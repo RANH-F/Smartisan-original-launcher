@@ -24,7 +24,7 @@
 
 <p align="center">
   <img src="docs/1.jpg" width="23%" alt="Smartisan Launcher 演示截图 1">
-  <img src="docs/2.jpg" width="23%" alt="Smartisan Launcher 演示截图 2">
+  <img src="docs/2.png" width="23%" alt="Smartisan Launcher 演示截图 2">
   <img src="docs/3.jpg" width="23%" alt="Smartisan Launcher 演示截图 3">
   <img src="docs/4.jpg" width="23%" alt="Smartisan Launcher 演示截图 4">
 </p>
