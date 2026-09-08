@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout android:gravity="center_vertical" android:id="@id/tt_video_traffic_tip_layout" android:background="@color/tt_video_traffic_tip_background_color" android:visibility="gone" android:layout_width="match_parent" android:layout_height="match_parent"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <TextView android:textSize="14.0sp" android:textColor="@color/tt_ssxinzi9" android:id="@id/tt_video_traffic_tip_tv" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/tt_video_without_wifi_tips" android:includeFontPadding="false" android:layout_centerHorizontal="true" />
+    <RelativeLayout android:id="@id/tt_video_traffic_continue_play_btn" android:background="@drawable/tt_video_traffic_continue_play_bg" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="28.0dp" android:layout_below="@id/tt_video_traffic_tip_tv" android:layout_centerHorizontal="true">
+        <TextView android:textSize="14.0sp" android:textColor="@color/tt_ssxinzi12" android:gravity="center" android:layout_gravity="center_vertical" android:id="@id/tt_video_traffic_continue_play_tv" android:layout_width="94.0dp" android:layout_height="28.0dp" android:text="@string/tt_video_continue_play" />
+    </RelativeLayout>
+</RelativeLayout>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout android:id="@id/search_layout" android:layout_width="match_parent" android:layout_height="32.0dp"
+  xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
+    <ImageView android:id="@id/search_image" android:background="@drawable/search_bg_selector" android:layout_width="match_parent" android:layout_height="match_parent" />
+    <ImageView android:id="@id/search_icon" android:layout_width="wrap_content" android:layout_height="wrap_content" android:src="@drawable/search_icon" android:layout_marginStart="7.0dp" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintLeft_toLeftOf="parent" app:layout_constraintTop_toTopOf="parent" />
+    <TextView android:textSize="15.0sp" android:textColor="#66ffffff" android:id="@id/search_text" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_centerVertical="true" android:layout_marginStart="3.0dp" android:layout_toEndOf="@id/search_icon" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintLeft_toRightOf="@id/search_icon" app:layout_constraintTop_toTopOf="parent" />
+</android.support.constraint.ConstraintLayout>

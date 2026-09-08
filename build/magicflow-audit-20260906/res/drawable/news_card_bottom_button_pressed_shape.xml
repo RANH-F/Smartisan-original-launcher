@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape android:shape="rectangle"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <corners android:bottomLeftRadius="@dimen/corners_radius" android:bottomRightRadius="@dimen/corners_radius" />
+    <solid android:color="@color/news_card_bottom_button_pressed" />
+</shape>

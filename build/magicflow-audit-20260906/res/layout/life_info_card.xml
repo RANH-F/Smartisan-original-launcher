@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:orientation="vertical" android:id="@id/life_info_layout" android:clipChildren="false" android:layout_width="match_parent" android:layout_height="wrap_content"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <com.smartisanos.magicflow.view.card.lifeinfo.LifeInfoCardListView android:id="@id/movie_list" android:clipChildren="false" android:layout_width="match_parent" android:layout_height="wrap_content" />
+    <com.smartisanos.magicflow.view.card.lifeinfo.LifeInfoCardListView android:id="@id/flight_list" android:clipChildren="false" android:layout_width="match_parent" android:layout_height="wrap_content" />
+    <com.smartisanos.magicflow.view.card.lifeinfo.LifeInfoCardListView android:id="@id/train_list" android:clipChildren="false" android:layout_width="match_parent" android:layout_height="wrap_content" />
+    <com.smartisanos.magicflow.view.card.lifeinfo.LifeInfoCardListView android:id="@id/hotel_list" android:clipChildren="false" android:layout_width="match_parent" android:layout_height="wrap_content" />
+    <com.smartisanos.magicflow.view.card.lifeinfo.LifeInfoCardListView android:id="@id/express_list" android:clipChildren="false" android:layout_width="match_parent" android:layout_height="wrap_content" />
+</LinearLayout>

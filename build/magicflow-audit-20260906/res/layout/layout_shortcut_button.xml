@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout android:background="@drawable/translucent_full_bg" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="@dimen/card_padding"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <com.smartisanos.magicflow.view.card.shortcut.ShortcutCardViewPager android:id="@id/shortcut_view_pager" android:layout_width="match_parent" android:layout_height="192.0px" android:overScrollMode="never" />
+    <com.smartisanos.magicflow.view.card.shortcut.DotsView android:layout_gravity="center|bottom" android:id="@id/dots_view" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="18.0px" />
+</FrameLayout>

@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="fixed_news_channel">
+        <item>news_hot:0</item>
+        <item>news_tech:1</item>
+        <item>news_sports:2</item>
+        <item>news_car:3</item>
+        <item>news_finance:4</item>
+        <item>news_world:5</item>
+        <item>news_house:6</item>
+        <item>news_local:7</item>
+        <item>news_discovery:8</item>
+        <item>news_career:9</item>
+        <item>news_society:10</item>
+        <item>news_entertainment:11</item>
+        <item>news_military:12</item>
+        <item>news_travel:13</item>
+        <item>news_pet:14</item>
+        <item>news_culture:15</item>
+        <item>news_fashion:16</item>
+        <item>news_game:17</item>
+        <item>news_history:18</item>
+        <item>news_food:19</item>
+        <item>news_regimen:20</item>
+        <item>news_health:21</item>
+        <item>news_baby:22</item>
+        <item>news_story:23</item>
+        <item>news_essay:24</item>
+        <item>news_edu:25</item>
+        <item>news_photography:26</item>
+        <item>news_comic:27</item>
+        <item>news_astrology:28</item>
+    </string-array>
+    <string-array name="news_channel">
+        <item>推荐:__all__</item>
+        <item>热点:news_hot</item>
+        <item>科技:news_tech</item>
+        <item>体育:news_sports</item>
+        <item>汽车:news_car</item>
+        <item>财经:news_finance</item>
+        <item>国际:news_world</item>
+        <item>房产:news_house</item>
+        <item>本地:news_local</item>
+        <item>探索:news_discovery</item>
+        <item>职场:news_career</item>
+        <item>社会:news_society</item>
+        <item>娱乐:news_entertainment</item>
+        <item>军事:news_military</item>
+        <item>旅游:news_travel</item>
+        <item>宠物:news_pet</item>
+        <item>人文:news_culture</item>
+        <item>时尚:news_fashion</item>
+        <item>游戏:news_game</item>
+        <item>历史:news_history</item>
+        <item>美食:news_food</item>
+        <item>养生:news_regimen</item>
+        <item>健康:news_health</item>
+        <item>育儿:news_baby</item>
+        <item>故事:news_story</item>
+        <item>美文:news_essay</item>
+        <item>教育:news_edu</item>
+        <item>摄影:news_photography</item>
+        <item>动漫:news_comic</item>
+        <item>星座:news_astrology</item>
+    </string-array>
+    <string-array name="wether_description">
+        <item>Sunny</item>
+        <item>Cloudy</item>
+        <item>Overcast</item>
+        <item>Shower</item>
+        <item>Thundershower</item>
+        <item>Thundershower with Hail</item>
+        <item>Sleet</item>
+        <item>Light Rain</item>
+        <item>Moderate Rain</item>
+        <item>Heavy Rain</item>
+        <item>Storm</item>
+        <item>Heavy Storm</item>
+        <item>Severe Storm</item>
+        <item>Snow Flurry</item>
+        <item>Light Snow</item>
+        <item>Moderate Snow</item>
+        <item>Heavy Snow</item>
+        <item>Snowstorm</item>
+        <item>Foggy</item>
+        <item>Ice Rain</item>
+        <item>Duststorm</item>
+        <item>Moderate Rain</item>
+        <item>Heavy Rain</item>
+        <item>Storm</item>
+        <item>Heavy Storm</item>
+        <item>Severe Storm</item>
+        <item>Moderate Snow</item>
+        <item>Heavy Snow</item>
+        <item>Snowstorm</item>
+        <item>Dust</item>
+        <item>Sand</item>
+        <item>Sandstorm</item>
+        <item>Dense Fog</item>
+        <item>Heavy Dense Fog</item>
+        <item>Haze</item>
+        <item>Moderate Haze</item>
+        <item>Severe Haze</item>
+        <item>Hazardous Haze</item>
+        <item>heavy Fog</item>
+        <item>Extra-heavy Dense Fog</item>
+        <item>Unknown</item>
+    </string-array>
+</resources>

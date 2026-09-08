@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@android:id/background" android:drawable="@drawable/thin_progress_track_smartisanos" />
+    <item android:id="@android:id/progress" android:left="1.0dp" android:right="1.0dp">
+        <scale android:drawable="@drawable/thin_progress_unfocused_smartisanos" android:scaleWidth="100%" />
+    </item>
+    <item android:id="@android:id/secondaryProgress">
+        <scale android:drawable="@drawable/thin_secondary_progress_smartisanos" android:scaleWidth="100%" />
+    </item>
+</layer-list>

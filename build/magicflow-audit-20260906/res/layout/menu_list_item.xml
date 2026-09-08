@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout android:gravity="center" android:layout_gravity="center" android:id="@id/poprelative" android:background="@drawable/menu_item_selector" android:layout_width="match_parent" android:layout_height="74.0dp"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <LinearLayout android:orientation="vertical" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_centerInParent="true">
+        <ImageView android:layout_gravity="center" android:id="@id/menu_icon" android:layout_width="wrap_content" android:layout_height="wrap_content" android:contentDescription="@null" />
+        <TextView android:textSize="10.0sp" android:textStyle="bold" android:textColor="@color/add_nav_text_color" android:gravity="center_vertical" android:layout_gravity="center" android:id="@id/menu_text" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginLeft="6.0dp" android:layout_marginTop="1.0dp" android:layout_marginRight="6.0dp" android:singleLine="true" android:paddingStart="1.0dp" android:paddingEnd="1.0dp" />
+    </LinearLayout>
+</RelativeLayout>

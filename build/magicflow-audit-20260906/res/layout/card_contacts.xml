@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout android:id="@id/contacts_layout" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="@dimen/card_padding"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <LinearLayout android:gravity="center_vertical" android:orientation="vertical" android:id="@id/add_contacts_layout" android:background="@drawable/contacts_no_data_bg" android:layout_width="match_parent" android:layout_height="@dimen/contacts_card_height">
+        <TextView android:textSize="@dimen/contacts_text_size" android:textStyle="bold" android:textColor="#515b5b" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/contacts_text" android:singleLine="true" android:layout_marginStart="@dimen/card_content_padding" />
+        <TextView android:textSize="@dimen/contacts_add_size" android:textColor="#cc676767" android:gravity="center" android:id="@id/contacts_tips" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="@dimen/contacts_add_margin_top" android:adjustViewBounds="true" android:text="@string/contacts_add_text" android:drawableEnd="@drawable/contacts_add_icon" android:layout_marginStart="@dimen/card_content_padding" />
+    </LinearLayout>
+    <GridView android:gravity="center_vertical" android:id="@id/contacts_gridview" android:background="@drawable/translucent_full_bg" android:visibility="gone" android:layout_width="match_parent" android:layout_height="wrap_content" android:listSelector="@android:color/transparent" android:divider="@null" />
+</FrameLayout>

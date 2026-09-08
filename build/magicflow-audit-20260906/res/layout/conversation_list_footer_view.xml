@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.smartisanos.magicflow.pulltorefresh.ConversationListFooterView android:gravity="center" android:layout_width="match_parent" android:layout_height="wrap_content"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <LinearLayout android:gravity="center" android:id="@id/loading" android:visibility="gone" android:layout_width="match_parent" android:layout_height="80.0dp">
+        <ProgressBar android:layout_width="32.0dp" android:layout_height="32.0dp" android:indeterminate="true" style="?android:progressBarStyle" />
+    </LinearLayout>
+    <LinearLayout android:gravity="center" android:id="@id/load_more" android:visibility="gone" android:clickable="true" android:layout_width="match_parent" android:layout_height="80.0dp">
+        <TextView android:textSize="15.0sp" android:textColor="#777777" android:layout_gravity="center" android:id="@id/load_more_text" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/pull_up_to_refresh" />
+    </LinearLayout>
+</com.smartisanos.magicflow.pulltorefresh.ConversationListFooterView>

@@ -137,7 +137,7 @@
 .end method
 
 .method public static ng()V
-    .locals 3
+    .locals 1
 
     .line 1
     sget-boolean v0, Lcom/smartisanos/launcher/data/Constants;->sLeftScreenEnabled:Z
@@ -148,74 +148,11 @@
 
     .line 2
     :cond_0
-    sget-boolean v0, Lcom/smartisanos/launcher/e/e;->uu:Z
+    const/4 v0, 0x0
 
-    if-eqz v0, :cond_1
+    invoke-static {v0}, Lcom/smartisanos/launcher/gesture/QuickDesktopGestureDiagnostics;->onRequestShow(Z)V
 
-    return-void
-
-    :cond_1
-    const/4 v0, 0x1
-
-    .line 3
-    sput-boolean v0, Lcom/smartisanos/launcher/e/e;->uu:Z
-
-    .line 4
-    new-instance v0, Lcom/smartisanos/launcher/e/a;
-
-    invoke-direct {v0}, Lcom/smartisanos/launcher/e/a;-><init>()V
-
-    const-wide/16 v1, 0x3c
-
-    invoke-static {v0, v1, v2}, Lcom/smartisanos/launcher/Sa;->postDelayed(Ljava/lang/Runnable;J)V
-
-    .line 5
-    sget-boolean v0, Lcom/smartisanos/launcher/va;->DBG:Z
-
-    if-eqz v0, :cond_2
-
-    sget-object v0, Lcom/smartisanos/launcher/e/e;->log:Lcom/smartisanos/launcher/va;
-
-    const-string v1, "requestShowMagicFlow !!!"
-
-    invoke-virtual {v0, v1}, Lcom/smartisanos/launcher/va;->u(Ljava/lang/String;)V
-
-    .line 6
-    :cond_2
-    invoke-static {}, Lcom/smartisanos/launcher/J;->getInstance()Lcom/smartisanos/launcher/J;
-
-    move-result-object v0
-
-    if-nez v0, :cond_3
-
-    return-void
-
-    .line 7
-    :cond_3
-    invoke-static {}, Lcom/smartisanos/launcher/J;->getInstance()Lcom/smartisanos/launcher/J;
-
-    move-result-object v0
-
-    invoke-virtual {v0}, Lcom/smartisanos/launcher/J;->getContext()Landroid/content/Context;
-
-    move-result-object v0
-
-    if-nez v0, :cond_4
-
-    return-void
-
-    .line 8
-    :cond_4
-    invoke-virtual {v0}, Landroid/content/Context;->getContentResolver()Landroid/content/ContentResolver;
-
-    move-result-object v0
-
-    .line 9
-    new-instance v1, Lcom/smartisanos/launcher/e/b;
-
-    invoke-direct {v1, v0}, Lcom/smartisanos/launcher/e/b;-><init>(Landroid/content/ContentResolver;)V
-
-    invoke-static {v1}, Lcom/smartisanos/launcher/wb;->post(Ljava/lang/Runnable;)V
+    invoke-static {}, Lcom/smartisanos/launcher/quickdesktop/QuickDesktopController;->requestShow()V
 
     return-void
 .end method

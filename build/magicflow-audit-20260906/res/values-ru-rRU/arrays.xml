@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="wether_description">
+        <item>Солнечно</item>
+        <item>Облачно</item>
+        <item>Облачно</item>
+        <item>Ливень</item>
+        <item>Гроза с ливнем</item>
+        <item>Гроза с ливнем и градом</item>
+        <item>Снег с дождем</item>
+        <item>Легкий дождь</item>
+        <item>Умеренный дождь</item>
+        <item>Сильный дождь</item>
+        <item>Буря</item>
+        <item>Сильная буря</item>
+        <item>Ураган</item>
+        <item>Небольшой снег</item>
+        <item>Слабый снег</item>
+        <item>Умеренный снег</item>
+        <item>Сильный снег</item>
+        <item>Снегопад</item>
+        <item>Туман</item>
+        <item>Ледяной дождь</item>
+        <item>Пыльная буря</item>
+        <item>Умеренный дождь</item>
+        <item>Сильный дождь</item>
+        <item>Буря</item>
+        <item>Сильная буря</item>
+        <item>Ураган</item>
+        <item>Умеренный снег</item>
+        <item>Сильный снег</item>
+        <item>Снегопад</item>
+        <item>Пыль</item>
+        <item>Песок</item>
+        <item>Песчаная буря</item>
+        <item>Плотный туман</item>
+        <item>Очень густой туман</item>
+        <item>Дымка</item>
+        <item>Умеренная дымка</item>
+        <item>Плотная дымка</item>
+        <item>Опасная дымка</item>
+        <item>Густой туман</item>
+        <item>Очень плотный туман</item>
+        <item>Неизвестно</item>
+    </string-array>
+</resources>

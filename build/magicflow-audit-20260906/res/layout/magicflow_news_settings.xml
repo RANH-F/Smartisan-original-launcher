@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout android:background="@drawable/background" android:layout_width="match_parent" android:layout_height="match_parent"
+  xmlns:android="http://schemas.android.com/apk/res/android" xmlns:smartisan="http://schemas.android.com/apk/res-auto">
+    <smartisan.widget.TitleBar android:id="@id/view_title" android:layout_width="match_parent" android:layout_height="wrap_content" smartisan:title_bar_center_text="@string/news_read" />
+    <ScrollView android:clipChildren="false" android:layout_width="match_parent" android:layout_height="match_parent" android:layout_below="@id/view_title" android:layout_alignParentBottom="true" android:overScrollMode="always">
+        <LinearLayout android:orientation="vertical" android:id="@id/view_list" android:clipChildren="false" android:layout_width="match_parent" android:layout_height="match_parent">
+            <include layout="@layout/setting_introduce_layout" />
+            <LinearLayout android:orientation="vertical" android:id="@id/news_sub" android:clipChildren="false" android:layout_width="match_parent" android:layout_height="wrap_content">
+                <smartisan.widget.ListContentItemSwitch android:id="@id/news_setting_toutiao" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="@dimen/setting_sub_item_margin_top" smartisan:smtTitle="@string/news" style="@style/SettingSubItemTopStyle" />
+                <smartisan.widget.ListContentItemSwitch android:id="@id/news_setting_reader" android:layout_width="match_parent" android:layout_height="wrap_content" smartisan:smtTitle="@string/smartisan_reader" style="@style/SettingSubItemBottomStyle" />
+                <smartisan.widget.ListContentItemText android:id="@id/news_interest_setting" smartisan:smtTitle="@string/news_interest_select" style="@style/SettingSubItemSingleStyle" />
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+</RelativeLayout>

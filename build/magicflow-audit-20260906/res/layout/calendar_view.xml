@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:orientation="vertical" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_centerInParent="true"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <RelativeLayout android:orientation="horizontal" android:id="@id/allinone_titilebar" android:layout_width="match_parent" android:layout_height="@dimen/allinone_titilebar_height">
+        <RelativeLayout android:gravity="center" android:layout_width="match_parent" android:layout_height="match_parent" android:layout_centerInParent="true" android:layout_centerVertical="true">
+            <TextView android:textSize="@dimen/remind_title_text_size" android:textStyle="bold" android:textColor="#9a000000" android:gravity="center" android:id="@id/date_title" android:layout_width="@dimen/allinone_dateview_layout_width" android:layout_height="match_parent" android:layout_centerInParent="true" />
+            <ImageView android:id="@id/allinone_image_previous" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginLeft="57.0dp" android:src="@drawable/reminder_previous_arrow_selector" android:scaleType="center" android:layout_alignParentLeft="true" android:layout_centerVertical="true" />
+            <ImageView android:id="@id/allinone_image_next" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginRight="57.0dp" android:src="@drawable/remind_next_arrow_selector" android:scaleType="center" android:layout_alignParentRight="true" android:layout_centerVertical="true" />
+        </RelativeLayout>
+    </RelativeLayout>
+    <LinearLayout android:background="@drawable/topbar_bottom_line" android:layout_width="match_parent" android:layout_height="1.0dp" />
+    <include android:id="@id/day_names" android:layout_marginTop="9.0dp" android:layout_marginBottom="7.0dp" layout="@layout/remind_full_month_header" />
+    <smartisan.widget.calendar.DragViewSwitcher android:id="@id/main_switcher" android:background="@drawable/remind_month_content_frame" android:layout_width="match_parent" android:layout_height="wrap_content" android:measureAllChildren="false" />
+</LinearLayout>

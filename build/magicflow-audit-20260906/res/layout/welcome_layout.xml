@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.smartisanos.magicflow.view.WelcomeView android:gravity="center_vertical" android:id="@id/welcome_layout" android:layout_width="match_parent" android:layout_height="match_parent"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <ImageView android:id="@id/welcome_img" android:layout_width="match_parent" android:layout_height="@dimen/welcome_img_height" android:layout_marginTop="@dimen/welcome_img_margin_top" android:scaleType="fitXY" android:layout_marginStart="@dimen/cards_list_padding_horizontal" android:layout_marginEnd="@dimen/cards_list_padding_horizontal" />
+    <LinearLayout android:gravity="center" android:layout_gravity="bottom" android:orientation="vertical" android:id="@id/presentation_layout" android:background="@drawable/welcome_mask" android:layout_width="match_parent" android:layout_height="618.0dp" android:alpha="0.0">
+        <View android:layout_width="wrap_content" android:layout_height="0.0dp" android:layout_weight="1.0" />
+        <TextView android:textSize="@dimen/welcome_title_size" android:textStyle="bold" android:textColor="@color/white" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/welcome_title_text" />
+        <TextView android:textSize="@dimen/welcome_content_size" android:textColor="@color/white" android:gravity="center" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="@dimen/welcome_content_margin_top" android:text="@string/welcome_content_text" android:lineSpacingExtra="8.0dp" />
+        <smartisan.widget.ShadowButton android:id="@id/enter_button" android:layout_width="match_parent" android:layout_marginLeft="30.0dp" android:layout_marginTop="96.0dp" android:layout_marginRight="30.0dp" android:text="@string/welcome_enter_text" style="@style/LongButton.Highlight" />
+        <TextView android:textSize="16.0sp" android:textStyle="bold" android:textColor="#ccffffff" android:gravity="center" android:id="@id/welcome_cancel" android:padding="10.0dp" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="10.0dp" android:layout_marginBottom="40.0dp" android:text="@string/dialog_cancel" />
+    </LinearLayout>
+</com.smartisanos.magicflow.view.WelcomeView>

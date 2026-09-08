@@ -1050,9 +1050,18 @@ public final class WeatherBridge {
         Bundle bundle = new Bundle();
         bundle.putString("weatherCode", weatherCode);
         bundle.putString("temp", temperature);
+        bundle.putString("city", weatherCity(context));
         bundle.putString("fahrenheitTemp", prefs.getString("temperature_f", temperature));
         bundle.putString("_1sunRiseAndSet", prefs.getString("sunrise_sunset", "06:00|18:00"));
         return bundle;
+    }
+
+    private static String weatherCity(Context context) {
+        SharedPreferences values = prefs(context);
+        String city = isAutomaticLocation(context)
+                ? values.getString("automatic_city", "")
+                : values.getString("manual_city", "");
+        return city == null || city.trim().length() == 0 ? "当前位置" : city.trim();
     }
 
     private static void broadcast(Context context, Bundle bundle) {

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge android:id="@id/empty" android:layout_width="wrap_content" android:layout_height="wrap_content"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <ImageView android:layout_gravity="center_horizontal" android:id="@id/empty_image" android:layout_width="120.0dp" android:layout_height="120.0dp" android:layout_marginTop="@dimen/blank_view_vertical_margin" />
+    <TextView android:textSize="20.0sp" android:textStyle="bold" android:textColor="#26000000" android:gravity="center" android:layout_gravity="center_horizontal" android:id="@id/empty_primary_hint" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginLeft="60.0dp" android:layout_marginTop="18.0dp" android:layout_marginRight="60.0dp" android:singleLine="true" />
+    <TextView android:textSize="13.5sp" android:textColor="#26000000" android:gravity="center" android:layout_gravity="center_horizontal" android:id="@id/empty_secondary_hint" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginLeft="60.0dp" android:layout_marginTop="5.0dp" android:layout_marginRight="60.0dp" />
+    <TextView android:layout_gravity="center_horizontal" android:id="@id/empty_action_btn" android:background="@drawable/blank_option_btn_selector" android:visibility="gone" android:clickable="true" android:layout_width="60.0dp" android:layout_height="60.0dp" android:layout_marginTop="@dimen/blankview_actionbtn_margintop" />
+</merge>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<smartisan.widget.RoundedRectLinearLayout android:orientation="vertical" android:layout_width="match_parent" android:layout_height="wrap_content" smartisan:cornerRadius="10.0dp" style="@style/PopupMenuStyle"
+  xmlns:android="http://schemas.android.com/apk/res/android" xmlns:smartisan="http://schemas.android.com/apk/res-auto">
+    <LinearLayout android:orientation="vertical" android:id="@id/menu_title_container" android:layout_width="match_parent" android:layout_height="wrap_content">
+        <TextView android:textSize="12.0sp" android:textStyle="bold" android:textColor="#4c000000" android:gravity="center_vertical" android:id="@id/menu_title" android:layout_width="match_parent" android:layout_height="@dimen/popup_list_menu_title_height" android:layout_marginLeft="@dimen/popup_list_title_left_margin" />
+        <View android:background="@drawable/list_divider_drawable" android:layout_width="match_parent" android:layout_height="@dimen/list_divider_height" />
+    </LinearLayout>
+    <smartisan.widget.DividerListView android:id="@id/menu_list" android:layout_width="match_parent" android:layout_height="wrap_content" android:listSelector="@android:color/transparent" android:divider="@null" android:overScrollMode="always" />
+    <View android:id="@id/menu_list_bottom_divider" android:background="@drawable/list_divider_drawable" android:layout_width="match_parent" android:layout_height="@dimen/list_divider_height" />
+    <RelativeLayout android:layout_gravity="center" android:id="@id/bottom_action_bar" android:background="@color/pop_win_bg_color" android:layout_width="match_parent" android:layout_height="@dimen/popup_list_menu_item_height" android:layout_below="@id/menu_title">
+        <ImageView android:id="@id/left_icon" android:background="@drawable/menu_pop_icon_bg_selector" android:layout_width="36.0dp" android:layout_height="28.0dp" android:layout_marginLeft="8.0dp" android:scaleType="center" android:layout_alignParentLeft="true" android:layout_centerVertical="true" />
+        <ImageView android:id="@id/right_icon" android:background="@drawable/menu_pop_icon_bg_selector" android:layout_width="36.0dp" android:layout_height="28.0dp" android:layout_marginRight="8.0dp" android:scaleType="center" android:layout_alignParentRight="true" android:layout_centerVertical="true" />
+        <Button android:textSize="10.0dp" android:textStyle="bold" android:textColor="@color/title_bar_button_text" android:id="@id/left_btn" android:background="@drawable/pop_menu_btn_selector" android:visibility="gone" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minWidth="64.0dp" android:layout_alignParentLeft="true" />
+        <Button android:textSize="10.0dp" android:textStyle="bold" android:textColor="@color/title_bar_button_text" android:id="@id/right_btn" android:background="@drawable/pop_menu_btn_selector" android:visibility="gone" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minWidth="64.0dp" android:layout_alignParentRight="true" />
+        <TextView android:textSize="10.0dp" android:textColor="#4c000000" android:gravity="center" android:id="@id/action_text" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_toLeftOf="@id/right_icon" android:layout_toRightOf="@id/left_icon" android:layout_centerInParent="true" />
+    </RelativeLayout>
+</smartisan.widget.RoundedRectLinearLayout>

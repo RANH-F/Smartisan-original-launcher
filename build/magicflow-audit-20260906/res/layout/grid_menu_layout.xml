@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:orientation="vertical" android:paddingTop="18.0dp" android:paddingBottom="@dimen/popup_grid_menu_margin" android:layout_width="match_parent" android:layout_height="wrap_content" style="@style/PopupMenuStyle"
+  xmlns:android="http://schemas.android.com/apk/res/android" xmlns:smartisan="http://schemas.android.com/apk/res-auto">
+    <smartisan.widget.support.WrapContentViewPager android:id="@id/viewpager" android:layout_width="match_parent" android:layout_height="wrap_content" />
+    <smartisan.app.IndicatorView android:id="@id/indicator" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="6.0dp" smartisan:radius="@dimen/large_circle_indicator_radius" />
+</LinearLayout>

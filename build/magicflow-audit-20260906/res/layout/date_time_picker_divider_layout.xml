@@ -1,0 +1,3 @@
+<?xml version="1.0" encoding="utf-8"?>
+<View android:background="@color/date_time_picker_divider_bg" android:layout_width="@dimen/smartisan_datepicker_divider_width" android:layout_height="match_parent"
+  xmlns:android="http://schemas.android.com/apk/res/android" />

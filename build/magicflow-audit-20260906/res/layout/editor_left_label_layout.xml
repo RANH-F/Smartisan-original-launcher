@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge android:layout_width="match_parent" android:layout_height="wrap_content"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <FrameLayout android:id="@id/iconContainer" android:visibility="gone" android:layout_width="@dimen/editor_left_icon_container_width" android:layout_height="@dimen/editor_left_icon_container_height">
+        <ImageView android:layout_gravity="center" android:id="@id/icon" android:layout_width="26.0dp" android:layout_height="26.0dp" android:scaleType="fitXY" />
+        <View android:layout_gravity="right" android:id="@id/divider" android:background="@color/list_divider_color" android:visibility="gone" android:layout_width="2.0px" android:layout_height="match_parent" />
+    </FrameLayout>
+    <TextView android:id="@id/label" android:layout_width="wrap_content" android:layout_height="match_parent" android:layout_marginLeft="@dimen/editor_element_margin_left_right" style="@style/EditorLabelTextStyle" />
+    <ImageView android:id="@id/arrow" android:visibility="gone" android:layout_width="wrap_content" android:layout_height="wrap_content" android:src="@drawable/arrow_icon" />
+    <LinearLayout android:orientation="vertical" android:id="@id/rightExpandView" android:visibility="gone" android:layout_width="wrap_content" android:layout_height="match_parent" />
+</merge>

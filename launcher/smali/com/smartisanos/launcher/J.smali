@@ -994,6 +994,8 @@
 
     iput-object p1, p0, Lcom/smartisanos/launcher/J;->mRootView:Lcom/smartisanos/launcher/view/RootView;
 
+    invoke-static {p1}, Lcom/smartisanos/launcher/quickdesktop/QuickDesktopController;->attach(Landroid/view/ViewGroup;)V
+
     .line 6
     invoke-virtual {v1, p2}, Landroid/view/Window;->findViewById(I)Landroid/view/View;
 

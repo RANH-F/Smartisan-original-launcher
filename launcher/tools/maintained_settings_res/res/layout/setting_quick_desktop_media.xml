@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:setting="http://schemas.android.com/apk/res-auto"
+    android:background="@drawable/background" android:fitsSystemWindows="true"
+    android:layout_width="match_parent" android:layout_height="match_parent">
+    <com.smartisanos.home.widget.sys.Title android:id="@id/view_title"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        setting:title_titlex="@string/quick_desktop_media_settings_title" />
+    <ScrollView android:layout_width="match_parent" android:layout_height="match_parent"
+        android:layout_below="@id/view_title" android:overScrollMode="always">
+        <LinearLayout android:orientation="vertical" android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <RelativeLayout android:id="@+id/item_id_quick_desktop_music_app"
+                android:background="@drawable/selector_setting_sub_item_bg_top"
+                android:layout_marginTop="@dimen/settings_item_top_bottom_margin"
+                android:layout_width="match_parent" android:layout_height="72.0dp">
+                <TextView android:textSize="@dimen/setting_item_text_size"
+                    android:textColor="@drawable/more_item_color_bg"
+                    android:paddingLeft="@dimen/setting_item_text_left"
+                    android:layout_width="wrap_content" android:layout_height="match_parent"
+                    android:text="@string/quick_desktop_music_app_title"
+                    android:gravity="center_vertical" />
+                <TextView android:id="@+id/quick_desktop_music_app_value"
+                    android:textSize="15.0sp" android:textColor="#888888"
+                    android:paddingRight="48.0dp" android:singleLine="true"
+                    android:ellipsize="end" android:maxWidth="180.0dp"
+                    android:layout_alignParentRight="true" android:gravity="center_vertical"
+                    android:layout_width="wrap_content" android:layout_height="match_parent" />
+                <ImageView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:src="@drawable/setting_next" android:layout_alignParentRight="true"
+                    android:layout_centerVertical="true" />
+            </RelativeLayout>
+            <RelativeLayout android:id="@+id/item_id_quick_desktop_payment_provider"
+                android:background="@drawable/selector_setting_sub_item_bg_middle"
+                android:layout_width="match_parent" android:layout_height="72.0dp">
+                <TextView android:textSize="@dimen/setting_item_text_size"
+                    android:textColor="@drawable/more_item_color_bg"
+                    android:paddingLeft="@dimen/setting_item_text_left"
+                    android:layout_width="wrap_content" android:layout_height="match_parent"
+                    android:text="@string/quick_desktop_payment_provider_title"
+                    android:gravity="center_vertical" />
+                <TextView android:id="@+id/quick_desktop_payment_provider_value"
+                    android:textSize="15.0sp" android:textColor="#888888"
+                    android:paddingRight="48.0dp" android:singleLine="true"
+                    android:layout_alignParentRight="true" android:gravity="center_vertical"
+                    android:layout_width="wrap_content" android:layout_height="match_parent" />
+                <ImageView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:src="@drawable/setting_next" android:layout_alignParentRight="true"
+                    android:layout_centerVertical="true" />
+            </RelativeLayout>
+            <RelativeLayout android:id="@+id/item_id_quick_desktop_music_access"
+                android:background="@drawable/selector_setting_sub_item_bg_bottom"
+                android:layout_width="match_parent" android:layout_height="72.0dp">
+                <TextView android:textSize="@dimen/setting_item_text_size"
+                    android:textColor="@drawable/more_item_color_bg"
+                    android:paddingLeft="@dimen/setting_item_text_left"
+                    android:layout_width="wrap_content" android:layout_height="match_parent"
+                    android:text="@string/quick_desktop_music_access_title"
+                    android:gravity="center_vertical" />
+                <TextView android:id="@+id/quick_desktop_music_access_value"
+                    android:textSize="15.0sp" android:textColor="#888888"
+                    android:paddingRight="48.0dp" android:singleLine="true"
+                    android:layout_alignParentRight="true" android:gravity="center_vertical"
+                    android:layout_width="wrap_content" android:layout_height="match_parent" />
+                <ImageView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:src="@drawable/setting_next" android:layout_alignParentRight="true"
+                    android:layout_centerVertical="true" />
+            </RelativeLayout>
+            <com.smartisanos.home.widget.sys.TipsView
+                android:layout_marginTop="@dimen/settings_item_title_margin_top"
+                android:text="@string/quick_desktop_music_access_tips"
+                style="@style/SettingItemTipsStyle" />
+            <include layout="@layout/item_bottom_shadow_layout" />
+        </LinearLayout>
+    </ScrollView>
+    <include android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_below="@id/view_title" layout="@layout/title_bar_shadow" />
+</RelativeLayout>

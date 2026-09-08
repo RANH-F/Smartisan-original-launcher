@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge android:layout_width="match_parent" android:layout_height="wrap_content"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <RelativeLayout android:layout_gravity="center" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_centerInParent="true">
+        <TextView android:textStyle="bold" android:textColor="#996b3d" android:gravity="center" android:id="@id/action_btn" android:background="@drawable/toast_action_btn_selector" android:layout_width="wrap_content" android:layout_height="wrap_content" android:maxLines="1" android:layout_alignParentRight="true" android:layout_centerVertical="true" />
+        <TextView android:id="@id/message" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_toLeftOf="@id/action_btn" style="@style/SnackbarMessageStyle" />
+    </RelativeLayout>
+</merge>

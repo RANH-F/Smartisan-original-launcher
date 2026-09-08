@@ -1306,31 +1306,12 @@
 .end method
 
 .method public static f(Landroid/content/Context;)Z
-    .locals 2
+    .locals 1
 
-    .line 8
-    invoke-virtual {p0}, Landroid/content/Context;->getContentResolver()Landroid/content/ContentResolver;
+    invoke-static {p0}, Lcom/smartisanos/launcher/quickdesktop/QuickDesktopController;->isEnabled(Landroid/content/Context;)Z
 
-    move-result-object p0
+    move-result v0
 
-    const/4 v0, 0x0
-
-    const-string v1, "sm_launcher_left_screen_state"
-
-    invoke-static {p0, v1, v0}, Landroid/provider/Settings$Global;->getInt(Landroid/content/ContentResolver;Ljava/lang/String;I)I
-
-    move-result p0
-
-    const/4 v1, 0x1
-
-    if-ne p0, v1, :cond_0
-
-    goto :goto_0
-
-    :cond_0
-    const/4 v0, 0x0
-
-    :goto_0
     return v0
 .end method
 

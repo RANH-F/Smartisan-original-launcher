@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<smartisan.widget.BHMContentLayout android:orientation="vertical" android:id="@id/bhm_content_layout" android:background="@android:color/transparent" android:layout_width="match_parent" android:layout_height="wrap_content"
+  xmlns:android="http://schemas.android.com/apk/res/android" xmlns:smartisan="http://schemas.android.com/apk/res-auto">
+    <smartisan.widget.MenuDialogTitleBar android:id="@id/menu_dialog_title_bar" android:layout_width="match_parent" android:layout_height="wrap_content" smartisan:show_divider="false" />
+    <RelativeLayout android:id="@id/bhm_list_view_layout" android:background="@android:color/white" android:layout_width="match_parent" android:layout_height="wrap_content">
+        <FrameLayout android:layout_width="match_parent" android:layout_height="match_parent" android:layout_marginTop="@dimen/bhm_list_view_margin_top">
+            <ListView android:id="@id/single_list_view" android:visibility="gone" android:fadingEdge="none" android:layout_width="match_parent" android:layout_height="match_parent" android:listSelector="@drawable/bhm_list_view_bg" android:drawSelectorOnTop="false" android:cacheColorHint="@android:color/transparent" android:choiceMode="singleChoice" android:overScrollMode="always" />
+            <ViewStub android:id="@id/combined_list_view_view_stub" android:layout="@layout/bhm_combined_list_view" android:inflatedId="@id/combined_list_view" android:layout_width="match_parent" android:layout_height="match_parent" />
+        </FrameLayout>
+    </RelativeLayout>
+</smartisan.widget.BHMContentLayout>

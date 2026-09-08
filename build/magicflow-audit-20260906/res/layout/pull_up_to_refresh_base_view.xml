@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <com.smartisanos.magicflow.pulltorefresh.RefreshFooterView android:gravity="center_horizontal" android:orientation="horizontal" android:id="@id/pull_to_refresh_foot" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_alignParentBottom="true">
+        <ImageView android:id="@id/footer_refresh_icon" android:background="@drawable/pull_to_refresh_anim_drawable" android:layout_width="wrap_content" android:layout_height="wrap_content" android:alpha="0.0" android:layerType="software" />
+        <TextView android:textSize="15.0sp" android:textColor="#777777" android:gravity="center_vertical" android:id="@id/footer_refresh_text" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="28.599976dp" android:text="@string/pull_up_to_refresh" android:alpha="0.0" android:layout_marginStart="10.0dp" />
+    </com.smartisanos.magicflow.pulltorefresh.RefreshFooterView>
+</merge>

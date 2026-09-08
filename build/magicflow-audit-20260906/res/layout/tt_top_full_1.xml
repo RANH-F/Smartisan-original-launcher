@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge android:layout_width="match_parent" android:layout_height="wrap_content"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <TextView android:textSize="14.0sp" android:textColor="@color/tt_white" android:gravity="center" android:layout_gravity="start|top" android:id="@id/tt_top_countdown" android:background="@drawable/tt_reward_countdown_bg" android:visibility="invisible" android:layout_width="28.0dp" android:layout_height="28.0dp" android:layout_marginLeft="16.0dp" android:layout_marginTop="20.0dp" android:layout_marginStart="16.0dp" />
+    <com.bytedance.sdk.openadsdk.core.widget.ShadowImageView android:gravity="center" android:layout_gravity="start|top" android:id="@id/tt_top_mute" android:layout_width="28.0dp" android:layout_height="28.0dp" android:layout_marginLeft="56.0dp" android:layout_marginTop="20.0dp" android:src="@drawable/tt_unmute" android:scaleType="center" android:layout_marginStart="56.0dp" />
+    <TextView android:textSize="14.0sp" android:textColor="#ffffff" android:gravity="center" android:layout_gravity="end|top" android:id="@id/tt_top_skip" android:background="@drawable/tt_ad_skip_btn_bg" android:visibility="gone" android:layout_width="96.0dp" android:layout_height="28.0dp" android:layout_marginTop="20.0dp" android:layout_marginRight="16.0dp" android:text="@string/tt_full_screen_skip_tx" />
+</merge>

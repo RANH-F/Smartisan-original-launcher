@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout android:paddingLeft="18.0dp" android:paddingRight="18.0dp" android:layout_width="match_parent" android:layout_height="match_parent"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <ImageView android:id="@id/app_icon" android:layout_width="40.0dp" android:layout_height="40.0dp" android:layout_marginTop="20.0dp" android:scaleType="fitXY" android:layout_centerHorizontal="true" />
+    <TextView android:textSize="15.0sp" android:textStyle="bold" android:textColor="#5c5c5c" android:id="@id/app_name" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="8.0dp" android:layout_marginBottom="6.0dp" android:layout_below="@id/app_icon" android:layout_centerHorizontal="true" />
+    <TextView android:textSize="15.0sp" android:textColor="#5c5c5c" android:id="@id/app_version" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_below="@id/app_name" android:layout_centerHorizontal="true" />
+    <View android:id="@id/line" android:background="#e6e6e6" android:layout_width="match_parent" android:layout_height="0.6600001dp" android:layout_marginTop="20.0dp" android:layout_marginBottom="20.0dp" android:layout_below="@id/app_version" />
+    <ScrollView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_below="@id/line">
+        <RelativeLayout android:layout_width="wrap_content" android:layout_height="wrap_content">
+            <TextView android:textSize="12.5dp" android:textColor="#aaaaaa" android:id="@id/log_title" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/auto_update_log" />
+            <TextView android:textSize="12.5dp" android:textColor="#5c5c5c" android:id="@id/app_update_log" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="6.0dp" android:layout_below="@id/log_title" android:lineSpacingExtra="6.0dp" />
+            <TextView android:textSize="12.5dp" android:textColor="#aaaaaa" android:id="@id/tip_title" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="20.0dp" android:text="@string/auto_install_log" android:layout_below="@id/app_update_log" />
+            <TextView android:textSize="12.5dp" android:textColor="#5c5c5c" android:id="@id/app_update_tip" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="6.0dp" android:layout_marginBottom="20.0dp" android:layout_below="@id/tip_title" />
+        </RelativeLayout>
+    </ScrollView>
+</RelativeLayout>

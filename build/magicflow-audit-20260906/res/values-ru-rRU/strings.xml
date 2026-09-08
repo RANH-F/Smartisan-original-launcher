@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="agree">Разрешить</string>
+    <string name="auto_progress_des">Скачается обновление...</string>
+    <string name="auto_progress_title">Скачать обновление</string>
+    <string name="auto_update_cancel">Потом</string>
+    <string name="auto_update_install">установка</string>
+    <string name="auto_update_ok">Обновить</string>
+    <string name="auto_update_tip_mobile">Упаковка установления %1$s, вы используете сотовую связь, Обновить до новейшей версии?</string>
+    <string name="auto_update_tip_wifi">Упаковка установления %1$s, Обновить до новейшей версии?</string>
+    <string name="auto_update_title">Новая версия</string>
+    <string name="call_by_sim">Вызов с помощью %1$s</string>
+    <string name="disagree">Отменить</string>
+    <string name="new_content_ready">已准备好新内容，点击查看</string>
+    <string name="protocal_content">Для полной функциональности компонента погоды необходим доступ к вашему местоположению и подключение к сети. Предоставить эти разрешения?</string>
+    <string name="protocal_title">Уведомление</string>
+    <string name="refresh">Refresh</string>
+    <string name="search">Поиск</string>
+    <string name="title_button_text_back">назад</string>
+</resources>

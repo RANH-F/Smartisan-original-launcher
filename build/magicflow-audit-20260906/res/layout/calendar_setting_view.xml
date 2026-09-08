@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout android:orientation="vertical" android:background="@drawable/background" android:layout_width="match_parent" android:layout_height="match_parent"
+  xmlns:android="http://schemas.android.com/apk/res/android" xmlns:smartisan="http://schemas.android.com/apk/res-auto">
+    <smartisan.widget.TitleBar android:id="@id/view_title" android:layout_width="match_parent" android:layout_height="wrap_content" smartisan:title_bar_center_text="@string/calendar" />
+    <ScrollView android:clipChildren="false" android:layout_width="match_parent" android:layout_height="match_parent" android:layout_below="@id/view_title" android:layout_alignParentBottom="true" android:overScrollMode="always">
+        <LinearLayout android:orientation="vertical" android:clipChildren="false" android:layout_width="match_parent" android:layout_height="match_parent">
+            <include layout="@layout/setting_introduce_layout" />
+            <LinearLayout android:orientation="vertical" android:id="@id/calendar_time_range" android:clipChildren="false" android:layout_width="match_parent" android:layout_height="wrap_content">
+                <smartisan.widget.TipsView android:textStyle="bold" android:layout_marginTop="@dimen/setting_sub_item_margin_top" android:text="@string/calendar_time_pick" style="@style/SettingItemTipsStyle" />
+                <smartisan.widget.ListContentItemCheck android:id="@id/list_content_item_one_day" android:layout_width="match_parent" android:layout_height="wrap_content" smartisan:smtTitle="@string/calendar_one_day" style="@style/ListContentItemStyle.Top" />
+                <smartisan.widget.ListContentItemCheck android:id="@id/list_content_item_three_day" android:layout_width="match_parent" android:layout_height="wrap_content" smartisan:smtTitle="@string/calendar_three_day" style="@style/ListContentItemStyle.Mid" />
+                <smartisan.widget.ListContentItemCheck android:id="@id/list_content_item_one_week" android:layout_width="match_parent" android:layout_height="wrap_content" smartisan:smtTitle="@string/calendar_one_week" style="@style/ListContentItemStyle.Mid" />
+                <smartisan.widget.ListContentItemCheck android:id="@id/list_content_item_two_week" android:layout_width="match_parent" android:layout_height="wrap_content" smartisan:smtTitle="@string/calendar_two_week" style="@style/ListContentItemStyle.Bottom" />
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+</RelativeLayout>

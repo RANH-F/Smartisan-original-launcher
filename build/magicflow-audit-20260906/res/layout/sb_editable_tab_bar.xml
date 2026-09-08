@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge android:layout_width="match_parent" android:layout_height="wrap_content"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <RelativeLayout android:layout_gravity="bottom" android:orientation="vertical" android:id="@id/sb_edit" android:layout_width="match_parent" android:layout_height="wrap_content">
+        <ImageView android:id="@id/sb_btn_top_divider" android:background="@drawable/switch_bar_title_bar_upper_shadow" android:layout_width="match_parent" android:layout_height="wrap_content" />
+        <RelativeLayout android:gravity="center_vertical" android:id="@id/sb_btn_layout" android:background="@drawable/switch_bar_title_bar_bg" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_below="@id/sb_btn_top_divider">
+            <Button android:ellipsize="end" android:gravity="center" android:id="@id/sb_btn_cancel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/sb_cancel" android:singleLine="true" android:layout_alignParentLeft="true" android:layout_centerVertical="true" style="@style/SmallButton.Standard" />
+            <Button android:ellipsize="end" android:gravity="center" android:id="@id/sb_btn_submit" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/sb_edit_submit" android:singleLine="true" android:layout_alignParentRight="true" android:layout_centerVertical="true" style="@style/SmallButton.Standard" />
+            <TextView android:textSize="@dimen/semi_small_text_size" android:textStyle="bold" android:textColor="@color/smartisan_title_text_color" android:ellipsize="end" android:gravity="center" android:id="@id/smartisan_sb_txt_title" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginLeft="6.0dp" android:layout_marginRight="6.0dp" android:text="@string/sb_editable_tab_title" android:maxLines="2" android:layout_toLeftOf="@id/sb_btn_submit" android:layout_toRightOf="@id/sb_btn_cancel" android:layout_centerVertical="true" />
+        </RelativeLayout>
+        <RadioGroup android:orientation="horizontal" android:id="@id/sb_editableTabContainer" android:background="@color/tab_bar_top_background" android:paddingTop="@dimen/smartisan_switch_bar_top_rg_padding" android:layout_width="match_parent" android:layout_height="80.0dp" android:weightSum="5.0" android:layout_below="@id/sb_btn_layout" />
+        <ImageView android:background="@drawable/switch_bar_title_bar_lower_shadow" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_below="@id/sb_btn_layout" />
+    </RelativeLayout>
+</merge>

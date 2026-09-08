@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout android:id="@id/card_movie_item" android:paddingBottom="@dimen/card_padding" android:layout_width="match_parent" android:layout_height="wrap_content"
+  xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
+    <LinearLayout android:orientation="horizontal" android:id="@id/card_movie_content_view" android:background="@drawable/life_info_white_bg" android:layout_width="match_parent" android:layout_height="@dimen/life_info_card_height">
+        <LinearLayout android:orientation="vertical" android:layout_width="0.0dp" android:layout_height="match_parent" android:layout_weight="1.0" android:layout_marginStart="@dimen/card_content_padding" android:layout_marginEnd="@dimen/life_info_card_base_info_margin_right">
+            <LinearLayout android:gravity="center_vertical" android:orientation="horizontal" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="@dimen/card_content_padding">
+                <ImageView android:background="@drawable/icon_movie_default" android:layout_width="48.0px" android:layout_height="48.0px" android:layout_marginEnd="6.0dp" />
+                <TextView android:textSize="36.0px" android:textColor="#80000000" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/card_movie_ticket_verify_num" android:maxLines="1" />
+                <TextView android:textSize="36.0px" android:textColor="#80000000" android:ellipsize="end" android:id="@id/card_movie_ticket_verify_num" android:layout_width="match_parent" android:layout_height="wrap_content" android:maxLines="1" android:layout_marginStart="2.0dp" />
+            </LinearLayout>
+            <TextView android:textSize="38.0px" android:textColor="#80000000" android:ellipsize="end" android:id="@id/card_movie_time" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="@dimen/life_info_card_des_margin_top" android:maxLines="1" />
+            <TextView android:textSize="51.0px" android:textStyle="bold" android:textColor="#b3000000" android:ellipsize="end" android:id="@id/card_movie_name" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="@dimen/life_info_card_name_margin_top" android:maxLines="1" />
+            <TextView android:textSize="30.0px" android:textColor="#4d000000" android:ellipsize="end" android:id="@id/card_movie_address" android:focusable="true" android:focusableInTouchMode="true" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="@dimen/life_info_card_bottom_des_margin_top" android:singleLine="true" android:marqueeRepeatLimit="marquee_forever" />
+        </LinearLayout>
+        <com.smartisanos.magicflow.view.RoundLayout android:layout_width="@dimen/life_info_card_right_width" android:layout_height="match_parent" app:bottomRightRadius="29.5px" app:topRightRadius="29.5px">
+            <ImageView android:id="@id/card_movie_poster" android:background="@drawable/card_movie_bg_right_mask_shape" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/card_movie_poster_default" android:scaleType="fitXY" />
+            <ImageView android:layout_gravity="right" android:id="@id/life_card_delete" android:background="@drawable/movie_close" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+        </com.smartisanos.magicflow.view.RoundLayout>
+    </LinearLayout>
+</FrameLayout>

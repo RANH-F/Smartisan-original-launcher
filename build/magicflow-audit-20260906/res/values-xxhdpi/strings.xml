@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="icon_resize_area">0.09</string>
+    <string name="icon_resize_radius">11</string>
+    <string name="icon_scale_9_16">0.71875</string>
+    <string name="layout_path">values-xxhdpi</string>
+</resources>

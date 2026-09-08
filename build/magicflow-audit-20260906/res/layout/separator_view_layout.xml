@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <TextView android:textSize="20.0sp" android:id="@id/title" style="@style/SeparatorViewTitle" />
+    <ImageView android:gravity="center" android:background="@drawable/title_dot" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginLeft="5.0dp" android:layout_marginRight="5.0dp" android:layout_marginBottom="8.0dp" />
+    <TextView android:textSize="15.0sp" android:id="@id/subtitle" style="@style/SeparatorViewTitle" />
+</merge>

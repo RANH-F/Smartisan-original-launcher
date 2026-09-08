@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:gravity="center_vertical" android:orientation="horizontal" android:background="@drawable/news_channel_bg" android:layout_width="@dimen/news_channel_item_with" android:layout_height="@dimen/news_channel_item_height"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <LinearLayout android:gravity="center" android:orientation="horizontal" android:layout_width="0.0dp" android:layout_height="match_parent" android:layout_weight="1.0" android:layout_marginStart="@dimen/news_channel_item_margin_start">
+        <ImageView android:id="@id/news_channel_icon" android:layout_width="@dimen/news_channel_icon_width" android:layout_height="@dimen/news_channel_icon_width" android:layout_marginEnd="@dimen/news_channel_icon_margin_end" />
+        <TextView android:textSize="15.0sp" android:textColor="@color/black" android:id="@id/news_channel_name" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+    </LinearLayout>
+    <ImageView android:id="@id/enabled_vector" android:background="@drawable/news_channel_vector" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginEnd="4.0dp" />
+</LinearLayout>

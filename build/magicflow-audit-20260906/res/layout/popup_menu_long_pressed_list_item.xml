@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <ImageView android:id="@id/menu_icon" android:layout_centerVertical="true" style="@style/StandardIconStyle" />
+    <TextView android:textSize="14.0sp" android:textColor="@color/smartisan_title_text_color" android:ellipsize="end" android:id="@id/menu_title" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginRight="6.0dp" android:maxLines="1" android:singleLine="true" android:layout_toRightOf="@id/menu_icon" android:layout_centerVertical="true" />
+</merge>

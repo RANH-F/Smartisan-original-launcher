@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:orientation="vertical" android:background="#ffffff" android:layout_width="match_parent" android:layout_height="match_parent"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <FrameLayout android:id="@id/video_container" android:background="@color/black" android:visibility="gone" android:layout_width="match_parent" android:layout_height="match_parent" />
+    <RelativeLayout android:id="@id/btn_relativeLayout" android:layout_width="match_parent" android:layout_height="match_parent">
+        <smartisan.widget.TitleBar android:id="@id/view_title" android:layout_width="match_parent" android:layout_height="wrap_content" />
+        <FrameLayout android:id="@id/webView_layout" android:layout_width="match_parent" android:layout_height="match_parent" android:layout_below="@id/view_title">
+            <include android:id="@id/webview_no_net" layout="@layout/no_network_layout" />
+            <WebView android:id="@id/item_webView" android:layout_width="match_parent" android:layout_height="match_parent" android:overScrollMode="never" />
+        </FrameLayout>
+    </RelativeLayout>
+</LinearLayout>

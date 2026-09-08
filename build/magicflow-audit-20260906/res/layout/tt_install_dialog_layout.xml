@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:gravity="center_vertical" android:layout_gravity="center" android:orientation="vertical" android:background="@drawable/tt_install_bk" android:paddingLeft="21.0dp" android:paddingTop="17.0dp" android:paddingRight="21.0dp" android:paddingBottom="17.0dp" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginLeft="38.0dp" android:layout_marginRight="38.0dp" android:minWidth="300.0dp" android:minHeight="180.0dp"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <TextView android:textSize="15.0sp" android:textColor="#222222" android:ellipsize="end" android:gravity="center_vertical" android:id="@id/tt_install_title" android:layout_width="wrap_content" android:layout_height="wrap_content" android:maxLines="1" />
+    <TextView android:textSize="16.0sp" android:textColor="#222222" android:ellipsize="end" android:id="@id/tt_install_content" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="14.0dp" android:maxLines="2" />
+    <LinearLayout android:gravity="right" android:orientation="horizontal" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="24.0dp">
+        <Button android:textSize="15.0sp" android:textColor="#ff999999" android:ellipsize="end" android:layout_gravity="center_vertical" android:id="@id/tt_install_btn_no" android:background="@color/tt_transparent" android:padding="9.0dp" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginRight="15.0dp" android:maxLines="1" android:maxLength="8" />
+        <Button android:textSize="15.0sp" android:textColor="@color/tt_white" android:ellipsize="end" android:layout_gravity="center_vertical" android:id="@id/tt_install_btn_yes" android:background="@drawable/tt_install_btn_bk" android:paddingLeft="18.0sp" android:paddingTop="9.0dp" android:paddingRight="18.0sp" android:paddingBottom="9.0dp" android:layout_width="wrap_content" android:layout_height="wrap_content" android:maxLines="1" />
+    </LinearLayout>
+</LinearLayout>

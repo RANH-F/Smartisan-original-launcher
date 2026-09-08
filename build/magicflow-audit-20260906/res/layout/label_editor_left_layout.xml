@@ -1,0 +1,3 @@
+<?xml version="1.0" encoding="utf-8"?>
+<smartisan.widget.editor.EditorLeftLabelWidget android:id="@id/left_widget" android:layout_width="match_parent" android:layout_height="match_parent" android:layout_centerInParent="true"
+  xmlns:android="http://schemas.android.com/apk/res/android" />

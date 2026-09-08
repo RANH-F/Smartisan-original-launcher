@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:orientation="horizontal" android:paddingLeft="18.0dp" android:paddingTop="11.0dp" android:paddingRight="18.0dp" android:paddingBottom="11.0dp" android:layout_width="match_parent" android:layout_height="wrap_content"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <TextView android:textSize="15.0sp" android:textColor="#cc000000" android:ellipsize="end" android:layout_gravity="left|center" android:id="@id/station_name" android:layout_width="wrap_content" android:layout_height="wrap_content" android:maxLines="1" android:layout_weight="1.0" />
+    <RadioButton android:layout_gravity="right|center" android:id="@id/station_selected" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+</LinearLayout>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge android:layout_width="match_parent" android:layout_height="match_parent"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <smartisan.widget.search.ImageNavigation android:id="@id/top_panel" android:background="@drawable/web_search_titlebar" android:layout_width="match_parent" android:layout_height="40.0dp" android:layout_alignParentTop="true">
+        <ImageView android:background="@drawable/boom_win_browser_foreground" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_alignParentRight="true" android:layout_centerVertical="true" />
+        <ImageView android:id="@id/goto_browser" android:background="@drawable/boom_win_browser_smartisan" android:layout_width="20.0dp" android:layout_height="20.0dp" android:layout_marginRight="12.599976dp" android:layout_alignParentRight="true" android:layout_centerVertical="true" />
+    </smartisan.widget.search.ImageNavigation>
+    <WebView android:id="@id/search_webview" android:clickable="true" android:layout_width="match_parent" android:layout_height="match_parent" android:layout_above="@id/bottom_panel" android:layout_below="@id/top_panel" android:overScrollMode="never" />
+    <include android:id="@id/network_view" android:layout_width="match_parent" android:layout_height="match_parent" android:layout_above="@id/bottom_panel" android:layout_below="@id/top_panel" layout="@layout/network_view" />
+    <smartisan.widget.search.ImageNavigation android:id="@id/bottom_panel" android:background="@drawable/web_search_bottombar" android:layout_width="match_parent" android:layout_height="40.0dp" android:layout_alignParentBottom="true" />
+    <ImageView android:id="@id/top_shadow" android:background="@drawable/web_search_titlebar_shadow" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_below="@id/top_panel" />
+    <ImageView android:id="@id/bottom_shadow" android:background="@drawable/web_search_bottombar_shadow" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_above="@id/bottom_panel" />
+</merge>

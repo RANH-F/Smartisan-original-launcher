@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:gravity="center" android:orientation="vertical" android:paddingTop="18.0dp" android:paddingBottom="18.0dp" android:layout_width="match_parent" android:layout_height="match_parent"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <ImageView android:layout_width="36.0dp" android:layout_height="36.0dp" android:src="@drawable/ic_magicflow" android:scaleType="fitCenter" />
+    <TextView android:textSize="20.0sp" android:textStyle="bold" android:gravity="center" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="18.0dp" android:text="@string/magicflow" />
+    <TextView android:textSize="20.0sp" android:gravity="center" android:id="@id/permission_desc" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="6.0dp" style="@android:style/TextAppearance.Material.Subhead" />
+</LinearLayout>

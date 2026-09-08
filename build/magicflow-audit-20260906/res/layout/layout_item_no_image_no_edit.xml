@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <LinearLayout android:gravity="center_vertical" android:orientation="horizontal" android:id="@id/message_background" android:layout_width="match_parent" android:layout_height="@dimen/news_item_height">
+        <LinearLayout android:orientation="vertical" android:layout_width="0.0dp" android:layout_height="wrap_content" android:layout_marginLeft="@dimen/newsitem_image_margin_left_single" android:layout_marginRight="@dimen/newsitem_image_margin_left_single" android:layout_weight="1.0">
+            <include layout="@layout/layout_block_title_text" />
+            <LinearLayout android:gravity="end|center" android:orientation="horizontal" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="@dimen/newsitem_source_margin_top_no_image">
+                <include layout="@layout/layout_block_source_text" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+</FrameLayout>

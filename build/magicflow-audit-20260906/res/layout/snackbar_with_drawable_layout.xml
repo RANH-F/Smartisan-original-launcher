@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge android:layout_width="match_parent" android:layout_height="wrap_content"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <RelativeLayout android:layout_gravity="center" android:id="@id/content" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_centerInParent="true">
+        <LinearLayout android:orientation="horizontal" android:id="@id/divider_layout" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_alignParentRight="true">
+            <FrameLayout android:id="@id/divider" android:background="#1e996b3d" android:layout_width="2.0px" android:layout_height="wrap_content" />
+            <ImageView android:layout_gravity="center" android:id="@id/action_img" android:layout_width="40.0dp" android:layout_height="40.0dp" android:src="@drawable/toast_action_dismiss" android:scaleType="center" />
+        </LinearLayout>
+        <TextView android:id="@id/message" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_toLeftOf="@id/divider_layout" style="@style/SnackbarMessageStyle" />
+    </RelativeLayout>
+</merge>

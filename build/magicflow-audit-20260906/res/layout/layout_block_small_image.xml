@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.smartisanos.magicflow.view.RoundLayout android:id="@id/thumbnail_layout" android:layout_width="match_parent" android:layout_height="match_parent" app:roundradius="12.0px"
+  xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
+    <ImageView android:id="@id/thumbnail" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop" />
+    <TextView android:textSize="@dimen/card_news_list_video_text_size" android:textColor="@color/news_video_text" android:gravity="center" android:layout_gravity="center|bottom" android:id="@id/video_duration" android:background="@color/express_status_detail_text_color" android:layout_width="match_parent" android:layout_height="@dimen/card_news_list_video_text_height" />
+</com.smartisanos.magicflow.view.RoundLayout>

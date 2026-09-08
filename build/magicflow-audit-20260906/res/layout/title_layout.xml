@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge android:layout_width="match_parent" android:layout_height="wrap_content"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <TextView android:gravity="center" android:id="@id/tv_title" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_centerInParent="true" style="@style/TitleTextStyle" />
+    <smartisan.widget.ShadowTextView android:textColor="@color/small_button_standard_text_color" android:gravity="left|center" android:id="@id/btn_back" android:background="@drawable/selector_small_btn_back" android:layout_width="wrap_content" android:layout_height="wrap_content" android:maxWidth="@dimen/title_back_btn_max_width" android:text="@string/title_button_text_back" android:singleLine="true" android:layout_alignParentLeft="true" android:layout_centerVertical="true" style="@style/SmallButton.Highlight" />
+    <LinearLayout android:orientation="vertical" android:id="@id/place_holder" android:layout_width="wrap_content" android:layout_height="1.0px" android:layout_alignParentRight="true" />
+    <smartisan.widget.ShadowButton android:gravity="center" android:id="@id/btn_ok" android:background="@drawable/selector_title_button_highlight" android:visibility="invisible" android:layout_width="wrap_content" android:layout_height="wrap_content" android:maxWidth="@dimen/title_back_btn_max_width" android:singleLine="true" android:layout_alignParentRight="true" android:layout_centerVertical="true" style="@style/SmallButton.Highlight" />
+</merge>

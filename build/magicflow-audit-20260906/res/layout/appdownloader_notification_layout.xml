@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:orientation="horizontal" android:id="@id/appdownloader_root" android:padding="10.0dp" android:layout_width="match_parent" android:layout_height="64.0dp"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <ImageView android:layout_gravity="center" android:id="@id/appdownloader_icon" android:background="@drawable/appdownloader_action_bg" android:duplicateParentState="false" android:layout_width="44.0dp" android:layout_height="44.0dp" android:layout_marginRight="18.0dp" android:scaleType="center" />
+    <RelativeLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_weight="1.0">
+        <TextView android:ellipsize="end" android:id="@id/appdownloader_desc" android:layout_width="match_parent" android:layout_height="wrap_content" android:singleLine="true" style="@style/appdownloader_style_notification_title" />
+        <LinearLayout android:orientation="horizontal" android:id="@id/appdownloader_download_success" android:visibility="gone" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_below="@id/appdownloader_desc">
+            <TextView android:ellipsize="end" android:gravity="left|center" android:id="@id/appdownloader_download_success_size" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginRight="12.0dp" android:singleLine="true" style="@style/appdownloader_style_notification_text" />
+            <TextView android:ellipsize="end" android:gravity="left|center" android:id="@id/appdownloader_download_success_status" android:layout_width="wrap_content" android:layout_height="wrap_content" android:singleLine="true" style="@style/appdownloader_style_notification_text" />
+        </LinearLayout>
+        <LinearLayout android:orientation="horizontal" android:id="@id/appdownloader_download_text" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_below="@id/appdownloader_desc">
+            <TextView android:textSize="10.0sp" android:ellipsize="end" android:gravity="left|center" android:id="@id/appdownloader_download_size" android:layout_width="0.0dp" android:layout_height="wrap_content" android:singleLine="true" android:layout_weight="3.0" style="@style/appdownloader_style_notification_text" />
+            <TextView android:textSize="10.0sp" android:ellipsize="end" android:gravity="right|center" android:id="@id/appdownloader_download_status" android:layout_width="0.0dp" android:layout_height="wrap_content" android:singleLine="true" android:layout_weight="2.0" style="@style/appdownloader_style_notification_text" />
+        </LinearLayout>
+        <ProgressBar android:id="@id/appdownloader_download_progress" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="2.0dp" android:max="100" android:layout_below="@id/appdownloader_download_text" style="@style/appdownloader_style_progress_bar" />
+    </RelativeLayout>
+    <TextView android:gravity="center" android:layout_gravity="right|center" android:id="@id/appdownloader_action" android:background="@drawable/appdownloader_action_bg" android:layout_width="55.0dp" android:layout_height="30.0dp" android:layout_marginLeft="18.0dp" android:layout_weight="0.0" style="@style/appdownloader_style_notification_title" />
+</LinearLayout>

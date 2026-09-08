@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <FrameLayout android:id="@id/item_background" android:visibility="invisible" android:layout_width="wrap_content" android:layout_height="match_parent">
+        <FrameLayout android:id="@id/delete_item" android:layout_width="wrap_content" android:layout_height="match_parent">
+            <ImageView android:background="@drawable/slide_delete_back_shadow" android:layout_width="match_parent" android:layout_height="match_parent" />
+            <ImageView android:background="@drawable/slide_delete_back" android:layout_width="match_parent" android:layout_height="match_parent" />
+            <ImageView android:layout_gravity="center" android:background="@drawable/slide_delete" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginLeft="@dimen/news_slide_delete_margin" android:layout_marginRight="@dimen/news_slide_delete_margin" />
+        </FrameLayout>
+    </FrameLayout>
+    <LinearLayout android:orientation="horizontal" android:id="@id/item_foreground" android:layout_width="match_parent" android:layout_height="wrap_content">
+        <ImageView android:layout_gravity="center_vertical" android:id="@id/check_box_img" android:visibility="gone" android:layout_width="@dimen/newsitem_image_width_single" android:layout_height="@dimen/newsitem_image_height_single" android:src="@drawable/browser_list_edit" />
+        <include layout="@layout/layout_item_single_big_image_no_edit" />
+    </LinearLayout>
+</FrameLayout>

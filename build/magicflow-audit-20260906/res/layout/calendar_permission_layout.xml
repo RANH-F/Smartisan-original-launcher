@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:gravity="center_vertical" android:orientation="vertical" android:id="@id/calendar_permission_layout" android:background="@drawable/calendar_permission_bg" android:layout_width="match_parent" android:layout_height="@dimen/contacts_card_height"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <TextView android:textSize="@dimen/contacts_text_size" android:textStyle="bold" android:textColor="#515b5b" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/calendar_remind" android:singleLine="true" android:layout_marginStart="@dimen/card_content_padding" />
+    <TextView android:textSize="@dimen/contacts_add_size" android:textColor="#cc676767" android:gravity="center" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="@dimen/contacts_add_margin_top" android:adjustViewBounds="true" android:text="@string/add_calendar_permission" android:drawableEnd="@drawable/contacts_add_icon" android:layout_marginStart="@dimen/card_content_padding" />
+</LinearLayout>

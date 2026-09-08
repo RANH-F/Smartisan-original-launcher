@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout android:background="@drawable/background" android:layout_width="match_parent" android:layout_height="match_parent"
+  xmlns:android="http://schemas.android.com/apk/res/android" xmlns:smartisan="http://schemas.android.com/apk/res-auto">
+    <smartisan.widget.TitleBar android:id="@id/view_title" android:layout_width="match_parent" android:layout_height="wrap_content" smartisan:title_bar_center_text="@string/left_screen_setting" />
+    <ScrollView android:layout_width="match_parent" android:layout_height="match_parent" android:layout_below="@id/view_title" android:layout_alignParentBottom="true" android:overScrollMode="always">
+        <LinearLayout android:orientation="vertical" android:clipChildren="false" android:layout_width="match_parent" android:layout_height="match_parent">
+            <smartisan.widget.ListContentItemSwitch android:id="@id/left_screen_switch_setting" smartisan:smtTitle="@string/left_screen_switch" smartisan:smt_shadow_project="false" style="@style/SettingSubItemSingleStyle" />
+            <smartisan.widget.TipsView android:id="@id/left_screen_switch_setting_tips" android:text="@string/left_screen_switch_tips" style="@style/SettingItemTipsStyle" />
+            <smartisan.widget.ListContentItemSwitch android:id="@id/global_left_screen_switch_setting" smartisan:smtTitle="@string/global_left_screen" smartisan:smt_shadow_project="false" style="@style/SettingSubItemSingleStyle">
+                <View android:id="@id/global_switch_line" android:background="@drawable/list_item_line" android:layout_width="match_parent" android:layout_height="@dimen/line_height" android:layout_marginTop="@dimen/setting_image_margin_top" />
+                <include android:id="@id/global_anim_layout" layout="@layout/global_left_screen_gif_anim_layout" />
+            </smartisan.widget.ListContentItemSwitch>
+            <smartisan.widget.TipsView android:id="@id/global_left_screen_switch_setting_tips" android:text="@string/global_left_screen_switch_tips" style="@style/SettingItemTipsStyle" />
+            <LinearLayout android:orientation="vertical" android:id="@id/main_setting_ll" android:clipChildren="false" android:clipToPadding="false" android:layout_width="match_parent" android:layout_height="match_parent" android:layout_marginBottom="24.0dp">
+                <smartisan.widget.TipsView android:textStyle="bold" android:id="@id/enabled_tips" android:visibility="gone" android:text="@string/enabled_category" style="@style/SettingItemTipsStyle" />
+                <com.smartisanos.magicflow.view.dslv.DragSortListView android:id="@id/category_list" android:clipChildren="false" android:clipToPadding="false" android:layout_width="match_parent" android:layout_height="wrap_content" android:listSelector="#00000000" android:divider="@null" android:minHeight="@dimen/category_list_item_height" />
+                <include layout="@layout/item_bottom_shadow_layout" />
+                <smartisan.widget.TipsView android:textStyle="bold" android:id="@id/disabled_tips" android:visibility="gone" android:text="@string/disabled_category" style="@style/SettingItemTipsStyle" />
+                <ListView android:id="@id/disabled_category_list" android:clipChildren="false" android:clipToPadding="false" android:layout_width="match_parent" android:layout_height="wrap_content" android:listSelector="#00000000" android:divider="@null" android:minHeight="@dimen/category_list_item_height" />
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+</RelativeLayout>

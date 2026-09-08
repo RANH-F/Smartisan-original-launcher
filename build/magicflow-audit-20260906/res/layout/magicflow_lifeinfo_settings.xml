@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout android:background="@drawable/background" android:layout_width="match_parent" android:layout_height="match_parent"
+  xmlns:android="http://schemas.android.com/apk/res/android" xmlns:smartisan="http://schemas.android.com/apk/res-auto">
+    <smartisan.widget.TitleBar android:id="@id/view_title" android:layout_width="match_parent" android:layout_height="wrap_content" smartisan:title_bar_center_text="@string/life_info" />
+    <ScrollView android:clipChildren="false" android:layout_width="match_parent" android:layout_height="match_parent" android:layout_below="@id/view_title" android:layout_alignParentBottom="true" android:overScrollMode="always">
+        <LinearLayout android:orientation="vertical" android:id="@id/view_list" android:layout_width="match_parent" android:layout_height="match_parent">
+            <include layout="@layout/setting_introduce_layout" />
+            <LinearLayout android:orientation="vertical" android:id="@id/life_info_sub" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="20.0dp">
+                <smartisan.widget.ListContentItemSwitch android:id="@id/movie_ticket_info_switch" android:layout_marginTop="@dimen/setting_sub_item_margin_top" smartisan:smtTitle="@string/movie_ticket_info" style="@style/SettingSubItemSingleStyle" />
+                <smartisan.widget.TipsView android:id="@id/movie_ticket_info_tips" android:text="@string/movie_setting_tips" style="@style/SettingItemTipsStyle" />
+                <smartisan.widget.ListContentItemSwitch android:id="@id/flight_reservation_switch" smartisan:smtTitle="@string/flight_reservation" style="@style/SettingSubItemSingleStyle" />
+                <smartisan.widget.TipsView android:id="@id/flight_reservation_tips" android:text="@string/flight_setting_tips" style="@style/SettingItemTipsStyle" />
+                <smartisan.widget.ListContentItemSwitch android:id="@id/train_reservation_switch" smartisan:smtTitle="@string/train_reservation" style="@style/SettingSubItemSingleStyle" />
+                <smartisan.widget.TipsView android:id="@id/train_reservation_tips" android:text="@string/train_setting_tips" style="@style/SettingItemTipsStyle" />
+                <smartisan.widget.ListContentItemSwitch android:id="@id/hotel_reservation_switch" smartisan:smtTitle="@string/hotel_reservation" style="@style/SettingSubItemSingleStyle" />
+                <smartisan.widget.TipsView android:id="@id/hotel_reservation_tips" android:text="@string/hotel_setting_tips" style="@style/SettingItemTipsStyle" />
+                <smartisan.widget.ListContentItemSwitch android:id="@id/express_info_switch" android:layout_marginTop="@dimen/settings_item_top_bottom_margin" smartisan:smtTitle="@string/express_info" style="@style/SettingSubItemTopStyle" />
+                <smartisan.widget.ListContentItemText android:id="@id/express_setting" smartisan:smtTitle="@string/express_setting" style="@style/SettingSubItemBottomStyle" />
+                <smartisan.widget.TipsView android:id="@id/express_setting_tips" android:text="@string/express_setting_tips" style="@style/SettingItemTipsStyle" />
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+</RelativeLayout>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout android:id="@id/tt_video_ad_cover_center_layout_draw" android:visibility="gone" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_centerInParent="true"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <TextView android:textSize="34.0px" android:textColor="@color/tt_white" android:gravity="center" android:layout_gravity="center_vertical" android:id="@id/tt_video_ad_button_draw" android:background="@drawable/tt_ad_cover_btn_draw_begin_bg" android:padding="2.0dp" android:visibility="gone" android:layout_width="580.0px" android:layout_height="98.0px" android:layout_marginTop="20.0dp" android:text="立即下载" android:layout_centerHorizontal="true" />
+    <TextView android:textSize="34.0px" android:textColor="@color/tt_white" android:ellipsize="end" android:id="@id/tt_video_ad_replay" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="60.0px" android:text="点击重播" android:maxLines="1" android:layout_below="@id/tt_video_ad_button_draw" android:layout_centerHorizontal="true" />
+</RelativeLayout>

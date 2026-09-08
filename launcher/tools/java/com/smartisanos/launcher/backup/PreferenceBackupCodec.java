@@ -4,10 +4,13 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.util.Log;
 
+import com.smartisanos.launcher.quickdesktop.QuickDesktopController;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -36,9 +39,11 @@ import java.util.Set;
  */
 public final class PreferenceBackupCodec {
     private static final String TAG = "PreferenceBackup";
+    private static final String QUICK_DESKTOP_PREFS = "quick_desktop_private";
 
     private static final String[] FILES = {
-            "launcher_settings", "com.smartisanos.launcher_prefs", "launcher_dynamic_weather"
+            "launcher_settings", "com.smartisanos.launcher_prefs", "launcher_dynamic_weather",
+            QUICK_DESKTOP_PREFS
     };
 
     /**
@@ -94,7 +99,18 @@ public final class PreferenceBackupCodec {
             "active_icon_enabled",
             // Weather city (city name is user data; location permission not required to display)
             "manual_city",
-            "manual_station_id"
+            "manual_station_id",
+            "manual_latitude_bits",
+            "manual_longitude_bits",
+            // Negative-one screen fixed-card configuration
+            "enabled",
+            "card_music_payment",
+            "card_shortcuts",
+            "card_calendar",
+            "card_life",
+            "custom_header_text",
+            "selected_music_package",
+            "payment_provider"
     ));
 
     private PreferenceBackupCodec() {}
@@ -105,7 +121,7 @@ public final class PreferenceBackupCodec {
         JSONObject files = new JSONObject();
         for (String file : FILES) {
             JSONObject values = new JSONObject();
-            Map<String, ?> all = context.getSharedPreferences(file, Context.MODE_PRIVATE).getAll();
+            Map<String, ?> all = portableValues(context, file);
             for (String key : PORTABLE_KEYS) {
                 if (NON_PORTABLE_PERMISSION_KEYS.contains(key)) {
                     // Should never happen given the two sets are disjoint, but guard anyway.
@@ -120,6 +136,7 @@ public final class PreferenceBackupCodec {
                 }
             }
             files.put(file, values);
+            Log.i(TAG, "BACKUP_PREFERENCE_FILE file=" + file + " count=" + values.length());
         }
         // Explicit audit log for excluded permission keys
         for (String key : NON_PORTABLE_PERMISSION_KEYS) {
@@ -149,7 +166,34 @@ public final class PreferenceBackupCodec {
                 Log.i(TAG, "RESTORE_PORTABLE_SETTING key=" + key);
             }
             if (!editor.commit()) throw new IllegalStateException("Preference commit failed: " + file);
+            Log.i(TAG, "RESTORE_PREFERENCE_FILE file=" + file + " count=" + values.length());
         }
+    }
+
+    /**
+     * A SharedPreferences file does not contain keys that still use their default value.  A
+     * backup must nevertheless describe the complete logical Quick Desktop state; otherwise a
+     * default-on switch backed up before its first edit cannot overwrite a later off value.
+     */
+    private static Map<String, ?> portableValues(Context context, String file) {
+        Map<String, ?> stored = context.getSharedPreferences(file, Context.MODE_PRIVATE).getAll();
+        if (!QUICK_DESKTOP_PREFS.equals(file)) return stored;
+
+        HashMap<String, Object> complete = new HashMap<String, Object>();
+        complete.putAll(stored);
+        complete.put("enabled", QuickDesktopController.isEnabled(context));
+        complete.put("card_music_payment", QuickDesktopController.isCardEnabled(context,
+                QuickDesktopController.CARD_MUSIC_PAYMENT));
+        complete.put("card_shortcuts", QuickDesktopController.isCardEnabled(context,
+                QuickDesktopController.CARD_SHORTCUTS));
+        complete.put("card_calendar", QuickDesktopController.isCardEnabled(context,
+                QuickDesktopController.CARD_CALENDAR));
+        complete.put("card_life", QuickDesktopController.isCardEnabled(context,
+                QuickDesktopController.CARD_LIFE));
+        complete.put("custom_header_text", QuickDesktopController.getCustomHeaderText(context));
+        complete.put("selected_music_package", QuickDesktopController.getSelectedMusicPackage(context));
+        complete.put("payment_provider", QuickDesktopController.getPaymentProvider(context));
+        return complete;
     }
 
     private static JSONObject encodeValue(Object value) throws Exception {

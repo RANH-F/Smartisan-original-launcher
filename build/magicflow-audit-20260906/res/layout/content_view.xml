@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.smartisanos.magicflow.view.ContentView android:orientation="vertical" android:id="@id/content_view" android:clipChildren="false" android:layout_width="match_parent" android:layout_height="match_parent"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <com.smartisanos.magicflow.view.MagicFlowScrollView android:id="@id/magicflow_scrollview" android:scrollbars="none" android:clipChildren="false" android:layout_width="match_parent" android:layout_height="match_parent" android:overScrollMode="always">
+        <LinearLayout android:orientation="vertical" android:focusable="true" android:focusableInTouchMode="true" android:clipChildren="false" android:descendantFocusability="blocksDescendants" android:layout_width="match_parent" android:layout_height="wrap_content">
+            <include layout="@layout/magicflow_head_layout" />
+            <LinearLayout android:orientation="vertical" android:id="@id/card_listview" android:clipChildren="false" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="50.0dp" />
+        </LinearLayout>
+    </com.smartisanos.magicflow.view.MagicFlowScrollView>
+    <include layout="@layout/float_search_layout" />
+    <include layout="@layout/navigation_bar_mask_layout" />
+</com.smartisanos.magicflow.view.ContentView>

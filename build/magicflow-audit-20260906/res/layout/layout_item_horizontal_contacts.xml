@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:gravity="center_vertical" android:orientation="horizontal" android:id="@id/contacts_info_layout" android:layout_width="match_parent" android:layout_height="@dimen/contacts_card_horizontal_height"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <FrameLayout android:layout_width="@dimen/contacts_item_horizontal_image_height" android:layout_height="@dimen/contacts_item_horizontal_image_height" android:layout_marginStart="@dimen/card_content_padding">
+        <com.smartisanos.magicflow.view.card.contacts.AvatarImageView android:id="@id/acatar_img" android:layout_width="@dimen/contacts_item_horizontal_image_height" android:layout_height="@dimen/contacts_item_horizontal_image_height" android:scaleType="fitXY" />
+        <ImageView android:id="@id/contacts_stroke_image" android:background="@drawable/contacts_stroke" android:layout_width="@dimen/contacts_item_horizontal_image_height" android:layout_height="@dimen/contacts_item_horizontal_image_height" />
+        <ImageView android:id="@id/contacts_mask_image" android:background="@drawable/contacts_mask" android:layout_width="@dimen/contacts_item_horizontal_image_height" android:layout_height="@dimen/contacts_item_horizontal_image_height" />
+        <ImageView android:layout_gravity="end|bottom" android:id="@id/contacts_label" android:layout_width="36.0px" android:layout_height="36.0px" />
+    </FrameLayout>
+    <TextView android:textSize="@dimen/contacts_item_name_text_size" android:textColor="#ccffffff" android:ellipsize="end" android:gravity="start|center" android:id="@id/contacts_item_name" android:layout_width="0.0dp" android:layout_height="match_parent" android:singleLine="true" android:layout_weight="1.0" android:layout_marginStart="@dimen/contacts_item_name_margin_top" />
+    <ImageView android:id="@id/contacts_call_img" android:background="@drawable/contact_icon_call" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+    <ImageView android:id="@id/contacts_dividing_line" android:background="#1affffff" android:layout_width="0.70000005dp" android:layout_height="@dimen/contacts_item_horizontal_image_height" />
+</LinearLayout>

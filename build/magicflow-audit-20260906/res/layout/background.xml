@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.smartisanos.magicflow.view.BackgroundView android:id="@id/background_view" android:layout_width="match_parent" android:layout_height="match_parent"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <ImageView android:id="@id/blur_bg" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop" />
+    <ImageView android:id="@id/mask_bg" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop" />
+    <ImageView android:id="@id/dim_bg" android:background="@color/dim_bg_color" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop" />
+</com.smartisanos.magicflow.view.BackgroundView>

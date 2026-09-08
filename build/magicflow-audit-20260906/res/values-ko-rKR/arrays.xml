@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="wether_description">
+        <item>맑음</item>
+        <item>구름 많음</item>
+        <item>흐림</item>
+        <item>소나기</item>
+        <item>뇌우</item>
+        <item>우박 소나기</item>
+        <item>진눈깨비</item>
+        <item>약한 비</item>
+        <item>보통 비</item>
+        <item>큰 비</item>
+        <item>폭우</item>
+        <item>대폭우</item>
+        <item>특대 폭우</item>
+        <item>소낙눈</item>
+        <item>약한 눈</item>
+        <item>보통 눈</item>
+        <item>큰 눈</item>
+        <item>폭설</item>
+        <item>안개</item>
+        <item>어는 비</item>
+        <item>황사</item>
+        <item>보통 비</item>
+        <item>큰 비</item>
+        <item>폭우</item>
+        <item>대폭우</item>
+        <item>최대 폭우</item>
+        <item>보통 눈</item>
+        <item>큰 눈</item>
+        <item>폭설</item>
+        <item>먼지</item>
+        <item>토사</item>
+        <item>강한 황사</item>
+        <item>짙은 안개</item>
+        <item>짙은 안개(강)</item>
+        <item>스모그</item>
+        <item>스모그(옐로우)</item>
+        <item>스모그(오레지)</item>
+        <item>스모그(레드)</item>
+        <item>안개 많음</item>
+        <item>짙은 안개(특강)</item>
+        <item>없음</item>
+    </string-array>
+</resources>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:gravity="center_vertical" android:background="@drawable/translucent_full_bg" android:paddingLeft="@dimen/card_padding" android:paddingRight="@dimen/card_padding" android:layout_width="match_parent" android:layout_height="240.0px" android:layout_marginBottom="@dimen/card_padding"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <ImageView android:id="@id/recently_first_app" android:layout_width="144.0px" android:layout_height="144.0px" android:scaleType="fitCenter" />
+    <ImageView android:id="@id/recently_second_app" android:layout_width="144.0px" android:layout_height="144.0px" android:layout_marginLeft="108.0px" android:scaleType="fitCenter" />
+    <ImageView android:id="@id/recently_third_app" android:layout_width="144.0px" android:layout_height="144.0px" android:layout_marginLeft="108.0px" android:scaleType="fitCenter" />
+    <ImageView android:id="@id/recently_fourth_app" android:layout_width="144.0px" android:layout_height="144.0px" android:layout_marginLeft="108.0px" android:scaleType="fitCenter" />
+</LinearLayout>

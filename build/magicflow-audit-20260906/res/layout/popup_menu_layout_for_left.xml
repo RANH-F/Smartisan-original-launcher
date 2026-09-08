@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout android:orientation="horizontal" android:layout_width="match_parent" android:layout_height="match_parent"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <FrameLayout android:id="@id/place_holder" android:paddingLeft="31.299988dp" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginLeft="-31.699982dp" android:layout_toRightOf="@id/arrow" android:layout_alignParentRight="true" />
+    <ImageView android:id="@id/arrow" android:layout_width="wrap_content" android:layout_height="wrap_content" android:src="@drawable/pop_up_menu_arrow_left" android:layout_alignParentLeft="true" />
+</RelativeLayout>

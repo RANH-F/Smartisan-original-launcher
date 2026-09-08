@@ -256,6 +256,36 @@ rem ============================================================
 if not exist "%OUT_DIR%" mkdir "%OUT_DIR%"
 
 rem ============================================================
+rem 6a. Stage pristine Magic Flow artwork used by the internal host
+rem ============================================================
+
+if exist "%ROOT%build\magicflow-audit-20260906\res\drawable-xxhdpi\music_default.png" (
+  if not exist "%ROOT%launcher\assets\quickdesktop_original" (
+    mkdir "%ROOT%launcher\assets\quickdesktop_original"
+  )
+  for %%f in (
+    music_default.png
+    music_def_app_icon.png
+    alipay_pay_scan.png
+    alipay_pay_qr.png
+    setting.png
+    search_icon.png
+    notes.png
+    calendar.png
+    sound_record.png
+    calculator.png
+    clock.png
+    city_service.png
+  ) do (
+    copy /y "%ROOT%build\magicflow-audit-20260906\res\drawable-xxhdpi\%%f" "%ROOT%launcher\assets\quickdesktop_original\%%f" >nul
+    if errorlevel 1 (
+      echo FAIL: staging pristine Magic Flow asset %%f failed.
+      exit /b 1
+    )
+  )
+)
+
+rem ============================================================
 rem 7. Build maintained settings resources
 rem ============================================================
 

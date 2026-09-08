@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:orientation="vertical" android:background="@drawable/round_bg" android:layout_width="@dimen/calendar_popup_window_width" android:layout_height="wrap_content"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <smartisan.widget.calendar.CalendarView android:id="@id/calendar_view" android:layout_width="match_parent" android:layout_height="wrap_content" />
+    <LinearLayout android:id="@id/divider_set_time_top_line" android:background="@drawable/topbar_bottom_line" android:visibility="visible" android:layout_width="match_parent" android:layout_height="2.0px" android:layout_marginTop="@dimen/remind_dialog_general_margin" />
+    <ViewStub android:id="@id/extended_view1" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+    <smartisan.widget.calendar.SmartisanTimePicker1Day android:id="@id/time_picker" android:layout_width="match_parent" android:layout_height="@dimen/time_picker_height" android:layout_margin="@dimen/remind_dialog_general_margin" />
+    <LinearLayout android:id="@id/divider_of_notify_top_line" android:background="@drawable/topbar_bottom_line" android:layout_width="match_parent" android:layout_height="1.0dp" />
+    <ViewStub android:id="@id/extended_view2" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+    <LinearLayout android:gravity="center_vertical" android:orientation="horizontal" android:id="@id/buttons_layout" android:layout_width="match_parent" android:layout_height="48.0dp" android:layout_marginLeft="@dimen/remind_dialog_general_margin" android:layout_marginRight="@dimen/remind_dialog_general_margin">
+        <Button android:textStyle="bold" android:textColor="@color/black_60" android:ellipsize="end" android:id="@id/cancel" android:background="@drawable/button_cancel_selector" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginRight="4.0dp" android:text="@string/sb_cancel" android:maxLines="1" android:layout_weight="1.0" />
+        <Button android:textStyle="bold" android:textColor="@color/title_bar_highlight_button_text_colorlist" android:ellipsize="end" android:id="@id/confirm" android:background="@drawable/button_confirm_selector" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginLeft="4.0dp" android:text="@string/confirm_reminder" android:maxLines="1" android:layout_weight="1.0" />
+    </LinearLayout>
+</LinearLayout>

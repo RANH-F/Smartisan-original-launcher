@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:paddingBottom="@dimen/settings_dragitem_divider_height" android:clipChildren="false" android:clipToPadding="false" android:layout_width="match_parent" android:layout_height="wrap_content"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <smartisan.widget.ListContentItemText android:id="@id/shortcut_tool_setting_item_content" android:layout_width="match_parent" android:layout_height="wrap_content" style="@style/ListContentItemStyle.Single">
+        <ImageView android:gravity="end|center" android:id="@id/item_drag" android:background="@drawable/shortcut_setting_drag" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_centerVertical="true" android:layout_alignParentEnd="true" />
+    </smartisan.widget.ListContentItemText>
+</LinearLayout>

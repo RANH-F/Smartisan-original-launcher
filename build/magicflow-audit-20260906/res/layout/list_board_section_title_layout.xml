@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge android:layout_width="match_parent" android:layout_height="wrap_content"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <View android:id="@id/top_space" android:layout_width="match_parent" android:layout_height="6.0dp" />
+    <RelativeLayout android:id="@id/section_info" android:background="@drawable/list_board_section_bg" android:paddingLeft="@dimen/list_section_header_padding_left" android:paddingRight="6.0dp" android:layout_width="match_parent" android:layout_height="40.0dp">
+        <TextView android:textSize="15.0sp" android:textStyle="bold" android:textColor="#9a000000" android:id="@id/section_title" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginRight="20.0dp" android:layout_alignParentLeft="true" android:layout_centerVertical="true" />
+        <ImageView android:id="@id/section_arrow" android:layout_width="wrap_content" android:layout_height="wrap_content" android:src="@drawable/selector_list_content_item_arrow" android:layout_alignParentRight="true" android:layout_centerVertical="true" />
+    </RelativeLayout>
+    <View android:id="@id/divider" android:background="@drawable/list_board_section_title_divider" android:layout_width="match_parent" android:layout_height="1.0px" />
+</merge>

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout android:background="@drawable/translucent_full_bg_selector" android:layout_width="@dimen/shortcut_tool_width" android:layout_height="@dimen/shortcut_tool_height"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <ImageView android:layout_gravity="center" android:id="@id/shortcut_app_icon" android:layout_width="@dimen/shortcut_icon_tool_width" android:layout_height="@dimen/shortcut_icon_tool_width" android:scaleType="fitCenter" />
+</FrameLayout>

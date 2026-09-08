@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:height="@dimen/line_height" android:drawable="@drawable/list_item_line" android:left="@dimen/newsitem_image_margin_left_single" android:right="@dimen/newsitem_image_margin_left_single" />
+</layer-list>

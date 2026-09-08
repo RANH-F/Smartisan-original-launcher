@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+  xmlns:android="http://schemas.android.com/apk/res/android" xmlns:smartisan="http://schemas.android.com/apk/res-auto">
+    <LinearLayout android:gravity="center" android:orientation="vertical" android:id="@id/progress_dialog_content" android:background="@drawable/smartisan_progress_dialog_bg" android:layout_width="246.0dp" android:layout_height="wrap_content" android:layout_centerInParent="true">
+        <TextView android:textSize="18.0sp" android:textColor="#9c000000" android:ellipsize="end" android:gravity="center" android:id="@id/progress_dialog_title" android:visibility="gone" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="8.0dp" android:layout_marginBottom="8.0dp" android:singleLine="true" />
+        <ProgressBar android:id="@id/progress" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2.0dp" style="@style/ProgressBarCircleStyle.Medium" />
+        <TextView android:textSize="13.0sp" android:textColor="#9c000000" android:ellipsize="end" android:gravity="center" android:layout_gravity="center" android:id="@id/message" android:paddingLeft="30.0dp" android:paddingRight="30.0dp" android:visibility="gone" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8.0dp" android:layout_marginBottom="8.0dp" android:singleLine="true" />
+    </LinearLayout>
+</RelativeLayout>

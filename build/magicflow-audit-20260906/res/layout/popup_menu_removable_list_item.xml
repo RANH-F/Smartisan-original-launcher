@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout android:gravity="center_vertical" android:layout_width="wrap_content" android:layout_height="wrap_content"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <RelativeLayout android:layout_width="wrap_content" android:layout_height="@dimen/popup_list_menu_item_height">
+        <ImageView android:id="@id/menu_icon" android:layout_width="44.0dp" android:layout_height="@dimen/popup_list_menu_item_height" android:scaleType="centerInside" android:layout_centerVertical="true" />
+        <FrameLayout android:id="@id/menu_closed" android:layout_width="36.0dp" android:layout_height="match_parent" android:layout_alignParentRight="true" android:layout_centerVertical="true" android:contentDescription="@string/delete_btn">
+            <ImageView android:layout_gravity="center" android:layout_width="27.0dp" android:layout_height="27.0dp" android:src="@drawable/menu_item_close" android:scaleType="centerInside" />
+        </FrameLayout>
+        <TextView android:textSize="15.0sp" android:textColor="@color/smartisan_title_text_color" android:ellipsize="end" android:id="@id/menu_title" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginRight="6.0dp" android:maxLines="1" android:singleLine="true" android:layout_toLeftOf="@id/menu_closed" android:layout_toRightOf="@id/menu_icon" android:layout_centerVertical="true" />
+    </RelativeLayout>
+</RelativeLayout>

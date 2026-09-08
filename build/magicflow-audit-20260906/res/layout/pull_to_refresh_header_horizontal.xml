@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <FrameLayout android:id="@id/fl_inner" android:paddingTop="@dimen/header_footer_top_bottom_padding" android:paddingBottom="@dimen/header_footer_top_bottom_padding" android:layout_width="wrap_content" android:layout_height="match_parent" android:paddingStart="@dimen/header_footer_left_right_padding" android:paddingEnd="@dimen/header_footer_left_right_padding">
+        <ImageView android:layout_gravity="center" android:id="@id/pull_to_refresh_image" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+        <ProgressBar android:layout_gravity="center" android:id="@id/pull_to_refresh_progress" android:visibility="gone" android:layout_width="wrap_content" android:layout_height="wrap_content" android:indeterminate="true" style="?android:progressBarStyleSmall" />
+    </FrameLayout>
+</merge>

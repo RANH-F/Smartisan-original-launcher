@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout android:id="@id/card_train_item" android:paddingBottom="@dimen/card_padding" android:layout_width="match_parent" android:layout_height="wrap_content"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <LinearLayout android:orientation="horizontal" android:id="@id/card_train_content_view" android:background="@drawable/train" android:layout_width="match_parent" android:layout_height="@dimen/life_info_card_height">
+        <LinearLayout android:orientation="vertical" android:layout_width="0.0dp" android:layout_height="match_parent" android:layout_weight="1.0" android:layout_marginStart="@dimen/card_content_padding" android:layout_marginEnd="@dimen/life_info_card_base_info_margin_right">
+            <LinearLayout android:gravity="center_vertical" android:orientation="horizontal" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="@dimen/card_content_padding">
+                <ImageView android:background="@drawable/icon_train_default" android:layout_width="48.0px" android:layout_height="48.0px" android:layout_marginEnd="6.0dp" />
+                <TextView android:textSize="36.0px" android:textColor="#80000000" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/train_card_title" />
+            </LinearLayout>
+            <LinearLayout android:orientation="horizontal" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="@dimen/life_info_card_des_margin_top">
+                <TextView android:textSize="38.0px" android:textColor="#80000000" android:id="@id/train_trips" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="G520" />
+                <com.smartisanos.magicflow.view.MarqueeTextView android:textSize="38.0px" android:textColor="#80000000" android:id="@id/train_carriage_num" android:focusable="true" android:focusableInTouchMode="true" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="djlasld" android:singleLine="true" android:marqueeRepeatLimit="marquee_forever" android:layout_marginStart="5.0dp" />
+            </LinearLayout>
+            <LinearLayout android:gravity="center_vertical" android:orientation="horizontal" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="@dimen/life_info_card_name_margin_top">
+                <com.smartisanos.magicflow.view.MarqueeTextView android:textSize="51.0px" android:textStyle="bold" android:textColor="#b3000000" android:ellipsize="end" android:id="@id/train_from_address" android:focusable="true" android:focusableInTouchMode="true" android:layout_width="wrap_content" android:layout_height="wrap_content" android:maxWidth="@dimen/address_max_width" android:text="北京" android:singleLine="true" android:marqueeRepeatLimit="marquee_forever" />
+                <TextView android:textSize="51.0px" android:textStyle="bold" android:textColor="#b3000000" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginLeft="@dimen/from_to_address_line_margin" android:layout_marginRight="@dimen/from_to_address_line_margin" android:text="－" />
+                <LinearLayout android:gravity="center_vertical" android:orientation="horizontal" android:id="@id/train_select_destination_right_click_area" android:layout_width="wrap_content" android:layout_height="wrap_content" android:maxWidth="@dimen/address_max_width">
+                    <com.smartisanos.magicflow.view.MarqueeTextView android:textSize="51.0px" android:textStyle="bold" android:textColor="#b3000000" android:ellipsize="end" android:id="@id/train_to_address" android:focusable="true" android:focusableInTouchMode="true" android:layout_width="wrap_content" android:layout_height="wrap_content" android:maxWidth="@dimen/address_max_width" android:text="北京" android:singleLine="true" android:marqueeRepeatLimit="marquee_forever" />
+                    <ImageView android:id="@id/train_select_destination_arrow" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginLeft="@dimen/from_to_address_line_margin" android:src="@drawable/card_train_select_destination_arrow" />
+                </LinearLayout>
+            </LinearLayout>
+            <TextView android:textSize="30.0px" android:textColor="#4d000000" android:id="@id/train_countdown" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="@dimen/life_info_card_bottom_des_margin_top" android:text="北京" />
+        </LinearLayout>
+        <FrameLayout android:background="@drawable/train_right" android:layout_width="@dimen/life_info_card_right_width" android:layout_height="match_parent">
+            <LinearLayout android:gravity="center_horizontal" android:orientation="vertical" android:layout_width="match_parent" android:layout_height="match_parent">
+                <TextView android:textSize="30.0px" android:textStyle="bold" android:textColor="#b3ffffff" android:id="@id/train_start_date" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="@dimen/life_info_card_start_date_margin_top" android:text="--" />
+                <TextView android:textSize="57.0px" android:textStyle="bold" android:textColor="#ffffff" android:id="@id/train_start_time" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="--:--" />
+                <ImageView android:background="@drawable/life_info_date_septal_line" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="6.0dp" android:layout_marginBottom="10.0dp" />
+                <TextView android:textSize="30.0px" android:textStyle="bold" android:textColor="#b3ffffff" android:id="@id/train_end_date" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="--" />
+                <TextView android:textSize="57.0px" android:textStyle="bold" android:textColor="#ffffff" android:id="@id/train_end_time" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="--:--" />
+            </LinearLayout>
+            <ImageView android:layout_gravity="right" android:id="@id/life_card_delete" android:background="@drawable/card_ic_close" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+        </FrameLayout>
+    </LinearLayout>
+</FrameLayout>

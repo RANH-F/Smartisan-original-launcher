@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout android:id="@id/pic_view_parent" android:layout_width="match_parent" android:layout_height="wrap_content"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <View android:background="@android:color/black" android:layout_width="match_parent" android:layout_height="@dimen/status_bar_h" />
+    <com.smartisanos.magicflow.view.pictureview.PicViewPager android:id="@id/pic_view_pager" android:background="#000000" android:layout_width="match_parent" android:layout_height="match_parent" />
+    <RelativeLayout android:background="@drawable/picture_view_bottom_bar_bg_cover" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_alignParentBottom="true">
+        <ImageView android:id="@id/share_btn" android:layout_width="wrap_content" android:layout_height="wrap_content" android:src="@drawable/grey_send_button" android:layout_alignParentLeft="true" android:layout_centerVertical="true" />
+        <TextView android:textSize="15.0sp" android:textColor="@android:color/white" android:id="@id/title_content" android:layout_width="wrap_content" android:layout_height="wrap_content" android:maxWidth="135.0dp" android:singleLine="true" android:layout_centerHorizontal="true" android:layout_centerVertical="true" />
+        <ImageView android:id="@id/save_btn" android:layout_width="wrap_content" android:layout_height="wrap_content" android:src="@drawable/download_button" android:layout_alignParentRight="true" android:layout_centerVertical="true" />
+    </RelativeLayout>
+</RelativeLayout>

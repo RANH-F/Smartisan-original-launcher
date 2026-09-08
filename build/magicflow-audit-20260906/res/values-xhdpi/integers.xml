@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <integer name="fling_up_limit_dp">400</integer>
+    <integer name="icon_sort_confirm_padding">255</integer>
+    <integer name="left_screen_hot_area_dp">89</integer>
+    <integer name="navigation_bar_height">144</integer>
+    <integer name="sort_bubble_text_font">30</integer>
+    <integer name="text_shadow_dx">0</integer>
+    <integer name="text_shadow_dy">2</integer>
+    <integer name="text_shadow_radius">3</integer>
+</resources>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout android:paddingBottom="@dimen/express_card_padding" android:layout_width="match_parent" android:layout_height="wrap_content"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <LinearLayout android:orientation="vertical" android:id="@id/card_express_item_content" android:background="@drawable/express_card_bg" android:paddingTop="@dimen/card_content_padding" android:layout_width="match_parent" android:layout_height="@dimen/express_info_card_height" android:paddingStart="@dimen/card_content_padding" android:paddingEnd="@dimen/life_info_card_base_info_margin_right">
+        <LinearLayout android:gravity="center_vertical" android:orientation="horizontal" android:layout_width="match_parent" android:layout_height="wrap_content">
+            <ImageView android:id="@id/express_company_icon" android:background="@drawable/icon_deliver_details_default" android:layout_width="48.0px" android:layout_height="48.0px" android:layout_marginRight="3.0dp" />
+            <TextView android:textSize="36.0px" android:textColor="#80000000" android:gravity="center_vertical" android:id="@id/express_company" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+            <TextView android:textSize="36.0px" android:textColor="#99000000" android:gravity="center_vertical" android:id="@id/express_order_num" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginLeft="4.0dp" />
+            <View android:layout_width="0.0dp" android:layout_height="1.0dp" android:layout_weight="1.0" />
+            <TextView android:textSize="30.0px" android:textStyle="bold" android:textColor="#ffffff" android:gravity="center" android:id="@id/express_status" android:background="@drawable/express_status_bg" android:paddingTop="10.0px" android:paddingBottom="10.0px" android:layout_width="wrap_content" android:layout_height="wrap_content" android:paddingStart="20.0px" android:paddingEnd="20.0px" />
+            <View android:id="@id/space_view" android:layout_width="4.0dp" android:layout_height="1.0dp" />
+        </LinearLayout>
+        <LinearLayout android:gravity="center_vertical" android:orientation="vertical" android:layout_width="match_parent" android:layout_height="match_parent" android:layout_marginTop="37.5px" android:layout_marginBottom="35.0px" android:layout_marginEnd="4.0dp">
+            <TextView android:textSize="30.0px" android:textColor="#66000000" android:gravity="bottom" android:id="@id/express_update_time" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+            <TextView android:textSize="36.0px" android:textStyle="normal" android:textColor="#cc403b31" android:ellipsize="end" android:id="@id/express_update_data" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="4.0dp" android:maxLines="2" android:lineSpacingExtra="4.0dp" />
+        </LinearLayout>
+    </LinearLayout>
+    <ImageView android:layout_gravity="right" android:id="@id/life_card_delete" android:background="@drawable/express_card_ic_close" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+</FrameLayout>

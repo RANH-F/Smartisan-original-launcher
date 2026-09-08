@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout android:orientation="vertical" android:id="@id/card_hotel_item" android:paddingBottom="@dimen/card_padding" android:layout_width="match_parent" android:layout_height="wrap_content"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <LinearLayout android:orientation="horizontal" android:id="@id/card_hotel_item_content" android:background="@drawable/hotel" android:layout_width="match_parent" android:layout_height="@dimen/life_info_card_height">
+        <LinearLayout android:orientation="vertical" android:layout_width="0.0dp" android:layout_height="match_parent" android:layout_weight="1.0" android:layout_marginStart="@dimen/card_content_padding" android:layout_marginEnd="@dimen/life_info_card_base_info_margin_right">
+            <LinearLayout android:gravity="center_vertical" android:orientation="horizontal" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="@dimen/card_content_padding">
+                <ImageView android:id="@id/hotel_company_icon" android:background="@drawable/icon_hotel_default" android:layout_width="48.0px" android:layout_height="48.0px" android:layout_marginEnd="6.0dp" />
+                <TextView android:textSize="36.0px" android:textColor="#80000000" android:id="@id/hotel_company" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+            </LinearLayout>
+            <com.smartisanos.magicflow.view.MarqueeTextView android:textSize="38.0px" android:textColor="#80000000" android:id="@id/hotel_room_type" android:focusable="true" android:focusableInTouchMode="true" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="@dimen/life_info_card_des_margin_top" android:singleLine="true" android:marqueeRepeatLimit="marquee_forever" />
+            <com.smartisanos.magicflow.view.MarqueeTextView android:textSize="51.0px" android:textStyle="bold" android:textColor="#b3000000" android:id="@id/hotel_name" android:focusable="true" android:focusableInTouchMode="true" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="@dimen/life_info_card_name_margin_top" android:singleLine="true" android:marqueeRepeatLimit="marquee_forever" />
+            <com.smartisanos.magicflow.view.MarqueeTextView android:textSize="30.0px" android:textColor="#4d000000" android:ellipsize="end" android:id="@id/hotel_address" android:focusable="true" android:focusableInTouchMode="true" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="@dimen/life_info_card_bottom_des_margin_top" android:singleLine="true" android:marqueeRepeatLimit="marquee_forever" />
+        </LinearLayout>
+        <FrameLayout android:background="@drawable/hotel_right" android:layout_width="@dimen/life_info_card_right_width" android:layout_height="match_parent">
+            <LinearLayout android:gravity="center_horizontal" android:orientation="vertical" android:layout_width="match_parent" android:layout_height="match_parent">
+                <TextView android:textSize="30.0px" android:textStyle="bold" android:textColor="#e68b7057" android:gravity="center" android:id="@id/hotel_room_count" android:background="@drawable/hotel_room_count_bg" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="@dimen/life_info_card_start_date_margin_top" />
+                <TextView android:textSize="30.0px" android:textStyle="bold" android:textColor="#b3ffffff" android:id="@id/hotel_checkin_date_year" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="@dimen/life_info_card_start_date_margin_top" />
+                <TextView android:textSize="57.0px" android:textStyle="bold" android:textColor="#ffffff" android:id="@id/hotel_checkin_date" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                <ImageView android:background="@drawable/hotel_date_septal_line" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="4.0dp" android:layout_marginBottom="3.0dp" />
+                <TextView android:textSize="57.0px" android:textStyle="bold" android:textColor="#ffffff" android:id="@id/hotel_checkout_date" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+            </LinearLayout>
+            <ImageView android:layout_gravity="right" android:id="@id/life_card_delete" android:background="@drawable/card_ic_close" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+        </FrameLayout>
+    </LinearLayout>
+</FrameLayout>

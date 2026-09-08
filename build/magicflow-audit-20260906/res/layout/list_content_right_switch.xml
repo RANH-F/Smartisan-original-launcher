@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:orientation="horizontal" android:layout_width="wrap_content" android:layout_height="wrap_content"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <LinearLayout android:layout_gravity="center_vertical" android:id="@id/rightExpandView" android:visibility="gone" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+    <smartisan.widget.SwitchEx android:id="@id/switchex" android:duplicateParentState="true" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginLeft="@dimen/right_container_margin" android:layout_marginRight="@dimen/right_container_margin" />
+</LinearLayout>

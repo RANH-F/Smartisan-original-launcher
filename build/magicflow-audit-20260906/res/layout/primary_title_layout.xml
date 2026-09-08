@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout android:gravity="center_vertical" android:id="@id/primary_title" android:background="@drawable/title_bar_bg" android:duplicateParentState="true" android:layout_width="match_parent" android:layout_height="@dimen/titlebar_height"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <FrameLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_alignParentLeft="true">
+        <View android:id="@id/left_placeholder" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+        <FrameLayout android:id="@id/left_container" android:duplicateParentState="true" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_centerVertical="true" />
+    </FrameLayout>
+    <FrameLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_alignParentRight="true">
+        <View android:id="@id/right_placeholder" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+        <LinearLayout android:gravity="right" android:layout_gravity="right" android:orientation="horizontal" android:id="@id/right_container" android:layout_width="wrap_content" android:layout_height="match_parent" android:layout_alignParentRight="true" android:layout_centerVertical="true" />
+    </FrameLayout>
+    <RelativeLayout android:gravity="center" android:orientation="vertical" android:id="@id/mid_container" android:duplicateParentState="true" android:layout_width="wrap_content" android:layout_height="match_parent" android:layout_marginLeft="@dimen/mid_container_margin" android:layout_marginRight="@dimen/mid_container_margin" android:layout_alignParentTop="true" android:layout_alignParentBottom="true" android:layout_centerInParent="true" />
+</RelativeLayout>

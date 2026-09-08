@@ -117,6 +117,7 @@ import com.smartisanos.home.settings.icons.IconSourceManager;
 import com.smartisanos.home.widget.sys.Title;
 import com.smartisanos.launcher.data.redirectIcon.RedirectIconDB;
 import com.smartisanos.launcher.data.redirectIcon.RedirectIconInfo;
+import com.smartisanos.launcher.quickdesktop.QuickDesktopController;
 import smartisanos.widget.SwitchEx;
 import smartisanos.widget.SettingItemText;
 
@@ -183,7 +184,7 @@ public final class MaintainedLauncherSettingsHost {
     private static File sSettingsApk;
     private static Dialog sLauncherReloadDialog;
     private static final String SETTINGS_ASSET = "settings_maintained/maintained-settings-res.apk";
-    private static final String SETTINGS_PKG = "com.smartisanos.home";
+    static final String SETTINGS_PKG = "com.smartisanos.home";
     private static final String QUICK_SEARCH_PKG = "com.smartisanos.quicksearch";
     private static final String QUICK_SEARCH_DOWNLOAD_URL =
             "https://gitee.com/RANH-F/Smartisan-original-launcher-download/releases/download/launcher-1.4.8/SmartisanQuickSearch.apk";
@@ -191,6 +192,8 @@ public final class MaintainedLauncherSettingsHost {
     private static final String UPDATE_INSTALL_ACTION = "com.smartisanos.launcher.action.INSTALL_DOWNLOADED_UPDATE";
     private static final String EXTRA_UPDATE_APK_PATH = "update_apk_path";
     private static final String EXTRA_UPDATE_DOWNLOAD_ID = "update_download_id";
+    private static final String EXTRA_SHOW_QUICK_DESKTOP_SETTINGS =
+            "launcher_show_quick_desktop_settings";
     private static final String PREF_UPDATE_DOWNLOAD_ID = "launcher_update_download_id";
     private static final String SEARCH_PREFS = "launcher_search_prefs";
     private static final String SEARCH_HISTORY_KEY = "search_history_entries";
@@ -525,6 +528,13 @@ public final class MaintainedLauncherSettingsHost {
                 qsPerf(searchSession, "QS_ACTIVITY_START");
                 tuneWindow(activity);
                 showSearchPage(activity, searchSession);
+                return;
+            }
+            if (intent != null && intent.getBooleanExtra(
+                    EXTRA_SHOW_QUICK_DESKTOP_SETTINGS, false)) {
+                intent.removeExtra(EXTRA_SHOW_QUICK_DESKTOP_SETTINGS);
+                tuneWindow(activity);
+                showQuickDesktopSettingsPage(activity);
                 return;
             }
             armSettingsClickGuard();
@@ -1104,7 +1114,7 @@ public final class MaintainedLauncherSettingsHost {
         return new Resources(assetManager, baseRes.getDisplayMetrics(), baseRes.getConfiguration());
     }
 
-    private static SettingsResourceContext createSettingsContext(Activity activity) throws Exception {
+    static SettingsResourceContext createSettingsContext(Activity activity) throws Exception {
         Resources resources = settingsResources(activity);
         return new SettingsResourceContext(activity, resources);
     }
@@ -1136,7 +1146,7 @@ public final class MaintainedLauncherSettingsHost {
         }
     }
 
-    private static View inflate(Activity activity, SettingsResourceContext context, String layoutName) {
+    static View inflate(Activity activity, SettingsResourceContext context, String layoutName) {
         Resources resources = context.getResources();
         int layoutId = resources.getIdentifier(layoutName, "layout", SETTINGS_PKG);
         if (layoutId == 0) {
@@ -1192,6 +1202,7 @@ public final class MaintainedLauncherSettingsHost {
                 KEY_DYNAMIC_WEATHER_CALENDAR, false);
         bindSwitch(activity, resources, root, "multi_block_fast_launch_app", "fast_launch_app_on", true);
         bindTransparentThemeSwitch(activity, resources, root);
+        bindQuickDesktopEnabledSwitch(activity, resources, root);
 
         hide(resources, root, "id_unlock_anim_tips");
         hide(resources, root, "setting_defaultsearchengine");
@@ -1275,7 +1286,9 @@ public final class MaintainedLauncherSettingsHost {
                 });
         click(activity, resources, root, "setting_dynamic_weather", new View.OnClickListener() {
             public void onClick(View v) {
-                showDynamicWeatherPage(activity);
+                if (LauncherSettingBridge.dynamicWeatherCalendarEnabled(activity)) {
+                    showDynamicWeatherPage(activity);
+                }
             }
         });
         click(activity, resources, root, "setting_switch_launcher", new View.OnClickListener() {
@@ -1380,6 +1393,9 @@ public final class MaintainedLauncherSettingsHost {
                 if (window.getNavigationBarColor() != Color.TRANSPARENT) {
                     window.setNavigationBarColor(Color.TRANSPARENT);
                 }
+                if (Build.VERSION.SDK_INT >= 29 && window.isNavigationBarContrastEnforced()) {
+                    window.setNavigationBarContrastEnforced(false);
+                }
             }
             if (Build.VERSION.SDK_INT >= 28 && !cutoutMatches) {
                 WindowManager.LayoutParams attrs = window.getAttributes();
@@ -1397,6 +1413,17 @@ public final class MaintainedLauncherSettingsHost {
 
     public static void openLauncherSearch(Context context) {
         openLauncherSearchInternal(context, false);
+    }
+
+    public static void openQuickDesktopSettings(Context context) {
+        if (context == null) return;
+        Intent intent = new Intent(Intent.ACTION_MAIN);
+        intent.setClassName(context.getPackageName(),
+                "com.smartisanos.launcher.theme.ThemeChooserActivity");
+        intent.putExtra(EXTRA_SHOW_QUICK_DESKTOP_SETTINGS, true);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        if (!(context instanceof Activity)) intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        context.startActivity(intent);
     }
 
     public static boolean isSwipeUpSearchEnabled(Context context) {
@@ -4402,7 +4429,7 @@ public final class MaintainedLauncherSettingsHost {
         }
     }
 
-    private static Runnable backToMainAction(final Activity activity) {
+    static Runnable backToMainAction(final Activity activity) {
         return new Runnable() {
             public void run() {
                 cancelCurrentIconPageSession(activity);
@@ -4428,7 +4455,7 @@ public final class MaintainedLauncherSettingsHost {
         };
     }
 
-    private static void bindBackTitle(final Activity activity, Resources resources, View root, String idName,
+    static void bindBackTitle(final Activity activity, Resources resources, View root, String idName,
                                       String titleText, String page, Runnable backAction) {
         markSettingsPage(root, page);
         registerSettingsBackActionPublic(activity, page, backAction);
@@ -4475,7 +4502,7 @@ public final class MaintainedLauncherSettingsHost {
         }, "MaintainedSettingsResourcesWarm").start();
     }
 
-    private static void setSettingsContentView(Activity activity, Context animContext,
+    static void setSettingsContentView(Activity activity, Context animContext,
                                                Resources resources, View root, boolean forward) {
         setSettingsContentView(activity, animContext, resources, root, forward, true);
     }
@@ -4624,7 +4651,7 @@ public final class MaintainedLauncherSettingsHost {
         });
     }
 
-    private static void tuneScrollBars(View view) {
+    static void tuneScrollBars(View view) {
         if (view == null) {
             return;
         }
@@ -4664,7 +4691,7 @@ public final class MaintainedLauncherSettingsHost {
         }
     }
 
-    private static String getString(Resources resources, String name, String fallback) {
+    static String getString(Resources resources, String name, String fallback) {
         int id = resources.getIdentifier(name, "string", SETTINGS_PKG);
         return id == 0 ? fallback : resources.getString(id);
     }
@@ -4830,6 +4857,48 @@ public final class MaintainedLauncherSettingsHost {
                     listener.onClick(v);
                 }
                 return true;
+            }
+        });
+    }
+
+    private static void bindQuickDesktopEnabledSwitch(final Activity activity,
+            Resources resources, View root) {
+        View view = find(resources, root, "item_id_quick_desktop_enabled");
+        if (!(view instanceof SettingItemSwitch)) {
+            return;
+        }
+        final SettingItemSwitch item = (SettingItemSwitch) view;
+        item.setChecked(QuickDesktopController.isEnabled(activity));
+        bindSwitchControlOnly(item, new View.OnClickListener() {
+            public void onClick(View v) {
+                boolean enabled = !QuickDesktopController.isEnabled(activity);
+                item.setCheckedAnimated(enabled);
+                QuickDesktopController.setEnabled(activity, enabled);
+            }
+        });
+        item.setClickable(true);
+        item.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                if (QuickDesktopController.isEnabled(activity)) {
+                    showQuickDesktopSettingsPage(activity);
+                }
+            }
+        });
+    }
+
+    static void bindQuickDesktopCardSwitch(final Activity activity,
+            Resources resources, View root, String idName, final String cardKey) {
+        View view = find(resources, root, idName);
+        if (!(view instanceof SettingItemSwitch)) {
+            return;
+        }
+        final SettingItemSwitch item = (SettingItemSwitch) view;
+        item.setChecked(QuickDesktopController.isCardEnabled(activity, cardKey));
+        bindSwitchControlOnly(item, new View.OnClickListener() {
+            public void onClick(View v) {
+                boolean enabled = !QuickDesktopController.isCardEnabled(activity, cardKey);
+                item.setCheckedAnimated(enabled);
+                QuickDesktopController.setCardEnabled(activity, cardKey, enabled);
             }
         });
     }
@@ -12177,8 +12246,71 @@ public final class MaintainedLauncherSettingsHost {
         showBackupNameDialog(activity, Uri.parse(value));
     }
 
-    private interface SingleInputListener {
+    interface SingleInputListener {
         boolean onConfirm(EditText input, String value);
+    }
+
+    interface SingleChoiceListener {
+        void onSelected(int which);
+    }
+
+    static void showSmartisanSingleChoiceDialog(final Activity activity, String title,
+            String[] labels, int checked, final SingleChoiceListener listener) {
+        final Dialog dialog = new Dialog(activity);
+        LinearLayout root = new LinearLayout(activity);
+        prepareSmartisanDialogRoot(activity, root);
+        root.addView(smartisanDialogTitle(activity, title),
+                new LinearLayout.LayoutParams(-1, dp(activity, 53)));
+        root.addView(smartisanDivider(activity), new LinearLayout.LayoutParams(-1, 1));
+
+        LinearLayout choices = new LinearLayout(activity);
+        choices.setOrientation(LinearLayout.VERTICAL);
+        for (int i = 0; i < labels.length; i++) {
+            final int index = i;
+            LinearLayout row = new LinearLayout(activity);
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            row.setGravity(Gravity.CENTER_VERTICAL);
+            row.setPadding(dp(activity, 26), 0, dp(activity, 18), 0);
+            TextView label = text(activity, labels[i], 17, 0xff454545, false);
+            label.setGravity(Gravity.CENTER_VERTICAL);
+            row.addView(label, new LinearLayout.LayoutParams(0, dp(activity, 58), 1.0f));
+            SmartisanChoiceDot dot = new SmartisanChoiceDot(activity);
+            dot.setChecked(i == checked);
+            row.addView(dot, new LinearLayout.LayoutParams(dp(activity, 44), dp(activity, 44)));
+            row.setOnClickListener(new View.OnClickListener() {
+                public void onClick(View view) {
+                    dialog.dismiss();
+                    if (listener != null) listener.onSelected(index);
+                }
+            });
+            choices.addView(row, new LinearLayout.LayoutParams(-1, dp(activity, 58)));
+            if (i < labels.length - 1) {
+                choices.addView(smartisanDivider(activity),
+                        new LinearLayout.LayoutParams(-1, 1));
+            }
+        }
+        ScrollView scroll = new ScrollView(activity);
+        scroll.setOverScrollMode(View.OVER_SCROLL_IF_CONTENT_SCROLLS);
+        scroll.addView(choices, new ScrollView.LayoutParams(-1, -2));
+        int choiceHeight = Math.min(dp(activity, 348),
+                labels.length * dp(activity, 59));
+        root.addView(scroll, new LinearLayout.LayoutParams(-1, choiceHeight));
+        root.addView(smartisanDivider(activity), new LinearLayout.LayoutParams(-1, 1));
+        TextView cancel = smartisanDialogActionButton(activity, "取消", false, -1);
+        cancel.setGravity(Gravity.CENTER);
+        cancel.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View view) { dialog.dismiss(); }
+        });
+        root.addView(cancel, new LinearLayout.LayoutParams(-1, dp(activity, 47)));
+
+        dialog.setContentView(root);
+        dialog.show();
+        Window shown = dialog.getWindow();
+        if (shown != null) {
+            shown.setBackgroundDrawableResource(android.R.color.transparent);
+            int screenWidth = activity.getResources().getDisplayMetrics().widthPixels;
+            shown.setLayout(Math.min(dp(activity, 380), screenWidth - dp(activity, 32)), -2);
+        }
     }
 
     private static final class SmartisanChoiceDot extends View {
@@ -12214,7 +12346,7 @@ public final class MaintainedLauncherSettingsHost {
     }
 
     /** Shared by application rename and backup naming to keep their Smartisan UI identical. */
-    private static void showSingleInputDialog(final Activity activity, String title, String initialValue,
+    static void showSingleInputDialog(final Activity activity, String title, String initialValue,
             final SingleInputListener listener) {
         final Dialog dialog = new Dialog(activity);
         LinearLayout root = new LinearLayout(activity);
@@ -12436,6 +12568,8 @@ public final class MaintainedLauncherSettingsHost {
                     backup.itemCount() - plan.folderCount - plan.shortcutCount)));
             setBackupValue(resources, root, "preview_shortcut_count", String.valueOf(plan.shortcutCount));
             setBackupValue(resources, root, "preview_custom_icon_count", String.valueOf(backup.customIconCount()));
+            setBackupValue(resources, root, "preview_quick_desktop_component_count",
+                    quickDesktopBackupSummary(resources, backup.settings));
             setBackupValue(resources, root, "preview_theme_name", backup.theme.optString("themeId",
                     getString(resources, "backup_default_theme", "默认主题")));
             setBackupValue(resources, root, "preview_preserved_count", String.valueOf(plan.preservedNewAppCount));
@@ -12457,6 +12591,33 @@ public final class MaintainedLauncherSettingsHost {
     private static void setBackupValue(Resources resources, View root, String id, String value) {
         TextView item = (TextView) find(resources, root, id + "_value");
         if (item != null) item.setText(value == null ? "" : value);
+    }
+
+    private static String quickDesktopBackupSummary(Resources resources,
+            org.json.JSONObject settings) {
+        org.json.JSONObject files = settings == null ? null : settings.optJSONObject("files");
+        org.json.JSONObject quickDesktop = files == null
+                ? null : files.optJSONObject("quick_desktop_private");
+        String[] componentKeys = {
+                "card_music_payment", "card_shortcuts", "card_calendar", "card_life"
+        };
+        if (quickDesktop == null || !quickDesktop.has("enabled")) {
+            return getString(resources, "quick_desktop_backup_not_included", "旧备份未包含");
+        }
+        int enabledCount = 0;
+        for (String key : componentKeys) {
+            org.json.JSONObject value = quickDesktop.optJSONObject(key);
+            if (value == null || !value.has("value")) {
+                return getString(resources, "quick_desktop_backup_not_included", "旧备份未包含");
+            }
+            if (value.optBoolean("value", false)) enabledCount++;
+        }
+        org.json.JSONObject enabled = quickDesktop.optJSONObject("enabled");
+        boolean featureEnabled = enabled != null && enabled.optBoolean("value", false);
+        return enabledCount + " / " + componentKeys.length + " · "
+                + getString(resources, featureEnabled
+                        ? "quick_desktop_backup_enabled" : "quick_desktop_backup_disabled",
+                        featureEnabled ? "已开启" : "已关闭");
     }
 
     private static void confirmStartRestore(final Activity activity) {
@@ -13003,6 +13164,9 @@ public final class MaintainedLauncherSettingsHost {
         }
     }
 
+    private static void showQuickDesktopSettingsPage(final Activity activity) {
+        QuickDesktopSettingsHost.show(activity);
+    }
     private static void showSearchVerticalGesturesPage(final Activity activity) {
         try {
             final SettingsResourceContext context = createSettingsContext(activity);
@@ -13064,7 +13228,7 @@ public final class MaintainedLauncherSettingsHost {
         }
     }
 
-    private static void showInfoDialog(final Activity activity, String title, String message) {
+    static void showInfoDialog(final Activity activity, String title, String message) {
         final Dialog dialog = new Dialog(activity);
         LinearLayout root = new LinearLayout(activity);
         prepareSmartisanDialogRoot(activity, root);
@@ -13177,7 +13341,7 @@ public final class MaintainedLauncherSettingsHost {
         };
     }
 
-    private static void hide(Resources resources, View root, String idName) {
+    static void hide(Resources resources, View root, String idName) {
         View view = find(resources, root, idName);
         if (view != null) {
             view.setVisibility(View.GONE);
@@ -19130,7 +19294,7 @@ public final class MaintainedLauncherSettingsHost {
         }
     }
 
-    private static final class SettingsResourceContext extends ContextWrapper {
+    static final class SettingsResourceContext extends ContextWrapper {
         private final Resources resources;
         private final Resources.Theme theme;
 

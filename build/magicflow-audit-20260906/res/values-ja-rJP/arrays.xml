@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="wether_description">
+        <item>晴れ</item>
+        <item>時々曇り</item>
+        <item>曇り</item>
+        <item>にわか雨</item>
+        <item>雷雨</item>
+        <item>雹混じりの雷雨</item>
+        <item>みぞれ</item>
+        <item>小雨</item>
+        <item>並雨</item>
+        <item>大雨</item>
+        <item>嵐</item>
+        <item>激しい嵐</item>
+        <item>猛烈な嵐</item>
+        <item>にわか雪</item>
+        <item>小雪</item>
+        <item>並雪</item>
+        <item>大雪</item>
+        <item>吹雪</item>
+        <item>霧</item>
+        <item>あられ</item>
+        <item>砂嵐</item>
+        <item>並雨</item>
+        <item>大雨</item>
+        <item>嵐</item>
+        <item>激しい嵐</item>
+        <item>猛烈な嵐</item>
+        <item>並雪</item>
+        <item>大雪</item>
+        <item>吹雪</item>
+        <item>塵</item>
+        <item>砂</item>
+        <item>砂嵐</item>
+        <item>濃い霧</item>
+        <item>超濃い霧</item>
+        <item>靄霾</item>
+        <item>並靄</item>
+        <item>濃い靄</item>
+        <item>激しい靄</item>
+        <item>大きい霧</item>
+        <item>超大きい霧</item>
+        <item>不明</item>
+    </string-array>
+</resources>

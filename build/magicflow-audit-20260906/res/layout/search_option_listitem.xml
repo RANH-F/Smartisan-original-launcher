@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout android:orientation="horizontal" android:layout_width="wrap_content" android:layout_height="45.0dp"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <ImageView android:id="@id/search_item_icon" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_alignParentLeft="true" />
+    <smartisan.widget.FontFitTextView android:textSize="15.0sp" android:textColor="#9a000000" android:id="@id/search_item_text" android:layout_width="wrap_content" android:layout_height="wrap_content" android:maxWidth="122.0dp" android:singleLine="true" android:layout_toRightOf="@id/search_item_icon" android:layout_centerVertical="true" />
+    <ImageView android:id="@id/search_item_check" android:background="@drawable/boom_win_popup_select" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginRight="7.0dp" android:layout_alignParentRight="true" android:layout_centerVertical="true" />
+</RelativeLayout>

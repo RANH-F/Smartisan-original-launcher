@@ -1,0 +1,3 @@
+<?xml version="1.0" encoding="utf-8"?>
+<smartisan.widget.ShadowButton android:textColor="@color/normal_btn_text_color" android:background="@drawable/menu_dialog_item_selector" android:layout_width="match_parent" android:singleLine="true" style="@style/LongButton.Shrink.Highlight.White"
+  xmlns:android="http://schemas.android.com/apk/res/android" />

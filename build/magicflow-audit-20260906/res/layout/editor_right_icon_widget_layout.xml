@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge android:layout_width="match_parent" android:layout_height="match_parent"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <TextView android:id="@id/label" android:layout_width="wrap_content" android:layout_height="match_parent" style="@style/EditorLabelTextStyle" />
+    <View android:id="@id/devide" android:background="@color/list_divider_color" android:visibility="gone" android:layout_width="2.0px" android:layout_height="match_parent" />
+    <ImageView android:id="@id/icon" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginLeft="6.0dp" />
+</merge>

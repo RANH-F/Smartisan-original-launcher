@@ -1,0 +1,3 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TextView android:textSize="@dimen/bhm_header_view_text_size" android:textStyle="bold" android:textColor="@color/bhm_header_view_color" android:ellipsize="end" android:gravity="center_vertical" android:background="@drawable/bhm_header_view_bg" android:paddingLeft="@dimen/bhm_header_view_left_margin" android:paddingRight="@dimen/bhm_header_view_right_margin" android:layout_width="match_parent" android:layout_height="@dimen/bhm_header_view_min_height" android:minHeight="@dimen/bhm_header_view_min_height" android:maxLines="1"
+  xmlns:android="http://schemas.android.com/apk/res/android" />

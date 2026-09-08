@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:orientation="horizontal" android:layout_width="match_parent" android:layout_height="@dimen/fullmonthheader_layout_height" android:layout_marginLeft="@dimen/fullmonthheader_margin_left" android:layout_marginRight="@dimen/fullmonthheader_margin_right"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <TextView android:gravity="center" android:id="@id/d0_label" android:layout_width="0.0dp" android:layout_height="match_parent" android:layout_weight="1.0" style="@style/TextAppearance.MonthView_DayLabel" />
+    <TextView android:gravity="center" android:id="@id/d1_label" android:layout_width="0.0dp" android:layout_height="match_parent" android:layout_weight="1.0" style="@style/TextAppearance.MonthView_DayLabel" />
+    <TextView android:gravity="center" android:id="@id/d2_label" android:layout_width="0.0dp" android:layout_height="match_parent" android:layout_weight="1.0" style="@style/TextAppearance.MonthView_DayLabel" />
+    <TextView android:gravity="center" android:id="@id/d3_label" android:layout_width="0.0dp" android:layout_height="match_parent" android:layout_weight="1.0" style="@style/TextAppearance.MonthView_DayLabel" />
+    <TextView android:gravity="center" android:id="@id/d4_label" android:layout_width="0.0dp" android:layout_height="match_parent" android:layout_weight="1.0" style="@style/TextAppearance.MonthView_DayLabel" />
+    <TextView android:gravity="center" android:id="@id/d5_label" android:layout_width="0.0dp" android:layout_height="match_parent" android:layout_weight="1.0" style="@style/TextAppearance.MonthView_DayLabel" />
+    <TextView android:gravity="center" android:id="@id/d6_label" android:layout_width="0.0dp" android:layout_height="match_parent" android:layout_weight="1.0" style="@style/TextAppearance.MonthView_DayLabel" />
+</LinearLayout>

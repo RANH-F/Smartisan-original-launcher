@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:orientation="horizontal" android:layout_width="match_parent" android:layout_height="wrap_content"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <com.bytedance.sdk.openadsdk.core.widget.ShadowTextView android:textSize="14.0sp" android:textColor="@color/tt_white" android:gravity="center" android:id="@id/tt_top_dislike" android:layout_width="wrap_content" android:layout_height="28.0dp" android:layout_marginLeft="16.0dp" android:layout_marginTop="20.0dp" android:text="@string/tt_reward_feedback" android:layout_marginStart="16.0dp" />
+    <com.bytedance.sdk.openadsdk.core.widget.ShadowImageView android:gravity="center" android:id="@id/tt_top_mute" android:layout_width="28.0dp" android:layout_height="28.0dp" android:layout_marginLeft="12.0dp" android:layout_marginTop="20.0dp" android:src="@drawable/tt_unmute" android:scaleType="center" android:layout_marginStart="12.0dp" />
+    <View android:layout_width="0.0dp" android:layout_height="0.0dp" android:layout_weight="1.0" />
+    <com.bytedance.sdk.openadsdk.core.widget.ShadowTextView android:textSize="14.0sp" android:textColor="#ffffff" android:gravity="center" android:id="@id/tt_top_skip" android:visibility="gone" android:layout_width="wrap_content" android:layout_height="28.0dp" android:layout_marginTop="20.0dp" android:layout_marginRight="16.0dp" android:layout_marginEnd="16.0dp" />
+</LinearLayout>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout android:id="@id/container" android:layout_width="match_parent" android:layout_height="wrap_content"
+  xmlns:android="http://schemas.android.com/apk/res/android" xmlns:smartisan="http://schemas.android.com/apk/res-auto">
+    <LinearLayout android:layout_gravity="bottom" android:orientation="vertical" android:id="@id/parentPanel" android:layout_width="match_parent" android:layout_height="wrap_content">
+        <smartisan.widget.MenuDialogTitleBar android:id="@id/menu_dialog_title_bar" android:layout_width="match_parent" android:layout_height="wrap_content" smartisan:show_divider="false" />
+        <FrameLayout android:id="@id/contentPanel" android:layout_width="match_parent" android:layout_height="wrap_content">
+            <GridView android:id="@id/gridview" android:layout_width="match_parent" android:layout_height="match_parent" android:listSelector="@null" />
+        </FrameLayout>
+        <View android:background="@color/bottom_line" android:layout_width="match_parent" android:layout_height="1.0px" />
+    </LinearLayout>
+</FrameLayout>

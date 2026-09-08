@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <integer name="BHMMaxCount">999</integer>
+    <integer name="abc_config_activityDefaultDur">220</integer>
+    <integer name="abc_config_activityShortDur">150</integer>
+    <integer name="cancel_button_image_alpha">127</integer>
+    <integer name="card_textView_shadowDx">-2</integer>
+    <integer name="config_boom_press_timeout">1000</integer>
+    <integer name="config_power_menu_anim_time">450</integer>
+    <integer name="config_smartkey_long_press_timeout">300</integer>
+    <integer name="config_tooltipAnimTime">150</integer>
+    <integer name="eyeAnimDuration">16</integer>
+    <integer name="smartisan_letterbar_gridview_column_num">3</integer>
+    <integer name="status_bar_notification_info_maxnum">999</integer>
+    <integer name="time_picker_wheel_item_count">3</integer>
+    <integer name="tt_video_progress_max">100</integer>
+</resources>

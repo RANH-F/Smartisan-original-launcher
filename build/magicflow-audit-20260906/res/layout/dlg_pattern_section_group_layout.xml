@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge android:layout_width="match_parent" android:layout_height="wrap_content"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <TextView android:id="@id/section_primary_title" android:layout_width="match_parent" android:layout_height="wrap_content" style="@style/DialogPatternSectionPrimaryTitle" />
+    <TextView android:id="@id/section_subtitle" android:layout_width="match_parent" android:layout_height="wrap_content" style="@style/DialogPatternSectionSubtitle" />
+    <TextView android:id="@id/section_message" android:layout_width="match_parent" android:layout_height="wrap_content" style="@style/DialogPatternSectionMessage" />
+</merge>

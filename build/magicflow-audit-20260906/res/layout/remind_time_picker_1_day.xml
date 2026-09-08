@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:layout_gravity="center_horizontal" android:orientation="horizontal" android:layout_width="match_parent" android:layout_height="@dimen/time_picker_height"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <smartisan.widget.calendar.SmartisanNumberPicker1Day android:layout_gravity="center" android:id="@id/hour" android:focusable="true" android:focusableInTouchMode="true" android:layout_width="0.0px" android:layout_height="match_parent" android:layout_weight="2.0" />
+    <View android:background="#0c000000" android:layout_width="1.0dp" android:layout_height="208.0dp" />
+    <smartisan.widget.calendar.SmartisanNumberPicker1Day android:layout_gravity="center" android:id="@id/minute" android:focusable="true" android:focusableInTouchMode="true" android:layout_width="0.0px" android:layout_height="match_parent" android:layout_weight="2.0" />
+    <View android:id="@id/am_pm_divider" android:background="#0c000000" android:layout_width="1.0dp" android:layout_height="208.0dp" />
+    <smartisan.widget.calendar.SmartisanNumberPicker1Day android:layout_gravity="center" android:id="@id/amPm" android:focusable="true" android:focusableInTouchMode="true" android:layout_width="0.0px" android:layout_height="match_parent" android:layout_weight="2.0" />
+    <View android:background="#0c000000" android:layout_width="1.0dp" android:layout_height="208.0dp" />
+</LinearLayout>

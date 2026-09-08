@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="bhm_item_view_subtitle_max_width">106.0dp</dimen>
+    <dimen name="bhm_list_view_title_max_width">292.0dp</dimen>
+    <dimen name="bhm_list_view_title_max_width_subtitle_exists">195.0dp</dimen>
+    <dimen name="letters_bar_dot_x_offset">0.0px</dimen>
+    <dimen name="letters_bar_dot_y_offset">-1.0dp</dimen>
+    <dimen name="letters_bar_highlight_icon_x">12.399994dp</dimen>
+    <dimen name="letters_bar_highlight_icon_y">3.7999878dp</dimen>
+    <dimen name="letters_bar_letter_font_x_offset">20.399994dp</dimen>
+    <dimen name="time_picker_width">1080.0px</dimen>
+</resources>

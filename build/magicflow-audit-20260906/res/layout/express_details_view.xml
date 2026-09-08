@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout android:orientation="vertical" android:background="@drawable/background" android:layout_width="match_parent" android:layout_height="match_parent"
+  xmlns:android="http://schemas.android.com/apk/res/android" xmlns:smartisan="http://schemas.android.com/apk/res-auto">
+    <smartisan.widget.TitleBar android:id="@id/view_title" android:layout_width="match_parent" android:layout_height="wrap_content" smartisan:title_bar_center_text="@string/express_details_info" />
+    <LinearLayout android:orientation="vertical" android:id="@id/express_details_content_view" android:layout_width="match_parent" android:layout_height="match_parent" android:layout_below="@id/view_title" android:layout_marginStart="12.0dp" android:layout_marginEnd="12.0dp">
+        <LinearLayout android:gravity="center_vertical" android:orientation="horizontal" android:background="@drawable/express_details_view_bg" android:layout_width="match_parent" android:layout_height="80.0dp" android:layout_marginTop="@dimen/settings_item_top_bottom_margin" android:layout_marginBottom="@dimen/settings_item_top_bottom_margin">
+            <ImageView android:id="@id/express_icon" android:background="@drawable/icon_deliver_details_default" android:layout_width="@dimen/express_detail_icon_height" android:layout_height="@dimen/express_detail_icon_height" android:scaleType="fitXY" android:layout_marginStart="16.0dp" />
+            <LinearLayout android:orientation="vertical" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="8.0dp">
+                <LinearLayout android:gravity="center_vertical" android:orientation="horizontal" android:layout_width="wrap_content" android:layout_height="wrap_content">
+                    <TextView android:textSize="42.0px" android:textStyle="bold" android:textColor="#cc000000" android:id="@id/express_company_text" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                    <TextView android:textSize="27.0px" android:textColor="#8c33240e" android:gravity="center" android:id="@id/express_status" android:background="@drawable/express_details_status_bg" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginLeft="6.0dp" android:paddingStart="6.0dp" android:paddingEnd="6.0dp" />
+                </LinearLayout>
+                <LinearLayout android:gravity="center_vertical" android:orientation="horizontal" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2.0dp">
+                    <TextView android:textSize="36.0px" android:textColor="#99000000" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="运单号: " />
+                    <TextView android:textSize="36.0px" android:textColor="#99000000" android:id="@id/express_order_num_text" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                    <ImageView android:id="@id/copy_button" android:background="@drawable/btn_copy" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="6.0dp" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+        <LinearLayout android:orientation="vertical" android:background="@drawable/express_details_view_bg" android:layout_width="match_parent" android:layout_height="wrap_content">
+            <ListView android:id="@id/express_detail_list_view" android:scrollbars="none" android:layout_width="match_parent" android:layout_height="wrap_content" android:listSelector="@android:color/transparent" android:divider="@null" />
+            <View android:id="@id/express_trace_line" android:background="@drawable/list_item_line" android:layout_width="match_parent" android:layout_height="@dimen/line_height" />
+            <include layout="@layout/express_details_taobao_layout" />
+        </LinearLayout>
+    </LinearLayout>
+    <include layout="@layout/no_network_layout" />
+    <ProgressBar android:id="@id/progress" android:layout_width="wrap_content" android:layout_height="wrap_content" android:indeterminate="true" android:layout_centerInParent="true" style="@style/ProgressBarCircleStyle.Large" />
+</RelativeLayout>

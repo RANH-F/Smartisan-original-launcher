@@ -202,6 +202,12 @@
     :goto_0
     const/4 v0, 0x0
 
+    iget v2, p0, Lcom/smartisanos/launcher/view/RootView;->Ad:F
+
+    invoke-static {v2, v0}, Lcom/smartisanos/launcher/gesture/QuickDesktopGestureDiagnostics;->onProgress(FZ)V
+
+    invoke-static {v2, p2}, Lcom/smartisanos/launcher/quickdesktop/QuickDesktopController;->onProgress(FLandroid/view/MotionEvent;)V
+
     .line 8
     iget v2, p0, Lcom/smartisanos/launcher/view/RootView;->Ad:F
 
@@ -1174,6 +1180,18 @@
 .method public dispatchKeyEvent(Landroid/view/KeyEvent;)Z
     .locals 2
 
+    invoke-static {p1}, Lcom/smartisanos/launcher/quickdesktop/QuickDesktopController;->onKeyEvent(Landroid/view/KeyEvent;)Z
+
+    move-result v0
+
+    if-eqz v0, :quick_desktop_key_not_handled
+
+    const/4 v0, 0x1
+
+    return v0
+
+    :quick_desktop_key_not_handled
+
     .line 1
     invoke-static {}, Lcom/smartisanos/launcher/J;->Ua()Z
 
@@ -1600,6 +1618,16 @@
 
     .line 3
     :cond_0
+    iget v0, p0, Lcom/smartisanos/launcher/view/RootView;->Ad:F
+
+    sget-boolean v3, Lcom/smartisanos/launcher/e/e;->uu:Z
+
+    sget-boolean v4, Lcom/smartisanos/launcher/data/Constants;->sLeftScreenEnabled:Z
+
+    invoke-static {p1, v0, v3, v4}, Lcom/smartisanos/launcher/gesture/QuickDesktopGestureDiagnostics;->onTouch(Landroid/view/MotionEvent;FZZ)V
+
+    invoke-static {p1, v0}, Lcom/smartisanos/launcher/quickdesktop/QuickDesktopController;->onTouch(Landroid/view/MotionEvent;F)V
+
     sget-boolean v0, Lcom/smartisanos/launcher/va;->_h:Z
 
     if-nez v0, :cond_1

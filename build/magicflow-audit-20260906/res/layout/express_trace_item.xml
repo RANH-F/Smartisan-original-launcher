@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:orientation="horizontal" android:layout_width="match_parent" android:layout_height="@dimen/express_trace_height"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <LinearLayout android:gravity="center_vertical" android:orientation="vertical" android:layout_width="wrap_content" android:layout_height="match_parent" android:layout_marginStart="12.0dp" android:layout_marginEnd="12.0dp">
+        <TextView android:textSize="15.0sp" android:textColor="#333333" android:layout_gravity="end" android:id="@id/express_trace_time" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+        <TextView android:textSize="12.0sp" android:textColor="#666666" android:id="@id/express_trace_date" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="1.0dp" />
+    </LinearLayout>
+    <ImageView android:id="@id/express_trace_line" android:background="@drawable/express_details_line_middle" android:layout_width="wrap_content" android:layout_height="match_parent" />
+    <LinearLayout android:gravity="center_vertical" android:orientation="vertical" android:layout_width="match_parent" android:layout_height="match_parent" android:layout_marginStart="10.0dp" android:layout_marginEnd="22.0dp">
+        <TextView android:textSize="15.0sp" android:textColor="#cc000000" android:id="@id/express_trace_status" android:visibility="gone" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="2.0dp" />
+        <TextView android:textSize="12.0sp" android:textColor="#99000000" android:autoLink="phone" android:linksClickable="true" android:id="@id/express_trace_description" android:layout_width="wrap_content" android:layout_height="wrap_content" android:lineSpacingExtra="3.0dp" />
+    </LinearLayout>
+</LinearLayout>

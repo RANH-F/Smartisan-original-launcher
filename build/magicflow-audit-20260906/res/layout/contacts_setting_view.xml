@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout android:orientation="vertical" android:background="@drawable/background" android:layout_width="match_parent" android:layout_height="match_parent"
+  xmlns:android="http://schemas.android.com/apk/res/android" xmlns:smartisan="http://schemas.android.com/apk/res-auto">
+    <smartisan.widget.TitleBar android:id="@id/view_title" android:layout_width="match_parent" android:layout_height="wrap_content" smartisan:title_bar_center_text="@string/contacts" />
+    <ScrollView android:clipChildren="false" android:layout_width="match_parent" android:layout_height="match_parent" android:layout_below="@id/view_title" android:layout_alignParentBottom="true" android:overScrollMode="always">
+        <LinearLayout android:orientation="vertical" android:layout_width="match_parent" android:layout_height="match_parent">
+            <include layout="@layout/setting_introduce_layout" />
+            <smartisan.widget.ListContentItemText android:id="@id/contacts_management_setting" android:layout_marginTop="@dimen/setting_sub_item_margin_top" smartisan:smtTitle="@string/contacts_management" style="@style/SettingSubItemSingleStyle" />
+        </LinearLayout>
+    </ScrollView>
+</RelativeLayout>

@@ -1,0 +1,21 @@
+version: 3.0.1
+apkFileName: com.smartisanos.magicflow.apk
+usesFramework:
+  ids:
+  - 1
+sdkInfo:
+  minSdkVersion: 23
+  targetSdkVersion: 28
+versionInfo:
+  versionCode: 8040200
+  versionName: 8.4.2
+resourcesInfo:
+  packageId: 127
+doNotCompress:
+- arsc
+- dex
+- ogg
+- png
+- so
+- assets/js/image.js
+- assets/js/jquery_highlight.js

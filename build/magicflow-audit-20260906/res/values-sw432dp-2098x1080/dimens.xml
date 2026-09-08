@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="pinned_cover_height">2104.0px</dimen>
+    <dimen name="pinned_cover_top">163.0px</dimen>
+    <dimen name="pinned_del_height">159.0px</dimen>
+    <dimen name="pinned_del_top">129.0px</dimen>
+    <dimen name="pinned_del_width">159.0px</dimen>
+    <dimen name="pinned_height">1931.0px</dimen>
+    <dimen name="pinned_top">218.0px</dimen>
+</resources>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <drawable name="list_board_pressed_color">#f2f2f2</drawable>
+    <drawable name="list_board_section_title_bg_normal">@color/white</drawable>
+    <drawable name="list_item_bg_divider">#14000000</drawable>
+    <drawable name="menu_list_item_normal">#ffffff</drawable>
+    <drawable name="menu_list_item_pressed">#f5f5f5</drawable>
+    <drawable name="notification_template_icon_bg">#3333b5e5</drawable>
+    <drawable name="notification_template_icon_low_bg">#0cffffff</drawable>
+    <drawable name="share_bg">@color/light_bar_color</drawable>
+</resources>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout android:layout_width="wrap_content" android:layout_height="match_parent"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <GridView android:scrollbarStyle="outsideOverlay" android:gravity="center" android:id="@id/quickbar_right_grid_view" android:background="#eaeaea" android:layout_width="wrap_content" android:layout_height="match_parent" android:listSelector="@android:color/transparent" android:horizontalSpacing="@dimen/smartisan_quickbar_grid_item_space" android:verticalSpacing="@dimen/smartisan_quickbar_grid_item_space" android:stretchMode="none" android:columnWidth="@dimen/quickbar_ex_grid_column_width" android:numColumns="@integer/smartisan_letterbar_gridview_column_num" android:layout_toRightOf="@id/quickbar_left_letters_bar" android:overScrollMode="never" />
+    <smartisan.widget.letters.LettersBar android:id="@id/quickbar_left_letters_bar" android:layout_width="wrap_content" android:layout_height="match_parent" android:layout_toRightOf="@id/iv_letter_bar_shadow" />
+    <ImageView android:id="@id/iv_letter_bar_shadow" android:background="@drawable/letters_bar_background_shadow" android:layout_width="wrap_content" android:layout_height="match_parent" android:layout_alignParentLeft="true" />
+</RelativeLayout>

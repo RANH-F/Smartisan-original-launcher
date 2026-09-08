@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout android:id="@id/card_express_delivery_item" android:paddingBottom="@dimen/card_padding" android:layout_width="match_parent" android:layout_height="wrap_content"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <LinearLayout android:gravity="center_vertical" android:orientation="vertical" android:id="@id/express_delivery_item" android:background="@drawable/express_delivery_bg" android:layout_width="match_parent" android:layout_height="@dimen/express_delivery_height" android:paddingStart="@dimen/card_content_padding">
+        <TextView android:textSize="@dimen/contacts_text_size" android:textStyle="bold" android:textColor="#cc403b31" android:id="@id/express_delivery_title_text" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/express_delivery_item_title" />
+        <TextView android:textSize="@dimen/contacts_add_size" android:textColor="#80403b31" android:gravity="center" android:id="@id/express_delivery_content_text" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="5.0dp" android:adjustViewBounds="true" android:text="@string/express_delivery" android:drawableRight="@drawable/icon_arrow_deliver" />
+    </LinearLayout>
+    <Button android:textSize="@dimen/news_view_more_textsize" android:textStyle="bold" android:textColor="#f2ead9" android:id="@id/express_delivery_button" android:background="@drawable/translucent_full_bg" android:layout_width="match_parent" android:layout_height="@dimen/express_delivery_button_height" android:text="@string/express_delivery_button_text" />
+</FrameLayout>

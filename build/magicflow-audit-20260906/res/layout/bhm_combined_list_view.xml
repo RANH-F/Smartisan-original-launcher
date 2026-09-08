@@ -1,0 +1,3 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ListView android:fadingEdge="none" android:layout_width="match_parent" android:layout_height="match_parent" android:listSelector="@drawable/bhm_list_view_bg" android:drawSelectorOnTop="false" android:cacheColorHint="@android:color/transparent" android:overScrollMode="always"
+  xmlns:android="http://schemas.android.com/apk/res/android" />

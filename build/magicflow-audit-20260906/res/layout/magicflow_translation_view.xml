@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout android:orientation="vertical" android:layout_width="387.0dp" android:layout_height="588.0dp"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <smartisan.widget.search.WebSearchViewGroup android:id="@id/web_search" android:layout_width="match_parent" android:layout_height="match_parent" />
+</FrameLayout>

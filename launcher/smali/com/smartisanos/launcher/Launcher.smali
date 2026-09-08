@@ -62,6 +62,8 @@
 .method public onBackPressed()V
     .locals 0
 
+    invoke-static {}, Lcom/smartisanos/launcher/quickdesktop/QuickDesktopController;->onBackPressed()V
+
     return-void
 .end method
 
@@ -245,6 +247,8 @@
     if-eqz v0, :cond_2
 
     :cond_3
+    invoke-static {}, Lcom/smartisanos/launcher/quickdesktop/QuickDesktopController;->onHomeIntent()V
+
     invoke-static {p1}, Lcom/smartisanos/launcher/gesture/LauncherHomeCompat;->logHomeIntentReceived(Landroid/content/Intent;)V
 
     invoke-static {}, Lcom/smartisanos/launcher/J;->getInstance()Lcom/smartisanos/launcher/J;
@@ -304,6 +308,8 @@
 
     invoke-static {p0}, Lcom/smartisanos/launcher/theme/LauncherBelowKeyguardCompat;->onLauncherResumed(Landroid/app/Activity;)V
 
+    invoke-static {}, Lcom/smartisanos/launcher/quickdesktop/QuickDesktopController;->onLauncherResumed()V
+
     invoke-static {p0}, Lcom/smartisanos/launcher/theme/MaintainedLauncherSettingsHost;->scheduleLauncherPostFirstFrameTasks(Landroid/app/Activity;)V
 
     return-void
@@ -353,6 +359,8 @@
     invoke-super {p0}, Landroid/app/Activity;->onStop()V
 
     invoke-static {p0}, Lcom/smartisanos/launcher/theme/LauncherBelowKeyguardCompat;->onLauncherStopped(Landroid/app/Activity;)V
+
+    invoke-static {}, Lcom/smartisanos/launcher/quickdesktop/QuickDesktopController;->onLauncherStopped()V
 
     return-void
 .end method

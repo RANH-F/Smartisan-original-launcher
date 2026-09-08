@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:orientation="vertical" android:background="@null" android:layout_width="match_parent" android:layout_height="wrap_content"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <TextView android:textSize="15.0sp" android:textColor="#777777" android:gravity="center" android:id="@id/pull_up_no_more_text" android:background="@null" android:layout_width="match_parent" android:layout_height="80.0dp" android:text="@string/pull_up_no_more" />
+</LinearLayout>

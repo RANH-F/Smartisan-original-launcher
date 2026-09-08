@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <LinearLayout android:id="@id/surname_container" android:paddingLeft="13.0dp" android:paddingTop="1.5dp" android:paddingRight="13.0dp" android:paddingBottom="4.0dp" android:layout_width="wrap_content" android:layout_height="wrap_content">
+        <smartisan.widget.SurnameGridView android:layout_gravity="center" android:id="@id/surname_content" android:background="@drawable/surname_popup_background" android:paddingLeft="6.0dp" android:paddingTop="16.0dp" android:paddingRight="6.0dp" android:paddingBottom="16.0dp" android:scrollbars="none" android:layout_width="wrap_content" android:layout_height="wrap_content" android:listSelector="@android:color/transparent" android:stretchMode="columnWidth" android:columnWidth="36.0dp" android:overScrollMode="always" />
+    </LinearLayout>
+    <ImageView android:layout_gravity="top" android:id="@id/surname_top_mask" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginLeft="19.0dp" android:layout_marginTop="17.5dp" android:src="@drawable/surname_mask_top" android:scaleType="fitXY" />
+    <ImageView android:layout_gravity="bottom" android:id="@id/surname_bottom_mask" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginLeft="19.0dp" android:layout_marginBottom="20.0dp" android:src="@drawable/surname_mask_bottom" android:scaleType="fitXY" />
+    <ImageView android:layout_gravity="bottom" android:id="@id/surname_popup_bottom_arrow" android:background="@drawable/surname_popup_arrow_bottom" android:visibility="gone" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+    <ImageView android:layout_gravity="top" android:id="@id/surname_popup_top_arrow" android:background="@drawable/surname_popup_arrow_up" android:visibility="gone" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+</FrameLayout>

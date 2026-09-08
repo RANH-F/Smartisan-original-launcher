@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<smartisan.widget.search.NetworkView android:background="@android:color/white" android:layout_width="match_parent" android:layout_height="match_parent"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <LinearLayout android:gravity="center_horizontal" android:layout_gravity="center" android:orientation="vertical" android:id="@id/refresh_layout" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_centerInParent="true">
+        <TextView android:textSize="@dimen/no_network_refresh_title_size" android:textStyle="bold" android:textColor="@color/no_network_text_color" android:gravity="center" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/no_data" />
+        <TextView android:textSize="@dimen/title_bar_btn_text_size" android:textStyle="bold" android:textColor="@color/no_network_text_color" android:gravity="center" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="@dimen/no_network_text_top" android:layout_marginBottom="@dimen/no_network_text_bottom" android:text="@string/connect_network_refresh_retry" />
+        <TextView android:textSize="@dimen/title_bar_btn_text_size" android:textStyle="bold" android:textColor="@color/no_network_refresh_btn_color" android:gravity="center" android:id="@id/refresh_btn" android:background="@drawable/selector_normal_button" android:layout_width="wrap_content" android:layout_height="wrap_content" android:minWidth="@dimen/no_network_refresh_btn_width" android:text="@string/refresh" />
+    </LinearLayout>
+    <ProgressBar android:id="@id/progress_view" android:visibility="gone" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_centerInParent="true" style="@style/ProgressBarCircleStyle.Medium" />
+</smartisan.widget.search.NetworkView>

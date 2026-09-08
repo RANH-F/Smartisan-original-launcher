@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <bool name="abc_action_bar_embed_tabs">true</bool>
+    <bool name="abc_allow_stacked_button_bar">false</bool>
+    <bool name="abc_config_actionMenuItemAllCaps">true</bool>
+    <bool name="feature_cdma_b">false</bool>
+    <bool name="feature_china_telecom">false</bool>
+    <bool name="feature_china_unicom">false</bool>
+    <bool name="feature_cmcc">false</bool>
+    <bool name="feature_domestic">true</bool>
+    <bool name="feature_dsds">false</bool>
+    <bool name="feature_oversea_url">false</bool>
+    <bool name="feature_rndis_enable">false</bool>
+    <bool name="feature_small_mem">false</bool>
+    <bool name="feature_softsim">false</bool>
+    <bool name="feature_ultrasonic_sensor">false</bool>
+    <bool name="feature_virtual_key">false</bool>
+</resources>

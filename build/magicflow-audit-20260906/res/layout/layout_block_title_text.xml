@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:orientation="horizontal" android:layout_width="match_parent" android:layout_height="wrap_content"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <TextView android:textSize="@dimen/newsitem_title_textsize" android:textStyle="bold" android:textColor="@color/newsitem_title_color" android:ellipsize="end" android:id="@id/title" android:layout_width="0.0dp" android:layout_height="wrap_content" android:maxLines="2" android:layout_weight="1.0" android:lineSpacingExtra="2.0dp" />
+    <ImageView android:id="@id/button_dislike" android:paddingBottom="3.0dp" android:layout_width="wrap_content" android:layout_height="match_parent" android:src="@drawable/news_delete_icon" android:scaleType="fitCenter" android:paddingStart="3.0dp" android:paddingEnd="1.0dp" />
+</LinearLayout>

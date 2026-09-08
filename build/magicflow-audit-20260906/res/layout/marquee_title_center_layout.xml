@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <TextView android:textSize="@dimen/title_bar_title_text_size" android:textColor="@color/smartisan_button_normal_text_color" android:ellipsize="marquee" android:gravity="center" android:id="@id/tv_title" android:focusable="true" android:focusableInTouchMode="true" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="@dimen/marquee_title_margin_top" android:singleLine="true" android:includeFontPadding="false" android:marqueeRepeatLimit="marquee_forever" />
+    <TextView android:textSize="@dimen/item_sub_title_size" android:textColor="@color/sub_title_text_color" android:gravity="center" android:id="@id/tv_sub_title" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="@dimen/marquee_subtitle_margin_top" android:includeFontPadding="false" />
+</merge>

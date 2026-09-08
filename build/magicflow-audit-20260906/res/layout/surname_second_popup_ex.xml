@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout android:gravity="center" android:layout_width="wrap_content" android:layout_height="wrap_content"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <TextView android:textSize="20.0sp" android:textColor="#b3000000" android:ellipsize="end" android:gravity="center" android:orientation="vertical" android:id="@id/popup_name" android:background="@drawable/surname_second_popup_ex_bg" android:paddingLeft="20.0dp" android:paddingRight="20.0dp" android:layout_width="wrap_content" android:layout_height="wrap_content" android:maxWidth="320.0dp" android:maxLines="2" />
+    <ImageView android:layout_gravity="center|bottom" android:id="@id/arrow_bottom" android:background="@drawable/surname_popup_bottom_arrow" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="10.0dp" />
+</FrameLayout>

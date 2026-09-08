@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout android:layout_gravity="center" android:layout_width="144.0px" android:layout_height="match_parent" android:scaleType="fitXY"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <ImageView android:layout_gravity="center" android:id="@id/recently_app_image" android:layout_width="144.0px" android:layout_height="144.0px" android:scaleType="fitCenter" />
+</FrameLayout>

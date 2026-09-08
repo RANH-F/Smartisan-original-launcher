@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout android:layout_gravity="center_vertical" android:duplicateParentState="true" android:layout_width="match_parent" android:layout_height="@dimen/dlg_single_choice_height_has_summary" android:minHeight="?android:listPreferredItemHeightSmall" android:paddingStart="20.0dp" android:paddingEnd="6.0dp"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <RelativeLayout android:id="@id/text_layout" android:duplicateParentState="true" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_toLeftOf="@id/item_check" android:layout_centerVertical="true">
+        <TextView android:textAppearance="?android:textAppearanceMedium" android:textColor="?android:textColorAlertDialogListItem" android:ellipsize="end" android:id="@id/item_title" android:duplicateParentState="true" android:layout_width="wrap_content" android:layout_height="wrap_content" android:singleLine="true" />
+        <TextView android:textSize="12.5sp" android:textColor="@color/dlg_single_choice_summary_colorlist" android:ellipsize="end" android:id="@id/item_summary" android:visibility="gone" android:duplicateParentState="true" android:layout_width="wrap_content" android:layout_height="wrap_content" android:singleLine="true" android:layout_below="@id/item_title" />
+    </RelativeLayout>
+    <ImageView android:id="@id/item_check" android:visibility="invisible" android:layout_width="wrap_content" android:layout_height="wrap_content" android:src="@drawable/selector_radio_choice" android:layout_alignParentRight="true" android:layout_centerVertical="true" />
+</RelativeLayout>

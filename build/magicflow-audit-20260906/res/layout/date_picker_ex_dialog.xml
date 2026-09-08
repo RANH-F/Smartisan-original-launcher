@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:gravity="bottom" android:orientation="vertical" android:layout_width="match_parent" android:layout_height="match_parent"
+  xmlns:android="http://schemas.android.com/apk/res/android" xmlns:smartisan="http://schemas.android.com/apk/res-auto">
+    <smartisan.widget.MenuDialogTitleBar android:id="@id/menu_dialog_title_bar" android:layout_width="match_parent" android:layout_height="wrap_content" smartisan:show_divider="false" />
+    <smartisan.widget.SmartisanDatePickerEx android:id="@id/date_picker" android:layout_width="match_parent" android:layout_height="wrap_content" />
+</LinearLayout>

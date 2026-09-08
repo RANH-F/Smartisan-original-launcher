@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:orientation="vertical" android:background="#ffededed" android:layout_width="match_parent" android:layout_height="match_parent"
+  xmlns:android="http://schemas.android.com/apk/res/android" xmlns:smartisan="http://schemas.android.com/apk/res-auto">
+    <smartisan.widget.TitleBar android:id="@id/view_title" android:layout_width="match_parent" android:layout_height="wrap_content" smartisan:title_bar_center_text="@string/card_details_title_hotel" />
+    <View android:background="#14000000" android:layout_width="match_parent" android:layout_height="0.6dp" />
+    <ScrollView android:scrollbars="none" android:layout_width="match_parent" android:layout_height="match_parent" android:overScrollMode="always">
+        <LinearLayout android:orientation="vertical" android:layout_width="match_parent" android:layout_height="match_parent">
+            <LinearLayout android:orientation="vertical" android:background="#ffffff" android:layout_width="match_parent" android:layout_height="wrap_content">
+                <LinearLayout android:orientation="horizontal" android:background="#fffafafa" android:layout_width="match_parent" android:layout_height="wrap_content">
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginLeft="15.0dp" android:layout_marginTop="14.0dp" android:layout_marginRight="18.0dp" android:layout_marginBottom="14.0dp">
+                        <ImageView android:background="@drawable/card_hotel_icon" android:layout_width="20.0dp" android:layout_height="20.0dp" />
+                        <TextView android:textSize="16.0sp" android:textColor="#cc000000" android:id="@id/card_details_hotel_name" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginLeft="9.0dp" />
+                    </LinearLayout>
+                </LinearLayout>
+                <LinearLayout android:orientation="vertical" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginLeft="18.0dp" android:layout_marginTop="28.0dp" android:layout_marginRight="18.0dp" android:layout_marginBottom="28.0dp">
+                    <LinearLayout android:orientation="horizontal" android:layout_width="match_parent" android:layout_height="wrap_content">
+                        <TextView android:textSize="20.0sp" android:textColor="#cc000000" android:gravity="left" android:id="@id/card_details_hotel_checkin_date" android:layout_width="0.0dp" android:layout_height="wrap_content" android:singleLine="true" android:layout_weight="1.0" />
+                        <TextView android:textSize="10.0sp" android:textColor="#ff5079d9" android:gravity="center" android:layout_gravity="center" android:id="@id/card_details_hotel_day_count" android:background="@drawable/card_details_hotel_day_count_bg" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                        <TextView android:textSize="20.0sp" android:textColor="#cc000000" android:gravity="right" android:id="@id/card_details_hotel_checkout_date" android:layout_width="0.0dp" android:layout_height="wrap_content" android:singleLine="true" android:layout_weight="1.0" />
+                    </LinearLayout>
+                    <LinearLayout android:orientation="horizontal" android:layout_width="match_parent" android:layout_height="wrap_content">
+                        <TextView android:textSize="12.0sp" android:textColor="#80000000" android:gravity="left" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/card_details_hotel_checkin_date" />
+                        <TextView android:textSize="12.0sp" android:textColor="#80000000" android:gravity="right" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/card_details_hotel_checkout_date" android:layout_weight="1.0" />
+                    </LinearLayout>
+                </LinearLayout>
+                <View android:background="#14000000" android:layout_width="match_parent" android:layout_height="0.6dp" android:layout_marginLeft="18.0dp" android:layout_marginRight="18.0dp" />
+                <LinearLayout android:orientation="vertical" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginLeft="18.0dp" android:layout_marginTop="21.0dp" android:layout_marginRight="18.0dp" android:layout_marginBottom="21.0dp">
+                    <LinearLayout android:orientation="horizontal" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="@dimen/card_details_line_spacing">
+                        <TextView android:textSize="12.0sp" android:textColor="#66000000" android:layout_width="81.0dp" android:layout_height="wrap_content" android:text="@string/card_details_hotel_room_type" />
+                        <TextView android:textSize="14.0sp" android:textColor="#cc000000" android:id="@id/card_details_hotel_room_type" android:layout_width="match_parent" android:layout_height="wrap_content" />
+                    </LinearLayout>
+                    <LinearLayout android:orientation="horizontal" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="@dimen/card_details_line_spacing">
+                        <TextView android:textSize="12.0sp" android:textColor="#66000000" android:layout_width="81.0dp" android:layout_height="wrap_content" android:text="@string/card_details_hotel_address" />
+                        <TextView android:textSize="14.0sp" android:textColor="#cc000000" android:id="@id/card_details_hotel_address" android:layout_width="match_parent" android:layout_height="wrap_content" />
+                    </LinearLayout>
+                    <LinearLayout android:orientation="horizontal" android:layout_width="match_parent" android:layout_height="wrap_content">
+                        <TextView android:textSize="12.0sp" android:textColor="#66000000" android:id="@id/card_details_hotel_call_text" android:layout_width="81.0dp" android:layout_height="wrap_content" android:text="@string/card_details_hotel_call_num" />
+                        <TextView android:textSize="14.0sp" android:textColor="#cc000000" android:id="@id/card_details_hotel_call_num" android:layout_width="match_parent" android:layout_height="wrap_content" />
+                    </LinearLayout>
+                </LinearLayout>
+                <View android:background="#14000000" android:layout_width="match_parent" android:layout_height="0.6dp" />
+                <LinearLayout android:orientation="horizontal" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginLeft="@dimen/card_details_button_margin_hori" android:layout_marginTop="9.0dp" android:layout_marginRight="@dimen/card_details_button_margin_hori" android:layout_marginBottom="9.0dp">
+                    <FrameLayout android:id="@id/card_details_hotel_enter_map" android:background="@drawable/card_details_view_button_bg" android:layout_width="0.0dp" android:layout_height="wrap_content" android:layout_marginRight="@dimen/card_details_button_margin_center" android:layout_weight="1.0">
+                        <TextView android:textSize="13.5sp" android:textColor="#9a000000" android:gravity="center" android:layout_gravity="center" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/card_details_hotel_enter_map" />
+                    </FrameLayout>
+                    <FrameLayout android:id="@id/card_details_hotel_contact" android:background="@drawable/card_details_view_button_bg" android:layout_width="0.0dp" android:layout_height="wrap_content" android:layout_weight="1.0">
+                        <TextView android:textSize="13.5sp" android:textColor="#9a000000" android:gravity="center" android:layout_gravity="center" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/card_details_movie_add_to_calendar" />
+                    </FrameLayout>
+                </LinearLayout>
+                <View android:background="#14000000" android:layout_width="match_parent" android:layout_height="1.0dp" />
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

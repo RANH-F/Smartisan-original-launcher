@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout android:orientation="vertical" android:background="@drawable/background" android:layout_width="match_parent" android:layout_height="match_parent"
+  xmlns:android="http://schemas.android.com/apk/res/android" xmlns:smartisan="http://schemas.android.com/apk/res-auto">
+    <smartisan.widget.TitleBar android:id="@id/view_title" android:layout_width="match_parent" android:layout_height="wrap_content" smartisan:title_bar_center_text="@string/express_setting" />
+    <ScrollView android:scrollbars="none" android:layout_width="match_parent" android:layout_height="match_parent" android:fillViewport="true" android:layout_below="@id/view_title" android:overScrollMode="always">
+        <LinearLayout android:orientation="vertical" android:layout_width="match_parent" android:layout_height="match_parent" android:layout_marginTop="@dimen/card_padding">
+            <smartisan.widget.TipsView android:id="@id/express_register_phone_num_tips" android:text="@string/express_register_phone_num" style="@style/SettingItemTipsStyle" />
+            <com.smartisanos.magicflow.view.MaxListView android:id="@id/express_register_list_view" android:background="@drawable/set_white_bg" android:layout_width="match_parent" android:layout_height="wrap_content" android:listSelector="@android:color/transparent" android:layout_marginStart="12.0dp" android:layout_marginEnd="12.0dp" />
+            <smartisan.widget.TipsView android:id="@id/express_unregister_phone_num_tips" android:text="@string/express_unregister_phone_num" style="@style/SettingItemTipsStyle" />
+            <LinearLayout android:orientation="vertical" android:background="@drawable/set_white_bg" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginStart="12.0dp" android:layout_marginEnd="12.0dp">
+                <com.smartisanos.magicflow.view.MaxListView android:id="@id/express_unregister_list_view" android:layout_width="match_parent" android:layout_height="wrap_content" android:listSelector="@android:color/transparent" />
+                <include layout="@layout/express_account_item" />
+            </LinearLayout>
+            <smartisan.widget.TipsView android:id="@id/statement_tips" android:text="@string/express_account_setting_statement" style="@style/SettingItemTipsStyle" />
+            <View android:layout_width="wrap_content" android:layout_height="0.0dp" android:layout_weight="1.0" />
+            <smartisan.widget.TipsView android:layout_gravity="center" android:text="@string/express_service" style="@style/SettingItemTipsStyle" />
+            <ImageView android:layout_gravity="center" android:background="@drawable/jingdong_guoguo" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+            <smartisan.widget.TipsView android:layout_gravity="center" android:layout_marginBottom="12.0dp" android:text="@string/express_service_support" style="@style/SettingItemTipsStyle" />
+        </LinearLayout>
+    </ScrollView>
+    <FrameLayout android:layout_width="match_parent" android:layout_height="match_parent">
+        <ProgressBar android:layout_gravity="center" android:id="@id/progress" android:visibility="gone" android:layout_width="wrap_content" android:layout_height="wrap_content" android:indeterminate="true" style="@style/ProgressBarCircleStyle.Large" />
+    </FrameLayout>
+</RelativeLayout>

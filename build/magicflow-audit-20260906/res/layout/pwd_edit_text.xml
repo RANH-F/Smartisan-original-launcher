@@ -1,0 +1,3 @@
+<?xml version="1.0" encoding="utf-8"?>
+<smartisan.widget.PasswordEditText android:id="@id/editor" android:layout_width="match_parent" android:layout_height="match_parent" android:layout_marginRight="0.0dp" android:inputType="textPassword" style="@style/EditorTextStyle"
+  xmlns:android="http://schemas.android.com/apk/res/android" />

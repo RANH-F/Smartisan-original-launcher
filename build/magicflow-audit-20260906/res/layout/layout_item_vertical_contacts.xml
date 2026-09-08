@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:gravity="center_horizontal" android:orientation="vertical" android:id="@id/contacts_info_layout" android:layout_width="match_parent" android:layout_height="@dimen/contacts_card_height"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <FrameLayout android:layout_width="@dimen/contacts_item_image_height" android:layout_height="@dimen/contacts_item_image_height" android:layout_marginTop="16.0dp">
+        <com.smartisanos.magicflow.view.card.contacts.AvatarImageView android:id="@id/acatar_img" android:layout_width="@dimen/contacts_item_image_height" android:layout_height="@dimen/contacts_item_image_height" android:scaleType="fitXY" />
+        <ImageView android:id="@id/contacts_stroke_image" android:background="@drawable/contacts_stroke" android:layout_width="@dimen/contacts_item_image_height" android:layout_height="@dimen/contacts_item_image_height" />
+        <ImageView android:background="@drawable/contacts_mask" android:layout_width="@dimen/contacts_item_image_height" android:layout_height="@dimen/contacts_item_image_height" />
+        <ImageView android:layout_gravity="end|bottom" android:id="@id/contacts_label" android:layout_width="42.0px" android:layout_height="42.0px" />
+    </FrameLayout>
+    <TextView android:textSize="@dimen/contacts_item_name_text_size" android:textColor="#ccffffff" android:ellipsize="end" android:gravity="center" android:id="@id/contacts_item_name" android:layout_width="@dimen/contacts_item_name_width" android:layout_height="wrap_content" android:layout_marginTop="@dimen/contacts_item_name_margin_top" android:singleLine="true" />
+</LinearLayout>

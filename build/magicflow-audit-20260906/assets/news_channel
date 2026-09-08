@@ -1,0 +1,118 @@
+[
+  {
+    "name": "热点",
+    "category": "news_hot"
+  },
+  {
+    "name": "本地",
+    "category": "news_local"
+  },
+  {
+    "name": "社会",
+    "category": "news_society"
+  },
+  {
+    "name": "娱乐",
+    "category": "news_entertainment"
+  },
+  {
+    "name": "科技",
+    "category": "news_tech"
+  },
+  {
+    "name": "汽车",
+    "category": "news_car"
+  },
+  {
+    "name": "财经",
+    "category": "news_finance"
+  },
+  {
+    "name": "军事",
+    "category": "news_military"
+  },
+  {
+    "name": "体育",
+    "category": "news_sports"
+  },
+  {
+    "name": "宠物",
+    "category": "news_pet"
+  },
+  {
+    "name": "人文",
+    "category": "news_culture"
+  },
+  {
+    "name": "国际",
+    "category": "news_world"
+  },
+  {
+    "name": "时尚",
+    "category": "news_fashion"
+  },
+  {
+    "name": "游戏",
+    "category": "news_game"
+  },
+  {
+    "name": "旅游",
+    "category": "news_travel"
+  },
+  {
+    "name": "历史",
+    "category": "news_history"
+  },
+  {
+    "name": "探索",
+    "category": "news_discovery"
+  },
+  {
+    "name": "美食",
+    "category": "news_food"
+  },
+  {
+    "name": "养生",
+    "category": "news_regimen"
+  },
+  {
+    "name": "健康",
+    "category": "news_health"
+  },
+  {
+    "name": "育儿",
+    "category": "news_baby"
+  },
+  {
+    "name": "故事",
+    "category": "news_story"
+  },
+  {
+    "name": "美文",
+    "category": "news_essay"
+  },
+  {
+    "name": "教育",
+    "category": "news_edu"
+  },
+  {
+    "name": "房产",
+    "category": "news_house"
+  },
+  {
+    "name": "职场",
+    "category": "news_career"
+  },
+  {
+    "name": "摄影",
+    "category": "news_photography"
+  },
+  {
+    "name": "动漫",
+    "category": "news_comic"
+  },
+  {
+    "name": "星座",
+    "category": "news_astrology"
+  }
+]

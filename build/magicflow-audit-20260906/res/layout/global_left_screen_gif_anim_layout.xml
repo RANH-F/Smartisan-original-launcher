@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.smartisanos.magicflow.view.settings.GlobalLeftScreenAnimView android:orientation="horizontal" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="30.0dp" android:layout_marginBottom="33.0dp" android:layout_below="@id/global_switch_line" android:layout_centerHorizontal="true"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <FrameLayout android:layout_gravity="center" android:layout_width="@dimen/schematic_layout_width" android:layout_height="@dimen/schematic_layout_height">
+        <ImageView android:layout_gravity="center" android:id="@id/bg" android:background="@drawable/left_magicflow_bg" android:layout_width="match_parent" android:layout_height="match_parent" />
+        <ImageView android:layout_gravity="center" android:id="@id/bg_shadow" android:background="@drawable/left_magicflow_bg_dim" android:layout_width="match_parent" android:layout_height="match_parent" />
+        <ImageView android:layout_gravity="center" android:id="@id/schematic_diagram" android:background="@drawable/schematic_diagram" android:layout_width="match_parent" android:layout_height="match_parent" />
+    </FrameLayout>
+    <ImageView android:layout_gravity="start|top" android:id="@id/hand" android:layout_width="wrap_content" android:layout_height="wrap_content" android:src="@drawable/hand" />
+</com.smartisanos.magicflow.view.settings.GlobalLeftScreenAnimView>

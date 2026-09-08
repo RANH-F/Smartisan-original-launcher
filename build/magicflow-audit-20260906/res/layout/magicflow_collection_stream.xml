@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout android:background="#ffffff" android:layout_width="match_parent" android:layout_height="match_parent"
+  xmlns:android="http://schemas.android.com/apk/res/android" xmlns:smartisan="http://schemas.android.com/apk/res-auto" xmlns:setting="http://schemas.android.com/apk/res-auto">
+    <smartisan.widget.TitleBar android:id="@id/view_title" android:layout_width="match_parent" android:layout_height="wrap_content" setting:title_bar_center_text="@string/collection" />
+    <LinearLayout android:orientation="vertical" android:id="@id/list_parent" android:layout_width="match_parent" android:layout_height="match_parent" android:layout_below="@id/view_title">
+        <com.smartisanos.magicflow.view.newslist.HorizontalScrollListView android:id="@id/horizontal_list" android:fadingEdge="none" android:layout_width="match_parent" android:layout_height="match_parent" android:divider="@null" android:layout_below="@id/view_title" android:isScrollContainer="true" android:overScrollMode="always" setting:left_btns_id="@id/item_background" setting:scroll_enabled="true" setting:scroll_factor="0.2" setting:scroll_handle_id="@id/item_foreground" />
+    </LinearLayout>
+    <TextView android:gravity="center" android:id="@id/no_article_textview" android:visibility="gone" android:layout_width="match_parent" android:layout_height="@dimen/news_readlater_no_article_height" android:text="@string/no_article" android:layout_centerInParent="true" />
+</RelativeLayout>

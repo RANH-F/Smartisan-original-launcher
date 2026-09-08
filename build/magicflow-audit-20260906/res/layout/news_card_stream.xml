@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout android:id="@id/news_container" android:focusable="true" android:focusableInTouchMode="true" android:layout_width="match_parent" android:layout_height="@dimen/news_card_list_min_height_single"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <com.smartisanos.magicflow.view.card.news.CardItemListView android:orientation="vertical" android:id="@id/news_card_list_view" android:layout_width="match_parent" android:layout_height="@dimen/news_card_list_min_height_single" />
+    <include layout="@layout/no_network_layout" />
+    <ProgressBar android:layout_gravity="center" android:id="@id/news_card_progress_bar" android:visibility="gone" android:layout_width="wrap_content" android:layout_height="wrap_content" android:indeterminateDrawable="@drawable/news_webview_progress" />
+</FrameLayout>

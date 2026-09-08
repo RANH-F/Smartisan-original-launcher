@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:orientation="vertical" android:paddingTop="6.0dp" android:paddingBottom="6.0dp" android:layout_width="match_parent" android:layout_height="wrap_content"
+  xmlns:android="http://schemas.android.com/apk/res/android" xmlns:smartisan="http://schemas.android.com/apk/res-auto">
+    <smartisan.widget.MenuDialogTitleBar android:id="@id/menu_dialog_title_bar" android:layout_width="match_parent" android:layout_height="wrap_content" smartisan:show_divider="true" />
+    <LinearLayout android:orientation="vertical" android:background="@drawable/revone_dialog_bg_main" android:layout_width="match_parent" android:layout_height="wrap_content">
+        <ListView android:scrollbarStyle="outsideOverlay" android:id="@id/content_list" android:paddingLeft="18.0dp" android:paddingRight="18.0dp" android:visibility="gone" android:scrollbars="vertical" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="18.0dp" android:listSelector="@android:color/transparent" android:divider="@android:color/transparent" android:dividerHeight="18.0dp" android:overScrollMode="never" />
+        <View android:layout_width="match_parent" android:layout_height="18.0dp" />
+        <smartisan.widget.ShadowButton android:id="@id/btn_ok" android:visibility="gone" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginLeft="18.0dp" android:layout_marginRight="18.0dp" android:layout_marginBottom="18.0dp" android:singleLine="true" style="@style/LongButton.Shrink.Highlight.Red" />
+    </LinearLayout>
+</LinearLayout>

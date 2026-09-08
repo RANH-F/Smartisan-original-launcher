@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:orientation="vertical" android:layout_width="match_parent" android:layout_height="match_parent"
+  xmlns:android="http://schemas.android.com/apk/res/android" xmlns:smartisan="http://schemas.android.com/apk/res-auto">
+    <smartisan.widget.ListContentItemSwitch android:id="@id/setting_switch" style="@style/SettingSubItemSingleStyle">
+        <View android:id="@id/line" android:background="@drawable/list_item_line" android:layout_width="match_parent" android:layout_height="@dimen/line_height" android:layout_marginTop="@dimen/setting_image_margin_top" />
+        <ImageView android:id="@id/introduce_image" android:background="#fafafa" android:layout_width="match_parent" android:layout_height="180.0dp" android:scaleType="fitXY" android:layout_below="@id/line" />
+    </smartisan.widget.ListContentItemSwitch>
+    <smartisan.widget.TipsView android:id="@id/tips_view" android:layout_below="@id/setting_switch" style="@style/SettingItemTipsStyle" />
+</LinearLayout>

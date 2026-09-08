@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<set android:ordering="together"
+  xmlns:android="http://schemas.android.com/apk/res/android" xmlns:aapt="http://schemas.android.com/aapt">
+    <objectAnimator android:interpolator="@drawable/$$music_resume__1__0" android:duration="120" android:startOffset="0" android:valueFrom="M-37.54 -5.51 C-37.54,-5.51 -37.5,16.87 -37.5,16.87 C-37.5,18.19 -37.52,23.57 -37.54,24.28 C-37.54,24.28 -60.33,37.37 -60.33,37.37 C-61.99,37.37 -63.33,36.02 -63.33,34.37 C-63.33,34.37 -63.33,-19.97 -63.33,-19.97 C-63.33,-21.62 -62.25,-23.25 -60.59,-23.25 C-60.59,-23.25 -37.47,-10.28 -37.47,-10.28 C-37.47,-10.29 -37.58,-5.4 -37.54,-5.51c " android:valueTo="M-46.76 -18.3 C-46.76,-18.3 -46.76,32.7 -46.76,32.7 C-46.76,34.36 -48.1,35.7 -49.76,35.7 C-49.76,35.7 -61.76,35.7 -61.76,35.7 C-63.42,35.7 -64.76,34.36 -64.76,32.7 C-64.76,32.7 -64.76,-18.3 -64.76,-18.3 C-64.76,-19.96 -63.42,-21.3 -61.76,-21.3 C-61.76,-21.3 -49.76,-21.3 -49.76,-21.3 C-48.1,-21.3 -46.76,-19.96 -46.76,-18.3c " android:valueType="pathType" android:propertyName="pathData" />
+</set>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:orientation="horizontal" android:paddingBottom="@dimen/card_padding" android:layout_width="match_parent" android:layout_height="wrap_content"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <FrameLayout android:id="@id/music_layout" android:layout_width="@dimen/music_height" android:layout_height="@dimen/music_height">
+        <ImageView android:id="@id/song_cover" android:background="@drawable/music_default" android:layout_width="@dimen/music_height" android:layout_height="@dimen/music_height" />
+        <ImageView android:id="@id/full_song_cover_mask" android:layout_width="match_parent" android:layout_height="match_parent" />
+        <ImageView android:layout_gravity="bottom" android:id="@id/half_song_cover_mask" android:layout_width="match_parent" android:layout_height="@dimen/half_song_cover_mask_height" />
+        <ImageView android:id="@id/music_app_icon" android:background="@drawable/music_def_app_icon" android:layout_width="108.0px" android:layout_height="108.0px" />
+        <FrameLayout android:id="@id/full_music_control_layout" android:layout_width="match_parent" android:layout_height="match_parent">
+            <LinearLayout android:gravity="center" android:layout_gravity="center_horizontal" android:orientation="vertical" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="80.0dp" android:layout_marginStart="20.0dp" android:layout_marginEnd="20.0dp">
+                <com.smartisanos.magicflow.view.MarqueeTextView android:textSize="48.0px" android:textStyle="bold" android:textColor="#ffffff" android:ellipsize="end" android:id="@id/song_name" android:focusable="true" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/music_def_song_name" android:singleLine="true" />
+                <com.smartisanos.magicflow.view.MarqueeTextView android:textSize="36.0px" android:textColor="#99ffffff" android:ellipsize="end" android:id="@id/song_author" android:focusable="true" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="3.0dp" android:text="@string/music_def_song_author" android:singleLine="true" />
+            </LinearLayout>
+            <LinearLayout android:gravity="center" android:layout_gravity="center|bottom" android:orientation="horizontal" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="25.0dp">
+                <ImageView android:id="@id/music_previous" android:layout_width="46.0dp" android:layout_height="46.0dp" android:src="@drawable/music_previous" android:scaleType="center" />
+                <ImageView android:id="@id/music_play_status" android:layout_width="48.0dp" android:layout_height="48.0dp" android:layout_marginLeft="18.0dp" android:layout_marginRight="18.0dp" android:src="@drawable/music_resume" android:scaleType="fitXY" android:contentDescription="@string/pause" />
+                <ImageView android:id="@id/music_next" android:layout_width="46.0dp" android:layout_height="46.0dp" android:src="@drawable/music_next" android:scaleType="center" />
+            </LinearLayout>
+        </FrameLayout>
+        <LinearLayout android:gravity="center_vertical" android:layout_gravity="bottom" android:orientation="horizontal" android:id="@id/half_music_control_layout" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginLeft="@dimen/card_content_padding" android:layout_marginRight="15.0dp" android:layout_marginBottom="15.0dp">
+            <LinearLayout android:gravity="center_vertical" android:orientation="vertical" android:layout_width="0.0dp" android:layout_height="wrap_content" android:layout_weight="1.0">
+                <com.smartisanos.magicflow.view.MarqueeTextView android:textSize="48.0px" android:textStyle="bold" android:textColor="#ffffff" android:ellipsize="end" android:id="@id/half_song_name" android:focusable="true" android:layout_width="wrap_content" android:layout_height="wrap_content" android:singleLine="true" />
+                <com.smartisanos.magicflow.view.MarqueeTextView android:textSize="36.0px" android:textColor="#99ffffff" android:ellipsize="end" android:id="@id/half_song_author" android:focusable="true" android:layout_width="wrap_content" android:layout_height="wrap_content" android:singleLine="true" />
+            </LinearLayout>
+            <ImageView android:id="@id/half_music_play_status" android:layout_width="120.0px" android:layout_height="120.0px" android:layout_marginLeft="@dimen/card_content_padding" android:src="@drawable/btn_music_resume" android:scaleType="fitXY" android:contentDescription="@string/pause" />
+        </LinearLayout>
+    </FrameLayout>
+    <LinearLayout android:orientation="vertical" android:layout_width="wrap_content" android:layout_height="match_parent" android:layout_marginStart="@dimen/music_card_padding">
+        <ImageView android:id="@id/alipay_scan" android:background="@drawable/alipay_pay_scan_selector" android:layout_width="@dimen/pay_width" android:layout_height="0.0dp" android:layout_weight="1.0" />
+        <ImageView android:id="@id/alipay_qr_code" android:background="@drawable/alipay_pay_qr_selector" android:layout_width="@dimen/pay_width" android:layout_height="0.0dp" android:layout_marginTop="@dimen/tool_app_grid_view_spacing" android:layout_weight="1.0" />
+    </LinearLayout>
+</LinearLayout>

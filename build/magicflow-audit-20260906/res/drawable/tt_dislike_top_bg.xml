@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape android:shape="rectangle"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="@color/tt_listview" />
+    <corners android:radius="2.0dp" android:topLeftRadius="5.0dp" android:topRightRadius="5.0dp" android:bottomLeftRadius="0.0dp" android:bottomRightRadius="0.0dp" />
+</shape>

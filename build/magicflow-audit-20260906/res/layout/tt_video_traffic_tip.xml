@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge android:layout_width="match_parent" android:layout_height="match_parent"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <ViewStub android:id="@id/tt_video_traffic_tip_layout_viewStub" android:layout="@layout/tt_video_traffic_tips_layout" android:layout_width="match_parent" android:layout_height="match_parent" />
+</merge>

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:orientation="vertical" android:background="#ffededed" android:layout_width="match_parent" android:layout_height="match_parent"
+  xmlns:android="http://schemas.android.com/apk/res/android" xmlns:smartisan="http://schemas.android.com/apk/res-auto">
+    <smartisan.widget.TitleBar android:id="@id/view_title" android:layout_width="match_parent" android:layout_height="wrap_content" smartisan:title_bar_center_text="@string/card_details_title_movie" />
+    <View android:background="#14000000" android:layout_width="match_parent" android:layout_height="0.6dp" />
+    <ScrollView android:scrollbars="none" android:layout_width="match_parent" android:layout_height="match_parent" android:overScrollMode="always">
+        <LinearLayout android:orientation="vertical" android:layout_width="match_parent" android:layout_height="match_parent">
+            <LinearLayout android:orientation="vertical" android:background="#ffffff" android:layout_width="match_parent" android:layout_height="wrap_content">
+                <LinearLayout android:orientation="horizontal" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginLeft="18.0dp" android:layout_marginTop="21.0dp" android:layout_marginRight="18.0dp" android:layout_marginBottom="21.0dp">
+                    <FrameLayout android:layout_width="@dimen/movie_details_image_width" android:layout_height="@dimen/movie_details_image_height">
+                        <ImageView android:layout_gravity="center" android:background="@color/movie_details_image_bg" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/card_movie_poster_default" android:scaleType="center" />
+                        <ImageView android:id="@id/card_details_movie_poster" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="fitXY" />
+                    </FrameLayout>
+                    <LinearLayout android:orientation="vertical" android:layout_width="match_parent" android:layout_height="match_parent" android:layout_marginLeft="18.0dp">
+                        <TextView android:textSize="15.0sp" android:textColor="#cc000000" android:id="@id/card_details_movie_date" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="4.0dp" />
+                        <TextView android:textSize="15.0sp" android:textColor="#cc000000" android:id="@id/card_details_movie_name" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="4.0dp" />
+                        <LinearLayout android:orientation="horizontal" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4.0dp">
+                            <TextView android:textSize="12.0sp" android:textColor="#66000000" android:id="@id/card_details_movie_category" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                            <TextView android:textSize="8.0sp" android:textColor="#ff3965cc" android:id="@id/card_details_movie_screen_type" android:background="@drawable/card_details_film_label" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginLeft="6.0dp" />
+                        </LinearLayout>
+                        <TextView android:id="@id/card_details_movie_time" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="4.0dp" android:layout_marginBottom="4.0dp" />
+                    </LinearLayout>
+                    <View android:background="#14000000" android:layout_width="match_parent" android:layout_height="0.6dp" android:layout_marginLeft="18.0dp" />
+                    <LinearLayout android:orientation="vertical" android:layout_width="match_parent" android:layout_height="wrap_content">
+                        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content">
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </LinearLayout>
+                <View android:background="#14000000" android:layout_width="match_parent" android:layout_height="0.6dp" android:layout_marginLeft="18.0dp" />
+                <LinearLayout android:orientation="vertical" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginLeft="18.0dp" android:layout_marginTop="21.0dp" android:layout_marginRight="18.0dp" android:layout_marginBottom="21.0dp">
+                    <LinearLayout android:orientation="horizontal" android:id="@id/card_details_movie_ticket_num_line" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="@dimen/card_details_line_spacing">
+                        <TextView android:textSize="12.0sp" android:textColor="#66000000" android:layout_width="81.0dp" android:layout_height="wrap_content" android:text="@string/card_details_movie_ticket_num" />
+                        <TextView android:textSize="12.0sp" android:textColor="#cc000000" android:id="@id/card_details_movie_ticket_num" android:layout_width="match_parent" android:layout_height="match_parent" />
+                    </LinearLayout>
+                    <LinearLayout android:orientation="horizontal" android:id="@id/card_details_movie_ticket_order_num_line" android:visibility="gone" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="@dimen/card_details_line_spacing">
+                        <TextView android:textSize="12.0sp" android:textColor="#66000000" android:layout_width="81.0dp" android:layout_height="wrap_content" android:text="@string/card_details_movie_ticket_order_num" />
+                        <TextView android:textSize="12.0sp" android:textColor="#cc000000" android:id="@id/card_details_movie_ticket_order_num" android:layout_width="match_parent" android:layout_height="match_parent" />
+                    </LinearLayout>
+                    <LinearLayout android:orientation="horizontal" android:id="@id/card_details_movie_ticket_verify_num_line" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="@dimen/card_details_line_spacing">
+                        <TextView android:textSize="12.0sp" android:textColor="#66000000" android:layout_width="81.0dp" android:layout_height="wrap_content" android:text="@string/card_details_movie_ticket_verify_num" />
+                        <TextView android:textSize="12.0sp" android:textColor="#cc000000" android:id="@id/card_details_movie_ticket_verify_num" android:layout_width="match_parent" android:layout_height="wrap_content" />
+                    </LinearLayout>
+                    <LinearLayout android:orientation="horizontal" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="@dimen/card_details_line_spacing">
+                        <TextView android:textSize="12.0sp" android:textColor="#66000000" android:layout_width="81.0dp" android:layout_height="wrap_content" android:text="@string/card_details_movie_ticket_viewing_room" />
+                        <TextView android:textSize="12.0sp" android:textColor="#cc000000" android:id="@id/card_details_movie_viewing_room" android:layout_width="match_parent" android:layout_height="match_parent" />
+                    </LinearLayout>
+                    <LinearLayout android:orientation="horizontal" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="@dimen/card_details_line_spacing">
+                        <TextView android:textSize="12.0sp" android:textColor="#66000000" android:layout_width="81.0dp" android:layout_height="wrap_content" android:text="@string/card_details_movie_ticket_seat_num" />
+                        <TextView android:textSize="12.0sp" android:textColor="#cc000000" android:id="@id/card_details_movie_seat_num" android:layout_width="match_parent" android:layout_height="match_parent" />
+                    </LinearLayout>
+                    <LinearLayout android:orientation="horizontal" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="@dimen/card_details_line_spacing">
+                        <TextView android:textSize="12.0sp" android:textColor="#66000000" android:layout_width="81.0dp" android:layout_height="match_parent" android:text="@string/card_details_movie_ticket_address" />
+                        <TextView android:textSize="14.0sp" android:textColor="#cc000000" android:id="@id/card_details_movie_address" android:layout_width="match_parent" android:layout_height="match_parent" />
+                    </LinearLayout>
+                    <LinearLayout android:orientation="horizontal" android:id="@id/card_details_movie_call_num_text" android:layout_width="match_parent" android:layout_height="wrap_content">
+                        <TextView android:textSize="12.0sp" android:textColor="#66000000" android:layout_width="81.0dp" android:layout_height="wrap_content" android:text="@string/card_details_movie_ticket_call_num" />
+                        <TextView android:textSize="14.0sp" android:textColor="#cc000000" android:id="@id/card_details_movie_call_num" android:layout_width="match_parent" android:layout_height="match_parent" />
+                    </LinearLayout>
+                </LinearLayout>
+                <View android:background="#14000000" android:layout_width="match_parent" android:layout_height="0.6dp" />
+                <LinearLayout android:orientation="horizontal" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginLeft="@dimen/card_details_button_margin_hori" android:layout_marginTop="9.0dp" android:layout_marginRight="@dimen/card_details_button_margin_hori" android:layout_marginBottom="9.0dp">
+                    <FrameLayout android:id="@id/card_details_movie_enter_map" android:background="@drawable/card_details_view_button_bg" android:layout_width="0.0dp" android:layout_height="wrap_content" android:layout_marginRight="@dimen/card_details_button_margin_center" android:layout_weight="1.0">
+                        <TextView android:textSize="13.5sp" android:textColor="#9a000000" android:gravity="center" android:layout_gravity="center" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/card_details_movie_enter_map" />
+                    </FrameLayout>
+                    <FrameLayout android:id="@id/card_details_movie_add_to_calendar" android:background="@drawable/card_details_view_button_bg" android:layout_width="0.0dp" android:layout_height="wrap_content" android:layout_weight="1.0">
+                        <TextView android:textSize="13.5sp" android:textColor="#9a000000" android:gravity="center" android:layout_gravity="center" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/card_details_movie_add_to_calendar" />
+                    </FrameLayout>
+                </LinearLayout>
+                <View android:background="#14000000" android:layout_width="match_parent" android:layout_height="1.0dp" />
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

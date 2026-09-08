@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:orientation="vertical" android:id="@id/calendar_container_view" android:background="@drawable/calendar_single" android:visibility="gone" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="@dimen/card_padding"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <include layout="@layout/calendar_permission_layout" />
+    <com.smartisanos.magicflow.view.MaxListView android:id="@id/calendar_recently_events_view" android:layout_width="match_parent" android:layout_height="wrap_content" android:divider="@drawable/calendar_list_divider" />
+    <LinearLayout android:orientation="vertical" android:id="@id/calendar_all_event_container" android:layout_width="match_parent" android:layout_height="52.0dp">
+        <View android:background="@drawable/list_item_line" android:layout_width="match_parent" android:layout_height="1.0dp" />
+        <TextView android:textSize="@dimen/card_calendar_more_text_size" android:textStyle="bold" android:textColor="@color/card_calendar_more_text_color" android:gravity="center" android:layout_gravity="center_vertical" android:id="@id/calendar_more_text" android:background="@drawable/selector_calendar_bottom_bg" android:clickable="true" android:layout_width="match_parent" android:layout_height="match_parent" android:text="@string/card_calendar_view_more" />
+    </LinearLayout>
+</LinearLayout>
