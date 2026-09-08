@@ -11,6 +11,7 @@ build/
 *.jpeg
 !/build/
 !/build/**
+!docs/*.png
 !launcher/assets/settings_native/
 !launcher/assets/settings_native/*.png
 !launcher/assets/folder_theme_bg/wallpaper_preview_*.png
