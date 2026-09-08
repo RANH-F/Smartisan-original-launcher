@@ -4,6 +4,10 @@
 
 > 本区只保留日期、标题和一句话结论；根因、修改、验证与风险统一写入下方“每日修复记录”。已废弃或已取代条目只保留标题。
 
+- 2026-09-08 QUICK_DESKTOP_CROSS_ROM_TOOL_RESOLVER：六个固定快捷工具保留原版动作语义，便签等系统工具新增标准 Intent、厂商包与系统应用身份三级解析；V2458A 五类系统工具解析通过，魅族及其他 ROM 真机点击仍待对应设备确认。
+
+- 2026-09-08 QUICK_DESKTOP_GESTURE_AND_RESTORE_TOKEN_FIX：快捷桌面动画开始即接管下一次触摸并补齐 100% 立即完成分支，解决快速切换卡住和误翻第二页；未执行的恢复预览令牌会在重新选文件时释放，正常旧备份不再被误报损坏，V2458A 真机由用户确认正常。
+
 - 2026-09-08 QUICK_DESKTOP_BACKUP_DEFAULT_STATE_FIX：快捷桌面备份已保存包含默认值的完整逻辑状态，X21A 新归档确认含全部 8 个字段且真机恢复重新生效；恢复预览同时显示启用组件数与总开关状态。
 
 - 2026-09-07 QUICK_DESKTOP_HALF_COMPLETE：9 月 6–7 日已完成原手势宿主、实时模糊背景、原版固定卡片及设置主链，V2458A 真机视觉与主要交互通过，整体约完成一半；AppWidgetHost、备份恢复实测和完整设备矩阵仍未完成。
@@ -105,6 +109,22 @@
 ## 每日修复记录（倒序）
 
 ### 2026-09-08
+
+#### 快捷桌面固定快捷工具跨品牌解析
+
+- **根因**：便签入口只尝试 Smartisan 的固定 Activity 和 `com.android.notes`，魅族便签等厂商包即使已经安装也无法命中，最终错误提示“未安装便签软件”。录音、计算器、日历和时钟虽已有部分 Android 标准 Intent 或少量厂商包兜底，但覆盖顺序和品牌范围不一致，同样可能在其他 ROM 上误报未安装。Android 本身没有统一的“打开便签”Intent，因此不能仅靠一个通用 Action 解决。
+- **修改**：保持六个原版固定图标与点击热区不变，只扩展 `QuickDesktopActions` 的动作解析。便签依次尝试 Smartisan 原入口、Smartisan/魅族/小米/OPPO/vivo/华为/荣耀/三星等已知应用包，最后复用项目现有系统图标识别语义，按 Launcher Activity 的包名、类名和“便签/笔记/备忘录/Notes/Memo”桌面名称解析，并优先系统应用。日历、录音、计算器和时钟先走 Android 标准 Category/Action，再走厂商包和同类身份兜底；城市服务继续按用户选择的支付宝/微信快捷入口处理，不伪造不存在的 ROM 城市服务 API。
+- **原版与参考边界**：`clean_launcher` 和 maintained 仅提供 Smartisan 固定组件或旧数组参考，不能覆盖现代厂商包；本次复用了当前 `IconManager` 已验证的 package/component/label 分类原则，没有创建新的 Manager/Service、没有修改原版手势、卡片布局或支付协议。
+- **验证**：`git diff --check` 和完整 `build.bat` 通过，`v1.5.7 / 32` APK 已用 `adb install --no-incremental -r -d` 保留数据覆盖安装，v1/v2/v3 签名有效；本地产物与设备 `base.apk` SHA-256 均为 `FAACE84F78700522FBFFDA53F45FABB5C65B84C046D3D58B087EC99648FA0CA0`。V2458A/Android 16 的系统解析结果分别为日历 `com.bbk.calendar/.MainActivity`、录音 `com.android.bbksoundrecorder/...ReclistActivity`、计算器 `com.android.bbkcalculator/.Calculator`、时钟 `com.android.BBKClock/.alarmclock.HandleApiCalls`，便签包 `com.android.notes/.Notes` 也存在且可启动；安装后未见本轮 `FATAL EXCEPTION` / `AndroidRuntime` 崩溃。
+- **风险与回归**：当前没有连接魅族设备，所以 `com.meizu.notepaper` 及其身份兜底属于实现和构建验证，不能写成魅族真机 PASS。各 ROM 若隐藏系统工具 Launcher Activity 且又不实现标准 Intent，仍需取得该机实际 package/component 后补精确候选；身份兜底只在标准入口和已知包均失败时启用，降低误开同名第三方应用的风险。
+
+#### 快捷桌面快速切换与正常旧备份误报损坏修复
+
+- **根因**：快捷桌面打开进度恰好达到 `100%` 时，`settleTo(1)` 的立即完成分支只更新位移便返回，没有调用 `onHostOpened()` 将 PopupWindow 切成可触摸状态；打开动画尚未结束时也要等最后一帧才接管触摸。快速反向滑动因此可能落到下层 `RootView`，既会造成快捷桌面看似卡住，也会让关闭手势继续驱动桌面分页而进入第二页。恢复问题并非归档损坏：恢复预览若被快捷桌面等其他设置路由直接替换，原 READY 状态的 `PreparedRestore` 和全局操作令牌不会经过预览返回回调释放；再次选择任何正常备份时，忙碌状态又被错误编码成 `RESTORE_INVALID_ARCHIVE`，界面遂显示“备份文件无效或已损坏”。
+- **修改**：`QuickDesktopHostView` 在打开吸附开始时即调用 `onHostOpened()` 接管下一次触摸，并补齐进度已到终点的立即完成分支；一次触摸未结束时即使内容到达关闭边界也不提前销毁窗口，部分展开状态允许双向水平拖动以支持快速反转。`DesktopRestoreController.validateSelectedFile()` 在用户明确选择新文件时先安全丢弃尚未执行的旧预览，再获取新令牌；真实并发占用改用 `RESTORE_OPERATION_BUSY`，设置页显示“桌面正在执行其他设置，请稍后再试”，不再冒充文件损坏。
+- **原版与参考边界**：Launcher 侧继续由原版 `RootView` 负责首页、方向锁和连续打开进度，替换宿主只修 PopupWindow 的触摸所有权交接；未新增第二套桌面分页或手势识别。原版 APK 与 `clean_launcher` 没有当前 `.slauncherbackup` 兼容层，备份修复仅处理当前移植版未执行预览的生命周期，不放宽 ZIP、路径、清单、JSON、校验和或 PNG 安全校验。
+- **验证**：四份设备备份（`2026-08-22 10-01`、`2026-09-07 09-09`、`2026-09-08 20-03`、`备份快捷方式`）逐一通过 ZIP 完整性、必需条目、逐文件 SHA-256 和便携图标 SHA-256 核验，确认原提示属于状态误报。`git diff --check` 与完整 `build.bat` 通过，最终 APK 为 `v1.5.7 / 32`，使用 `adb install --no-incremental -r -d` 保留数据覆盖安装成功，设备 `dumpsys package` 确认版本一致。V2458A/Android 16 上已复现“恢复预览被快捷桌面设置替换”的原触发顺序并安装修复包，用户随后确认恢复和快捷桌面当前均正常。
+- **风险与回归**：本次真机结论覆盖 V2458A/Android 16 当前手势节奏和上述四份 format v2 备份；Android 8–15、三键导航、不同触控采样率以及 format v1 归档仍未组成完整矩阵。真正截断、校验和不符或内容非法的备份仍会按原安全策略拒绝恢复。
 
 #### 快捷桌面默认开关状态无法备份恢复
 

@@ -16,7 +16,7 @@
 </p>
 
 <p align="center">
-  <img alt="Android" src="https://img.shields.io/badge/Android-6.0%2B-brightgreen?style=flat-square">
+  <img alt="Android" src="https://img.shields.io/badge/Android-8.0%2B-brightgreen?style=flat-square">
   <img alt="Version" src="https://img.shields.io/badge/version-v1.5.7-blue?style=flat-square">
   <img alt="Build" src="https://img.shields.io/badge/build-32-orange?style=flat-square">
   <img alt="Status" src="https://img.shields.io/badge/status-active-success?style=flat-square">
@@ -50,7 +50,7 @@
 ## 当前状态
 
 当前版本：**v1.5.7 / versionCode 32**
-支持系统：**Android 6.0 及以上**
+支持系统：**Android 8.0 及以上**
 测试环境：已在 **Android 12 / Android 15 / Android 16** 环境开展兼容测试。
 
 不同厂商 ROM 在应用分身、后台限制、主题行为、解锁广播和系统入口暴露方式上仍可能存在差异，本项目会持续针对真实设备反馈进行适配。
@@ -69,6 +69,7 @@
 
 #### 修复与优化
 
+* **旧备份恢复误报修复**：修复恢复预览被其他设置页替换后遗留操作令牌，导致再次选择正常旧备份却提示“备份文件无效或已损坏”的问题；真正的操作占用现在会显示独立提示。
 * **文件夹稳定性与显示修复**：修复文件夹渲染资源释放后的 GLThread 崩溃；隔离桌面图标缩放对打开文件夹的影响，并修复文件夹预览中日历、时钟、天气的尺寸、缓存和首次数据回放问题。
 * **桌面与文件夹几何优化**：修正不同分辨率下的桌面局部偏移、文字大小与间距，以及打开文件夹的标签位置和图标尺寸；文件夹普通应用恢复复用桌面共享纹理路径。
 * **默认图标显示统一**：DEFAULT APK 图标按透明可见边界对齐现有图标可见范围，减少应用原图留白差异造成的主体忽大忽小。

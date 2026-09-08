@@ -39,7 +39,7 @@ E:\FANG\smartisan\smartisan-launcher-original-port
 
 | 文件 | 当前用途 | 备注 |
 | --- | --- | --- |
-| `build/launcher-signed.apk` | 当前桌面主 APK。 | 当前构建版本为 `v1.5.6 / 31`，`compileSdkVersion=36`、`minSdkVersion=23`、`targetSdkVersion=28`，可安装基线为 Android 6.0+，包含 Android 15 / Android 16；不包含独立 QuickSearch APK 和在线图标库；发布 GitHub / Gitee Release 时需要上传。 |
+| `build/launcher-signed.apk` | 当前桌面主 APK。 | 当前构建版本为 `v1.5.7 / 32`，`compileSdkVersion=36`、`minSdkVersion=23`、`targetSdkVersion=28`，可安装基线为 Android 6.0+，包含 Android 15 / Android 16；不包含独立 QuickSearch APK 和在线图标库；发布 GitHub / Gitee Release 时需要上传。 |
 | `build/theme-trans-signed.apk` | 当前透明主题安装包。 | 安装后包名为 `com.smartisanos.launcher.theme.trans`；`compileSdkVersion=36`、`minSdkVersion=23`、`targetSdkVersion=28`，Android 15 / Android 16 使用这个包；发布 GitHub / Gitee Release 时建议随主 APK 一起上传。 |
 | `original_apks/com.smartisanos.launcher.theme.trans.apk` | 原始透明主题参考包。 | `minSdkVersion=29`、`targetSdkVersion=17`；只作资源参考，不作为 Android 15 / Android 16 安装包。 |
 | `original_apks/com.smartisanos.launcher.theme.aero.apk` | 毛玻璃主题安装包 / 原版参考。 | 包名为 `com.smartisanos.launcher.theme.aero`，不能当透明主题包使用。 |

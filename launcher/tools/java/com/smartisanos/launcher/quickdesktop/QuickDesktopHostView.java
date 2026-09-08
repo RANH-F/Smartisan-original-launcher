@@ -40,6 +40,7 @@ public final class QuickDesktopHostView extends FrameLayout {
     private float closeDownY;
     private float closeStartProgress;
     private boolean closingDrag;
+    private boolean touchSequenceActive;
 
     public QuickDesktopHostView(Context context) {
         this(context, null);
@@ -126,7 +127,8 @@ public final class QuickDesktopHostView extends FrameLayout {
             setAlpha(1.0f);
             updateBackground(0.0f);
             contentLayer.setTranslationX(-width);
-            if (settlingAnimator == null || !settlingAnimator.isRunning()) {
+            if ((settlingAnimator == null || !settlingAnimator.isRunning())
+                    && !touchSequenceActive) {
                 setVisibility(GONE);
                 clearFocus();
                 QuickDesktopController.onHostClosed();
@@ -170,8 +172,16 @@ public final class QuickDesktopHostView extends FrameLayout {
         cancelSettling();
         if (Math.abs(target - openProgress) < 0.001f) {
             setContentTranslation(finalTranslation(target), reason);
+            if (target >= 1.0f) {
+                QuickDesktopController.onHostOpened();
+            }
             logState(reason, target);
             return;
+        }
+        if (target >= 1.0f) {
+            // Own the next gesture as soon as the opening settle begins. Waiting until the last
+            // animation frame lets a rapid reverse swipe fall through to desktop pagination.
+            QuickDesktopController.onHostOpened();
         }
         final float finalTarget = target;
         final String finalReason = reason;
@@ -219,6 +229,7 @@ public final class QuickDesktopHostView extends FrameLayout {
 
     void closeImmediately(String reason) {
         cancelSettling();
+        touchSequenceActive = false;
         openProgress = 0.0f;
         setAlpha(1.0f);
         updateBackground(0.0f);
@@ -249,6 +260,7 @@ public final class QuickDesktopHostView extends FrameLayout {
         int action = event.getActionMasked();
         if (action == MotionEvent.ACTION_DOWN) {
             cancelSettling();
+            touchSequenceActive = true;
             closeDownX = event.getX();
             closeDownY = event.getY();
             closeStartProgress = openProgress;
@@ -265,7 +277,9 @@ public final class QuickDesktopHostView extends FrameLayout {
             float dx = event.getX() - closeDownX;
             float dy = event.getY() - closeDownY;
             if (!closingDrag && Math.abs(dx) > touchSlop && Math.abs(dx) > Math.abs(dy)) {
-                closingDrag = dx < 0.0f;
+                // A newly interrupted settle may begin partially open. Keep both horizontal
+                // directions continuous so a rapid reversal can reopen instead of stalling.
+                closingDrag = true;
             }
             if (closingDrag) {
                 setContentTranslation(-effectiveWidth() * (1.0f - closeStartProgress) + dx,
@@ -284,6 +298,7 @@ public final class QuickDesktopHostView extends FrameLayout {
                     && Math.abs(event.getY() - closeDownY) <= touchSlop;
             if (tap && openProgress >= 0.999f
                     && contentView.performActionAt(event.getX(), event.getY())) {
+                touchSequenceActive = false;
                 recycleVelocityTracker();
                 closingDrag = false;
                 return true;
@@ -291,6 +306,7 @@ public final class QuickDesktopHostView extends FrameLayout {
             boolean close = action == MotionEvent.ACTION_CANCEL
                     || velocityX < -FLING_VELOCITY
                     || (velocityX <= FLING_VELOCITY && openProgress <= (1.0f / 3.0f));
+            touchSequenceActive = false;
             settleTo(close ? 0.0f : 1.0f, velocityX,
                     action == MotionEvent.ACTION_CANCEL ? "close-cancel" : "close-release");
             recycleVelocityTracker();
@@ -302,6 +318,7 @@ public final class QuickDesktopHostView extends FrameLayout {
 
     @Override
     protected void onDetachedFromWindow() {
+        touchSequenceActive = false;
         cancelSettling();
         recycleVelocityTracker();
         super.onDetachedFromWindow();

@@ -4,18 +4,28 @@ import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.LauncherApps;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Process;
 import android.provider.AlarmClock;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.smartisanos.launcher.theme.MaintainedLauncherSettingsHost;
 
+import java.util.List;
+import java.util.Locale;
+
 /** Cross-ROM action fallbacks for the fixed original Magic Flow entries. */
 final class QuickDesktopActions {
+    private static final String TAG = "QuickDesktopActions";
+
     private QuickDesktopActions() {
     }
 
@@ -90,37 +100,73 @@ final class QuickDesktopActions {
             case 0:
                 if (startComponent(context, "com.smartisanos.notes",
                         "com.smartisanos.notes.CreateNotesActivity")) return true;
-                return requireHandled(context,
-                        launchFirst(context, "com.smartisanos.notes", "com.android.notes"),
+                if (launchFirst(context, "com.smartisanos.notes",
+                        "com.meizu.notepaper", "com.meizu.flyme.notepaper",
+                        "com.miui.notes", "com.coloros.note", "com.coloros.note2",
+                        "com.oplus.note", "com.vivo.notes", "com.android.notes",
+                        "com.example.android.notepad", "com.huawei.notepad",
+                        "com.hihonor.notepad", "com.samsung.android.app.notes",
+                        "com.oneplus.note", "com.asus.quickmemo")) return true;
+                return requireHandled(context, launchByIdentity(context,
+                        new String[] {"notes", "notepad", "memo"},
+                        new String[] {"便签", "笔记", "备忘录", "notes", "notepad", "memo"}),
                         "便签软件");
             case 1:
                 if (startComponent(context, "com.android.calendar",
                         "com.android.calendar.event.EditEventActivity")) return true;
-                return requireHandled(context, start(context, new Intent(Intent.ACTION_MAIN)
-                        .addCategory(Intent.CATEGORY_APP_CALENDAR)), "日历软件");
+                if (start(context, new Intent(Intent.ACTION_MAIN)
+                        .addCategory(Intent.CATEGORY_APP_CALENDAR))) return true;
+                if (launchFirst(context, "com.meizu.flyme.calendar", "com.android.calendar",
+                        "com.coloros.calendar", "com.oplus.calendar", "com.vivo.calendar",
+                        "com.miui.calendar", "com.huawei.calendar",
+                        "com.hihonor.calendar", "com.samsung.android.calendar",
+                        "com.google.android.calendar")) return true;
+                return requireHandled(context, launchByIdentity(context,
+                        new String[] {"calendar"}, new String[] {"日历", "calendar"}),
+                        "日历软件");
             case 2:
                 if (startComponent(context, "com.smartisanos.recorder",
                         "com.smartisanos.recorder.activity.RecorderActivity")) return true;
-                return requireHandled(context,
-                        start(context, new Intent(MediaStore.Audio.Media.RECORD_SOUND_ACTION)),
+                if (start(context, new Intent(MediaStore.Audio.Media.RECORD_SOUND_ACTION))) return true;
+                if (launchFirst(context, "com.meizu.media.recorder", "com.android.soundrecorder",
+                        "com.miui.soundrecorder", "com.coloros.soundrecorder",
+                        "com.oplus.soundrecorder", "com.android.bbksoundrecorder",
+                        "com.vivo.soundrecorder", "com.huawei.soundrecorder",
+                        "com.hihonor.soundrecorder", "com.sec.android.app.voicenote",
+                        "com.asus.soundrecorder")) return true;
+                return requireHandled(context, launchByIdentity(context,
+                        new String[] {"soundrecorder", "voicerecorder", "recorder"},
+                        new String[] {"录音", "录音机", "录音器", "recorder", "voice recorder"}),
                         "录音软件");
             case 3:
                 if (startComponent(context, "com.smartisanos.calculator",
                         "com.smartisanos.calculator.Calculator")) return true;
-                if (launchFirst(context, "com.android.bbkcalculator",
+                if (start(context, new Intent(Intent.ACTION_MAIN)
+                        .addCategory(Intent.CATEGORY_APP_CALCULATOR))) return true;
+                if (launchFirst(context, "com.meizu.flyme.calculator", "com.meizu.calculator",
+                        "com.android.bbkcalculator", "com.vivo.calculator",
                         "com.coloros.calculator", "com.miui.calculator",
-                        "com.sec.android.app.popupcalculator")) return true;
-                return requireHandled(context, start(context, new Intent(Intent.ACTION_MAIN)
-                        .addCategory(Intent.CATEGORY_APP_CALCULATOR)), "计算器软件");
+                        "com.oplus.calculator", "com.android.calculator2",
+                        "com.google.android.calculator", "com.huawei.calculator",
+                        "com.hihonor.calculator", "com.sec.android.app.popupcalculator",
+                        "com.oneplus.calculator")) return true;
+                return requireHandled(context, launchByIdentity(context,
+                        new String[] {"calculator", "calc"},
+                        new String[] {"计算器", "calculator"}), "计算器软件");
             case 4:
                 return openAlipay(context, false);
             case 5:
                 if (startComponent(context, "com.smartisanos.clock",
                         "com.smartisanos.clock.activity.ClockActivity")) return true;
-                if (launchFirst(context, "com.android.BBKClock", "com.coloros.alarmclock",
-                        "com.android.deskclock", "com.sec.android.app.clockpackage")) return true;
-                return requireHandled(context,
-                        start(context, new Intent(AlarmClock.ACTION_SHOW_ALARMS)), "时钟软件");
+                if (start(context, new Intent(AlarmClock.ACTION_SHOW_ALARMS))) return true;
+                if (launchFirst(context, "com.meizu.flyme.alarmclock", "com.android.alarmclock",
+                        "com.android.BBKClock", "com.coloros.alarmclock", "com.oplus.alarmclock",
+                        "com.android.deskclock", "com.google.android.deskclock",
+                        "com.huawei.deskclock", "com.hihonor.deskclock",
+                        "com.sec.android.app.clockpackage")) return true;
+                return requireHandled(context, launchByIdentity(context,
+                        new String[] {"deskclock", "alarmclock", "clock"},
+                        new String[] {"时钟", "闹钟", "clock", "alarm"}), "时钟软件");
             default:
                 return false;
         }
@@ -144,6 +190,59 @@ final class QuickDesktopActions {
     private static boolean launchPackage(Context context, String packageName) {
         Intent intent = context.getPackageManager().getLaunchIntentForPackage(packageName);
         return intent != null && start(context, intent);
+    }
+
+    /**
+     * Last-resort cross-ROM resolver for system tools that have no portable Android category
+     * (notably Notes).  Reuse the same package/component/label semantics as the launcher's
+     * existing system-icon classifier, preferring preinstalled apps before user apps.
+     */
+    private static boolean launchByIdentity(Context context, String[] identityTokens,
+            String[] labelTokens) {
+        PackageManager packageManager = context.getPackageManager();
+        Intent launcher = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER);
+        List<ResolveInfo> activities;
+        try {
+            activities = packageManager.queryIntentActivities(launcher, 0);
+        } catch (RuntimeException error) {
+            return false;
+        }
+        if (activities == null) return false;
+        for (int pass = 0; pass < 2; pass++) {
+            for (ResolveInfo info : activities) {
+                ActivityInfo activity = info == null ? null : info.activityInfo;
+                if (activity == null || activity.packageName == null || activity.name == null) continue;
+                boolean system = activity.applicationInfo != null
+                        && (activity.applicationInfo.flags & (ApplicationInfo.FLAG_SYSTEM
+                        | ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)) != 0;
+                if ((pass == 0) != system) continue;
+                String identity = (activity.packageName + " " + activity.name)
+                        .toLowerCase(Locale.US);
+                String label = "";
+                try {
+                    CharSequence loaded = info.loadLabel(packageManager);
+                    label = loaded == null ? "" : loaded.toString().trim().toLowerCase(Locale.US);
+                } catch (RuntimeException ignored) {
+                }
+                if (!containsAny(identity, identityTokens) && !containsAny(label, labelTokens)) {
+                    continue;
+                }
+                Log.i(TAG, "QD_TOOL_RESOLVED package=" + activity.packageName
+                        + " activity=" + activity.name + " system=" + system);
+                if (start(context, new Intent().setComponent(
+                        new ComponentName(activity.packageName, activity.name)))) return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean containsAny(String value, String[] tokens) {
+        if (value == null || tokens == null) return false;
+        for (String token : tokens) {
+            if (token != null && token.length() > 0
+                    && value.contains(token.toLowerCase(Locale.US))) return true;
+        }
+        return false;
     }
 
     private static boolean startComponent(Context context, String packageName, String className) {

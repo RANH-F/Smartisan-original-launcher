@@ -12703,6 +12703,9 @@ public final class MaintainedLauncherSettingsHost {
             return getString(resources, "restore_success", "桌面恢复已完成。");
         }
         String code = result == null ? "" : result.errorCode;
+        if ("RESTORE_OPERATION_BUSY".equals(code)) {
+            return getString(resources, "restore_error_busy", "桌面正在执行其他设置，请稍后再试。");
+        }
         if ("RESTORE_FORMAT_TOO_NEW".equals(code)) {
             return getString(resources, "restore_error_too_new", "该备份由更高版本创建，请升级桌面后恢复。");
         }

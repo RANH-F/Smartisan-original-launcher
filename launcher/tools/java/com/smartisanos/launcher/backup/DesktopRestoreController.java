@@ -77,8 +77,12 @@ public final class DesktopRestoreController {
 
     public static void validateSelectedFile(Context context, Uri uri, Listener listener) {
         if (context == null || uri == null) return;
+        // Selecting another file replaces an abandoned READY preview.  The preview can be
+        // displaced by another maintained-settings route without invoking its back callback;
+        // leaving that token owned makes every later, valid archive look "damaged".
+        discardPreparedRestore(context);
         if (BackupOperationLock.isBusy()) {
-            complete(listener, BackupRestoreResult.error("RESTORE_INVALID_ARCHIVE",
+            complete(listener, BackupRestoreResult.error("RESTORE_OPERATION_BUSY",
                     "桌面正在执行其他设置，请稍后再试。"));
             return;
         }
@@ -87,7 +91,7 @@ public final class DesktopRestoreController {
         final Listener callback = listener;
         final String token = UUID.randomUUID().toString();
         if (!BackupOperationLock.acquire(token)) {
-            complete(listener, BackupRestoreResult.error("RESTORE_INVALID_ARCHIVE",
+            complete(listener, BackupRestoreResult.error("RESTORE_OPERATION_BUSY",
                     "桌面正在执行其他设置，请稍后再试。"));
             return;
         }
@@ -387,6 +391,7 @@ public final class DesktopRestoreController {
     }
 
     private static String restoreMessage(String code) {
+        if ("RESTORE_OPERATION_BUSY".equals(code)) return "桌面正在执行其他设置，请稍后再试。";
         if ("RESTORE_FORMAT_TOO_NEW".equals(code)) return "该备份由更高版本创建，请升级桌面后恢复。";
         if ("RESTORE_CHECKSUM_FAILED".equals(code)) return "备份文件校验失败，无法恢复。";
         if ("RESTORE_FILE_UNREADABLE".equals(code)) return "无法读取所选备份文件。";
