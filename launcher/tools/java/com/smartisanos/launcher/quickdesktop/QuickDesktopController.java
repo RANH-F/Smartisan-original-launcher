@@ -44,6 +44,7 @@ public final class QuickDesktopController {
     private static PopupWindow hostWindow;
     private static boolean hostWindowTouchable;
     private static boolean actionLaunchPending;
+    private static boolean searchLaunchPending;
     private static boolean openingGesture;
     private static boolean captureStartedForGesture;
     private static VelocityTracker openingVelocityTracker;
@@ -275,18 +276,28 @@ public final class QuickDesktopController {
         captureStartedForGesture = false;
         recycleOpeningVelocityTracker();
         actionLaunchPending = false;
+        searchLaunchPending = false;
     }
 
     public static void onLauncherStopped() {
         if (!actionLaunchPending) return;
         actionLaunchPending = false;
+        searchLaunchPending = false;
         closeForAction("target-covered-launcher");
     }
 
     public static void onLauncherResumed() {
         if (!actionLaunchPending) return;
         actionLaunchPending = false;
+        searchLaunchPending = false;
         closeForAction("returned-before-stop");
+    }
+
+    public static void onSearchSurfaceReady() {
+        if (!searchLaunchPending) return;
+        searchLaunchPending = false;
+        actionLaunchPending = false;
+        closeForAction("search-surface-ready");
     }
 
     static void onHostClosed() {
@@ -308,8 +319,15 @@ public final class QuickDesktopController {
     }
 
     static void markActionLaunchPending(String reason) {
+        searchLaunchPending = false;
         actionLaunchPending = true;
         Log.i(TAG, "QD_ACTION_PENDING reason=" + reason);
+    }
+
+    static void markSearchLaunchPending(String reason) {
+        searchLaunchPending = true;
+        actionLaunchPending = true;
+        Log.i(TAG, "QD_SEARCH_PENDING reason=" + reason);
     }
 
     private static QuickDesktopHostView host() {

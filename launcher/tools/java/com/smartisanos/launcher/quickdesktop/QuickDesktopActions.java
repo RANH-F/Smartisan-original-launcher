@@ -36,8 +36,10 @@ final class QuickDesktopActions {
     }
 
     static boolean openSearch(Context context) {
+        // QuickSearch is translucent: keep this host until its window is actually visible, then
+        // let the search Activity close it through the dedicated surface-ready handoff.
+        QuickDesktopController.markSearchLaunchPending("open-search");
         MaintainedLauncherSettingsHost.openLauncherSearch(context);
-        QuickDesktopController.markActionLaunchPending("open-search");
         return true;
     }
 

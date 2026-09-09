@@ -43,6 +43,7 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.smartisanos.launcher.quickdesktop.QuickDesktopController;
 import com.smartisanos.launcher.quicksearch.SearchEntry;
 import com.smartisanos.launcher.quicksearch.SearchIconBackend;
 import com.smartisanos.launcher.quicksearch.SearchHistoryRepository;
@@ -240,7 +241,10 @@ public final class OriginalQuickSearchActivity extends Activity
     @Override public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
         windowFocused = hasFocus;
-        if (hasFocus) maybeShowInitialIme("WINDOW_FOCUS");
+        if (hasFocus) {
+            QuickDesktopController.onSearchSurfaceReady();
+            maybeShowInitialIme("WINDOW_FOCUS");
+        }
     }
 
     @Override public void onSnapshotPublished(final SearchSnapshot snapshot) {
