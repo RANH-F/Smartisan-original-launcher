@@ -10,6 +10,7 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.ViewGroup;
 import android.view.VelocityTracker;
+import android.view.ViewConfiguration;
 import android.widget.PopupWindow;
 
 import java.lang.ref.WeakReference;
@@ -17,8 +18,9 @@ import java.lang.ref.WeakReference;
 /**
  * Narrow bridge between the original RootView left-edge progress and the in-activity host.
  *
- * <p>The controller does not recognize the opening gesture. RootView remains the only owner of
- * the opening gesture, direction lock, page-zero gate, and edit-mode behavior.</p>
+ * <p>RootView remains the owner of the opening gesture, direction lock, page-zero gate, and
+ * edit-mode behavior. This bridge only cancels RootView's current sequence after a revealed
+ * left screen wins and then reverses closed, so the same UP cannot start desktop pagination.</p>
  */
 public final class QuickDesktopController {
     private static final String TAG = "QuickDesktopHost";
@@ -47,8 +49,15 @@ public final class QuickDesktopController {
     private static boolean searchLaunchPending;
     private static boolean openingGesture;
     private static boolean captureStartedForGesture;
+    private static boolean cleanupInProgress;
+    private static boolean expectedHostWindowDetach;
     private static VelocityTracker openingVelocityTracker;
     private static float openingDownX;
+    private static boolean openingStartAllowed;
+    private static float openingMaxX;
+    private static int openingTouchSlop;
+    private static boolean openingRevealOccurred;
+    private static boolean consumeRootGestureUntilEnd;
 
     private QuickDesktopController() {
     }
@@ -152,10 +161,7 @@ public final class QuickDesktopController {
         if (current != null && currentRoot == root) {
             return;
         }
-        if (current != null) {
-            current.closeImmediately("reattach");
-        }
-        dismissHostWindow();
+        cleanup("reattach", true);
         QuickDesktopHostView host = new QuickDesktopHostView(root.getContext());
         hostView = host;
         rootRef = new WeakReference<>(root);
@@ -163,15 +169,28 @@ public final class QuickDesktopController {
         Log.i(TAG, "QD_HOST_ATTACHED enabled=" + isEnabled(root.getContext()));
     }
 
-    public static void onTouch(MotionEvent event, float closedProgress) {
-        QuickDesktopHostView host = host();
-        if (event == null || host == null || !isEnabled(host.getContext())) {
-            return;
-        }
+    public static int onTouch(MotionEvent event, float closedProgress) {
+        if (event == null) return 0;
         int action = event.getActionMasked();
         if (action == MotionEvent.ACTION_DOWN) {
-            openingGesture = host.getOpenProgress() < 0.001f;
+            consumeRootGestureUntilEnd = false;
+            openingRevealOccurred = false;
+        } else if (consumeRootGestureUntilEnd) {
+            if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
+                consumeRootGestureUntilEnd = false;
+            }
+            return 2;
+        }
+        QuickDesktopHostView host = host();
+        if (host == null || !isEnabled(host.getContext())) {
+            return 0;
+        }
+        if (action == MotionEvent.ACTION_DOWN) {
+            openingStartAllowed = isGridGestureStart(event);
+            openingGesture = openingStartAllowed && host.getOpenProgress() < 0.001f;
             openingDownX = event.getX();
+            openingMaxX = openingDownX;
+            openingTouchSlop = ViewConfiguration.get(host.getContext()).getScaledTouchSlop();
             captureStartedForGesture = false;
             if (openingGesture) {
                 host.cancelSettling();
@@ -190,10 +209,30 @@ public final class QuickDesktopController {
             }
         } else if (openingGesture && openingVelocityTracker != null) {
             openingVelocityTracker.addMovement(event);
+            if (action == MotionEvent.ACTION_MOVE) {
+                float currentX = event.getX();
+                if (currentX > openingMaxX) {
+                    openingMaxX = currentX;
+                } else if (openingRevealOccurred
+                        && openingMaxX - currentX > openingTouchSlop) {
+                    openingVelocityTracker.computeCurrentVelocity(1000);
+                    float velocityX = openingVelocityTracker.getXVelocity();
+                    if (velocityX < -900.0f) {
+                        host.settleTo(0.0f, velocityX, "open-reverse");
+                        openingGesture = false;
+                        consumeRootGestureUntilEnd = true;
+                        recycleOpeningVelocityTracker();
+                        Log.i(TAG, "QD_ROOT_GESTURE_CANCEL reason=open-reverse velocityX="
+                                + velocityX);
+                        return 1;
+                    }
+                }
+            }
         }
         if ((action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL)
                 && openingGesture) {
             float open = host.getOpenProgress();
+            boolean cancelRootGesture = false;
             if (open > 0.0f) {
                 float velocityX = 0.0f;
                 if (openingVelocityTracker != null) {
@@ -205,10 +244,16 @@ public final class QuickDesktopController {
                         || (velocityX >= -900.0f && open > (1.0f / 3.0f)));
                 host.settleTo(shouldOpen ? 1.0f : 0.0f, velocityX,
                         action == MotionEvent.ACTION_CANCEL ? "open-cancel" : "open-release");
+                cancelRootGesture = !shouldOpen && openingRevealOccurred;
             }
             recycleOpeningVelocityTracker();
             openingGesture = false;
+            if (cancelRootGesture) {
+                Log.i(TAG, "QD_ROOT_GESTURE_CANCEL reason=open-release-close");
+                return 1;
+            }
         }
+        return 0;
     }
 
     public static void onProgress(float closedProgress, MotionEvent event) {
@@ -233,12 +278,13 @@ public final class QuickDesktopController {
         // a page after a full-screen drag. RootView still owns all gesture gating; once it calls
         // this bridge, translate the replacement host by the gesture's real physical distance.
         float physicalProgress = (event.getX() - openingDownX) / host.getPageWidth();
+        if (physicalProgress > 0.001f) openingRevealOccurred = true;
         host.setOpenProgress(physicalProgress, "root-physical-progress");
     }
 
     public static void requestShow() {
         QuickDesktopHostView host = host();
-        if (host != null && isEnabled(host.getContext())) {
+        if (openingStartAllowed && host != null && isEnabled(host.getContext())) {
             showHostWindow(false);
             host.ensureVisibleForOriginalRequest();
         }
@@ -280,10 +326,40 @@ public final class QuickDesktopController {
     }
 
     public static void onLauncherStopped() {
-        if (!actionLaunchPending) return;
+        QuickDesktopHostView host = host();
+        if (host != null && (host.getOpenProgress() > 0.0f || hostWindow != null)) {
+            host.closeImmediately(actionLaunchPending
+                    ? "target-covered-launcher" : "launcher-stopped");
+        } else {
+            cleanup("launcher-stopped", false);
+        }
         actionLaunchPending = false;
         searchLaunchPending = false;
-        closeForAction("target-covered-launcher");
+    }
+
+    /** Latch the original scene boundaries at DOWN; moving into the grid cannot claim it. */
+    private static boolean isGridGestureStart(MotionEvent event) {
+        try {
+            Class<?> constants = Class.forName("com.smartisanos.launcher.data.Constants");
+            float top = constants.getField("status_bar_height").getInt(null);
+            Class<?> workspaceClass = Class.forName("com.smartisanos.launcher.view.Eb");
+            Object workspace = workspaceClass.getMethod("getInstance").invoke(null);
+            java.lang.reflect.Field pageField = workspaceClass.getDeclaredField("px");
+            pageField.setAccessible(true);
+            Object page = pageField.get(workspace);
+            int mode = (Integer) page.getClass().getMethod("Dl").invoke(page);
+            Object layout = constants.getMethod("mode", int.class).invoke(null, mode);
+            Class<?> layoutClass = Class.forName("com.smartisanos.launcher.data.LayoutProperty");
+            float bottom = (Float) Class.forName("com.smartisanos.launcher.view.x")
+                    .getMethod("d", layoutClass).invoke(null, layout);
+            boolean allowed = bottom > top && event.getY() >= top && event.getY() < bottom;
+            Log.i(TAG, "QD_START_REGION allowed=" + allowed + " y=" + event.getY()
+                    + " top=" + top + " dockTop=" + bottom);
+            return allowed;
+        } catch (ReflectiveOperationException | NullPointerException error) {
+            Log.w(TAG, "QD_START_REGION_UNAVAILABLE", error);
+            return false;
+        }
     }
 
     public static void onLauncherResumed() {
@@ -291,6 +367,10 @@ public final class QuickDesktopController {
         actionLaunchPending = false;
         searchLaunchPending = false;
         closeForAction("returned-before-stop");
+    }
+
+    public static void onLauncherDestroyed() {
+        cleanup("launcher-destroyed", true);
     }
 
     public static void onSearchSurfaceReady() {
@@ -301,10 +381,13 @@ public final class QuickDesktopController {
     }
 
     static void onHostClosed() {
-        openingGesture = false;
-        captureStartedForGesture = false;
-        recycleOpeningVelocityTracker();
-        dismissHostWindow();
+        cleanup("host-closed", false);
+    }
+
+    static void onHostDetached(QuickDesktopHostView detachedHost) {
+        if (!expectedHostWindowDetach && detachedHost != null && detachedHost == hostView) {
+            cleanup("host-window-detached", true);
+        }
     }
 
     static void onHostOpened() {
@@ -372,13 +455,51 @@ public final class QuickDesktopController {
 
     private static void dismissHostWindow() {
         if (hostWindow != null) {
+            PopupWindow window = hostWindow;
             try {
-                hostWindow.dismiss();
+                window.setTouchable(false);
+                hostWindowTouchable = false;
+                if (window.isShowing()) {
+                    window.update();
+                }
+            } catch (RuntimeException error) {
+                Log.w(TAG, "QD_HOST_WINDOW_DISABLE_TOUCH_FAILED", error);
+            }
+            expectedHostWindowDetach = true;
+            try {
+                window.dismiss();
             } catch (RuntimeException error) {
                 Log.w(TAG, "QD_HOST_WINDOW_DISMISS_FAILED", error);
+            } finally {
+                expectedHostWindowDetach = false;
             }
             hostWindow = null;
             hostWindowTouchable = false;
+        }
+    }
+
+    private static void cleanup(String reason, boolean releaseHost) {
+        if (cleanupInProgress) return;
+        cleanupInProgress = true;
+        try {
+            QuickDesktopBackgroundCapture.cancel(reason);
+            dismissHostWindow();
+            openingGesture = false;
+            captureStartedForGesture = false;
+            recycleOpeningVelocityTracker();
+            actionLaunchPending = false;
+            searchLaunchPending = false;
+            if (releaseHost) {
+                openingRevealOccurred = false;
+                consumeRootGestureUntilEnd = false;
+                QuickDesktopHostView current = hostView;
+                hostView = null;
+                rootRef.clear();
+                if (current != null) current.releaseForDetach();
+            }
+            Log.i(TAG, "QD_CLEANUP reason=" + reason + " releaseHost=" + releaseHost);
+        } finally {
+            cleanupInProgress = false;
         }
     }
 

@@ -16,6 +16,31 @@ public class SettingItemSwitch extends RelativeLayout {
     private SwitchEx toggle;
     private TextView title;
     private TextView subtitle;
+    private boolean switchTouchStarted;
+    private boolean labelNavigationEnabled;
+
+    public void setLabelNavigationEnabled(boolean enabled) {
+        labelNavigationEnabled = enabled;
+    }
+
+    @Override public boolean dispatchTouchEvent(android.view.MotionEvent event) {
+        if (event.getActionMasked() == android.view.MotionEvent.ACTION_DOWN) {
+            android.graphics.Rect bounds = new android.graphics.Rect();
+            if (toggle != null) {
+                toggle.getDrawingRect(bounds);
+                offsetDescendantRectToMyCoords(toggle, bounds);
+            }
+            switchTouchStarted = toggle != null
+                    && bounds.contains((int) event.getX(), (int) event.getY());
+        }
+        if (!switchTouchStarted && !labelNavigationEnabled) return false;
+        boolean handled = super.dispatchTouchEvent(event);
+        if (event.getActionMasked() == android.view.MotionEvent.ACTION_UP
+                || event.getActionMasked() == android.view.MotionEvent.ACTION_CANCEL) {
+            switchTouchStarted = false;
+        }
+        return handled;
+    }
 
     public SettingItemSwitch(Context context) {
         this(context, null);

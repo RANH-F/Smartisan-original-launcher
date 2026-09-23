@@ -22,6 +22,7 @@ public final class LauncherSettingBridge {
     private static final String PREFS = "com.smartisanos.launcher_prefs";
     private static final String SETTINGS_PREFS = "launcher_settings";
     private static final String KEY_ICON_SIZE = "launcher_icon_size";
+    private static final String KEY_DESKTOP_TEXT_SIZE = "launcher_desktop_text_size";
     private static final String TAG = "LauncherIconShadow";
     private static final int SHADOW_DARK = 0;
     private static final int SHADOW_LIGHT = 1;
@@ -189,6 +190,32 @@ public final class LauncherSettingBridge {
 
     public static int readIconSizePercent(Context context) {
         return normalizeIconSizePercent(readInt(context, KEY_ICON_SIZE, 100));
+    }
+
+    /** Applies the saved desktop-label increment after original resources are loaded. */
+    public static void applyDesktopTextSize(Context context) {
+        int extra = Math.max(0, Math.min(10, readInt(context, KEY_DESKTOP_TEXT_SIZE, 0)));
+        extra = ((extra + 1) / 2) * 2;
+        if (extra == 0) return;
+        try {
+            Class<?> constants = Class.forName("com.smartisanos.launcher.data.Constants");
+            Class<?> metrics = Class.forName(
+                    "com.smartisanos.launcher.data.DesktopLabelMetrics");
+            metrics.getMethod("setDesktopTextSizeAdjustment", Integer.TYPE)
+                    .invoke(null, Integer.valueOf(extra));
+            int applied = 0;
+            for (int mode : new int[] {12, 20}) {
+                Object property = constants.getMethod("mode", Integer.TYPE)
+                        .invoke(null, Integer.valueOf(mode));
+                if (property == null) continue;
+                Field field = property.getClass().getField("text_font_size");
+                field.setInt(property, Math.max(1, field.getInt(property) + extra));
+                applied++;
+            }
+            Log.i(TAG, "DESKTOP_TEXT_SIZE_APPLIED extra=" + extra + " modes=" + applied);
+        } catch (Throwable error) {
+            Log.w(TAG, "DESKTOP_TEXT_SIZE_APPLY_FAILED", error);
+        }
     }
 
     /** Geometry-only mapping owned by IconVisualMetrics; the user value is unchanged. */

@@ -260,6 +260,8 @@ public final class MaintainedLauncherSettingsHost {
     private static final String PREF_TRANSPARENT_PREVIOUS_THEME = "transparent_previous_theme";
     private static final String KEY_LAUNCHER_ICON_SIZE = "launcher_icon_size";
     private static final String TAG_ICON_SIZE_SUBTITLE = "launcher_icon_size_subtitle";
+    private static final String KEY_DESKTOP_TEXT_SIZE = "launcher_desktop_text_size";
+    private static final String TAG_DESKTOP_TEXT_SIZE_SUBTITLE = "launcher_desktop_text_size_subtitle";
     private static final String TAG_ICON_PACK_SUBTITLE = "launcher_icon_pack_subtitle";
     private static final String PREF_ICON_SIZE_RUNTIME_DIRTY = "launcher_icon_size_runtime_dirty";
     private static final String PREF_ICON_SIZE_RUNTIME_OLD = "launcher_icon_size_runtime_old";
@@ -1276,6 +1278,11 @@ public final class MaintainedLauncherSettingsHost {
         click(activity, resources, root, "setting_ocd_options", new View.OnClickListener() {
             public void onClick(View v) {
                 showOcdOptionsPage(activity);
+            }
+        });
+        click(activity, resources, root, "item_id_status_bar_compat", new View.OnClickListener() {
+            public void onClick(View v) {
+                showStatusBarSettingsPage(activity);
             }
         });
         click(activity, resources, root, "item_id_search_vertical_gestures",
@@ -4511,6 +4518,16 @@ public final class MaintainedLauncherSettingsHost {
                                                Resources resources, final View root,
                                                boolean forward, boolean animate) {
         tuneScrollBars(root);
+        if (activity != null) {
+            View contentHost = activity.findViewById(android.R.id.content);
+            if (contentHost != null) {
+                // Paint the extra top inset with the same color as the settings status bar.
+                contentHost.setBackgroundColor(0xfff7f7f7);
+                contentHost.setPadding(contentHost.getPaddingLeft(),
+                        com.smartisanos.launcher.compat.StatusBarHeightCompat.settingsTopSpacing(activity),
+                        contentHost.getPaddingRight(), contentHost.getPaddingBottom());
+            }
+        }
         if (activity == null || root == null || !animate) {
             if (activity != null) {
                 activity.setContentView(root);
@@ -4842,8 +4859,9 @@ public final class MaintainedLauncherSettingsHost {
         });
     }
 
-    private static void bindSwitchControlOnly(final SettingItemSwitch item,
+    static void bindSwitchControlOnly(final SettingItemSwitch item,
                                               final View.OnClickListener listener) {
+        item.setLabelNavigationEnabled(false);
         item.setOnClickListener(null);
         item.setClickable(false);
         if (item.getSwitch() == null) {
@@ -4877,6 +4895,7 @@ public final class MaintainedLauncherSettingsHost {
             }
         });
         item.setClickable(true);
+        item.setLabelNavigationEnabled(true);
         item.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 if (QuickDesktopController.isEnabled(activity)) {
@@ -13168,6 +13187,79 @@ public final class MaintainedLauncherSettingsHost {
         }
     }
 
+    static void showSmartisanConfirmedSingleChoiceDialog(final Activity activity, String title,
+            String[] labels, int checked, String cancelText, String confirmText,
+            final SingleChoiceListener listener) {
+        final Dialog dialog = new Dialog(activity);
+        LinearLayout root = new LinearLayout(activity);
+        prepareSmartisanDialogRoot(activity, root);
+        root.addView(smartisanDialogTitle(activity, title),
+                new LinearLayout.LayoutParams(-1, dp(activity, 53)));
+        root.addView(smartisanDivider(activity), new LinearLayout.LayoutParams(-1, 1));
+
+        final int[] selected = {Math.max(0, Math.min(checked, labels.length - 1))};
+        final ArrayList<SmartisanChoiceDot> dots = new ArrayList<SmartisanChoiceDot>();
+        LinearLayout choices = new LinearLayout(activity);
+        choices.setOrientation(LinearLayout.VERTICAL);
+        for (int i = 0; i < labels.length; i++) {
+            final int index = i;
+            LinearLayout row = new LinearLayout(activity);
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            row.setGravity(Gravity.CENTER_VERTICAL);
+            row.setPadding(dp(activity, 26), 0, dp(activity, 18), 0);
+            TextView label = text(activity, labels[i], 17, 0xff454545, false);
+            label.setGravity(Gravity.CENTER_VERTICAL);
+            row.addView(label, new LinearLayout.LayoutParams(0, dp(activity, 58), 1.0f));
+            final SmartisanChoiceDot dot = new SmartisanChoiceDot(activity);
+            dot.setChecked(i == selected[0]);
+            dots.add(dot);
+            row.addView(dot, new LinearLayout.LayoutParams(dp(activity, 44), dp(activity, 44)));
+            row.setOnClickListener(new View.OnClickListener() {
+                public void onClick(View view) {
+                    selected[0] = index;
+                    for (int j = 0; j < dots.size(); j++) dots.get(j).setChecked(j == index);
+                }
+            });
+            choices.addView(row, new LinearLayout.LayoutParams(-1, dp(activity, 58)));
+            if (i < labels.length - 1) {
+                choices.addView(smartisanDivider(activity), new LinearLayout.LayoutParams(-1, 1));
+            }
+        }
+        ScrollView scroll = new ScrollView(activity);
+        scroll.setOverScrollMode(View.OVER_SCROLL_IF_CONTENT_SCROLLS);
+        scroll.addView(choices, new ScrollView.LayoutParams(-1, -2));
+        root.addView(scroll, new LinearLayout.LayoutParams(-1,
+                Math.min(dp(activity, 348), labels.length * dp(activity, 59))));
+        root.addView(smartisanDivider(activity), new LinearLayout.LayoutParams(-1, 1));
+
+        LinearLayout buttons = new LinearLayout(activity);
+        buttons.setOrientation(LinearLayout.HORIZONTAL);
+        TextView cancel = smartisanDialogActionButton(activity, cancelText, false, -1);
+        TextView confirm = smartisanDialogActionButton(activity, confirmText, true, 1);
+        cancel.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View view) { dialog.dismiss(); }
+        });
+        confirm.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View view) {
+                dialog.dismiss();
+                if (listener != null) listener.onSelected(selected[0]);
+            }
+        });
+        buttons.addView(cancel, new LinearLayout.LayoutParams(0, dp(activity, 47), 1));
+        buttons.addView(smartisanDivider(activity), new LinearLayout.LayoutParams(1, dp(activity, 47)));
+        buttons.addView(confirm, new LinearLayout.LayoutParams(0, dp(activity, 47), 1));
+        root.addView(buttons, new LinearLayout.LayoutParams(-1, dp(activity, 47)));
+
+        dialog.setContentView(root);
+        dialog.show();
+        Window shown = dialog.getWindow();
+        if (shown != null) {
+            shown.setBackgroundDrawableResource(android.R.color.transparent);
+            int screenWidth = activity.getResources().getDisplayMetrics().widthPixels;
+            shown.setLayout(Math.min(dp(activity, 380), screenWidth - dp(activity, 32)), -2);
+        }
+    }
+
     private static void bindUnlockCompatibilitySwitch(final Activity activity,
             Resources resources, View root) {
         View view = find(resources, root, "item_id_unlock_wait_for_focus");
@@ -13190,6 +13282,9 @@ public final class MaintainedLauncherSettingsHost {
 
     private static void showQuickDesktopSettingsPage(final Activity activity) {
         QuickDesktopSettingsHost.show(activity);
+    }
+    private static void showStatusBarSettingsPage(final Activity activity) {
+        StatusBarSettingsHost.show(activity);
     }
     private static void showSearchVerticalGesturesPage(final Activity activity) {
         try {
@@ -13334,6 +13429,10 @@ public final class MaintainedLauncherSettingsHost {
     private static void click(Context context, Resources resources, View root, String idName, View.OnClickListener listener) {
         View view = find(resources, root, idName);
         if (view != null) {
+            if (view instanceof SettingItemSwitch
+                    && "setting_dynamic_weather".equals(idName)) {
+                ((SettingItemSwitch) view).setLabelNavigationEnabled(true);
+            }
             view.setOnClickListener(guardedSettingsClick(idName, listener));
             view.setClickable(true);
         }
@@ -13948,7 +14047,7 @@ public final class MaintainedLauncherSettingsHost {
     private static View iconPageHeader(final Activity activity, SettingsResourceContext context, Resources resources) {
         LinearLayout root = new LinearLayout(context);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setLayoutParams(new AbsListView.LayoutParams(-1, dp(context, 112)));
+        root.setLayoutParams(new AbsListView.LayoutParams(-1, dp(context, 224)));
 
         root.addView(iconHeaderRow(activity, context, resources,
                 getString(resources, "icon_style_title", "图标样式"), iconSourceSubtitle(activity),
@@ -13959,18 +14058,40 @@ public final class MaintainedLauncherSettingsHost {
         }, false, 1),
                 new LinearLayout.LayoutParams(-1, dp(context, 56)));
 
+        root.addView(iconHeaderRow(activity, context, resources,
+                getString(resources, "default_icon_shape_title", "默认应用图标框"),
+                defaultIconShapeSubtitle(activity),
+                "selector_setting_sub_item_bg_middle", new View.OnClickListener() {
+            public void onClick(View v) {
+                showDefaultIconShapeDialog(activity);
+            }
+        }, false, 4), new LinearLayout.LayoutParams(-1, dp(context, 56)));
+
         View.OnClickListener iconSizeClick = new View.OnClickListener() {
             public void onClick(View v) {
                 showIconSizeDialog(activity);
             }
         };
         View iconSizeRow = iconHeaderRow(activity, context, resources,
-                getString(resources, "desktop_icon_size_title", "桌面图标大小"),
+                getString(resources, "desktop_icon_size_title", "桌面图标调整"),
                 iconSizeSubtitle(activity),
-                "selector_setting_sub_item_bg_bottom", iconSizeClick, false, 2);
+                "selector_setting_sub_item_bg_middle", iconSizeClick, false, 2);
         iconSizeRow.setClickable(true);
         iconSizeRow.setOnClickListener(iconSizeClick);
         root.addView(iconSizeRow, new LinearLayout.LayoutParams(-1, dp(context, 56)));
+
+        View.OnClickListener textSizeClick = new View.OnClickListener() {
+            public void onClick(View v) {
+                showDesktopTextSizeDialog(activity);
+            }
+        };
+        View textSizeRow = iconHeaderRow(activity, context, resources,
+                getString(resources, "desktop_text_size_title", "桌面文字调整"),
+                desktopTextSizeSubtitle(activity),
+                "selector_setting_sub_item_bg_bottom", textSizeClick, false, 3);
+        textSizeRow.setClickable(true);
+        textSizeRow.setOnClickListener(textSizeClick);
+        root.addView(textSizeRow, new LinearLayout.LayoutParams(-1, dp(context, 56)));
         return root;
     }
 
@@ -14013,7 +14134,9 @@ public final class MaintainedLauncherSettingsHost {
 
         boolean iconSourceRow = rowType == 1;
         boolean iconSizeRow = rowType == 2;
-        if (iconSizeRow || iconSourceRow) {
+        boolean textSizeRow = rowType == 3;
+        boolean defaultIconShapeRow = rowType == 4;
+        if (iconSizeRow || iconSourceRow || textSizeRow || defaultIconShapeRow) {
             ImageView arrow = new ImageView(context);
             int arrowId = resources.getIdentifier("setting_next", "drawable", SETTINGS_PKG);
             if (arrowId != 0) {
@@ -14037,10 +14160,13 @@ public final class MaintainedLauncherSettingsHost {
             RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(-2, -1);
             lp.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
             lp.addRule(RelativeLayout.CENTER_VERTICAL);
-            lp.rightMargin = (iconSizeRow || iconSourceRow) ? dp(context, 58) : dp(context, 24);
+            lp.rightMargin = (iconSizeRow || iconSourceRow || textSizeRow
+                    || defaultIconShapeRow) ? dp(context, 58) : dp(context, 24);
             row.addView(subtitle, lp);
             if (iconSizeRow) {
                 subtitle.setTag(TAG_ICON_SIZE_SUBTITLE);
+            } else if (textSizeRow) {
+                subtitle.setTag(TAG_DESKTOP_TEXT_SIZE_SUBTITLE);
             } else if (iconSourceRow) {
                 subtitle.setTag(TAG_ICON_PACK_SUBTITLE);
             }
@@ -14058,6 +14184,43 @@ public final class MaintainedLauncherSettingsHost {
             return IconPackManager.getIconPackLabel(context, selection.packageName);
         }
         return getString(context, "default_icon_text", "默认图标");
+    }
+
+    private static String defaultIconShapeSubtitle(Context context) {
+        return DefaultIconCircleRenderer.isCircleEnabled(context)
+                ? getString(context, "default_icon_shape_circle", "圆形")
+                : getString(context, "default_icon_shape_follow_app", "跟随应用");
+    }
+
+    private static void showDefaultIconShapeDialog(final Activity activity) {
+        if (activity == null || activity.isFinishing()) return;
+        final Resources resources = getMaintainedResources(activity);
+        final boolean oldCircle = DefaultIconCircleRenderer.isCircleEnabled(activity);
+        String[] labels = {
+                getString(resources, "default_icon_shape_follow_app", "跟随应用"),
+                getString(resources, "default_icon_shape_circle", "圆形")
+        };
+        showSmartisanConfirmedSingleChoiceDialog(activity,
+                getString(resources, "default_icon_shape_title", "默认应用图标框"),
+                labels, oldCircle ? 1 : 0, getString(resources, "cancel", "取消"),
+                getString(resources, "activity_title_confirm", "确定"),
+                new SingleChoiceListener() {
+                    public void onSelected(int which) {
+                        boolean circle = which == 1;
+                        if (circle == oldCircle) return;
+                        if (!DefaultIconCircleRenderer.setCircleEnabled(activity, circle)) {
+                            Toast.makeText(activity, "图标框设置保存失败，请重试", Toast.LENGTH_LONG).show();
+                            return;
+                        }
+                        if (LauncherColdReloadCoordinator.beginDefaultIconShapeReload(activity)) {
+                            activity.finish();
+                            activity.overridePendingTransition(0, 0);
+                        } else {
+                            DefaultIconCircleRenderer.setCircleEnabled(activity, oldCircle);
+                            Toast.makeText(activity, "桌面重载未启动，请返回桌面后重试", Toast.LENGTH_LONG).show();
+                        }
+                    }
+                });
     }
 
     /** Shows a transactional global-source chooser. Nothing is persisted until Apply is tapped. */
@@ -14491,7 +14654,9 @@ public final class MaintainedLauncherSettingsHost {
     }
 
     private static String iconSizeSubtitle(Context context) {
-        return normalizeIconSizePercent(readIconSizePercent(context)) + "%";
+        int adjustment = normalizeIconSizePercent(readIconSizePercent(context)) - 100;
+        return adjustment == 0 ? adjustmentDefaultLabel(context)
+                : (adjustment > 0 ? "+" : "") + adjustment;
     }
 
     private static int readIconSizePercent(Context context) {
@@ -14538,6 +14703,32 @@ public final class MaintainedLauncherSettingsHost {
     }
 
     private static void showIconSizeDialog(final Activity activity) {
+        final int[] values = {-20, -10, 0, 10, 20, 30, 40, 50};
+        String[] labels = new String[values.length];
+        int currentPercent = normalizeIconSizePercent(readIconSizePercent(activity));
+        int currentValue = currentPercent - 100;
+        int selected = 0;
+        for (int i = 0; i < values.length; i++) {
+            labels[i] = values[i] == 0 ? adjustmentDefaultLabel(activity)
+                    : (values[i] > 0 ? "+" : "") + values[i];
+            if (values[i] == currentValue) selected = i;
+        }
+        final int oldPercent = currentPercent;
+        final Resources resources = getMaintainedResources(activity);
+        showSmartisanConfirmedSingleChoiceDialog(activity,
+                getString(resources, "desktop_icon_size_title", "桌面图标调整"),
+                labels, selected, getString(resources, "cancel", "取消"),
+                getString(resources, "activity_title_confirm", "确定"),
+                new SingleChoiceListener() {
+                    public void onSelected(int which) {
+                        if (which < 0 || which >= values.length) return;
+                        int percent = values[which] + 100;
+                        if (percent != oldPercent) saveIconSizePercent(activity, oldPercent, percent);
+                    }
+                });
+    }
+
+    private static void showLegacyIconSizeDialog(final Activity activity) {
         final int current = normalizeIconSizePercent(readIconSizePercent(activity));
         final Resources resources = getMaintainedResources(activity);
         final Dialog dialog = new Dialog(activity);
@@ -14681,6 +14872,62 @@ public final class MaintainedLauncherSettingsHost {
             window.setLayout(Math.min(dp(activity, 380), screenWidth - dp(activity, 32)),
                     WindowManager.LayoutParams.WRAP_CONTENT);
         }
+    }
+
+    private static String desktopTextSizeSubtitle(Context context) {
+        int adjustment = readDesktopTextSize(context);
+        return adjustment == 0 ? adjustmentDefaultLabel(context)
+                : (adjustment > 0 ? "+" : "") + adjustment;
+    }
+
+    private static int readDesktopTextSize(Context context) {
+        try {
+            int value = Math.max(0, Math.min(10, context.getSharedPreferences(
+                    "launcher_settings", Context.MODE_PRIVATE)
+                    .getInt(KEY_DESKTOP_TEXT_SIZE, 0)));
+            return ((value + 1) / 2) * 2;
+        } catch (Throwable ignored) {
+            return 0;
+        }
+    }
+
+    private static void showDesktopTextSizeDialog(final Activity activity) {
+        final int oldValue = readDesktopTextSize(activity);
+        final int[] values = {0, 2, 4, 6, 8, 10};
+        final String[] labels = {adjustmentDefaultLabel(activity), "+2", "+4", "+6", "+8", "+10"};
+        int selected = 0;
+        for (int i = 0; i < values.length; i++) {
+            if (values[i] == oldValue) selected = i;
+        }
+        final Resources resources = getMaintainedResources(activity);
+        showSmartisanConfirmedSingleChoiceDialog(activity,
+                getString(resources, "desktop_text_size_title", "桌面文字调整"),
+                labels, selected, getString(resources, "cancel", "取消"),
+                getString(resources, "activity_title_confirm", "确定"),
+                new SingleChoiceListener() {
+                    public void onSelected(int which) {
+                        if (which < 0 || which >= values.length) return;
+                        int newValue = values[which];
+                        if (newValue == oldValue) return;
+                        boolean saved = activity.getSharedPreferences(
+                                "launcher_settings", Context.MODE_PRIVATE).edit()
+                                .putInt(KEY_DESKTOP_TEXT_SIZE, newValue).commit();
+                        if (saved) {
+                            LauncherColdReloadCoordinator.beginDesktopTextSizeReload(
+                                    activity, oldValue, newValue);
+                        }
+                    }
+                });
+    }
+
+    private static String adjustmentDefaultLabel(Context context) {
+        Resources resources;
+        try {
+            resources = createSettingsContext(context).getResources();
+        } catch (Throwable ignored) {
+            resources = context.getResources();
+        }
+        return getString(resources, "adjustment_default_value", "默认");
     }
 
     private static TextView iconSizeLabel(Context context, String text) {
@@ -15513,6 +15760,35 @@ public final class MaintainedLauncherSettingsHost {
             reloadOriginalSettings(context);
         } catch (Throwable ignored) {
         }
+    }
+
+    /** Resolves only applications whose effective desktop source is DEFAULT. */
+    private static java.util.Set<String> defaultIconPackages(Context context) {
+        java.util.LinkedHashSet<String> packages = new java.util.LinkedHashSet<String>();
+        if (context == null) return packages;
+        try {
+            PackageManager pm = context.getPackageManager();
+            Intent intent = new Intent(Intent.ACTION_MAIN);
+            intent.addCategory(Intent.CATEGORY_LAUNCHER);
+            List<ResolveInfo> entries = pm.queryIntentActivities(intent, 0);
+            for (ResolveInfo entry : entries == null
+                    ? java.util.Collections.<ResolveInfo>emptyList() : entries) {
+                ActivityInfo info = entry == null ? null : entry.activityInfo;
+                if (info == null || TextUtils.isEmpty(info.packageName)
+                        || LauncherSettingBridge.isDynamicIconPackage(info.packageName)) {
+                    continue;
+                }
+                Drawable managed = null;
+                try {
+                    managed = iconOverrideDrawable(entry, pm);
+                } catch (Throwable ignored) {
+                }
+                if (managed == null) packages.add(info.packageName);
+            }
+        } catch (Throwable error) {
+            Log.w(LOG_TAG, "DEFAULT_ICON_PACKAGE_RESOLVE_FAILED", error);
+        }
+        return packages;
     }
 
     private static void warmAndApplyIconPack(final Activity activity) {

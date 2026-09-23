@@ -1,7 +1,6 @@
 package com.smartisanos.launcher.quickdesktop;
 
 import android.graphics.Bitmap;
-import android.graphics.Matrix;
 import android.opengl.GLSurfaceView;
 import android.os.Handler;
 import android.os.Looper;
@@ -10,6 +9,9 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 /** Captures the already-rendered launcher GL framebuffer and prepares fixed background layers. */
 public final class QuickDesktopBackgroundCapture {
     private static final String TAG = "QuickDesktopHost";
@@ -17,6 +19,7 @@ public final class QuickDesktopBackgroundCapture {
     private static final int BLUR_RADIUS = 14;
     private static final int BLUR_PASSES = 2;
     private static final Handler MAIN = new Handler(Looper.getMainLooper());
+    private static final ExecutorService WORKER = Executors.newSingleThreadExecutor();
 
     private static volatile boolean glCaptureRequested;
     private static volatile int generation;
@@ -49,6 +52,14 @@ public final class QuickDesktopBackgroundCapture {
         }, Math.max(0L, delayMillis));
     }
 
+    static void cancel(String reason) {
+        generation++;
+        glCaptureRequested = false;
+        pendingGeneration = 0;
+        pendingHost = null;
+        Log.i(TAG, "QD_BACKGROUND_CANCEL reason=" + reason);
+    }
+
     public static boolean isGlCaptureRequested() {
         return glCaptureRequested;
     }
@@ -68,17 +79,23 @@ public final class QuickDesktopBackgroundCapture {
             Log.w(TAG, "QD_BACKGROUND_GL_CAPTURE_EMPTY");
             return;
         }
-        Thread worker = new Thread(new Runnable() {
+        WORKER.execute(new Runnable() {
             @Override
             public void run() {
-                Matrix flip = new Matrix();
-                flip.setScale(1.0f, -1.0f);
-                final Bitmap sharpBitmap = Bitmap.createBitmap(rawBitmap, 0, 0,
-                        rawBitmap.getWidth(), rawBitmap.getHeight(), flip, false);
-                rawBitmap.recycle();
+                if (requestGeneration != generation) {
+                    rawBitmap.recycle();
+                    return;
+                }
+                // The Host ImageViews flip the framebuffer vertically. Keep rawBitmap as the
+                // sharp layer so capture never creates a second full-resolution Bitmap.
+                final Bitmap sharpBitmap = rawBitmap;
                 if (!hasVisibleContent(sharpBitmap)) {
                     sharpBitmap.recycle();
                     Log.w(TAG, "QD_BACKGROUND_GL_CAPTURE_REJECTED reason=blank");
+                    return;
+                }
+                if (requestGeneration != generation) {
+                    sharpBitmap.recycle();
                     return;
                 }
                 int blurWidth = Math.min(CAPTURE_WIDTH, sharpBitmap.getWidth());
@@ -86,6 +103,11 @@ public final class QuickDesktopBackgroundCapture {
                         * (blurWidth / (float) sharpBitmap.getWidth())));
                 final Bitmap blurBitmap = Bitmap.createScaledBitmap(
                         sharpBitmap, blurWidth, blurHeight, true);
+                if (requestGeneration != generation) {
+                    sharpBitmap.recycle();
+                    if (blurBitmap != sharpBitmap) blurBitmap.recycle();
+                    return;
+                }
                 blur(blurBitmap, BLUR_RADIUS, BLUR_PASSES);
                 MAIN.post(new Runnable() {
                     @Override
@@ -99,9 +121,7 @@ public final class QuickDesktopBackgroundCapture {
                     }
                 });
             }
-        }, "QuickDesktopBackground");
-        worker.setDaemon(true);
-        worker.start();
+        });
     }
 
     private static SurfaceView findSurfaceView(View view) {

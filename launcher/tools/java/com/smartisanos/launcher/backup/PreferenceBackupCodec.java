@@ -72,6 +72,8 @@ public final class PreferenceBackupCodec {
             // Grid / layout
             "prefs_key_launcher_mode",
             "launcher_icon_size",
+            "launcher_default_icon_shape_v1",
+            "launcher_desktop_text_size",
             "launcher_page_animation",
             // Theme
             "launcher_theme",
@@ -86,6 +88,9 @@ public final class PreferenceBackupCodec {
             // Display
             "launcher_hide_lable",
             "launcher_hide_navigation_bar",
+            "status_bar_auto_enabled",
+            "status_bar_extra_dp",
+            "dock_extra_dp",
             "launcher_unlock_animation_enabled",
             "dock_slide_reverse_enabled",
             // Icon source / pack (no permission gate; missing pack falls back gracefully)
@@ -177,10 +182,25 @@ public final class PreferenceBackupCodec {
      */
     private static Map<String, ?> portableValues(Context context, String file) {
         Map<String, ?> stored = context.getSharedPreferences(file, Context.MODE_PRIVATE).getAll();
-        if (!QUICK_DESKTOP_PREFS.equals(file)) return stored;
-
         HashMap<String, Object> complete = new HashMap<String, Object>();
         complete.putAll(stored);
+        // Include implicit defaults so restoring a default-valued backup can undo later edits.
+        if ("launcher_settings".equals(file)) {
+            complete.put("launcher_icon_size", com.smartisanos.launcher.theme.LauncherSettingBridge
+                    .readIconSizePercent(context));
+            if (!complete.containsKey("launcher_desktop_text_size")) complete.put("launcher_desktop_text_size", 0);
+            if (!complete.containsKey("status_bar_auto_enabled")) complete.put("status_bar_auto_enabled", true);
+            if (!complete.containsKey("status_bar_extra_dp")) complete.put("status_bar_extra_dp", 0);
+            if (!complete.containsKey("dock_extra_dp")) complete.put("dock_extra_dp", 0);
+            return complete;
+        }
+        if ("com.smartisanos.launcher_prefs".equals(file)) {
+            if (!complete.containsKey("launcher_default_icon_shape_v1")) {
+                complete.put("launcher_default_icon_shape_v1", "circle");
+            }
+            return complete;
+        }
+        if (!QUICK_DESKTOP_PREFS.equals(file)) return stored;
         complete.put("enabled", QuickDesktopController.isEnabled(context));
         complete.put("card_music_payment", QuickDesktopController.isCardEnabled(context,
                 QuickDesktopController.CARD_MUSIC_PAYMENT));

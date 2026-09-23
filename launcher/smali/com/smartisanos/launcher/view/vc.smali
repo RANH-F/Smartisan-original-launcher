@@ -112,12 +112,7 @@
     mul-int/lit8 v0, v0, 0x4
 
     .line 1
-    new-array v0, v0, [B
-
-    .line 2
-    array-length v1, v0
-
-    invoke-static {v1}, Ljava/nio/ByteBuffer;->allocateDirect(I)Ljava/nio/ByteBuffer;
+    invoke-static {v0}, Ljava/nio/ByteBuffer;->allocateDirect(I)Ljava/nio/ByteBuffer;
 
     move-result-object v1
 
@@ -129,14 +124,9 @@
 
     move-result-object v1
 
-    .line 3
-    invoke-virtual {v1, v0}, Ljava/nio/ByteBuffer;->put([B)Ljava/nio/ByteBuffer;
-
-    move-result-object v0
-
     const/4 v2, 0x0
 
-    invoke-virtual {v0, v2}, Ljava/nio/ByteBuffer;->position(I)Ljava/nio/Buffer;
+    invoke-virtual {v1, v2}, Ljava/nio/ByteBuffer;->position(I)Ljava/nio/Buffer;
 
     const v0, 0x8d40
 

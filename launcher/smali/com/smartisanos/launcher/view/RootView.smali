@@ -1626,7 +1626,24 @@
 
     invoke-static {p1, v0, v3, v4}, Lcom/smartisanos/launcher/gesture/QuickDesktopGestureDiagnostics;->onTouch(Landroid/view/MotionEvent;FZZ)V
 
-    invoke-static {p1, v0}, Lcom/smartisanos/launcher/quickdesktop/QuickDesktopController;->onTouch(Landroid/view/MotionEvent;F)V
+    invoke-static {p1, v0}, Lcom/smartisanos/launcher/quickdesktop/QuickDesktopController;->onTouch(Landroid/view/MotionEvent;F)I
+
+    move-result v0
+
+    if-eqz v0, :quick_desktop_root_touch_continue
+
+    const/4 v3, 0x2
+
+    if-ne v0, v3, :quick_desktop_root_touch_cancel
+
+    return v2
+
+    :quick_desktop_root_touch_cancel
+    const/4 v0, 0x3
+
+    invoke-virtual {p1, v0}, Landroid/view/MotionEvent;->setAction(I)V
+
+    :quick_desktop_root_touch_continue
 
     sget-boolean v0, Lcom/smartisanos/launcher/va;->_h:Z
 

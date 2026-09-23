@@ -74,6 +74,20 @@ public final class LauncherColdReloadCoordinator {
         return beginReload(context, "ACTIVE_ICON_SETTINGS_CHANGE", -1, readThemeMode(context));
     }
 
+    /** Reuses the verified opaque handoff after top safe-area settings or cache change. */
+    public static boolean beginStatusBarCompatReload(Context context) {
+        return beginReload(context, "STATUS_BAR_COMPAT_CHANGE", -1, readThemeMode(context));
+    }
+
+    public static boolean beginDefaultIconShapeReload(Context context) {
+        return beginReload(context, "DEFAULT_ICON_SHAPE_CHANGE", -1, readThemeMode(context));
+    }
+
+    public static boolean beginDesktopTextSizeReload(Context context, int oldSize, int newSize) {
+        if (oldSize == newSize) return true;
+        return beginReload(context, "DESKTOP_TEXT_SIZE_CHANGE", -1, readThemeMode(context));
+    }
+
     /** Starts the existing opaque process handoff for an already journaled restore. */
     public static boolean beginBackupRestoreReload(Context context, String operationToken,
             boolean rollback, int gridMode) {

@@ -13,8 +13,13 @@ public final class DesktopLabelMetrics {
     private static final float BASE_GAP_MODE_20 = 13.0f;
     private static final int BASE_TEXT_SIZE_MODE_12 = 36;
     private static final int BASE_TEXT_SIZE_MODE_20 = 30;
+    private static volatile int sTextSizeAdjustment;
 
     private DesktopLabelMetrics() {
+    }
+
+    public static void setDesktopTextSizeAdjustment(int adjustment) {
+        sTextSizeAdjustment = Math.max(0, Math.min(10, adjustment));
     }
 
     public static float resolveLabelCenterY(Object property, Object label,
@@ -48,7 +53,7 @@ public final class DesktopLabelMetrics {
             return fallback;
         }
         final int base = mode == 20 ? BASE_TEXT_SIZE_MODE_20 : BASE_TEXT_SIZE_MODE_12;
-        return Math.max(1, Math.round(base * widthScale()));
+        return Math.max(1, Math.round(base * widthScale()) + sTextSizeAdjustment);
     }
 
     static float widthScale() {

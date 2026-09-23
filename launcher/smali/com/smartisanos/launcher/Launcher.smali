@@ -171,6 +171,8 @@
 .method public onDestroy()V
     .locals 2
 
+    invoke-static {}, Lcom/smartisanos/launcher/quickdesktop/QuickDesktopController;->onLauncherDestroyed()V
+
     .line 1
     invoke-super {p0}, Landroid/app/Activity;->onDestroy()V
 

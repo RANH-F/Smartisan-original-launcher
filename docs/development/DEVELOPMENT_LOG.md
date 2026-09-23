@@ -1,8 +1,28 @@
 # 开发与修复记录
 
+## 2026-09-16 图标框冷重载、双入口设置行与显示设置备份
+
+- 图标框：名称改为“默认应用图标框”。原确认回调仅发 per-package 图标刷新，没有启动冷重载；现同步保存成功后复用 LauncherColdReloadCoordinator 的进程交接，失败提示并尝试恢复原值，不修改 Geometry 或其他图标来源。
+- 双入口设置行：此前 SettingItemSwitch 一律拒绝开关外的 DOWN，误拦截了原有二级菜单。仅为“动态天气和日历”“快捷桌面”显式开放标签导航，仍由原有 enabled 判断控制是否进入；右侧独立切换，其他标签保持不能切换。
+- 备份：状态栏自动适配/高度、Dock 高度、图标大小、文字大小已有白名单；补入 com.smartisanos.launcher_prefs/launcher_default_icon_shape_v1。同时将这些设置的隐式默认值写入新备份，避免默认备份恢复时无法覆盖后续修改。恢复继续走原有类型化 commit 与冷重载；不迁移设备安全区缓存。
+- 验证：最终 build.bat 成功，git diff --check 通过，APK badging 为 com.smartisanos.launcher / v1.5.7 / 32，v1/v2/v3 签名通过。当前 adb devices 无设备，尚未验证真机点击、确认后的进程切换及备份恢复往返。旧备份缺失的图标框设置不能追溯补出，需重新备份。未更新 MEMORY.md。
+
+## 2026-09-15 自适应 DEFAULT 圆形四端平边修正
+
+- 根因：Adaptive 分支先把图层画入带 inset 的 circleBounds，再把整个含透明边的画布映射至 circleBounds，重复缩进使圆周四端缺少底图覆盖。此前把中间位图平边归因于偏好异步保存的判断没有证据，应撤回该根因结论。
+- 修改：DefaultIconCircleRenderer v6 将自适应图层画到完整源画布，按不透明外轮廓确定内接裁切区域，再通过抗锯齿 oval 映射到既有圆形包络。最终 Geometry 与原版尺寸分类沿用现有实现。
+- 验证：build.bat 成功，ADB 覆盖安装成功；build/circle-v6-install.png 真机截图中微信、aShell、抖音四端平边消失。git diff --check 通过。按比例计算，不含设备分辨率常量；其他分辨率真机尚未验证。
+- 同轮设置项修改：图标、文字与状态栏高度调整的零值在行尾及选择项显示“默认”；数值存储保留原语义。负一屏反向手势修复尚待专项真机验收。
+
 ## 最新专项补录（按结论优先级，不参与倒序日期轴）
 
 > 本区只保留日期、标题和一句话结论；根因、修改、验证与风险统一写入下方“每日修复记录”。已废弃或已取代条目只保留标题。
+
+- 2026-09-15 DEFAULT_SOURCE_CIRCLE_CROP：有效来源为 DEFAULT 的系统原图默认使用自身底色放大后圆形裁切，最终外径继续由原版 IconColor 分类、LayoutProperty 与用户倍率决定；vivo X21A 已通过十二/二十宫格、100%/150%、A/B 设置与翻页压力验证。
+
+- 2026-09-14 QUICK_DESKTOP_TOUCH_CLEANUP_AND_CAPTURE_MEMORY：快捷桌面增加统一幂等清理，Launcher Stop/Destroy、Host 异常分离和重新 attach 均先禁用并移除全屏触摸窗口；GL 截图删除全屏零填充数组和第二张全尺寸翻转图，后台处理改为 Latest-Wins 单线程，vivo 真机 10 次开关、Home 与设置覆盖返回通过。
+
+- 2026-09-14 STATUS_AND_DESKTOP_VISUAL_ADJUSTMENT_UI：状态栏设置改为确认后重载并移除重复操作项，桌面图标/文字统一显示相对默认值的调整量；桌面文字调整已接入最终字号 Owner，当前 vivo 真机 `+6/+10` 可见生效。
 
 - 2026-09-13 QUICKSEARCH_ICON_TEXT_VISUAL_ALIGNMENT_AND_HISTORY_STABILITY：搜索历史保持原版自然换行，将标签字体、图标、图文间距和左右内边距小幅收窄，使当前 360dp 设备的实测前四项刚好占满一行；历史图标同时稳定补齐，搜索结果与历史标签的图文可见重心已对齐。
 
@@ -30,7 +50,7 @@
 
 - 2026-09-05 UNLOCK_V154_RESUME_PRE_ROLL：恢复 v1.5.4 已有的 Resume 后 120ms 预滚时机，但继续使用当前严格 Session 防误播与去重，避免立即预滚过早及 USER_PRESENT 后播。
 
-- 2026-09-05 DEFAULT_VISIBLE_FIT：DEFAULT APK 图标按透明可见边界对齐现有 IMPROVED 可见范围，所有分辨率共用同一相对比例，未改宫格、文字或改进版资源。
+- 2026-09-05 【已被 DEFAULT_SOURCE_CIRCLE_CROP 取代】DEFAULT_VISIBLE_FIT
 
 - 2026-09-05 V154_SETTING_BUTTON_ASSETS：桌面编辑齿轮恢复 Git 标签 v1.5.4 归档 APK 的白色描边三层资源及原版 SceneNode 路径，不再使用 maintained 的深灰齿轮资源。
 
@@ -117,6 +137,47 @@
 4. 同一天有多条记录时，越靠上的记录越新；参数或结论冲突时，以同日靠上的记录为准。
 
 ## 每日修复记录（倒序）
+
+### 2026-09-15
+
+#### DEFAULT 系统原图放大圆形裁切
+
+- **根因**：旧 `DEFAULT_VISIBLE_FIT` 在最终 Composer 内按透明可见边做 98% 对齐，却绕过了原版 `IconColor.ColorInfo.resize -> icon_size_origin_resize` 内容框；第一版圆形实验又新增浅色底板并把原图缩到 75%，造成用户截图中的底色不一致。随后仅把整张透明画布放大仍会保留圆角矩形/八边形透明角，视觉继续小于真正圆形图标。
+- **修改**：仅在有效来源确定为 `DEFAULT` 后生成 256×256 canonical source。传统位图从原 Drawable 自身 Alpha 外轮廓求可覆盖中心的内切裁切框，放大并直接裁成圆形，不生成或猜测额外底色；AdaptiveIcon 分别绘制原 background/foreground。圆形外径采用 5 个现有完整圆形 IMPROVED 资源 Alpha 外径中位数 `0.9791667`。Smali 保留原版 `IconColor.resize` 分类并把结果交给统一 Composer，Composer 仍从当前 `LayoutProperty.icon_size_origin` / `icon_size_origin_resize`、现有 rasterScale 和用户倍率得到最终内容框；未改 `IconVisualMetrics`、Cell、Scene、Folder、Dock、QuickLaunch、ActiveIcon、文字或动画。
+- **设置与缓存**：应用图标页新增“默认应用图标样式：跟随应用/圆形”，默认圆形。切换时只解析并刷新当前有效来源为 DEFAULT 的普通应用，动态日历/时钟和受管来源不进入该集合。缓存键加入 shape、renderer version、source canvas version、IconColor 内容框类型、组件/用户/source identity；最终版本为 `raster:v24-default-inscribed-circle`。
+- **测量**：5 个基准 IMPROVED 圆形资源的 Alpha 外径比例为 Chrome `250/256`、Spotify `190/192`、Telegram `248/256`、Edge `188/192`、Phone `188/192`，中位数 `0.9791667`。vivo X21A 的 1080px 截图中，十二宫格 100% 下 `vivo 官网`、`录音机`、`aShell You` 的水平可见外径均为 `188px`，单格宽 `360px`，即 `52.2%`。
+- **验证**：`audit_icon_contract.py`、`git diff --check`、完整 `build.bat`、`aapt2 dump badging` 与 v1/v2/v3 签名检查通过；APK 为 `v1.5.7/32`、SHA256 `C9AA4127775F15BA8DB3598422E200FD899616CBBA68094AAF1AB2160B73ED34`。保留数据安装到 vivo X21A/Android 9，系统安装器完成时间为 `2026-09-15 15:09:05`；最终截图确认默认原图底色直接铺满圆面。十二宫格与二十宫格的 100%/150% 均完成截图复核，跟随应用/圆形 A/B 可切换并已恢复十二宫格、100%、圆形。30 次交替翻页前后 PSS 为 `232853 -> 236271 KB`，Graphics 均为 `144620 KB`，未见 Launcher FATAL/VerifyError/OOM/ANR。
+- **边界与风险**：当前设置页可选图标范围实际为 80%–150%，因此没有伪造 50% 结果；80% 本轮也未单独截图。只验证 vivo X21A/1080×2280/Android 9，尚未覆盖 1220/1260/1440、Android 12–16、多 ROM、全部 AdaptiveIcon/传统位图、Folder 开合和 ActiveIcon 全矩阵。30 次翻页 PSS 的约 3.4 MB 差值是单次过程样本，不能据此证明长期内存完全无增长。覆盖安装命令返回厂商错误 `-200`，但手动点击系统安装器后 `lastUpdateTime` 与最终包版本已更新，Launcher 正常启动且 ART 未报验证错误。
+
+### 2026-09-14
+
+#### QuickDesktop 性能 Gate 验证（未修改产品代码）
+
+- 原始完整指标保存在 `build/quickdesktop_gate_metrics.csv`，单位沿用 dumpsys 的 KB；此前记录把 KB/1000 的近似值写作 MiB 不严谨，本次以原始值为准。冷启动采样仍含启动异步任务，不能作为稳定空闲基线。
+- 累计 1/5/10/20/30 次完整开关日志确认 30 次打开、30 次关闭，无 Launcher ANR/崩溃。PSS 为 318612（冷启动）、424477、446815、457931、517717、518457 KB；30 次后约 +30/+60/+180 秒分别回落到 368709/368493/368217 KB。Graphics 静置保持 247310 KB，Bitmap 39605 KB，ViewRootImpl 回到 1，线程数稳定 48。支持本轮未观察到持续累积，不能归因 Graphics 常驻差额，也不能由总线程数证明某个 Executor 的归属。
+- 临时 shell 注入器通过 InputManagerGlobal 使用连续 downTime 完成约 20/40/70% 屏宽位移后反向，独立三组均返回关闭且无窗口残留。随后交替 30 次循环出现部分有 DOWN/UP 但无展开进度的样本；存在页面位置/同时人工操作干扰，尚未完成隔离复现，不标记反向 Gate 全通过。展开与关闭自动动画中立即反向尚待验证。
+- 用户配合完成关闭、完全打开、半开、展开自动动画中、关闭自动动画中五组锁屏/解锁。日志确认 CANCEL/Stop 清理，无 Launcher PopupWindow 残留，最后可再次完整打开关闭。解锁 Timeline 视觉是否不变仍需用户确认，未修改解锁代码。
+- 旧 UiAutomator runner 因 Android 16 缺少 RepetitiveTest 失败；首版临时注入器因 InputManager 初始化失败崩溃，均为测试工具故障而非 Launcher 崩溃。产品源码与 APK 本轮未改，MEMORY.md 未更新。结论：内存回收 Gate 通过本轮样本，完整交互 Gate 待收口，暂不宣称冻结。
+
+#### 快捷桌面触摸窗口清理与截图瞬时内存收口
+
+- **根因与范围**：快捷桌面展开后使用全屏 `PopupWindow` 并切换为 `touchable=true`，但普通 `Launcher.onStop()` 在没有快捷动作待处理时直接返回，`QuickDesktopHostView.onDetachedFromWindow()` 也没有通知 Controller 解除窗口与静态 Host；异常动画/生命周期边界存在透明窗口继续拦截桌面触摸的风险。GL 捕获同时分配全屏 `byte[]`、DirectByteBuffer、原始 Bitmap，后台又创建第二张全尺寸翻转 Bitmap；1260×2800 单份约 13.46 MiB，重复捕获还会各自创建线程并到主线程应用阶段才淘汰旧结果。本次只修改 QuickDesktop 宿主、捕获与 Launcher 销毁入口，未动 RootView 原版手势门控、动画参数、卡片布局、图标、文件夹、解锁动画或 12/20 宫格。
+- **修改**：Controller 新增单一幂等 `cleanup(reason, releaseHost)`，统一取消 pending capture、先将 PopupWindow 设为不可触摸、再 dismiss、重置 gesture/action 状态，并在完整 detach 时清除 Root/Host 与截图引用。重新 attach、Launcher Destroy、普通 Stop、Host 非预期 detach 和正常关闭均复用该入口；预期的 PopupWindow dismiss 通过窄状态标记避免 detach 回调递归销毁可复用 Host。`vc.b()` 删除仅用于零填充 DirectByteBuffer 的全屏 `byte[]`；捕获结果直接作为 sharp Bitmap，sharp/blur 两个 ImageView 在显示层做 Y 翻转，取消第二张全尺寸翻转 Bitmap。后台处理改为单线程 Executor，并在缩放、模糊和主线程应用前分别检查 generation；关闭/detach 会主动使旧任务失效。
+- **验证**：`git diff --check` 与完整 `build.bat` 通过，最终 APK 保持 `v1.5.7 / 32`，v1/v2/v3 签名有效，已保留数据覆盖安装到当前 vivo 1260×2800 设备。真机首次展开背景方向正确，窗口按 `touchable=false -> true` 交接；连续 10 次完整展开/关闭均命中 `QD_CLEANUP reason=host-closed`，关闭后 WindowManager 不再存在 Launcher PopupWindow。快捷桌面打开时切到系统设置，日志命中 `reason=launcher-stopped` 且窗口消失，返回后仍可再次完整展开/关闭；快捷桌面打开时按 Home 也立即清理，随后桌面继续响应手势。未见 `FATAL EXCEPTION` 或 ANR。
+- **内存边界**：打开时一次样本约 `PSS 459 MiB / Graphics 296 MiB / Bitmap 46 MiB`；关闭基线约 `369/231/46 MiB`。连续 10 次后立即采样因 GC 延迟升至约 `525/292/82 MiB`，静置约 60 秒后回落到约 `377/247/40 MiB`，Views/ViewRootImpl 从 `22/6` 回到 `12/1`。说明本轮没有观察到逐次永久累积或窗口残留，但 Graphics 仍比关闭基线高约 16 MiB，SMEngine/OpenGL 长期纹理占用尚未归因，不能宣称整体 195 MiB Graphics 已解决。
+- **风险**：当前仅验证一台 vivo、12 宫格和 10 次循环；ImageView 显示层翻转、Stop 强制关闭与 Latest-Wins 捕获仍需其他 ROM、锁屏/解锁、快速半程反向手势和 30 次循环验证。没有引入截图有效性复用，也没有改主题缓存或拆分 `MaintainedLauncherSettingsHost`，避免扩大优化范围。未更新 `MEMORY.md`，未提交或推送。
+
+#### 状态栏与桌面图标/文字调整设置收口
+
+- **界面修改**：主设置项改名为“状态栏设置”，说明“可以自定义状态栏高度”按快捷桌面同款 `TipsView` 放在卡片外；详情页“顶部留白微调”改为“状态栏高度调整”。高度弹窗改成选择后点“确定”才保存并冷重载，底部保留“取消/确定”，删除页面内“恢复默认”和“应用并重启桌面”。应用图标页将两项改名为“桌面图标调整/桌面文字调整”，右侧均显示相对默认值：默认为 `0`；图标档位为 `-20/-10/0/+10/+20/+30/+40/+50`，文字档位为 `0/+2/+4/+6/+8/+10`。
+- **文字不生效根因与修复**：首次实现只修改 `LayoutProperty.text_font_size`，但普通桌面标签最终由 `DesktopLabelMetrics.resolveDesktopTextSize()` 按分辨率重新计算固定字号，前面的值会被覆盖。调整量现由该最终字号 Owner 叠加，并只同步 12/20 宫格的标签几何后备字段，不遍历 Folder 或其他模式；已有奇数试验值规范到最近偶数档。偏好加入现有备份白名单，变更继续复用冷重载协调器。
+- **验证**：`git diff --check` 与完整 `build.bat` 通过，最终 APK 保持 `v1.5.7 / 32`，已保留数据覆盖安装到当前 vivo 设备。ADB UI hierarchy 确认主设置说明位于卡片外，状态栏页无“恢复默认/应用并重启桌面”，高度弹窗含“取消/确定”；应用图标页显示“桌面图标调整 0”“桌面文字调整 +6”，文字弹窗完整显示六档。真实选择 `+10` 与恢复 `+6` 均完成冷重载，日志分别命中 `DESKTOP_TEXT_SIZE_APPLIED extra=10 modes=2` 与 `extra=6 modes=2`，真机截图可见桌面文字放大，未见 `FATAL EXCEPTION`。
+- **风险**：当前仅验证 12 宫格和当前 vivo；20 宫格已接同一最终 Owner 但尚未切换宫格逐档截图，其他 ROM 也未验证。设备最终保留用户原试验值就近对应的 `+6`。未更新 `MEMORY.md`，未提交或推送。
+
+- **设置页顶部留白色带**：新增 padding 未绘制背景，露出 Window 默认底色。公共设置内容容器改用与状态栏一致的 `0xfff7f7f7` 背景。完整构建与覆盖安装成功，当前 vivo 真机截图确认新增顶部留白的异色色带消失；其他 ROM 尚未验证。
+
+- **状态栏高度同步设置页**：设置 Activity 仍由系统预留顶部空间，未使用桌面手动增量。`StatusBarHeightCompat.settingsTopSpacing()` 读取已保存配置，`MaintainedLauncherSettingsHost.setSettingsContentView()` 在公共内容容器设置额外顶部留白，覆盖使用该入口的主设置与二级页；草稿不触发实时布局。保留系统安全区，不将设置标题推入系统状态栏。
+- **验证与限制**：完整构建、覆盖安装通过；当前设备 UI hierarchy 显示系统内容起点 y=147，设置标题起点 y=175，与 +8dp（560dpi 下 28px）一致。其他 ROM、负微调以及全部二级页切换未完成真机验证；此前桌面滑动无响应仍未确认根因，不宣称修复。
 
 ### 2026-09-13
 

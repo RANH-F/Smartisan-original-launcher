@@ -23,9 +23,9 @@ public final class IconRasterDiagnostics {
     private static final String TAG = "LauncherIconRaster";
     private static final Set<String> REPORTED = new HashSet<String>();
     private static final int DIAGNOSTIC_ALPHA_CUTOFF = 40;
-    private static final String SOURCE_CANVAS_VERSION = "source-canvas:v6-default-visible-fit";
-    private static final String RASTER_CACHE_VERSION = "raster:v20-default-visible-fit";
-    private static final float IMPROVED_VISIBLE_EXTENT_RATIO = 0.98f;
+    private static final String SOURCE_CANVAS_VERSION = "source-canvas:v13-default-circle-sync-pref";
+    private static final String RASTER_CACHE_VERSION = "raster:v27-default-circle-sync-pref";
+    private static final int CANONICAL_DEFAULT_SOURCE_SIZE = 256;
     private static final String BADGE_VERSION = "badge:v1";
     private static final String SHADOW_VERSION = "shadow:original-v1";
     private static volatile String sLifecycle = "COLD";
@@ -190,13 +190,17 @@ public final class IconRasterDiagnostics {
      */
     public static Bitmap prepareStaticSource(Object itemInfo, Bitmap cachedSource) {
         if (isQuickLaunchItem(itemInfo)) return cachedSource;
-        // Keep only a carrier for the smali signature. The final Composer
-        // resolves and draws RAW Drawable directly; no logical-size bitmap is
-        // produced here and unknown managed iconRawData is never promoted.
-        if (cachedSource != null && !cachedSource.isRecycled()) return cachedSource;
-        StaticSource resolved = resolveStaticSource(itemInfo, null);
-        return resolved.drawable == null ? null
-                : Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
+        StaticSource resolved = resolveStaticSource(itemInfo, cachedSource);
+        if (resolved.drawable != null) {
+            if ("DEFAULT".equals(resolved.type)
+                    && DefaultIconCircleRenderer.isCircleEnabled(
+                    MaintainedLauncherSettingsHost.currentApplicationContext())) {
+                return DefaultIconCircleRenderer.render(resolved.drawable,
+                        CANONICAL_DEFAULT_SOURCE_SIZE);
+            }
+            return sourceBitmap(resolved.drawable);
+        }
+        return cachedSource;
     }
 
     /**
@@ -347,7 +351,13 @@ public final class IconRasterDiagnostics {
     public static Bitmap composeStaticApplicationIconTexture(Object itemInfo,
             Bitmap source, int pageMode) {
         if (isQuickLaunchItem(itemInfo)) return source;
-        return composeTexture(source, 0, itemInfo, pageMode);
+        return composeTexture(source, 0, itemInfo, pageMode, resizeClassification(itemInfo));
+    }
+
+    public static Bitmap composeStaticApplicationIconTexture(Object itemInfo,
+            Bitmap source, int pageMode, boolean resized) {
+        if (isQuickLaunchItem(itemInfo)) return source;
+        return composeTexture(source, 0, itemInfo, pageMode, resized);
     }
 
     /**
@@ -385,8 +395,18 @@ public final class IconRasterDiagnostics {
 
     private static Bitmap composeTexture(Bitmap source, int actualLogicalTexture,
             Object itemInfo, int pageMode) {
+        return composeTexture(source, actualLogicalTexture, itemInfo, pageMode,
+                resizeClassification(itemInfo));
+    }
+
+    private static Bitmap composeTexture(Bitmap source, int actualLogicalTexture,
+            Object itemInfo, int pageMode, boolean resized) {
         StaticSource resolved = resolveStaticSource(itemInfo, source);
         Drawable rawDrawable = resolved.drawable;
+        boolean defaultCircle = "DEFAULT".equals(resolved.type)
+                && DefaultIconCircleRenderer.isCircleEnabled(
+                MaintainedLauncherSettingsHost.currentApplicationContext());
+        if (defaultCircle && source != null && !source.isRecycled()) rawDrawable = null;
         if ((source == null || source.isRecycled()) && rawDrawable == null) return source;
         int logicalArtwork = layoutSize(pageMode, "icon_size_origin");
         int logicalTexture = layoutSize(pageMode, "icon_size_with_shadow");
@@ -402,8 +422,10 @@ public final class IconRasterDiagnostics {
             artwork = Math.max(1, Math.round(texture
                     * (logicalArtwork / (float) logicalTexture)));
         }
-        float contentInset = 0f;
-        float contentSize = artwork;
+        int logicalContent = resized
+                ? layoutSize(pageMode, "icon_size_origin_resize") : logicalArtwork;
+        float contentSize = Math.max(1f, Math.round(logicalContent * rasterScale));
+        float contentInset = Math.max(0f, (artwork - contentSize) * 0.5f);
         Bitmap drawableBitmap = rawDrawable instanceof android.graphics.drawable.BitmapDrawable
                 ? ((android.graphics.drawable.BitmapDrawable) rawDrawable).getBitmap() : null;
         Bitmap analysisSource = drawableBitmap != null && !drawableBitmap.isRecycled()
@@ -421,31 +443,6 @@ public final class IconRasterDiagnostics {
         float drawHeight = sourceHeight * sourceScale;
         float drawLeftInArtwork = contentInset + (contentSize - drawWidth) * 0.5f;
         float drawTopInArtwork = contentInset + (contentSize - drawHeight) * 0.5f;
-        boolean defaultVisibleFit = false;
-        if ("DEFAULT".equals(resolved.type) && visibleBefore != null
-                && analysisSource != null && analysisSource.getWidth() > 0
-                && analysisSource.getHeight() > 0) {
-            float visibleWidthInDrawable = visibleBefore.width()
-                    * (sourceWidth / (float) analysisSource.getWidth());
-            float visibleHeightInDrawable = visibleBefore.height()
-                    * (sourceHeight / (float) analysisSource.getHeight());
-            float visibleExtent = Math.max(visibleWidthInDrawable, visibleHeightInDrawable);
-            if (visibleExtent > 0f) {
-                float targetVisibleExtent = contentSize * IMPROVED_VISIBLE_EXTENT_RATIO;
-                sourceScale = targetVisibleExtent / visibleExtent;
-                drawWidth = sourceWidth * sourceScale;
-                drawHeight = sourceHeight * sourceScale;
-                float visibleCenterX = visibleBefore.centerX()
-                        / analysisSource.getWidth();
-                float visibleCenterY = visibleBefore.centerY()
-                        / analysisSource.getHeight();
-                drawLeftInArtwork = contentInset + contentSize * 0.5f
-                        - visibleCenterX * drawWidth;
-                drawTopInArtwork = contentInset + contentSize * 0.5f
-                        - visibleCenterY * drawHeight;
-                defaultVisibleFit = true;
-            }
-        }
         Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG | Paint.DITHER_FLAG);
         Bitmap physicalArtwork = Bitmap.createBitmap(
                 artwork, artwork, Bitmap.Config.ARGB_8888);
@@ -502,7 +499,8 @@ public final class IconRasterDiagnostics {
                 + " pipeline=STATIC_APPLICATION_COMPOSER"
                 + " sourceType=" + resolved.type
                 + " sourceIdentity=" + resolved.identity
-                + " visibleFit=" + defaultVisibleFit
+                + " contentBox=" + (resized ? "RESIZED" : "NORMAL")
+                + " defaultShape=" + (defaultCircle ? "CIRCLE" : "FOLLOW_APP")
                 + " source=" + sourceWidth + 'x' + sourceHeight
                 + " finalContentBounds=" + Math.round(drawLeft) + ',' + Math.round(drawTop)
                 + ',' + Math.round(drawWidth) + 'x' + Math.round(drawHeight)
@@ -523,7 +521,8 @@ public final class IconRasterDiagnostics {
                 + " grid=" + gridToken(pageMode)
                 + " iconSize=" + visualMetrics.iconSizeSetting
                 + " surface=" + visualMetrics.surfaceWidth
-                + " composerCount=1 rawDirect=0 cacheHit=0"
+                + " composerCount=1 rawDirect=0 cacheHit=0 contentBox="
+                + (resized ? "RESIZED" : "NORMAL")
                 + " representation=" + (resolved.legacyDefaultBitmap
                 ? "LEGACY_DEFAULT_BITMAP" : "RAW_DRAWABLE"));
         physicalArtwork.recycle();
@@ -552,6 +551,16 @@ public final class IconRasterDiagnostics {
                 || title.contains("云服务") || title.contains("天气")
                 || title.contains("日历") || title.contains("weather")
                 || title.contains("calendar");
+    }
+
+    private static boolean resizeClassification(Object itemInfo) {
+        if (itemInfo == null) return false;
+        try {
+            Object color = itemInfo.getClass().getField("color").get(itemInfo);
+            return color != null && color.getClass().getField("resize").getBoolean(color);
+        } catch (Throwable ignored) {
+            return false;
+        }
     }
 
     private static String boundsString(VisibleBounds bounds) {
@@ -776,28 +785,30 @@ public final class IconRasterDiagnostics {
         float beforeY = before == null ? 0f : before.height() / (float) Math.max(1, source.getHeight());
         float finalX = after == null ? 0f : after.width() / (float) Math.max(1, artwork);
         float finalY = after == null ? 0f : after.height() / (float) Math.max(1, artwork);
-        boolean defaultVisibleFit = "DEFAULT".equals(
-                MaintainedLauncherSettingsHost.desktopIconSourceType(itemInfo));
+        boolean defaultCircle = "DEFAULT".equals(
+                MaintainedLauncherSettingsHost.desktopIconSourceType(itemInfo))
+                && DefaultIconCircleRenderer.isCircleEnabled(
+                MaintainedLauncherSettingsHost.currentApplicationContext());
         Log.w(TAG, "DEFAULT_ICON_COMPOSE package=" + packageName
                 + " logicalArtwork=" + currentLayoutSize("icon_size_origin")
                 + " physicalArtwork=" + artwork
                 + " logicalTexture=" + currentLayoutSize("icon_size_with_shadow")
                 + " physicalTexture=" + texture + " sourceCanvasPolicy="
-                + (defaultVisibleFit ? "DEFAULT_VISIBLE_FIT" : "MANAGED_FULL_BOUNDS")
+                + (defaultCircle ? "DEFAULT_CIRCLE_CANONICAL" : "SOURCE_FULL_BOUNDS")
                 + " sourceScale=" + sourceScale
                 + " finalVisibleWidth=" + (after == null ? 0 : after.width())
                 + " finalVisibleHeight=" + (after == null ? 0 : after.height())
                 + " finalVisibleRatio=" + Math.max(finalX, finalY)
                 + " beforeVisibleRatio=" + Math.max(beforeX, beforeY)
-                + " fitPolicy=" + (defaultVisibleFit
-                ? "DEFAULT_VISIBLE_FIT" : "MANAGED_FULL_SOURCE_CANVAS")
+                + " fitPolicy=" + (defaultCircle
+                ? "DEFAULT_CIRCLE_CANONICAL" : "SOURCE_FULL_CANVAS")
                 + " cacheVersion=" + RASTER_CACHE_VERSION);
         Log.w(TAG, "SOURCE_CANVAS_NORMALIZATION package=" + packageName
                 + " component=" + component
                 + " sourceSize=" + source.getWidth() + "x" + source.getHeight()
                 + " visibleRatioBefore=" + Math.max(beforeX, beforeY)
                 + " scale=" + sourceScale
-                + " alphaGeometryUsed=" + defaultVisibleFit);
+                + " alphaGeometryUsed=false");
     }
 
     /** True only while the original active-icon controller owns the item. */
@@ -890,9 +901,13 @@ public final class IconRasterDiagnostics {
                 + ':' + iconPercent + ':' + pageMode + ":grid=" + pageMode + ':' + themeMode + ':' + pipeline
                 + ":representation=RAW_SOURCE"
                 + ":sourceCanvasVersion=" + SOURCE_CANVAS_VERSION
-                + ":fitPolicy=" + ("DEFAULT".equals(sourceType)
-                ? "default-visible-fit" : "managed-full-source-canvas")
-                + ":alphaGeometryUsed=" + "DEFAULT".equals(sourceType)
+                + ":contentBoxType=" + (resizeClassification(itemInfo) ? "RESIZED" : "NORMAL")
+                + ":defaultShape=" + ("DEFAULT".equals(sourceType)
+                ? DefaultIconCircleRenderer.shapeToken(
+                MaintainedLauncherSettingsHost.currentApplicationContext()) : "not-default")
+                + ":defaultShapeVersion=" + DefaultIconCircleRenderer.VERSION
+                + ":fitPolicy=source-full-canvas"
+                + ":alphaGeometryUsed=false"
                 + ":badgeVersion=" + BADGE_VERSION
                 + ":shadowVersion=" + SHADOW_VERSION;
         Log.i(TAG, "ICON_CACHE_PIPELINE_KEY packageName=" + packageName

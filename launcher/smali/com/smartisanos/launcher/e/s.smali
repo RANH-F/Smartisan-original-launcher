@@ -2623,7 +2623,7 @@
 .end method
 
 .method public static a(Lcom/smartisanos/launcher/data/ItemInfo;Ljava/lang/String;ZI)Lcom/smartisanos/smengine/Da;
-    .locals 11
+    .locals 12
 
     const/4 v0, 0x0
 
@@ -2830,6 +2830,14 @@
 
     move-result-object p2
 
+    const/4 v11, 0x0
+
+    if-eqz p2, :cond_codex_classification_saved
+
+    iget-boolean v11, p2, Lcom/smartisanos/launcher/actions/sort/color/IconColor$ColorInfo;->resize:Z
+
+    :cond_codex_classification_saved
+
     .line 72
     iget-object v4, p0, Lcom/smartisanos/launcher/data/ItemInfo;->packageName:Ljava/lang/String;
 
@@ -2975,7 +2983,7 @@
 
     if-eqz v9, :cond_codex_original_texture
 
-    invoke-static {v10, p0, p3}, Lcom/smartisanos/launcher/theme/IconRasterDiagnostics;->composeStaticApplicationIconTexture(Ljava/lang/Object;Landroid/graphics/Bitmap;I)Landroid/graphics/Bitmap;
+    invoke-static {v10, p0, p3, v11}, Lcom/smartisanos/launcher/theme/IconRasterDiagnostics;->composeStaticApplicationIconTexture(Ljava/lang/Object;Landroid/graphics/Bitmap;IZ)Landroid/graphics/Bitmap;
 
     move-result-object p0
 

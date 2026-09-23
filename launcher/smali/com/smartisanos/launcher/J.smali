@@ -2014,6 +2014,9 @@
 
     invoke-static {v0}, Lcom/smartisanos/launcher/ua;->a(Landroid/view/Window;)V
 
+    # Capture real WindowInsets after the decor exists. A changed value is applied by cold reload.
+    invoke-static {p0}, Lcom/smartisanos/launcher/compat/StatusBarHeightCompat;->bindWindow(Landroid/app/Activity;)V
+
     .line 18
     invoke-static {}, Lcom/smartisanos/launcher/data/Constants;->getSinglePageMode()I
 

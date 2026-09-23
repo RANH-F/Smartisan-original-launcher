@@ -53,11 +53,15 @@ public final class QuickDesktopHostView extends FrameLayout {
         setBackgroundColor(Color.TRANSPARENT);
         sharpBackgroundView = new ImageView(context);
         sharpBackgroundView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        // OpenGL framebuffer rows are bottom-to-top. Flip the presentation layer instead of
+        // allocating a second full-screen Bitmap only to reverse those rows.
+        sharpBackgroundView.setScaleY(-1.0f);
         sharpBackgroundView.setAlpha(0.0f);
         addView(sharpBackgroundView, new FrameLayout.LayoutParams(
                 LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
         blurBackgroundView = new ImageView(context);
         blurBackgroundView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        blurBackgroundView.setScaleY(-1.0f);
         blurBackgroundView.setAlpha(0.0f);
         addView(blurBackgroundView, new FrameLayout.LayoutParams(
                 LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
@@ -241,6 +245,19 @@ public final class QuickDesktopHostView extends FrameLayout {
         logState(reason, 0.0f);
     }
 
+    /** Releases view-owned state after the PopupWindow has been made non-touchable and removed. */
+    void releaseForDetach() {
+        touchSequenceActive = false;
+        cancelSettling();
+        recycleVelocityTracker();
+        closingDrag = false;
+        openProgress = 0.0f;
+        clearBackgroundSnapshots();
+        contentLayer.setTranslationX(-effectiveWidth());
+        setVisibility(GONE);
+        clearFocus();
+    }
+
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
         if (openProgress > 0.0f && event.getKeyCode() == KeyEvent.KEYCODE_BACK) {
@@ -321,6 +338,7 @@ public final class QuickDesktopHostView extends FrameLayout {
         touchSequenceActive = false;
         cancelSettling();
         recycleVelocityTracker();
+        QuickDesktopController.onHostDetached(this);
         super.onDetachedFromWindow();
     }
 

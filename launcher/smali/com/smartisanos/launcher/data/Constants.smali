@@ -5159,6 +5159,8 @@
 
     move-result-object v0
 
+    invoke-static {v0}, Lcom/smartisanos/launcher/compat/StatusBarHeightCompat;->applyDockHeight(Ljava/lang/Object;)V
+
     .line 2
     iget v1, v0, Lcom/smartisanos/launcher/data/LayoutProperty;->page_cell_row_num:I
 
@@ -7769,6 +7771,15 @@
 
     .line 14
     :cond_3
+    # Resolve one top coordinate before Page, StatusBar and animation initialization.
+    sget v5, Lcom/smartisanos/launcher/data/Constants;->status_bar_height:I
+
+    invoke-static {p0, v5}, Lcom/smartisanos/launcher/compat/StatusBarHeightCompat;->resolveStartupHeight(Landroid/content/Context;I)I
+
+    move-result v5
+
+    sput v5, Lcom/smartisanos/launcher/data/Constants;->status_bar_height:I
+
     invoke-static {p0}, Lcom/smartisanos/launcher/e/s;->getStatusBarHeight(Landroid/content/Context;)I
 
     const-string v5, "density_mode"
@@ -8132,6 +8143,8 @@
     invoke-static {v2}, Lcom/smartisanos/launcher/data/Constants;->initLayoutProperty(Landroid/content/res/Resources;)V
 
     invoke-static {p0}, Lcom/smartisanos/launcher/data/Constants;->applyLauncherIconSize(Landroid/content/Context;)V
+
+    invoke-static {p0}, Lcom/smartisanos/launcher/theme/LauncherSettingBridge;->applyDesktopTextSize(Landroid/content/Context;)V
 
     .line 50
     invoke-static {}, Lcom/smartisanos/launcher/data/Constants;->initPoints()V
