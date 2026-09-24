@@ -42,6 +42,7 @@ import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.smartisanos.launcher.quickdesktop.QuickDesktopController;
@@ -106,6 +107,9 @@ public final class OriginalQuickSearchActivity extends Activity
     private SearchHistoryRepository historyRepository;
     private OriginalSearchBarCompat searchBar;
     private EditText query;
+    private boolean t9Enabled;
+    private OriginalT9PanelCompat t9Panel;
+    private int t9PanelHeight;
     private View emptyLayout;
     private View topAppsLayout;
     private View suggestionsContainer;
@@ -188,6 +192,8 @@ public final class OriginalQuickSearchActivity extends Activity
         Log.i(TAG, "QS_ORIGINAL_UI_CREATE layoutName=qs_original_search_activity");
         configureWindow();
         resourceContext = createResourceContext();
+        t9Enabled = getSharedPreferences("launcher_settings", Context.MODE_PRIVATE)
+                .getBoolean(MaintainedLauncherSettingsHost.KEY_SEARCH_T9_ENABLED, false);
         uiResources = resourceContext.getResources();
         uiInflater = LayoutInflater.from(this).cloneInContext(resourceContext);
         int layoutId = resource("layout", "qs_original_search_activity");
@@ -332,6 +338,14 @@ public final class OriginalQuickSearchActivity extends Activity
             }
         });
         query = searchBar.getEditText();
+        if (t9Enabled) {
+            query.setShowSoftInputOnFocus(false);
+            query.setOnClickListener(new View.OnClickListener() {
+                @Override public void onClick(View view) {
+                    setT9PanelVisible(true);
+                }
+            });
+        }
         emptyLayout = findViewById(resource("id", "qs_original_empty_layout"));
         topAppsLayout = findViewById(resource("id", "qs_original_recommend_apps_layout"));
         suggestionsContainer = findViewById(
@@ -353,6 +367,7 @@ public final class OriginalQuickSearchActivity extends Activity
             }
         });
         suggestions = (ListView) findViewById(resource("id", "qs_original_suggestions"));
+        if (t9Enabled) bindT9Panel();
         topApps = new TextView[]{
                 topApp(1), topApp(2), topApp(3), topApp(4), topApp(5)
         };
@@ -427,7 +442,96 @@ public final class OriginalQuickSearchActivity extends Activity
         query.requestFocus();
     }
 
+    private void bindT9Panel() {
+        RelativeLayout content = (RelativeLayout) findViewById(
+                resource("id", "qs_original_search_activity_view"));
+        if (content == null) throw new IllegalStateException("T9 search content missing");
+        t9Panel = new OriginalT9PanelCompat(resourceContext,
+                new OriginalT9PanelCompat.OnKeyListener() {
+                    @Override public void onKey(int key) {
+                        if (key == OriginalT9PanelCompat.HIDE) {
+                            setT9PanelVisible(false);
+                            return;
+                        }
+                        Editable text = query.getText();
+                        if (text == null) return;
+                        int start = Math.max(0, query.getSelectionStart());
+                        int end = Math.max(0, query.getSelectionEnd());
+                        if (key == OriginalT9PanelCompat.DELETE) {
+                            if (start != end) text.delete(Math.min(start, end), Math.max(start, end));
+                            else if (start > 0) text.delete(start - 1, start);
+                        } else {
+                            text.replace(Math.min(start, end), Math.max(start, end),
+                                    String.valueOf(key));
+                        }
+                    }
+                });
+        RelativeLayout.LayoutParams panelParams = new RelativeLayout.LayoutParams(-1, 0);
+        panelParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+        content.addView(t9Panel, panelParams);
+        content.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
+            @Override public void onLayoutChange(View view, int left, int top, int right,
+                    int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
+                if (right - left != oldRight - oldLeft || bottom - top != oldBottom - oldTop) {
+                    updateT9PanelGeometry(right - left, bottom - top);
+                }
+            }
+        });
+        updateT9PanelGeometry(getResources().getDisplayMetrics().widthPixels,
+                getResources().getDisplayMetrics().heightPixels);
+        t9Panel.bringToFront();
+    }
+
+    private void updateT9PanelGeometry(int availableWidth, int availableHeight) {
+        if (t9Panel == null || availableWidth <= 0 || availableHeight <= 0) return;
+        int reservedHeight = (int) (160 * getResources().getDisplayMetrics().density + 0.5f);
+        int keyHeight = Math.min(Math.round(availableWidth * 201f / 1080f),
+                Math.max(1, (availableHeight - reservedHeight) / 4));
+        int panelWidth = Math.min(availableWidth, Math.round(keyHeight * 1080f / 201f));
+        int newHeight = keyHeight * 4;
+        t9Panel.setKeyHeight(keyHeight);
+        RelativeLayout.LayoutParams panelParams =
+                (RelativeLayout.LayoutParams) t9Panel.getLayoutParams();
+        if (panelParams.width != panelWidth || panelParams.height != newHeight) {
+            panelParams.width = panelWidth;
+            panelParams.height = newHeight;
+            panelParams.addRule(RelativeLayout.CENTER_HORIZONTAL);
+            t9Panel.setLayoutParams(panelParams);
+        }
+        int delta = newHeight - t9PanelHeight;
+        t9PanelHeight = newHeight;
+        if (t9Panel.getVisibility() == View.VISIBLE && delta != 0) {
+            adjustT9ResultsBottomMargin(delta);
+        }
+    }
+
+    private void adjustT9ResultsBottomMargin(int delta) {
+        for (View area : new View[]{emptyLayout, suggestionsContainer}) {
+            if (area == null || !(area.getLayoutParams() instanceof RelativeLayout.LayoutParams)) continue;
+            RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) area.getLayoutParams();
+            params.bottomMargin += delta;
+            area.setLayoutParams(params);
+        }
+    }
+
+    private void setT9PanelVisible(boolean visible) {
+        if (t9Panel == null) return;
+        boolean showing = t9Panel.getVisibility() == View.VISIBLE;
+        if (showing == visible) return;
+        t9Panel.setVisibility(visible ? View.VISIBLE : View.GONE);
+        adjustT9ResultsBottomMargin(visible ? t9PanelHeight : -t9PanelHeight);
+    }
+
     private void beginSearchSession(String reason) {
+        if (t9Enabled) {
+            pendingInitialImeShow = false;
+            if (query != null) {
+                query.requestFocus();
+                query.setSelection(query.length());
+            }
+            setT9PanelVisible(true);
+            return;
+        }
         pendingInitialImeShow = true;
         imeRequestAttempted = false;
         imeRetryScheduled = false;
@@ -483,6 +587,7 @@ public final class OriginalQuickSearchActivity extends Activity
     }
 
     private void maybeShowInitialIme(String reason) {
+        if (t9Enabled) return;
         if (!pendingInitialImeShow || destroyed || isFinishing()) return;
         if (transitionEntrancePending) {
             logImeDeferred("TRANSITION_" + reason);
@@ -1008,6 +1113,7 @@ public final class OriginalQuickSearchActivity extends Activity
                 }
                 for (ContactSearchEntry contact : contacts) {
                     RowModel row = new RowModel(contact);
+                    MaintainedLauncherSettingsHost.prepareQuickSearchMatchModel(row.matchModel);
                     int score = MaintainedLauncherSettingsHost.scorePreparedQuickSearchMatch(
                             needle, row.matchModel);
                     if (score >= 0 || contact.hasPhonePrefix(needle)) { row.score = score; contactMatches.add(row); }

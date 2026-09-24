@@ -196,6 +196,8 @@
     <string name="search_vertical_gestures_title">Search &amp; Vertical Gestures</string>
     <string name="search_vertical_gestures_tips">Control search content and desktop vertical swipe gestures.</string>
     <string name="search_page_gesture_title">Enable Search Bar</string>
+    <string name="search_t9_enabled_title">T9 keypad input</string>
+    <string name="search_t9_enabled_tips">On: use the original T9 keypad. Off: use the system keyboard.</string>
     <string name="search_page_gesture_tips_normal">Swipe up from the DOCK bar to open Search.</string>
     <string name="search_page_gesture_tips_reversed">Swipe down from the top status bar to open Search.</string>
     <string name="search_page_enabled_title_reversed">Swipe Down to Open Search</string>

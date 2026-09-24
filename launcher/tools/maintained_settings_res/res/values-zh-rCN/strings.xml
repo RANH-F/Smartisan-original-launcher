@@ -200,6 +200,8 @@
     <string name="search_vertical_gestures_title">搜索与上下滑手势</string>
     <string name="search_vertical_gestures_tips">控制搜索页内容及桌面上下滑手势</string>
     <string name="search_page_gesture_title">开启搜索栏功能</string>
+    <string name="search_t9_enabled_title">T9 键盘输入</string>
+    <string name="search_t9_enabled_tips">开启后，使用原版T9键盘，关闭后使用系统键盘</string>
     <string name="search_page_gesture_tips_normal">开启后，从DOCK栏向上滑动，即可打开搜索页</string>
     <string name="search_page_gesture_tips_reversed">开启后，从状态栏顶部向下滑动，即可打开搜索页</string>
     <string name="search_page_enabled_title_reversed">下滑打开搜索页</string>

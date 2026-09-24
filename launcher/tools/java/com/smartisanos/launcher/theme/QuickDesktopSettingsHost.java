@@ -10,6 +10,7 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import com.smartisanos.home.settings.SettingItemSwitch;
 import com.smartisanos.launcher.quickdesktop.QuickDesktopController;
 
 import java.util.LinkedHashMap;
@@ -61,6 +62,9 @@ final class QuickDesktopSettingsHost {
             View musicPaymentItem = root.findViewById(resources.getIdentifier(
                     "item_id_quick_desktop_music_payment", "id", SETTINGS_PKG));
             if (musicPaymentItem != null) {
+                if (musicPaymentItem instanceof SettingItemSwitch) {
+                    ((SettingItemSwitch) musicPaymentItem).setLabelNavigationEnabled(true);
+                }
                 musicPaymentItem.setClickable(true);
                 musicPaymentItem.setOnClickListener(new View.OnClickListener() {
                     public void onClick(View view) {

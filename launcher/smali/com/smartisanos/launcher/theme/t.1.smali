@@ -6707,6 +6707,12 @@
 
     invoke-virtual {p0}, Lcom/smartisanos/launcher/view/Ha;->oe()V
 
+    new-instance v0, Lcom/smartisanos/launcher/theme/W;
+
+    invoke-direct {v0}, Lcom/smartisanos/launcher/theme/W;-><init>()V
+
+    invoke-virtual {v0}, Lcom/smartisanos/launcher/theme/W;->run()V
+
     return-void
 .end method
 

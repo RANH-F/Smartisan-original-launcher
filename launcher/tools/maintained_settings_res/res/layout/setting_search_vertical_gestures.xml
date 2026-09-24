@@ -17,6 +17,13 @@
             <com.smartisanos.home.widget.sys.TipsView android:id="@+id/item_id_search_page_tips"
                 android:layout_marginTop="@dimen/settings_item_title_margin_top"
                 android:text="@string/search_page_gesture_tips_normal" style="@style/SettingItemTipsStyle" />
+            <com.smartisanos.home.settings.SettingItemSwitch android:id="@+id/item_id_search_t9_enabled"
+                android:layout_marginTop="@dimen/settings_item_top_bottom_margin"
+                setting:setting_item_switch_title="@string/search_t9_enabled_title"
+                style="@style/SettingSubItemSingleStyle" />
+            <com.smartisanos.home.widget.sys.TipsView
+                android:layout_marginTop="@dimen/settings_item_title_margin_top"
+                android:text="@string/search_t9_enabled_tips" style="@style/SettingItemTipsStyle" />
             <com.smartisanos.home.settings.SettingItemSwitch android:id="@+id/item_id_search_common_apps_enabled"
                 android:layout_marginTop="@dimen/settings_item_top_bottom_margin"
                 setting:setting_item_switch_title="@string/search_common_apps_enabled_title"

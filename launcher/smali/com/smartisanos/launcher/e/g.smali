@@ -31,6 +31,18 @@
 .method public run()V
     .locals 15
 
+    iget-object v3, p0, Lcom/smartisanos/launcher/e/g;->rj:Lcom/smartisanos/launcher/theme/v;
+
+    invoke-static {}, Lcom/smartisanos/launcher/theme/X;->eg()Lcom/smartisanos/launcher/theme/v;
+
+    move-result-object v4
+
+    if-eq v3, v4, :current_theme
+
+    return-void
+
+    :current_theme
+
     const-string v0, "status_bar_number_color"
 
     const-string v1, "status_bar_icon_color"
@@ -276,6 +288,8 @@
     and-int/2addr v13, v14
 
     :goto_port_apply_light_status_bar
+    invoke-virtual {v4, v11}, Landroid/view/Window;->setAttributes(Landroid/view/WindowManager$LayoutParams;)V
+
     invoke-virtual {v12, v13}, Landroid/view/View;->setSystemUiVisibility(I)V
     :try_end_0
     .catch Ljava/lang/Exception; {:try_start_0 .. :try_end_0} :catch_0
@@ -294,7 +308,5 @@
 
     .line 19
     :goto_3
-    invoke-virtual {v4, v11}, Landroid/view/Window;->setAttributes(Landroid/view/WindowManager$LayoutParams;)V
-
     return-void
 .end method

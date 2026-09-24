@@ -213,6 +213,7 @@ public final class MaintainedLauncherSettingsHost {
     private static final String PREF_IMPROVED_ICON_ENABLED = "launcher_improved_icon_enabled";
     private static final String KEY_LEGACY_SEARCH_PAGE_ENABLED = "launcher_search_page_enabled";
     public static final String KEY_SWIPE_UP_SEARCH_ENABLED = "swipe_up_search_enabled";
+    public static final String KEY_SEARCH_T9_ENABLED = "search_t9_enabled";
     private static final String KEY_SEARCH_COMMON_APPS_ENABLED =
             "launcher_search_common_apps_enabled";
     public static final String KEY_SEARCH_CONTACTS_ENABLED = "search_contacts_enabled";
@@ -2185,13 +2186,18 @@ public final class MaintainedLauncherSettingsHost {
             return 0;
         }
         boolean t9 = isDigitQuery(needle);
+        if (t9) {
+            if (model.labelLower.startsWith(needle)) return 0;
+            if (model.t9Initials.startsWith(needle)) return 10;
+            if (model.t9FullPinyin.startsWith(needle)) return 20;
+            return -1;
+        }
         if (model.labelLower.equals(needle)) return 0;
         if (model.labelLower.startsWith(needle)) return 10;
         if (matchesTokenForms(needle, model.pinyinForms)) return 15;
         if (matchesTokenForms(needle, model.initialForms)) return 16;
         if (model.packageLower.contains(needle)) return 28;
         if (model.labelLower.contains(needle)) return 32;
-        if (t9 && model.t9Code.indexOf(needle) >= 0) return 45;
         return -1;
     }
 
@@ -2223,6 +2229,13 @@ public final class MaintainedLauncherSettingsHost {
     /** Q5/Q6 presentation bridge: returns the process-shared production matcher model. */
     public static Object getQuickSearchMatchModel(String label, String packageName) {
         return obtainSharedSearchMatchModel(label, packageName);
+    }
+
+    /** Contact rows are created on the matcher worker, so prepare before scoring them. */
+    public static void prepareQuickSearchMatchModel(Object model) {
+        if (model instanceof SharedSearchMatchModel) {
+            prepareSharedSearchMatchModel((SharedSearchMatchModel) model);
+        }
     }
 
     /** Q6 presentation bridge: reuses the exact Q5 production scorer and token state. */
@@ -2340,8 +2353,8 @@ public final class MaintainedLauncherSettingsHost {
             model.initials = initialValues;
             model.pinyinForms = buildTokenForms(spaced, false);
             model.initialForms = buildTokenForms(spaced, true);
-            model.t9Code = toT9Code(model.label + " " + model.packageName + " "
-                    + compact + " " + initialValues);
+            model.t9Initials = toT9Code(initialValues);
+            model.t9FullPinyin = toT9Code(compact);
             model.ready = true;
         }
     }
@@ -7966,12 +7979,18 @@ public final class MaintainedLauncherSettingsHost {
                             return true;
                         }
                         int action = event.getActionMasked();
+                        if (action == MotionEvent.ACTION_UP
+                                || action == MotionEvent.ACTION_CANCEL) {
+                            v.setPressed(false);
+                            return true;
+                        }
                         if (action != MotionEvent.ACTION_DOWN) {
                             return true;
                         }
                         if (TextUtils.isEmpty(key)) {
                             return true;
                         }
+                        v.setPressed(true);
                         v.playSoundEffect(android.view.SoundEffectConstants.CLICK);
                         v.performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP);
                         if ("取消".equals(key)) {
@@ -8023,24 +8042,38 @@ public final class MaintainedLauncherSettingsHost {
             int id = resources.getIdentifier(name, "drawable", SETTINGS_PKG);
         if (id != 0) {
                 Drawable normal = resources.getDrawable(id);
-                return keyboardButtonState(normal, dark);
+                return keyboardButtonState(resources, normal);
             }
         } catch (Throwable ignored) {
         }
         return null;
     }
 
-    private static Drawable keyboardButtonState(Drawable normal, boolean dark) {
+    private static Drawable keyboardButtonState(Resources resources, Drawable normal) {
         if (normal == null) {
             return null;
         }
         StateListDrawable state = new StateListDrawable();
-        state.addState(new int[]{}, normal);
+        Drawable defaultDrawable = normal.getConstantState() == null ? normal
+                : normal.getConstantState().newDrawable(resources);
+        try {
+            int pressedId = resources.getIdentifier("btn_pressed", "drawable", SETTINGS_PKG);
+            if (pressedId != 0) {
+                state.addState(new int[]{android.R.attr.state_pressed},
+                        new android.graphics.drawable.LayerDrawable(new Drawable[]{
+                                normal, resources.getDrawable(pressedId)}));
+            }
+        } catch (Throwable ignored) {
+        }
+        state.addState(new int[]{}, defaultDrawable);
         return state;
     }
 
     private static Drawable keyBackground(boolean dark) {
         StateListDrawable state = new StateListDrawable();
+        state.addState(new int[]{android.R.attr.state_pressed},
+                colorDrawable(dark ? 0xff3b3b3b : 0xffd5d5d5,
+                        dark ? 0xff202020 : 0xffe6e6e6));
         state.addState(new int[]{}, colorDrawable(dark ? Color.rgb(12, 12, 12) : Color.WHITE,
                 dark ? 0xff202020 : 0xffe6e6e6));
         return state;
@@ -13298,6 +13331,8 @@ public final class MaintainedLauncherSettingsHost {
             migrateSearchGestureSetting(activity);
             bindSwitch(activity, resources, root, "item_id_search_page_enabled",
                     KEY_SWIPE_UP_SEARCH_ENABLED, true);
+            bindSwitch(activity, resources, root, "item_id_search_t9_enabled",
+                    KEY_SEARCH_T9_ENABLED, false);
             bindSearchCommonAppsSwitch(activity, resources, root);
             bindSearchContactsSwitch(activity, resources, root);
             bindSwitch(activity, resources, root, "item_id_swipe_down_system_panels",
@@ -19380,7 +19415,8 @@ public final class MaintainedLauncherSettingsHost {
         volatile String initials = "";
         volatile ArrayList<String> pinyinForms = new ArrayList<String>();
         volatile ArrayList<String> initialForms = new ArrayList<String>();
-        volatile String t9Code;
+        volatile String t9Initials = "";
+        volatile String t9FullPinyin = "";
         volatile boolean ready;
         boolean queued;
 
@@ -19389,7 +19425,6 @@ public final class MaintainedLauncherSettingsHost {
             this.labelLower = label.toLowerCase();
             this.packageName = packageName;
             this.packageLower = packageName.toLowerCase();
-            this.t9Code = toT9Code(label + " " + packageName);
         }
     }
 

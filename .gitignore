@@ -6,6 +6,7 @@ build/
 !launcher/assets/Textures/1080p/setting_button/editBtn_gear.png
 !launcher/assets/Textures/1080p/setting_button/editBtn_inShadow.png
 !launcher/tools/maintained_settings_res/res/drawable/com_smartisanos_videoplayerproject.png
+!launcher/tools/original_quicksearch_res/res/drawable-xxhdpi/btn_*_classic_normal.9.png
 !icons/drawable/*.png
 *.jpg
 *.jpeg
@@ -19,6 +20,7 @@ build/
 !launcher/tools/maintained_settings_res/res/drawable-xxhdpi-v4/privacy_password_lock_icon.png
 !launcher/tools/maintained_settings_res/res/drawable-xxhdpi-v4/app_operation.png
 !launcher/tools/maintained_settings_res/res/drawable-xxhdpi-v4/btn_*_classic_dark.9.png
+!launcher/tools/maintained_settings_res/res/drawable-xxhdpi-v4/btn_pressed.9.png
 launcher/scratch/
 scratch/
 decoded_desktop/

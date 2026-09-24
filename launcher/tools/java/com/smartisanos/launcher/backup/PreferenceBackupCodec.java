@@ -85,6 +85,7 @@ public final class PreferenceBackupCodec {
             "swipe_up_search_enabled",
             "vertical_gesture_direction_reversed",
             "launcher_search_page_enabled",
+            "search_t9_enabled",
             // Display
             "launcher_hide_lable",
             "launcher_hide_navigation_bar",
