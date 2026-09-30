@@ -711,17 +711,17 @@ Launcher 会先确认目标是系统应用或更新后的系统应用，再按�
 
 原版解锁动画引擎、宫格颜色资源和 `USER_PRESENT` 播放链路均保留在主 Launcher APK。
 
-解锁触发只有一个状态 Owner：`LauncherBelowKeyguardCompat`。不得重新引入 `UnlockAnimationCoordinator`、generation、第二套 PlayClaim、动画回调拒绝播放或新的全局 Handler 状态机。
+2026-09-25 用户要求改用 maintained 项目的解锁实现与兼容开关；先前“焦点等待 / 120ms 预滚 / 帧率档位”的实验结论不再是当前实现。触发仍由 `LauncherBelowKeyguardCompat` 单一状态 Owner 管理，保留当前真实锁屏会话边界以防普通应用返回误播，不新增第二套 Coordinator。
 
 `SCREEN_OFF`、`Launcher.onPause()`、focus-lost 与 `onStop()` 只允许进入同一个 `armAndPrepareIfNeeded()`。首次真实锁屏证据（`!interactive || keyguardLocked`）立即 ARM 并同步派发一次原版 `action_keyguard_on -> q(0)`；重复来源只记录 `UNLOCK_DUPLICATE_ARM_IGNORED`，不得再次 prepare。
 
 锁屏资格使用 Smartisan Launcher 自身真实 `resumed + windowFocus` 前台快照，即使它不是系统默认 HOME 也成立；不得在 Keyguard 切换期间用 HOME resolver 作硬 Gate。厂商 ROM 的 `onPause` 可能早于 Power/Keyguard 状态更新，必须保留 pause 可见候选到 `onStop` 再以真实锁屏证据裁决；普通 APP/设置跳转在 interactive 且未锁定时清除候选，不能 ARM。
 
-解锁信号只设置当前 Session：标准 `USER_PRESENT/action_keyguard_to_dismiss` 记录 dismiss；无该广播时，以“已 prepared、Launcher 在 Keyguard locked 时 resume，随后 focus=true 且 interactive/unlocked”的直接 handoff 作为信号。所有来源只调用同步 `tryCommitUnlockAnimation()`，最终只派发一次内部 play 与原版 `q(1)`；不得伪造 `USER_PRESENT`，不得用 120/250/1200/1500ms 延迟播放。1500ms 只允许作为旧 dismiss 的 stale 判定。
+标准 `USER_PRESENT/action_keyguard_to_dismiss` 对有效锁屏 Session 按 maintained 直接派发原版播放事件，不等待 Keyguard unlocked、Resume 或 Focus；没有广播的 ROM 才保留原有 direct handoff + Focus 兜底。原版播放事件在 GL 线程先执行初始化再播放；兼容开关开启且原版尚未初始化时额外排队 init。**不得用 `r.Jd()` / `k.Yd()!=null` 判断动画正在运行**：锁屏预初始化已创建 Timeline，2026-09-25 首版照搬 maintained 运行态检查会误跳过播放，使画面停在准备态；当前单 Session 消费已负责去重。偏好键 `launcher_unlock_wait_for_focus` 只为兼容旧设置与备份保留，含义已改为 maintained 兼容模式，不再表示等待焦点。
 
-OriginOS 16 / V2458A 已在 Smartisan 非默认 HOME 状态用最终 APK 连续20轮验证：ARM/PREPARE/PREPARE_READY/COMMIT/PLAY/START/FINISH 均为 `20/20/20/20/20/20/20`，重复 lifecycle/SCREEN_OFF ARM 共40次均被忽略，错误为0；Settings、Recents、普通 APP 返回的 ARM/PREPARE/COMMIT/START 均为0。ColorOS、Flyme、锁屏相机、Folder 打开和主题切换矩阵仍需对应真机，不得扩写为全 ROM FINAL。
+旧单 Session 版本曾在 OriginOS 16 / V2458A 非默认 HOME 状态完成20轮 `ARM/PREPARE/PREPARE_READY/COMMIT/PLAY/START/FINISH=20/20/20/20/20/20/20`；这是 2026-09-25 maintained 迁移前的历史证据，不能视作新实现的真机结果。ColorOS、Flyme、锁屏相机、Folder 打开和主题切换矩阵仍需对应真机，不得扩写为全 ROM FINAL。
 
-`Eb.update()` 必须保留统一的真实时间差推进；首帧只建立时间基准，不能回退为每帧固定 `Ra.T(20.0f)`，也不能只对解锁动画增加倍率。
+`Eb.update()` 现按 maintained 的全局真实帧间隔推进：恢复首帧为 0，后续 `min(realDeltaMs, 100) * fx * 0.06f` 送入原版 `Ra.T()`；不按刷新率分档，也不只给解锁动画乘倍率。跨刷新率速度、首帧可见性和重复播放尚待多 ROM 真机验收，不得把构建通过当作视觉最终 PASS。
 
 ---
 

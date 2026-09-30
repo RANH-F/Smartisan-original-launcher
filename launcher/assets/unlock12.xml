@@ -361,21 +361,6 @@
             />
     </statusbar>
 
-    <navigationbar
-        index="777"
-        animcount="1"
-        init_alpha="0.7f"
-        init_scale="0.86f"
-        delay_frame="2"
-    >
-        <pass
-            duration="58"
-            interpolator="CUBIC_OUT"
-            target_alpha="0.0f"
-            target_scale="1.0f"
-        />
-    </navigationbar>
-
     <dock
         index="888"
         animcount="1"

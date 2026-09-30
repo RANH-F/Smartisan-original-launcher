@@ -190,6 +190,8 @@
 .method public onDrawFrame(Ljavax/microedition/khronos/opengles/GL10;)V
     .locals 2
 
+    invoke-static {}, Lcom/smartisanos/launcher/theme/LauncherBelowKeyguardCompat;->onRendererFrame()V
+
     .line 1
     iget-object p1, p0, Lcom/smartisanos/launcher/view/vc;->ly:Lcom/smartisanos/launcher/view/Eb;
 
@@ -468,8 +470,6 @@
 
 .method public onSurfaceCreated(Ljavax/microedition/khronos/opengles/GL10;Ljavax/microedition/khronos/egl/EGLConfig;)V
     .locals 6
-
-    invoke-static {}, Lcom/smartisanos/launcher/animations/AnimationFrameRateController;->reset()V
 
     .line 1
     sget-boolean p1, Lcom/smartisanos/launcher/va;->DBG:Z

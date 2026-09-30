@@ -15,6 +15,7 @@
 - [DEVELOPMENT_LOG.md](development/DEVELOPMENT_LOG.md)：BUG 根因、修复方式、验证过程、回归注意和倒序每日记录。
 - [LAUNCHER_FIX_AND_OPTIMIZATION_PLAN.md](development/LAUNCHER_FIX_AND_OPTIMIZATION_PLAN.md)：Launcher 启动、重载、宫格和主题专项的阶段计划与验收条件。
 - [ICON_RENDERING_CONTRACT.md](development/ICON_RENDERING_CONTRACT.md)：普通、改进版、图标包、自定义及 Weather/Calendar 图标唯一 Owner、栅格、缓存与验收冻结合同。
+- [ICON_ILLUMINATION_HANDOFF.md](development/ICON_ILLUMINATION_HANDOFF.md)：原版桌面图标感知阴影的已删除实验、真机证据、未解决断点与续做步骤。
 - [QUICK_SEARCH_AUDIT.md](development/QUICK_SEARCH_AUDIT.md)：原版 QuickSearch 主基线、调用链、数据与兼容边界审计。
 - [QUICK_SEARCH_FINAL_STATUS.md](development/QUICK_SEARCH_FINAL_STATUS.md)：QuickSearch 冻结后的当前架构、功能、验证与防回归边界。
 - [CLEANUP.md](development/CLEANUP.md)：清理和归档候选项。记录候选，不代表可以直接删除。

@@ -17,6 +17,7 @@ import android.app.usage.UsageStatsManager;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.ComponentName;
+import android.content.ComponentCallbacks2;
 import android.content.ActivityNotFoundException;
 import android.content.ContentValues;
 import android.content.BroadcastReceiver;
@@ -33,6 +34,7 @@ import android.content.pm.PackageInstaller;
 import android.content.pm.ResolveInfo;
 import android.content.pm.ShortcutInfo;
 import android.content.res.AssetManager;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -245,8 +247,9 @@ public final class MaintainedLauncherSettingsHost {
     private static final int STORAGE_PICKER_BACKUP_TREE = 1;
     private static final int STORAGE_PICKER_RESTORE_DOCUMENT = 2;
     private static Dialog sBackupProgressDialog;
+    private static View sPendingBackupPreviewRoot;
     private static int sPendingStoragePicker = STORAGE_PICKER_NONE;
-    private static boolean sBackupNamePendingAfterTreeSelection;
+    private static boolean sBackupPreviewPendingAfterTreeSelection;
     private static final String PREF_DYNAMIC_WEATHER_LOCATION_REQUESTED =
             "dynamic_weather_location_permission_requested";
     private static final String KEY_BADGE_HIDE = "launcher_hide_badge";
@@ -293,11 +296,41 @@ public final class MaintainedLauncherSettingsHost {
     private static long sImprovedIconGeneration;
     private static final long ICON_PAGE_CACHE_FRESH_MS = 5L * 60L * 1000L;
     private static int sThemePageScrollY = -1;
-    private static final Map<String, Bitmap> sThemePreviewCache = new HashMap<String, Bitmap>();
-    private static final Map<String, Bitmap> sThemeLargePreviewCache = new HashMap<String, Bitmap>();
-    private static final Map<String, Boolean> sThemePreviewFetchPending = new HashMap<String, Boolean>();
+    private static final LruCache<String, Bitmap> sThemePreviewCache = themeBitmapCache(2 * 1024 * 1024);
+    private static final LruCache<String, Bitmap> sThemeLargePreviewCache = themeBitmapCache(8 * 1024 * 1024);
+    private static boolean sThemeMemoryCallbacksRegistered;
+    private static final Map<String, ArrayList<WeakReference<ImageView>>> sThemePreviewFetchPending =
+            new HashMap<String, ArrayList<WeakReference<ImageView>>>();
     private static final java.util.concurrent.ExecutorService THEME_PREVIEW_FETCH_EXECUTOR =
             java.util.concurrent.Executors.newFixedThreadPool(2);
+
+    private static LruCache<String, Bitmap> themeBitmapCache(int bytes) {
+        return new LruCache<String, Bitmap>(bytes) {
+            @Override protected int sizeOf(String key, Bitmap bitmap) {
+                return bitmap.getAllocationByteCount();
+            }
+        };
+    }
+
+    private static synchronized void ensureThemeMemoryCallbacks(Context context) {
+        if (sThemeMemoryCallbacksRegistered) return;
+        context.getApplicationContext().registerComponentCallbacks(new ComponentCallbacks2() {
+            @Override public void onTrimMemory(int level) {
+                if (level >= ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW) clearThemePreviews();
+            }
+            @Override public void onLowMemory() { clearThemePreviews(); }
+            @Override public void onConfigurationChanged(Configuration configuration) {
+                clearThemePreviews();
+            }
+        });
+        sThemeMemoryCallbacksRegistered = true;
+    }
+
+    private static void clearThemePreviews() {
+        // Views may still display these bitmaps; eviction must never recycle them.
+        sThemePreviewCache.evictAll();
+        sThemeLargePreviewCache.evictAll();
+    }
     private static final LruCache<String, Bitmap> sSmartisanIconCache =
             new LruCache<String, Bitmap>(8 * 1024) {
                 protected int sizeOf(String key, Bitmap bitmap) {
@@ -328,6 +361,10 @@ public final class MaintainedLauncherSettingsHost {
             new WeakHashMap<Activity, PasswordPageExit>();
     private static final Object SETTINGS_BACK_LOCK = new Object();
     private static SettingsBackEntry sSettingsBackEntry;
+    private static Activity sSystemSettingsBackOwner;
+    private static Object sSystemSettingsBackCallback;
+    private static final Map<Activity, SettingsHomeGestureState> sSettingsHomeGestures =
+            new WeakHashMap<Activity, SettingsHomeGestureState>();
     private static final Map<String, Integer> sSettingsPageScrollStates =
             new HashMap<String, Integer>();
     public static volatile boolean sLauncherFrameReportPending;
@@ -428,12 +465,41 @@ public final class MaintainedLauncherSettingsHost {
                 if (owner == null || owner == activity) sSettingsBackEntry = null;
                 Log.i("SettingsNavigation", "SETTINGS_BACK_CLEAR page=" + page
                         + " activity=" + activity.getClass().getSimpleName());
+                syncSystemSettingsBackCallback(activity, false);
                 return;
             }
             sSettingsBackEntry = new SettingsBackEntry(activity, page, action);
         }
+        syncSystemSettingsBackCallback(activity, true);
         Log.i("SettingsNavigation", "SETTINGS_BACK_REGISTER page=" + page
                 + " activity=" + activity.getClass().getSimpleName());
+    }
+
+    private static void syncSystemSettingsBackCallback(Activity activity, boolean intercept) {
+        if (Build.VERSION.SDK_INT < 33 || LauncherSettingsOverlayHost.isLauncherActivity(activity)) return;
+        Api33SettingsBack.set(activity, intercept);
+    }
+
+    private static final class Api33SettingsBack {
+        static void set(final Activity activity, boolean intercept) {
+            if (!intercept && sSystemSettingsBackOwner != activity) return;
+            if (sSystemSettingsBackOwner != null && sSystemSettingsBackCallback != null) {
+                sSystemSettingsBackOwner.getOnBackInvokedDispatcher().unregisterOnBackInvokedCallback(
+                        (android.window.OnBackInvokedCallback) sSystemSettingsBackCallback);
+                sSystemSettingsBackOwner = null;
+                sSystemSettingsBackCallback = null;
+            }
+            if (!intercept) return;
+            android.window.OnBackInvokedCallback callback = new android.window.OnBackInvokedCallback() {
+                @Override public void onBackInvoked() {
+                    if (!handleSettingsBackPublic(activity)) activity.finish();
+                }
+            };
+            activity.getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
+                    android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT, callback);
+            sSystemSettingsBackOwner = activity;
+            sSystemSettingsBackCallback = callback;
+        }
     }
 
     public static boolean handleSettingsBackPublic(Activity activity) {
@@ -477,8 +543,20 @@ public final class MaintainedLauncherSettingsHost {
         }
     }
 
+    public static boolean hasSettingsBackActionPublic(Activity activity) {
+        synchronized (SETTINGS_BACK_LOCK) {
+            return sSettingsBackEntry != null
+                    && sSettingsBackEntry.owner.get() == activity
+                    && sSettingsBackEntry.action != null;
+        }
+    }
+
     public static void clearSettingsBackActionPublic(Activity activity) {
         if (activity == null) return;
+        syncSystemSettingsBackCallback(activity, false);
+        synchronized (sSettingsHomeGestures) {
+            sSettingsHomeGestures.remove(activity);
+        }
         synchronized (SETTINGS_BACK_LOCK) {
             if (sSettingsBackEntry != null && sSettingsBackEntry.owner.get() == activity) {
                 sSettingsBackEntry = null;
@@ -500,11 +578,84 @@ public final class MaintainedLauncherSettingsHost {
         show(activity, -1, false);
     }
 
+    public static boolean keepSettingsPageOnDesktopReturn(Activity activity, Intent intent) {
+        if (activity == null || intent == null
+                || !Intent.ACTION_MAIN.equals(intent.getAction())
+                || !intent.hasCategory(Intent.CATEGORY_LAUNCHER)
+                || intent.getBooleanExtra("launcher_show_search", false)
+                || intent.getBooleanExtra(EXTRA_SHOW_QUICK_DESKTOP_SETTINGS, false)) return false;
+        ViewGroup content = activity.findViewById(android.R.id.content);
+        if (content == null || content.getChildCount() == 0) return false;
+        View current = content.getChildAt(content.getChildCount() - 1);
+        if (current == null || !(current.getTag() instanceof String)) return false;
+        while (content.getChildCount() > 1) {
+            View stale = content.getChildAt(0);
+            stale.animate().cancel();
+            content.removeViewAt(0);
+        }
+        current.animate().cancel();
+        current.setTranslationX(0f);
+        current.setLayerType(View.LAYER_TYPE_NONE, null);
+        ScrollView scroll = firstScrollView(current);
+        Log.i("SettingsNavigation", "SETTINGS_PAGE_RETAIN_ON_TASK_RETURN page="
+                + current.getTag() + " scrollY=" + (scroll == null ? 0 : scroll.getScrollY()));
+        return true;
+    }
+
+    private static final class SettingsHomeGestureState {
+        boolean fromBottom;
+        boolean consuming;
+        float downRawY;
+    }
+
+    public static boolean blockSettingsHomeGestureScroll(Activity activity, MotionEvent event) {
+        if (activity == null || event == null) return false;
+        final SettingsHomeGestureState state;
+        synchronized (sSettingsHomeGestures) {
+            SettingsHomeGestureState existing = sSettingsHomeGestures.get(activity);
+            if (existing == null) {
+                existing = new SettingsHomeGestureState();
+                sSettingsHomeGestures.put(activity, existing);
+            }
+            state = existing;
+        }
+        int action = event.getActionMasked();
+        if (action == MotionEvent.ACTION_DOWN) {
+            View decor = activity.getWindow().getDecorView();
+            float guard = 48f * activity.getResources().getDisplayMetrics().density;
+            state.fromBottom = event.getY() >= decor.getHeight() - guard;
+            state.downRawY = event.getRawY();
+            state.consuming = false;
+        } else if (action == MotionEvent.ACTION_MOVE && state.fromBottom && !state.consuming) {
+            float threshold = 4f * activity.getResources().getDisplayMetrics().density;
+            if (state.downRawY - event.getRawY() > threshold) {
+                MotionEvent cancel = MotionEvent.obtain(event);
+                cancel.setAction(MotionEvent.ACTION_CANCEL);
+                activity.getWindow().superDispatchTouchEvent(cancel);
+                cancel.recycle();
+                state.consuming = true;
+                Log.i("SettingsNavigation", "SETTINGS_HOME_GESTURE_BLOCK_SCROLL");
+            }
+        }
+        boolean consumed = state.consuming;
+        if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
+            state.fromBottom = false;
+            state.consuming = false;
+        }
+        return consumed;
+    }
+
+    public static void showLauncherMainPage(Activity activity) {
+        show(activity, -1, false);
+    }
+
     private static void show(Activity activity, int restoreScrollY) {
         show(activity, restoreScrollY, false);
     }
 
     private static void show(Activity activity, int restoreScrollY, boolean animateBack) {
+        if (LauncherSettingsOverlayHost.isLauncherActivity(activity)
+                && !LauncherSettingsOverlayHost.isShowing(activity)) return;
         try {
             cancelScheduledLauncherRestart(activity);
             Intent intent = activity.getIntent();
@@ -544,9 +695,11 @@ public final class MaintainedLauncherSettingsHost {
             tuneWindow(activity);
             SettingsResourceContext context = createSettingsContext(activity);
             Resources resources = context.getResources();
-            View root = inflate(activity, context, "setting_main");
+            View root = LauncherSettingsOverlayHost.takeMainRootForNewSession(activity);
+            if (root == null) root = inflate(activity, context, "setting_main");
             root.setTag("MAIN");
             bindPage(activity, resources, root);
+            LauncherSettingsOverlayHost.rememberMainRoot(activity, root);
             tuneScrollBars(root);
             setSettingsContentView(activity, context, resources, root, !animateBack, animateBack);
             registerSettingsBackActionPublic(activity, "MAIN", null);
@@ -1064,6 +1217,10 @@ public final class MaintainedLauncherSettingsHost {
     }
 
     private static void tuneWindow(Activity activity) {
+        if (LauncherSettingsOverlayHost.isLauncherActivity(activity)) {
+            LauncherSettingsOverlayHost.tuneWindow(activity);
+            return;
+        }
         activity.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN
                 | WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
         if (Build.VERSION.SDK_INT >= 21) {
@@ -1072,6 +1229,7 @@ public final class MaintainedLauncherSettingsHost {
         if (Build.VERSION.SDK_INT >= 23) {
             activity.getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
         }
+        applyLauncherNavigationBarSetting(activity);
     }
 
     private static File copySettingsResources(Context context) throws Exception {
@@ -1335,7 +1493,34 @@ public final class MaintainedLauncherSettingsHost {
     }
 
     public static void applyLauncherNavigationBarSetting(Activity activity) {
-        applyNavigationBarIfChanged(activity);
+        if (activity == null || activity.getWindow() == null) return;
+        if ("com.smartisanos.launcher.Launcher".equals(activity.getClass().getName())) {
+            applyNavigationBarIfChanged(activity);
+            return;
+        }
+        applyNavigationBarToWindow(activity, activity.getWindow());
+    }
+
+    public static void applyNavigationBarToWindow(Context context, Window window) {
+        if (context == null || window == null) return;
+        // Keep each page's status-bar and layout policy; only apply the navigation preference.
+        View decor = window.getDecorView();
+        if (decor == null) return;
+        boolean hide = LauncherSettingBridge.readBool(context,
+                "launcher_hide_navigation_bar", false);
+        int flags = decor.getSystemUiVisibility();
+        if (hide) {
+            flags |= View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
+        } else {
+            flags &= ~(View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+        }
+        if (decor.getSystemUiVisibility() != flags) decor.setSystemUiVisibility(flags);
+        if (Build.VERSION.SDK_INT >= 30 && window.getInsetsController() != null) {
+            if (hide) window.getInsetsController().hide(
+                    android.view.WindowInsets.Type.navigationBars());
+            else window.getInsetsController().show(
+                    android.view.WindowInsets.Type.navigationBars());
+        }
     }
 
     public static void applyNavigationBarIfChanged(Activity activity) {
@@ -3956,6 +4141,7 @@ public final class MaintainedLauncherSettingsHost {
             final SettingsResourceContext context = createSettingsContext(activity);
             final Resources resources = context.getResources();
             View root = inflate(activity, context, "activity_theme_item");
+            markSettingsPage(root, "THEME_DETAIL");
 
             final ThemeEntry[] entries = allThemeEntries();
             final int[] selected = new int[]{Math.max(0, indexOf(entries, initialEntry))};
@@ -4528,10 +4714,14 @@ public final class MaintainedLauncherSettingsHost {
     }
 
     private static void setSettingsContentView(Activity activity, Context animContext,
-                                               Resources resources, final View root,
-                                               boolean forward, boolean animate) {
+                                                Resources resources, final View root,
+                                                boolean forward, boolean animate) {
+        if (LauncherSettingsOverlayHost.isLauncherActivity(activity)
+                && !LauncherSettingsOverlayHost.isShowing(activity)) return;
         tuneScrollBars(root);
-        if (activity != null) {
+        final ViewGroup overlayPages = LauncherSettingsOverlayHost.pagesFor(activity);
+        if (activity != null && overlayPages == null) {
+            applyLauncherNavigationBarSetting(activity);
             View contentHost = activity.findViewById(android.R.id.content);
             if (contentHost != null) {
                 // Paint the extra top inset with the same color as the settings status bar.
@@ -4542,18 +4732,21 @@ public final class MaintainedLauncherSettingsHost {
             }
         }
         if (activity == null || root == null || !animate) {
-            if (activity != null) {
+            if (overlayPages != null) {
+                LauncherSettingsOverlayHost.showPageDirect(activity, root);
+            } else if (activity != null) {
                 activity.setContentView(root);
             }
             return;
         }
-        ViewGroup content = null;
+        ViewGroup content = overlayPages;
         try {
-            content = (ViewGroup) activity.findViewById(android.R.id.content);
+            if (content == null) content = (ViewGroup) activity.findViewById(android.R.id.content);
         } catch (Throwable ignored) {
         }
         if (content == null || content.getChildCount() == 0) {
-            activity.setContentView(root);
+            if (overlayPages != null) LauncherSettingsOverlayHost.showPageDirect(activity, root);
+            else activity.setContentView(root);
             return;
         }
 
@@ -4588,7 +4781,8 @@ public final class MaintainedLauncherSettingsHost {
             width = activity.getResources().getDisplayMetrics().widthPixels;
         }
         if (width <= 0) {
-            activity.setContentView(root);
+            if (overlayPages != null) LauncherSettingsOverlayHost.showPageDirect(activity, root);
+            else activity.setContentView(root);
             return;
         }
         final int direction = forward ? 1 : -1;
@@ -5189,6 +5383,9 @@ public final class MaintainedLauncherSettingsHost {
         }
         item.setCheckedAnimated(next);
         writeBoolSetting(context, key, next);
+        if ("launcher_hide_navigation_bar".equals(key) && context instanceof Activity) {
+            applyLauncherNavigationBarSetting((Activity) context);
+        }
         applyLauncherSettingChange(context, key);
         if (KEY_DOCK_SLIDE_REVERSE_ENABLED.equals(key)) {
             applyDockSlideDirectionPreference(context);
@@ -5381,6 +5578,21 @@ public final class MaintainedLauncherSettingsHost {
             if (controller != null) controller.setSystemBarsAppearance(0,
                     WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
                             | WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS);
+        }
+        if (LauncherSettingBridge.readBool(context, "launcher_hide_navigation_bar", false)) {
+            applyNavigationBarToWindow(context, window);
+            applyNavigationBarToWindow(context, dialog.getWindow());
+        }
+    }
+
+    /** Reapply the user's navigation preference after the original loading dialog is shown. */
+    public static void onOriginalThemeLoadingUiShown(Dialog dialog) {
+        if (dialog == null) return;
+        Context context = dialog.getContext();
+        if (!LauncherSettingBridge.readBool(context, "launcher_hide_navigation_bar", false)) return;
+        applyNavigationBarToWindow(context, dialog.getWindow());
+        if (context instanceof Activity) {
+            applyNavigationBarToWindow(context, ((Activity) context).getWindow());
         }
     }
 
@@ -5946,7 +6158,7 @@ public final class MaintainedLauncherSettingsHost {
     }
 
     public static void startActivityForUser(Context context, Intent intent, android.os.Bundle options,
-                                            int userId) throws Exception {
+                                             int userId) throws Exception {
         if (context == null || intent == null) {
             return;
         }
@@ -6321,6 +6533,7 @@ public final class MaintainedLauncherSettingsHost {
         if (activity == null) {
             return;
         }
+        applyLauncherNavigationBarSetting(activity);
         SharedPreferences settings = activity.getSharedPreferences("launcher_settings",
                 Context.MODE_PRIVATE);
         boolean runtimeReturned = false;
@@ -7005,8 +7218,6 @@ public final class MaintainedLauncherSettingsHost {
                 String saved = activity.getSharedPreferences("launcher_page_lock", Context.MODE_PRIVATE)
                         .getString("password_hash", "");
                 if (!saved.equals(launcherPagePasswordHash(value))) {
-                    Toast.makeText(activity, getString(resources,
-                            "privacy_password_incorrect", "密码错误"), Toast.LENGTH_SHORT).show();
                     reset.run();
                     return;
                 }
@@ -7014,7 +7225,7 @@ public final class MaintainedLauncherSettingsHost {
                     onVerified.run();
                 }
             }
-        }, true, false);
+        }, true, false, true);
     }
 
     private static void showSettingsPagePasswordSet(final Activity activity, boolean changing) {
@@ -7471,7 +7682,7 @@ public final class MaintainedLauncherSettingsHost {
                 finishLauncherPasswordVerification();
             }
         });
-        dialog.show();
+        showDialogWithNavigation(dialog);
         Window passwordWindow = dialog.getWindow();
         if (passwordWindow != null) {
             passwordWindow.setBackgroundDrawableResource(android.R.color.transparent);
@@ -7531,6 +7742,13 @@ public final class MaintainedLauncherSettingsHost {
     private static void showSettingsPasswordPad(final Activity activity, String titleText,
             String promptText, final PasswordPadCallback callback, boolean animate,
             final boolean backToPrivacyPage) {
+        showSettingsPasswordPad(activity, titleText, promptText, callback, animate,
+                backToPrivacyPage, false);
+    }
+
+    private static void showSettingsPasswordPad(final Activity activity, String titleText,
+            String promptText, final PasswordPadCallback callback, boolean animate,
+            final boolean backToPrivacyPage, final boolean originalErrorFeedback) {
         try {
             tuneWindow(activity);
             final SettingsResourceContext context = createSettingsContext(activity);
@@ -7556,32 +7774,42 @@ public final class MaintainedLauncherSettingsHost {
 
             LinearLayout content = new LinearLayout(context);
             content.setOrientation(LinearLayout.VERTICAL);
-            content.setGravity(Gravity.CENTER_HORIZONTAL);
+            content.setGravity(Gravity.CENTER);
             content.setPadding(0, 0, 0, 0);
             page.addView(content, new LinearLayout.LayoutParams(-1, 0, 1f));
-
-            Space top = new Space(activity);
-            content.addView(top, new LinearLayout.LayoutParams(1, 0, 1.15f));
 
             TextView prompt = new TextView(context);
             prompt.setText(promptText);
             prompt.setTextColor(0xff9d9d9d);
-            prompt.setTextSize(19);
+            prompt.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX,
+                    originalPasswordDimen(activity, "unlocker_txt_main", dp(activity, 16)));
+            prompt.setTypeface(Typeface.DEFAULT_BOLD);
             prompt.setGravity(Gravity.CENTER);
             content.addView(prompt, new LinearLayout.LayoutParams(-1, -2));
 
             final LinearLayout dots = makePasswordDotsView(activity, false);
-            LinearLayout.LayoutParams dotsLp = new LinearLayout.LayoutParams(-1, dp(activity, 26));
-            dotsLp.topMargin = dp(activity, 18);
+            LinearLayout.LayoutParams dotsLp = new LinearLayout.LayoutParams(-1,
+                    originalPasswordDimen(activity, "unlocker_pin_dot_size", dp(activity, 15)));
+            dotsLp.topMargin = originalPasswordDimen(activity,
+                    "unlocker_hint_pin_view_margin_top", dp(activity, 20));
             content.addView(dots, dotsLp);
 
-            content.addView(new Space(activity), new LinearLayout.LayoutParams(1, 0, 1.85f));
-
-            final Runnable reset = new Runnable() {
+            final Runnable clear = new Runnable() {
                 @Override
                 public void run() {
                     input.setLength(0);
                     updatePasswordDots(dots, 0, false);
+                }
+            };
+            final Runnable reset = new Runnable() {
+                @Override
+                public void run() {
+                    if (originalErrorFeedback) {
+                        showOriginalPasswordError(activity, prompt, dots, clear);
+                        vibrateOriginalPasswordError(activity);
+                    } else {
+                        clear.run();
+                    }
                 }
             };
             addPasswordKeypad(activity, page, false, false, input, dots, new PasswordPadCallback() {
@@ -7648,33 +7876,40 @@ public final class MaintainedLauncherSettingsHost {
         root.setGravity(Gravity.CENTER_HORIZONTAL);
         root.setBackgroundColor(Color.BLACK);
 
-        int height = activity.getResources().getDisplayMetrics().heightPixels;
-        int topPad = Math.max(dp(activity, 48), height / 10);
-        root.setPadding(0, topPad, 0, 0);
+        FrameLayout hintArea = new FrameLayout(activity);
+        root.addView(hintArea, new LinearLayout.LayoutParams(-1, 0, 1f));
+        LinearLayout hint = new LinearLayout(activity);
+        hint.setOrientation(LinearLayout.VERTICAL);
+        hint.setGravity(Gravity.CENTER_HORIZONTAL);
+        hintArea.addView(hint, new FrameLayout.LayoutParams(-1, -2, Gravity.CENTER));
 
         ImageView icon = new ImageView(activity);
         icon.setImageDrawable(createLauncherLockIcon(activity));
-        root.addView(icon, new LinearLayout.LayoutParams(dp(activity, 76), dp(activity, 96)));
+        icon.setTranslationY(dp(activity, 8));
+        int logoSize = originalPasswordDimen(activity, "unlocker_hint_logo_size", dp(activity, 72));
+        LinearLayout.LayoutParams iconLp = new LinearLayout.LayoutParams(logoSize, logoSize);
+        iconLp.bottomMargin = originalPasswordDimen(activity,
+                "unlocker_hint_text_margin_top", dp(activity, 18));
+        hint.addView(icon, iconLp);
 
         TextView title = new TextView(activity);
         title.setText("解锁板块");
         title.setTextColor(Color.WHITE);
         title.setGravity(Gravity.CENTER);
-        title.setTextSize(24);
+        title.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX,
+                originalPasswordDimen(activity, "unlocker_txt_main", dp(activity, 16)));
         title.setTypeface(Typeface.DEFAULT_BOLD);
         LinearLayout.LayoutParams titleLp = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        titleLp.topMargin = dp(activity, 22);
-        root.addView(title, titleLp);
+        hint.addView(title, titleLp);
 
         final LinearLayout dots = makePasswordDotsView(activity, true);
         LinearLayout.LayoutParams dotsLp = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, dp(activity, 34));
-        dotsLp.topMargin = dp(activity, 18);
-        root.addView(dots, dotsLp);
-
-        Space spacer = new Space(activity);
-        root.addView(spacer, new LinearLayout.LayoutParams(1, 0, 1f));
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                originalPasswordDimen(activity, "unlocker_pin_dot_size", dp(activity, 15)));
+        dotsLp.topMargin = originalPasswordDimen(activity,
+                "unlocker_hint_pin_view_margin_top", dp(activity, 20));
+        hint.addView(dots, dotsLp);
 
         final StringBuilder input = new StringBuilder(6);
         addPasswordKeypad(activity, root, true, true, input, dots, new PasswordPadCallback() {
@@ -7693,9 +7928,8 @@ public final class MaintainedLauncherSettingsHost {
                         }
                     });
                 } else {
-                    Toast.makeText(activity, "密码错误", Toast.LENGTH_SHORT).show();
+                    showOriginalPasswordError(activity, title, dots, reset);
                     vibrateOriginalPasswordError(activity);
-                    reset.run();
                 }
             }
         });
@@ -7799,6 +8033,64 @@ public final class MaintainedLauncherSettingsHost {
             }
         } catch (Throwable ignored) {
         }
+    }
+
+    private static void showOriginalPasswordError(final Activity activity, final TextView title,
+            final LinearLayout dots, final Runnable reset) {
+        final CharSequence normalTitle = title.getText();
+        final android.content.res.ColorStateList normalColor = title.getTextColors();
+        final float normalSize = title.getTextSize();
+        int errorColor = 0xffd44d44;
+        int colorId = activity.getResources().getIdentifier(
+                "unlocker_tips_wrong", "color", activity.getPackageName());
+        if (colorId != 0) {
+            errorColor = activity.getResources().getColor(colorId);
+        }
+        int errorTextId = activity.getResources().getIdentifier(
+                "unlocker_invalid_password", "string", activity.getPackageName());
+        title.setText(errorTextId == 0 ? "密码错误" : activity.getString(errorTextId));
+        title.setTextColor(errorColor);
+        int textSizeId = activity.getResources().getIdentifier(
+                "unlocker_txt_main", "dimen", activity.getPackageName());
+        if (textSizeId != 0) {
+            title.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX,
+                    activity.getResources().getDimension(textSizeId));
+        }
+        int redDotId = activity.getResources().getIdentifier(
+                "pin_dot_red", "drawable", activity.getPackageName());
+        for (int i = 0; i < dots.getChildCount(); i++) {
+            View dot = dots.getChildAt(i);
+            if (redDotId != 0) {
+                dot.setBackgroundResource(redDotId);
+            } else {
+                GradientDrawable red = new GradientDrawable();
+                red.setShape(GradientDrawable.OVAL);
+                red.setColor(errorColor);
+                dot.setBackgroundDrawable(red);
+            }
+        }
+        float distance = 25f;
+        float[] positions = {0f, -distance, distance, -distance, distance,
+                -distance, distance, 0f};
+        float[] times = {0f, 0.1f, 0.26f, 0.42f, 0.58f, 0.74f, 0.9f, 1f};
+        android.animation.Keyframe[] frames = new android.animation.Keyframe[positions.length];
+        for (int i = 0; i < frames.length; i++) {
+            frames[i] = android.animation.Keyframe.ofFloat(times[i], positions[i]);
+        }
+        android.animation.PropertyValuesHolder movement =
+                android.animation.PropertyValuesHolder.ofKeyframe(View.TRANSLATION_X, frames);
+        android.animation.ObjectAnimator.ofPropertyValuesHolder(dots, movement)
+                .setDuration(400L).start();
+        dots.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                reset.run();
+                title.setText(normalTitle);
+                title.setTextColor(normalColor);
+                title.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, normalSize);
+                dots.setTranslationX(0f);
+            }
+        }, 400L);
     }
 
     private static void showLauncherPasswordSetStep(final Activity activity, final String firstPassword) {
@@ -8114,16 +8406,24 @@ public final class MaintainedLauncherSettingsHost {
         return out.toString();
     }
 
+    private static int originalPasswordDimen(Context context, String name, int fallback) {
+        if (context == null) return fallback;
+        int id = context.getResources().getIdentifier(name, "dimen", context.getPackageName());
+        return id == 0 ? fallback : context.getResources().getDimensionPixelSize(id);
+    }
+
     private static LinearLayout makePasswordDotsView(Context context, boolean dark) {
         LinearLayout row = new LinearLayout(context);
         row.setGravity(Gravity.CENTER);
         row.setOrientation(LinearLayout.HORIZONTAL);
+        int dotSize = originalPasswordDimen(context, "unlocker_pin_dot_size", dp(context, 15));
+        int dotSpace = originalPasswordDimen(context, "unlocker_pin_space", dp(context, 12));
         for (int i = 0; i < 6; i++) {
             View dot = new View(context);
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                    dp(context, dark ? 14 : 12), dp(context, dark ? 14 : 12));
+                    dotSize, dotSize);
             if (i > 0) {
-                lp.leftMargin = dp(context, dark ? 18 : 16);
+                lp.leftMargin = dotSpace * 2;
             }
             row.addView(dot, lp);
         }
@@ -8138,9 +8438,18 @@ public final class MaintainedLauncherSettingsHost {
         int empty = dark ? Color.rgb(38, 38, 38) : 0xffe4e4e4;
         int active = dark ? Color.rgb(220, 220, 220) : 0xffffffff;
         int activeStroke = dark ? Color.rgb(220, 220, 220) : 0xffd8d8d8;
+        int emptyId = dark ? row.getResources().getIdentifier(
+                "pin_dot_empty", "drawable", row.getContext().getPackageName()) : 0;
+        int fullId = dark ? row.getResources().getIdentifier(
+                "pin_dot_full", "drawable", row.getContext().getPackageName()) : 0;
         for (int i = 0; i < row.getChildCount(); i++) {
             View dot = row.getChildAt(i);
             boolean on = i < filled;
+            int originalId = on ? fullId : emptyId;
+            if (originalId != 0) {
+                dot.setBackgroundResource(originalId);
+                continue;
+            }
             GradientDrawable drawable = new GradientDrawable();
             drawable.setShape(GradientDrawable.OVAL);
             drawable.setColor(on ? active : empty);
@@ -8845,6 +9154,10 @@ public final class MaintainedLauncherSettingsHost {
     }
 
     private static void startLauncherFromForeground(Context context) {
+        startLauncherFromForeground(context, false);
+    }
+
+    private static void startLauncherFromForeground(Context context, boolean themeTransition) {
         try {
             Context launchContext = context;
             if (context instanceof Activity) {
@@ -8852,14 +9165,25 @@ public final class MaintainedLauncherSettingsHost {
                 Intent intent = launcherActivityIntent(activity);
                 intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                 markThemeSettingsExitRequested(activity);
+                if (LauncherSettingsOverlayHost.finishForSettingsOperation(activity)) {
+                    activity.startActivity(intent);
+                    return;
+                }
                 activity.finish();
+                int exitAnimation = themeTransition ? activity.getResources().getIdentifier(
+                        "slide_down_out", "anim", activity.getPackageName()) : 0;
                 try {
-                    activity.overridePendingTransition(0, 0);
+                    activity.overridePendingTransition(0, exitAnimation);
                 } catch (Throwable ignored) {
                 }
-                activity.startActivity(intent);
+                if (themeTransition && exitAnimation != 0 && Build.VERSION.SDK_INT >= 16) {
+                    activity.startActivity(intent, android.app.ActivityOptions
+                            .makeCustomAnimation(activity, 0, exitAnimation).toBundle());
+                } else {
+                    activity.startActivity(intent);
+                }
                 try {
-                    activity.overridePendingTransition(0, 0);
+                    activity.overridePendingTransition(0, exitAnimation);
                 } catch (Throwable ignored) {
                 }
                 return;
@@ -8972,6 +9296,7 @@ public final class MaintainedLauncherSettingsHost {
     }
 
     private static void finishSettingsTask(Activity activity) {
+        if (LauncherSettingsOverlayHost.finishForSettingsOperation(activity)) return;
         try {
             activity.overridePendingTransition(0, 0);
         } catch (Throwable ignored) {
@@ -9091,10 +9416,7 @@ public final class MaintainedLauncherSettingsHost {
         tagThemeDetailControl(btnDownload, entry);
         tagThemeDetailControl(statusIcon, entry);
         if (previewImg != null) {
-            Bitmap bitmap = maskedThemeLargePreviewBitmapCached(activity, resources, entry.id);
-            if (bitmap != null) {
-                previewImg.setImageBitmap(bitmap);
-            }
+            requestThemeLargePreview(activity, resources, entry.id, previewImg);
         }
         final boolean installed = entry.local || packageInstalled(activity, entry.pkg);
         final boolean current = entry.id.equals(currentTheme(activity));
@@ -9191,8 +9513,14 @@ public final class MaintainedLauncherSettingsHost {
             }
             dialogClass.getMethod("setCancelable", boolean.class).invoke(dialog, false);
             dialogClass.getMethod("setCanceledOnTouchOutside", boolean.class).invoke(dialog, false);
-            dialogClass.getMethod("setMessage", String.class).invoke(dialog, message);
+            dialogClass.getMethod("setMessage", String.class).invoke(dialog, "");
+            if (dialog instanceof Dialog) {
+                com.smartisanos.launcher.reload.LoadingUiWindowCompat.apply((Dialog) dialog);
+            }
             dialogClass.getMethod("show").invoke(dialog);
+            if (dialog instanceof Dialog) {
+                com.smartisanos.launcher.reload.LoadingUiWindowCompat.apply((Dialog) dialog);
+            }
             if (keepReference && dialog instanceof Dialog) {
                 sLauncherReloadDialog = (Dialog) dialog;
             }
@@ -9208,13 +9536,7 @@ public final class MaintainedLauncherSettingsHost {
     }
 
     private static void tuneWindowForLoading(Activity activity) {
-        if (Build.VERSION.SDK_INT >= 21) {
-            activity.getWindow().setStatusBarColor(Color.BLACK);
-            activity.getWindow().setNavigationBarColor(Color.BLACK);
-        }
-        if (Build.VERSION.SDK_INT >= 23) {
-            activity.getWindow().getDecorView().setSystemUiVisibility(0);
-        }
+        com.smartisanos.launcher.reload.LoadingUiWindowCompat.apply(activity.getWindow());
     }
 
     private static final class RestartLoadingView extends View implements Runnable {
@@ -9305,6 +9627,12 @@ public final class MaintainedLauncherSettingsHost {
         showConfirmDialog(activity, title, message, negative, positive, positiveClick);
     }
 
+    private static void showDialogWithNavigation(Dialog dialog) {
+        applyNavigationBarToWindow(dialog.getContext(), dialog.getWindow());
+        dialog.show();
+        applyNavigationBarToWindow(dialog.getContext(), dialog.getWindow());
+    }
+
     private static void showConfirmDialog(final Activity activity, String title, String message,
             String negative, String positive, final View.OnClickListener positiveClick,
             final Runnable dismissed) {
@@ -9387,7 +9715,7 @@ public final class MaintainedLauncherSettingsHost {
         if (window != null) {
             window.setBackgroundDrawableResource(android.R.color.transparent);
         }
-        dialog.show();
+        showDialogWithNavigation(dialog);
         Window shown = dialog.getWindow();
         if (shown != null) {
             int screenWidth = activity.getResources().getDisplayMetrics().widthPixels;
@@ -9534,7 +9862,6 @@ public final class MaintainedLauncherSettingsHost {
         logOperation(activity, "THEME", "dispatch id=" + id
                 + ", original=" + originalApplied + ", fallback=" + fallbackQueued
                 + ", after=" + themeDiagnosticState(activity));
-        Toast.makeText(activity, "正在应用：" + name, Toast.LENGTH_SHORT).show();
         returnToLauncherForOriginalThemeTransition(activity);
     }
 
@@ -9545,7 +9872,7 @@ public final class MaintainedLauncherSettingsHost {
         View root = activity.getWindow() == null ? null : activity.getWindow().getDecorView();
         if (root == null) {
             submitThemeSnapshot(activity);
-            startLauncherFromForeground(activity);
+            startLauncherFromForeground(activity, true);
             return;
         }
         // ThemeItemActivity waits 100 ms after the original theme state is committed.
@@ -9557,7 +9884,7 @@ public final class MaintainedLauncherSettingsHost {
                     return;
                 }
                 submitThemeSnapshot(activity);
-                startLauncherFromForeground(activity);
+                startLauncherFromForeground(activity, true);
             }
         }, 100L);
     }
@@ -10302,7 +10629,13 @@ public final class MaintainedLauncherSettingsHost {
             dialogClass.getMethod("setCancelable", boolean.class).invoke(value, false);
             dialogClass.getMethod("setCanceledOnTouchOutside", boolean.class).invoke(value, false);
             dialogClass.getMethod("setMessage", String.class).invoke(value, message);
+            if (value instanceof Dialog) {
+                applyNavigationBarToWindow(activity, ((Dialog) value).getWindow());
+            }
             dialogClass.getMethod("show").invoke(value);
+            if (value instanceof Dialog) {
+                applyNavigationBarToWindow(activity, ((Dialog) value).getWindow());
+            }
             return value instanceof Dialog ? (Dialog) value : null;
         } catch (Throwable error) {
             Log.w(LOG_TAG, "Unable to show Smartisan progress dialog", error);
@@ -11004,7 +11337,7 @@ public final class MaintainedLauncherSettingsHost {
             dialog.setContentView(root);
             Window window = dialog.getWindow();
             if (window != null) window.setBackgroundDrawableResource(android.R.color.transparent);
-            dialog.show();
+            showDialogWithNavigation(dialog);
             Window shown = dialog.getWindow();
             if (shown != null) {
                 int screenWidth = activity.getResources().getDisplayMetrics().widthPixels;
@@ -12096,25 +12429,6 @@ public final class MaintainedLauncherSettingsHost {
         return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(new Date(time));
     }
 
-    private static void addFollowRow(Context context, LinearLayout parent, String left, String right) {
-        LinearLayout row = new LinearLayout(context);
-        row.setOrientation(LinearLayout.HORIZONTAL);
-        row.setGravity(Gravity.CENTER_VERTICAL);
-        row.setPadding(dp(context, 20), 0, dp(context, 20), 0);
-        TextView title = text(context, left, 20, 0xff555d6d, false);
-        row.addView(title, new LinearLayout.LayoutParams(0, -1, 1.0f));
-        TextView value = text(context, right, 16, 0xff6f91df, false);
-        value.setGravity(Gravity.CENTER_VERTICAL | Gravity.RIGHT);
-        row.addView(value, new LinearLayout.LayoutParams(0, -1, 1.0f));
-        parent.addView(row, new LinearLayout.LayoutParams(-1, dp(context, 72)));
-    }
-
-    private static void addDivider(Context context, LinearLayout parent) {
-        View line = new View(context);
-        line.setBackgroundColor(0xffeeeeee);
-        parent.addView(line, new LinearLayout.LayoutParams(-1, 1));
-    }
-
     private static void showDesktopBackupPage(final Activity activity, boolean forward) {
         try {
             SettingsResourceContext context = createSettingsContext(activity);
@@ -12196,8 +12510,8 @@ public final class MaintainedLauncherSettingsHost {
         return new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(new Date(time));
     }
 
-    private static void openBackupTree(Activity activity, boolean continueToBackupName) {
-        sBackupNamePendingAfterTreeSelection = continueToBackupName;
+    private static void openBackupTree(Activity activity, boolean continueToBackupPreview) {
+        sBackupPreviewPendingAfterTreeSelection = continueToBackupPreview;
         if (!ensureStoragePermissionForPicker(activity, STORAGE_PICKER_BACKUP_TREE)) return;
         launchBackupTreePicker(activity);
     }
@@ -12295,7 +12609,24 @@ public final class MaintainedLauncherSettingsHost {
             openBackupTree(activity, true);
             return;
         }
-        showBackupNameDialog(activity, Uri.parse(value));
+        startBackupPreview(activity, Uri.parse(value));
+    }
+
+    private static void startBackupPreview(final Activity activity, Uri treeUri) {
+        Resources resources = getMaintainedResources(activity);
+        final View pendingRoot = showBackupPreviewPage(activity, null, null, true,
+                DesktopBackupController.suggestedBackupName(), null);
+        if (pendingRoot == null) return;
+        sPendingBackupPreviewRoot = pendingRoot;
+        DesktopBackupController.prepareBackupPreview(activity, treeUri,
+                backupPreviewListener(activity, resources, pendingRoot));
+    }
+
+    static void cancelPendingBackupPreview(Activity activity) {
+        if (sPendingBackupPreviewRoot == null) return;
+        sPendingBackupPreviewRoot = null;
+        DesktopBackupController.cancelRunningBackup();
+        DesktopBackupController.discardPreparedBackupPreview(activity);
     }
 
     interface SingleInputListener {
@@ -12356,7 +12687,7 @@ public final class MaintainedLauncherSettingsHost {
         root.addView(cancel, new LinearLayout.LayoutParams(-1, dp(activity, 47)));
 
         dialog.setContentView(root);
-        dialog.show();
+        showDialogWithNavigation(dialog);
         Window shown = dialog.getWindow();
         if (shown != null) {
             shown.setBackgroundDrawableResource(android.R.color.transparent);
@@ -12443,7 +12774,7 @@ public final class MaintainedLauncherSettingsHost {
         root.addView(buttons, new LinearLayout.LayoutParams(-1, dp(activity, 47)));
 
         dialog.setContentView(root);
-        dialog.show();
+        showDialogWithNavigation(dialog);
         Window shown = dialog.getWindow();
         if (shown != null) {
             shown.setBackgroundDrawableResource(android.R.color.transparent);
@@ -12488,20 +12819,20 @@ public final class MaintainedLauncherSettingsHost {
     private static boolean onBackupActivityResult(Activity activity, int requestCode,
             int resultCode, Intent data) {
         if (resultCode != Activity.RESULT_OK || data == null || data.getData() == null) {
-            if (requestCode == REQUEST_BACKUP_TREE) sBackupNamePendingAfterTreeSelection = false;
+            if (requestCode == REQUEST_BACKUP_TREE) sBackupPreviewPendingAfterTreeSelection = false;
             return true;
         }
         Uri uri = data.getData();
         if (requestCode == REQUEST_BACKUP_TREE) {
-            boolean continueToBackupName = sBackupNamePendingAfterTreeSelection;
-            sBackupNamePendingAfterTreeSelection = false;
+            boolean continueToBackupPreview = sBackupPreviewPendingAfterTreeSelection;
+            sBackupPreviewPendingAfterTreeSelection = false;
             if (!DesktopBackupController.persistTreePermission(activity, uri, data.getFlags())) {
                 Resources resources = getMaintainedResources(activity);
                 showInfoDialog(activity,
                         getString(resources, "backup_permission_failed_title", "目录授权失败"),
                         getString(resources, "backup_permission_failed_message", "所选目录没有可持久使用的读写权限，请重新选择。"));
             } else {
-                if (continueToBackupName) showBackupNameDialog(activity, uri);
+                if (continueToBackupPreview) startBackupPreview(activity, uri);
                 else showDesktopBackupPage(activity, false);
             }
             return true;
@@ -12516,30 +12847,6 @@ public final class MaintainedLauncherSettingsHost {
         return false;
     }
 
-    private static void showBackupNameDialog(final Activity activity, final Uri treeUri) {
-        Resources resources = getMaintainedResources(activity);
-        showSingleInputDialog(activity,
-                getString(resources, "backup_name_title", "备份名称"),
-                new SimpleDateFormat("yyyy-MM-dd HH-mm", Locale.getDefault()).format(new Date()),
-                new SingleInputListener() {
-                    public boolean onConfirm(EditText input, String value) {
-                        String fileName = DesktopBackupController.normalizeBackupFileName(value);
-                        if (TextUtils.isEmpty(fileName)) {
-                            input.setError(getString(getMaintainedResources(activity),
-                                    "backup_name_empty", "名称不能为空"));
-                            return false;
-                        }
-                        Uri existing = DesktopBackupController.findTreeBackup(activity, treeUri, fileName);
-                        if (existing != null) {
-                            confirmBackupOverwrite(activity, treeUri, fileName);
-                        } else {
-                            startNamedBackup(activity, treeUri, fileName, false);
-                        }
-                        return true;
-                    }
-                });
-    }
-
     private static void confirmBackupOverwrite(final Activity activity, final Uri treeUri,
             final String fileName) {
         Resources resources = getMaintainedResources(activity);
@@ -12550,17 +12857,73 @@ public final class MaintainedLauncherSettingsHost {
                 getString(resources, "backup_overwrite_action", "覆盖"),
                 null, new View.OnClickListener() {
                     public void onClick(View v) {
-                        startNamedBackup(activity, treeUri, fileName, true);
+                        savePreparedBackup(activity, fileName, true);
                     }
                 });
     }
 
-    private static void startNamedBackup(final Activity activity, Uri treeUri, String fileName,
+    private static void savePreparedBackup(final Activity activity, String fileName,
             boolean overwrite) {
         final Resources resources = getMaintainedResources(activity);
         showBackupProgress(activity, getString(resources, "backup_progress", "正在备份桌面…"), true);
-        DesktopBackupController.startBackupToTree(activity, treeUri, fileName, overwrite,
+        DesktopBackupController.startPreparedBackup(activity, fileName, overwrite,
                 backupListener(activity, resources));
+    }
+
+    private static void confirmStartBackup(final Activity activity, String name) {
+        Resources resources = getMaintainedResources(activity);
+        String fileName = DesktopBackupController.normalizeBackupFileName(name);
+        if (TextUtils.isEmpty(fileName)) {
+            showInfoDialog(activity, getString(resources, "backup_name_title", "备份名称"),
+                    getString(resources, "backup_name_empty", "请输入备份名称。"));
+            return;
+        }
+        String treeValue = activity.getSharedPreferences(DesktopBackupController.PREFS,
+                Context.MODE_PRIVATE).getString(DesktopBackupController.KEY_TREE_URI, "");
+        Uri treeUri = TextUtils.isEmpty(treeValue) ? null : Uri.parse(treeValue);
+        if (treeUri == null) {
+            showInfoDialog(activity, getString(resources, "backup_location_unavailable", "备份位置不可用"),
+                    getString(resources, "backup_error_permission_lost", "备份目录授权已失效，请重新选择。"));
+            DesktopBackupController.discardPreparedBackupPreview(activity);
+            return;
+        }
+        Uri existing = DesktopBackupController.findTreeBackup(activity, treeUri, fileName);
+        if (existing != null) confirmBackupOverwrite(activity, treeUri, fileName);
+        else savePreparedBackup(activity, fileName, false);
+    }
+
+    private static DesktopBackupController.PreviewListener backupPreviewListener(
+            final Activity activity, final Resources resources, final View pendingRoot) {
+        final DesktopBackupController.Listener resultListener = backupListener(activity, resources);
+        return new DesktopBackupController.PreviewListener() {
+            public void onState(String state, boolean cancellable) {
+                resultListener.onState(state, cancellable);
+            }
+            public void onComplete(BackupRestoreResult result) {
+                dismissBackupProgress();
+                if (sPendingBackupPreviewRoot != pendingRoot) return;
+                sPendingBackupPreviewRoot = null;
+                if (!canShowDialog(activity) || pendingRoot.getParent() == null) return;
+                showDesktopBackupPage(activity, false);
+                if (result != null && !"BACKUP_CANCELLED".equals(result.errorCode)) {
+                    showInfoDialog(activity,
+                            getString(resources, "backup_dialog_title", "桌面备份"),
+                            backupResultMessage(resources, result));
+                }
+            }
+            public void onPreview(BackupArchiveReader.ValidatedBackup backup,
+                    RestoreMergePlanner.Plan plan, String suggestedName) {
+                dismissBackupProgress();
+                if (sPendingBackupPreviewRoot != pendingRoot) {
+                    DesktopBackupController.discardPreparedBackupPreview(activity);
+                    return;
+                }
+                sPendingBackupPreviewRoot = null;
+                if (canShowDialog(activity) && pendingRoot.getParent() != null) {
+                    showBackupPreviewPage(activity, backup, plan, true, suggestedName, pendingRoot);
+                } else DesktopBackupController.discardPreparedBackupPreview(activity);
+            }
+        };
     }
 
     private static DesktopRestoreController.Listener restoreListener(final Activity activity) {
@@ -12572,7 +12935,7 @@ public final class MaintainedLauncherSettingsHost {
             public void onPreview(BackupArchiveReader.ValidatedBackup backup,
                     RestoreMergePlanner.Plan plan) {
                 dismissBackupProgress();
-                showRestorePreviewPage(activity, backup, plan);
+                showBackupPreviewPage(activity, backup, plan, false, backup.sourceName);
             }
             public void onComplete(BackupRestoreResult result) {
                 dismissBackupProgress();
@@ -12586,29 +12949,105 @@ public final class MaintainedLauncherSettingsHost {
         };
     }
 
-    private static void showRestorePreviewPage(final Activity activity,
-            BackupArchiveReader.ValidatedBackup backup, RestoreMergePlanner.Plan plan) {
+    private static View showBackupPreviewPage(final Activity activity,
+            final BackupArchiveReader.ValidatedBackup backup, RestoreMergePlanner.Plan plan,
+            final boolean creatingBackup, String displayName) {
+        return showBackupPreviewPage(activity, backup, plan, creatingBackup, displayName, null);
+    }
+
+    private static View showBackupPreviewPage(final Activity activity,
+            final BackupArchiveReader.ValidatedBackup backup, RestoreMergePlanner.Plan plan,
+            final boolean creatingBackup, String displayName, View existingRoot) {
         try {
             SettingsResourceContext context = createSettingsContext(activity);
             Resources resources = context.getResources();
-            View root = inflate(activity, context, "setting_backup_restore_preview");
+            View root = existingRoot == null ? inflate(activity, context,
+                    "setting_backup_restore_preview") : existingRoot;
             bindBackTitle(activity, resources, root, "restore_preview_title",
-                    getString(resources, "restore_preview_title", "恢复桌面备份"),
-                    "RESTORE_PREVIEW", new Runnable() {
+                    getString(resources, creatingBackup ? "backup_preview_title" : "restore_preview_title",
+                            creatingBackup ? "备份桌面" : "恢复桌面备份"),
+                    creatingBackup ? "BACKUP_PREVIEW" : "RESTORE_PREVIEW", new Runnable() {
                         public void run() {
-                            DesktopRestoreController.discardPreparedRestore(activity);
+                            if (creatingBackup) {
+                                if (sPendingBackupPreviewRoot == root) {
+                                    cancelPendingBackupPreview(activity);
+                                }
+                                DesktopBackupController.discardPreparedBackupPreview(activity);
+                            }
+                            else DesktopRestoreController.discardPreparedRestore(activity);
                             showDesktopBackupPage(activity, false);
                         }
                     });
             View titleView = find(resources, root, "restore_preview_title");
             if (titleView instanceof Title) {
                 Title title = (Title) titleView;
-                title.setOkButtonText(getString(resources, "restore_start", "开始恢复"));
+                title.setOkButtonText(getString(resources,
+                        creatingBackup ? "backup_preview_start" : "restore_start",
+                        creatingBackup ? "开始备份" : "开始恢复"));
                 title.setOkButtonListener(new View.OnClickListener() {
-                    public void onClick(View v) { confirmStartRestore(activity); }
+                    public void onClick(View v) {
+                        if (creatingBackup) {
+                            View nameView = find(resources, root, "preview_backup_time_value");
+                            confirmStartBackup(activity,
+                                    nameView instanceof TextView ? ((TextView) nameView).getText().toString() : "");
+                        } else confirmStartRestore(activity);
+                    }
+                });
+                title.updateOkButtonEnableState(backup != null);
+            }
+            View nameRow = find(resources, root, "preview_backup_time");
+            if (nameRow instanceof ViewGroup && ((ViewGroup) nameRow).getChildCount() > 0
+                    && ((ViewGroup) nameRow).getChildAt(0) instanceof TextView) {
+                ((TextView) ((ViewGroup) nameRow).getChildAt(0)).setText(
+                        getString(resources, "backup_name_title", "备份名称"));
+            }
+            String shownName = displayBackupName(displayName);
+            if (TextUtils.isEmpty(shownName) && backup != null) {
+                shownName = backupDate(backup.manifest.createdAt);
+            }
+            setBackupValue(resources, root, "preview_backup_time", shownName);
+            if (creatingBackup && backup != null) {
+                final TextView nameValue = (TextView) find(resources, root, "preview_backup_time_value");
+                if (nameRow != null) nameRow.setOnClickListener(new View.OnClickListener() {
+                    public void onClick(View v) {
+                        showSingleInputDialog(activity,
+                                getString(getMaintainedResources(activity), "backup_name_title", "备份名称"),
+                                nameValue.getText().toString(), new SingleInputListener() {
+                                    public boolean onConfirm(EditText input, String value) {
+                                        String normalized = DesktopBackupController.normalizeBackupFileName(value);
+                                        if (TextUtils.isEmpty(normalized)) {
+                                            input.setError(getString(getMaintainedResources(activity),
+                                                    "backup_name_empty", "请输入备份名称。"));
+                                            return false;
+                                        }
+                                        nameValue.setText(displayBackupName(normalized));
+                                        return true;
+                                    }
+                                });
+                    }
                 });
             }
-            setBackupValue(resources, root, "preview_backup_time", backupDate(backup.manifest.createdAt));
+            if (backup == null) {
+                String[] values = {"preview_source_version", "preview_format_version",
+                        "preview_grid_mode", "preview_page_count", "preview_folder_count",
+                        "preview_app_count", "preview_shortcut_count", "preview_custom_icon_count",
+                        "preview_quick_desktop_component_count", "preview_theme_name",
+                        "preview_page_animation", "preview_icon_pack", "preview_icon_size", "preview_default_icon_shape",
+                        "preview_desktop_text_size", "preview_status_height", "preview_dock_height"};
+                for (String id : values) setBackupValue(resources, root, id, "…");
+                hidePreviewRow(resources, root, "preview_preserved_count");
+                hidePreviewRow(resources, root, "preview_preserved_shortcut_count");
+                hidePreviewRow(resources, root, "preview_missing_app_count");
+                hidePreviewRow(resources, root, "preview_missing_icon_pack_count");
+                hidePreviewRow(resources, root, "preview_missing_theme_count");
+                View tips = find(resources, root, "restore_preview_tips");
+                if (tips instanceof TextView) ((TextView) tips).setText(getString(resources,
+                        "backup_preview_preparing", "正在准备备份预览…"));
+                if (existingRoot == null) {
+                    setSettingsContentView(activity, context, resources, root, true);
+                }
+                return root;
+            }
             setBackupValue(resources, root, "preview_source_version", backup.manifest.launcherVersionName);
             setBackupValue(resources, root, "preview_format_version", String.valueOf(backup.manifest.formatVersion));
             setBackupValue(resources, root, "preview_grid_mode", backup.manifest.gridMode == 20
@@ -12622,27 +13061,211 @@ public final class MaintainedLauncherSettingsHost {
             setBackupValue(resources, root, "preview_custom_icon_count", String.valueOf(backup.customIconCount()));
             setBackupValue(resources, root, "preview_quick_desktop_component_count",
                     quickDesktopBackupSummary(resources, backup.settings));
-            setBackupValue(resources, root, "preview_theme_name", backup.theme.optString("themeId",
-                    getString(resources, "backup_default_theme", "默认主题")));
+            setBackupValue(resources, root, "preview_theme_name", backupThemeDisplayName(resources,
+                    backup.theme.optString("themeId", "")));
             setBackupValue(resources, root, "preview_preserved_count", String.valueOf(plan.preservedNewAppCount));
             setBackupValue(resources, root, "preview_preserved_shortcut_count", String.valueOf(plan.preservedNewShortcutCount));
             setBackupValue(resources, root, "preview_missing_app_count", String.valueOf(plan.missingAppCount));
             setBackupValue(resources, root, "preview_missing_icon_pack_count", String.valueOf(plan.missingIconPackCount));
             setBackupValue(resources, root, "preview_missing_theme_count", String.valueOf(plan.missingThemePackageCount));
 
-            setSettingsContentView(activity, context, resources, root, true);
+            View permissionValue = find(resources, root, "preview_permission_count_value");
+            if (permissionValue instanceof TextView) {
+                ((TextView) permissionValue).setText(getString(resources,
+                        "backup_manual_setting_count", "6 项"));
+            }
+            setBackupPreviewDetails(activity, resources, root, backup.settings, creatingBackup);
+            if (creatingBackup) {
+                hidePreviewRow(resources, root, "preview_preserved_count");
+                hidePreviewRow(resources, root, "preview_preserved_shortcut_count");
+                hidePreviewRow(resources, root, "preview_missing_app_count");
+                hidePreviewRow(resources, root, "preview_missing_icon_pack_count");
+                hidePreviewRow(resources, root, "preview_missing_theme_count");
+            }
+            View tips = find(resources, root, "restore_preview_tips");
+            if (tips instanceof TextView) {
+                String summary = getString(resources,
+                        creatingBackup ? "backup_preview_tips" : "restore_preview_tips",
+                        creatingBackup ? "以上内容来自本次待保存的备份文件。未列出的权限功能需在新设备上检查并手动开启。"
+                                : "恢复将替换当前桌面布局和备份中已有的桌面设置。");
+                ((TextView) tips).setText(summary);
+            }
+
+            if (existingRoot == null) {
+                setSettingsContentView(activity, context, resources, root, true);
+            }
+            return root;
         } catch (Throwable error) {
-            Log.w(LOG_TAG, "Unable to show restore preview", error);
+            Log.w(LOG_TAG, "Unable to show backup preview", error);
             Resources resources = getMaintainedResources(activity);
             showInfoDialog(activity,
-                    getString(resources, "restore_preview_title", "恢复桌面备份"),
+                    getString(resources, creatingBackup ? "backup_preview_title" : "restore_preview_title",
+                            creatingBackup ? "备份桌面" : "恢复桌面备份"),
                     getString(resources, "restore_preview_failed", "无法显示恢复预览"));
+            if (creatingBackup) DesktopBackupController.discardPreparedBackupPreview(activity);
+            return null;
         }
+    }
+
+    private static String displayBackupName(String value) {
+        if (value == null) return "";
+        String name = value.trim();
+        String extension = ".slauncherbackup";
+        if (name.toLowerCase(Locale.US).endsWith(extension)) {
+            name = name.substring(0, name.length() - extension.length());
+        }
+        return name;
+    }
+
+    private static String backupThemeDisplayName(Resources resources, String themeId) {
+        if (TextUtils.isEmpty(themeId)) {
+            return getString(resources, "backup_default_theme", "默认主题");
+        }
+        for (ThemeEntry entry : allThemeEntries()) {
+            if (themeId.equals(entry.id)) return themeDisplayName(resources, entry);
+        }
+        if ("smartisan_theme_trans".equals(themeId)) {
+            return getString(resources, "transparent_theme_title", "透明主题");
+        }
+        return getString(resources, themeId.toLowerCase(Locale.US) + "_name", themeId);
+    }
+
+    private static void hidePreviewRow(Resources resources, View root, String id) {
+        View row = find(resources, root, id);
+        if (row != null) row.setVisibility(View.GONE);
     }
 
     private static void setBackupValue(Resources resources, View root, String id, String value) {
         TextView item = (TextView) find(resources, root, id + "_value");
         if (item != null) item.setText(value == null ? "" : value);
+    }
+
+    private static void setBackupPreviewDetails(Context activity, Resources resources, View root,
+            org.json.JSONObject settings, boolean creatingBackup) {
+        Object pageAnimation = backupSetting(settings, "launcher_page_animation");
+        String pageAnimationName = getString(resources, "backup_archive_value_missing", "此备份未记录");
+        if (pageAnimation instanceof Number) {
+            int animation = ((Number) pageAnimation).intValue();
+            String name = animation == 0 ? "flip_anim_default"
+                    : animation == 3 ? "flip_anim_grid_flip"
+                    : animation == 4 ? "flip_anim_shutter"
+                    : animation == 6 ? "flip_anim_cut_card" : null;
+            if (name != null) pageAnimationName = getString(resources, name, pageAnimationName);
+        }
+        setBackupValue(resources, root, "preview_page_animation", pageAnimationName);
+        setBackupValue(resources, root, "preview_icon_pack",
+                backupIconPackLabel(activity, settings, resources));
+        setBackupValue(resources, root, "preview_icon_size",
+                formatIconSizePercent(backupSetting(settings, "launcher_icon_size"),
+                        getString(resources, "backup_archive_value_missing", "此备份未记录")));
+        Object iconShape = backupSetting(settings, "launcher_default_icon_shape_v1");
+        String shapeValue = getString(resources, "backup_archive_value_missing", "此备份未记录");
+        if ("circle".equals(iconShape)) {
+            shapeValue = getString(resources, "default_icon_shape_circle", "圆形");
+        } else if ("follow_app".equals(iconShape)) {
+            shapeValue = getString(resources, "default_icon_shape_follow_app", "跟随应用");
+        }
+        setBackupValue(resources, root, "preview_default_icon_shape", shapeValue);
+        setBackupValue(resources, root, "preview_desktop_text_size",
+                formatDesktopTextSize(backupSetting(settings, "launcher_desktop_text_size"),
+                        getString(resources, "backup_archive_value_missing", "此备份未记录"),
+                        getString(resources, "adjustment_default_value", "默认")));
+        Object autoStatusValue = backupSetting(settings, "status_bar_auto_enabled");
+        Object statusExtraValue = backupSetting(settings, "status_bar_extra_dp");
+        Boolean autoStatus = backupSettingBooleanValue(autoStatusValue);
+        String statusSetting = autoStatus != null
+                ? getString(resources, autoStatus.booleanValue()
+                        ? "backup_status_auto_value" : "backup_status_manual_value",
+                        autoStatus.booleanValue() ? "自动适配" : "手动")
+                : getString(resources, "backup_archive_value_missing", "此备份未记录");
+        if (statusExtraValue instanceof Number) {
+            statusSetting += " · " + formatDp(resources, ((Number) statusExtraValue).intValue());
+        }
+        setBackupValue(resources, root, "preview_status_height", statusSetting);
+        Object dockExtraValue = backupSetting(settings, "dock_extra_dp");
+        setBackupValue(resources, root, "preview_dock_height",
+                dockExtraValue instanceof Number
+                        ? formatDp(resources, ((Number) dockExtraValue).intValue())
+                        : getString(resources, "backup_archive_value_missing", "此备份未记录"));
+        if (!creatingBackup) {
+            setBackground(find(resources, root, "preview_dock_height"), resources,
+                    "setting_item_down");
+        }
+    }
+
+    private static Object backupSetting(org.json.JSONObject settings, String key) {
+        org.json.JSONObject files = settings == null ? null : settings.optJSONObject("files");
+        if (files == null) return null;
+        org.json.JSONObject launcherSettings = files.optJSONObject("launcher_settings");
+        org.json.JSONObject canonical = launcherSettings == null
+                ? null : launcherSettings.optJSONObject(key);
+        if (canonical != null && canonical.has("value")) return canonical.opt("value");
+        java.util.Iterator<String> names = files.keys();
+        while (names.hasNext()) {
+            org.json.JSONObject values = files.optJSONObject(names.next());
+            org.json.JSONObject typed = values == null ? null : values.optJSONObject(key);
+            if (typed != null && typed.has("value")) return typed.opt("value");
+        }
+        return null;
+    }
+
+    private static Boolean backupSettingBooleanValue(Object value) {
+        if (value instanceof Boolean) return (Boolean) value;
+        if (value instanceof Number) return Boolean.valueOf(((Number) value).intValue() != 0);
+        if (value instanceof String) return Boolean.valueOf(Boolean.parseBoolean((String) value));
+        return null;
+    }
+
+    private static String formatDp(Resources resources, int value) {
+        return value == 0 ? getString(resources, "backup_default_value", "默认")
+                : (value > 0 ? "+" : "") + value + " dp";
+    }
+
+    private static String formatIconSizePercent(Object value, String fallback) {
+        if (!(value instanceof Number)) return fallback;
+        int percent = ((Number) value).intValue();
+        if (percent == 0) percent = 100;
+        else if (percent == 1) percent = 110;
+        else if (percent == 2) percent = 120;
+        percent = Math.max(50, Math.min(150, percent));
+        return percent + "%";
+    }
+
+    private static String formatDesktopTextSize(Object value, String fallback,
+            String defaultLabel) {
+        if (!(value instanceof Number)) return fallback;
+        int adjustment = Math.max(0, Math.min(10, ((Number) value).intValue()));
+        adjustment = ((adjustment + 1) / 2) * 2;
+        return adjustment == 0 ? defaultLabel : "+" + adjustment;
+    }
+
+    private static String backupIconPackLabel(Context context, org.json.JSONObject settings,
+            Resources resources) {
+        String source = String.valueOf(backupSetting(settings, "launcher_global_icon_source_v2"));
+        String packageName = source.startsWith("pack:") ? source.substring(5) : "";
+        if ("improved".equals(source)) {
+            return getString(resources, "backup_icon_source_improved", "改进版图标");
+        }
+        if ("default".equals(source)) {
+            return getString(resources, "backup_icon_source_default", "默认图标");
+        }
+        if (packageName.length() == 0 && (source.length() == 0 || "null".equals(source))) {
+            Object selected = backupSetting(settings, "prefs_key_selected_icon_pack");
+            if (selected instanceof String) packageName = (String) selected;
+        }
+        if (TextUtils.isEmpty(packageName) || "disabled".equals(packageName)
+                || "__disabled__".equals(packageName)) {
+            if (source.length() == 0 || "null".equals(source)) {
+                return getString(resources, "backup_archive_value_missing", "此备份未记录");
+            }
+            return getString(resources, "backup_icon_source_default", "默认图标");
+        }
+        try {
+            return com.smartisanos.home.settings.icons.IconPackManager
+                    .getIconPackLabel(context, packageName) + " (" + packageName + ")";
+        } catch (Throwable ignored) {
+            return packageName;
+        }
     }
 
     private static String quickDesktopBackupSummary(Resources resources,
@@ -13123,7 +13746,7 @@ public final class MaintainedLauncherSettingsHost {
         dialog.setContentView(panel);
         Window window = dialog.getWindow();
         if (window != null) window.setBackgroundDrawableResource(android.R.color.transparent);
-        dialog.show();
+        showDialogWithNavigation(dialog);
         Window shown = dialog.getWindow();
         if (shown != null) shown.setLayout(Math.min(dp(activity, 380),
                 activity.getResources().getDisplayMetrics().widthPixels - dp(activity, 32)), -2);
@@ -13185,7 +13808,7 @@ public final class MaintainedLauncherSettingsHost {
         dialog.setContentView(panel);
         Window window = dialog.getWindow();
         if (window != null) window.setBackgroundDrawableResource(android.R.color.transparent);
-        dialog.show();
+        showDialogWithNavigation(dialog);
         Window shown = dialog.getWindow();
         if (shown != null) shown.setLayout(Math.min(dp(activity, 380),
                 activity.getResources().getDisplayMetrics().widthPixels - dp(activity, 32)), -2);
@@ -13204,8 +13827,6 @@ public final class MaintainedLauncherSettingsHost {
                     getString(resources, "obsession_header_title", "OCD Settings"), "OCD_OPTIONS", backToMainAction(activity));
             bindSwitch(activity, resources, root, "item_id_hide_lable", "launcher_hide_lable", false);
             bindSwitch(activity, resources, root, "item_id_hide_navigation_bar", "launcher_hide_navigation_bar", false);
-            bindSwitch(activity, resources, root, "item_id_dock_slide_reverse",
-                    KEY_DOCK_SLIDE_REVERSE_ENABLED, false);
             bindBadgeVisibilitySwitch(activity, resources, root);
             bindBadgeSwipeCleanSwitch(activity, resources, root);
             bindSwitch(activity, resources, root, "item_id_unlock_anim", "launcher_unlock_animation_enabled", false);
@@ -13284,7 +13905,7 @@ public final class MaintainedLauncherSettingsHost {
         root.addView(buttons, new LinearLayout.LayoutParams(-1, dp(activity, 47)));
 
         dialog.setContentView(root);
-        dialog.show();
+        showDialogWithNavigation(dialog);
         Window shown = dialog.getWindow();
         if (shown != null) {
             shown.setBackgroundDrawableResource(android.R.color.transparent);
@@ -13326,7 +13947,7 @@ public final class MaintainedLauncherSettingsHost {
             View root = inflate(activity, context, "setting_search_vertical_gestures");
             bindBackTitle(activity, resources, root, "view_title",
                     getString(resources, "search_vertical_gestures_title",
-                            "搜索与上下滑手势"), "SEARCH_VERTICAL_GESTURES",
+                            "搜索与桌面手势"), "SEARCH_VERTICAL_GESTURES",
                     backToMainAction(activity));
             migrateSearchGestureSetting(activity);
             bindSwitch(activity, resources, root, "item_id_search_page_enabled",
@@ -13338,12 +13959,14 @@ public final class MaintainedLauncherSettingsHost {
             bindSwitch(activity, resources, root, "item_id_swipe_down_system_panels",
                     KEY_SWIPE_DOWN_SYSTEM_PANELS_ENABLED, true);
             bindVerticalGestureDirectionSwitch(activity, resources, root);
+            bindSwitch(activity, resources, root, "item_id_dock_slide_reverse",
+                    KEY_DOCK_SLIDE_REVERSE_ENABLED, false);
             updateVerticalGestureDirectionText(resources, root,
                     readSystemBool(activity, KEY_VERTICAL_GESTURE_DIRECTION_REVERSED, false));
             tuneScrollBars(root);
             setSettingsContentView(activity, context, resources, root, true);
         } catch (Throwable t) {
-            showInfoDialog(activity, "搜索与上下滑手势", "无法打开搜索与上下滑手势设置");
+            showInfoDialog(activity, "搜索与桌面手势", "无法打开搜索与桌面手势设置");
         }
     }
 
@@ -13429,7 +14052,7 @@ public final class MaintainedLauncherSettingsHost {
         if (window != null) {
             window.setBackgroundDrawableResource(android.R.color.transparent);
         }
-        dialog.show();
+        showDialogWithNavigation(dialog);
         Window shown = dialog.getWindow();
         if (shown != null) {
             int screenWidth = activity.getResources().getDisplayMetrics().widthPixels;
@@ -13558,9 +14181,6 @@ public final class MaintainedLauncherSettingsHost {
             Bitmap bitmap = BitmapFactory.decodeStream(in, null, options);
             if (bitmap != null) {
                 synchronized (sThemePreviewCache) {
-                    if (sThemePreviewCache.size() > 48) {
-                        sThemePreviewCache.clear();
-                    }
                     sThemePreviewCache.put(key, bitmap);
                 }
             }
@@ -13624,16 +14244,30 @@ public final class MaintainedLauncherSettingsHost {
     }
 
     private static void requestThemePreview(final Context context, final String themeId,
-                                            final ThemePreviewAdapter adapter) {
-        if (context == null || TextUtils.isEmpty(themeId) || cachedThemePreviewBitmap(context, themeId) != null) {
+                                            final ImageView preview) {
+        if (context != null) ensureThemeMemoryCallbacks(context);
+        if (context == null || TextUtils.isEmpty(themeId)) {
             return;
         }
         final String key = themeId + "#" + readLauncherMode(context);
+        Bitmap cached = cachedThemePreviewBitmap(context, themeId);
+        if (cached != null) {
+            preview.setImageBitmap(cached);
+            preview.setTag("loaded:" + key);
+            return;
+        }
         synchronized (sThemePreviewFetchPending) {
-            if (sThemePreviewFetchPending.containsKey(key)) {
+            ArrayList<WeakReference<ImageView>> waiting = sThemePreviewFetchPending.get(key);
+            if (waiting != null) {
+                for (WeakReference<ImageView> reference : waiting) {
+                    if (reference.get() == preview) return;
+                }
+                waiting.add(new WeakReference<ImageView>(preview));
                 return;
             }
-            sThemePreviewFetchPending.put(key, Boolean.TRUE);
+            waiting = new ArrayList<WeakReference<ImageView>>();
+            waiting.add(new WeakReference<ImageView>(preview));
+            sThemePreviewFetchPending.put(key, waiting);
         }
         final Context app = context.getApplicationContext() == null
                 ? context : context.getApplicationContext();
@@ -13641,15 +14275,26 @@ public final class MaintainedLauncherSettingsHost {
             public void run() {
                 try {
                     android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
-                    themePreviewBitmap(app, themeId);
+                    final Bitmap bitmap = themePreviewBitmap(app, themeId);
+                    final ArrayList<WeakReference<ImageView>> waiting;
+                    synchronized (sThemePreviewFetchPending) {
+                        waiting = sThemePreviewFetchPending.remove(key);
+                    }
                     new Handler(Looper.getMainLooper()).post(new Runnable() {
                         public void run() {
-                            if (adapter != null) {
-                                adapter.notifyPreviewLoaded();
+                            if (waiting == null || bitmap == null) return;
+                            for (WeakReference<ImageView> reference : waiting) {
+                                ImageView target = reference.get();
+                                if (target != null && target.isAttachedToWindow()
+                                        && ("pending:" + key).equals(target.getTag())) {
+                                    target.setImageBitmap(bitmap);
+                                    target.setTag("loaded:" + key);
+                                }
                             }
                         }
                     });
-                } finally {
+                } catch (RuntimeException error) {
+                    Log.w(LOG_TAG, "THEME_PREVIEW_LOAD_FAILED theme=" + themeId, error);
                     synchronized (sThemePreviewFetchPending) {
                         sThemePreviewFetchPending.remove(key);
                     }
@@ -13951,17 +14596,57 @@ public final class MaintainedLauncherSettingsHost {
         return null;
     }
 
-    private static Bitmap maskedThemeLargePreviewBitmapCached(Context context, Resources resources, String themeId) {
-        String key = themeId + ":" + readLauncherMode(context);
-        synchronized (sThemeLargePreviewCache) {
-            if (sThemeLargePreviewCache.containsKey(key)) {
-                return sThemeLargePreviewCache.get(key);
+    private static String themeLargePreviewKey(Context context, Resources resources, String themeId) {
+        return themeId + ":" + readLauncherMode(context) + ":" + resources.getDisplayMetrics().densityDpi;
+    }
+
+    private static void requestThemeLargePreview(final Activity activity, final Resources resources,
+            final String themeId, ImageView preview) {
+        ensureThemeMemoryCallbacks(activity);
+        final String key = themeLargePreviewKey(activity, resources, themeId);
+        final Object requestToken = new Object();
+        preview.setTag(requestToken);
+        Bitmap cached = sThemeLargePreviewCache.get(key);
+        if (cached != null) {
+            preview.setImageBitmap(cached);
+            return;
+        }
+        preview.setImageDrawable(null);
+        final Context app = activity.getApplicationContext();
+        final WeakReference<Activity> owner = new WeakReference<Activity>(activity);
+        final WeakReference<ImageView> target = new WeakReference<ImageView>(preview);
+        THEME_PREVIEW_FETCH_EXECUTOR.execute(new Runnable() {
+            @Override public void run() {
+                if (target.get() == null) return;
+                final Bitmap bitmap = maskedThemeLargePreviewBitmapCached(app, resources, themeId);
+                new Handler(Looper.getMainLooper()).post(new Runnable() {
+                    @Override public void run() {
+                        Activity currentOwner = owner.get();
+                        ImageView currentTarget = target.get();
+                        if (currentOwner != null && !currentOwner.isDestroyed()
+                                && !currentOwner.isFinishing() && currentTarget != null
+                                && currentTarget.isAttachedToWindow()
+                                && key.equals(themeLargePreviewKey(currentOwner, resources, themeId))
+                                && currentTarget.getTag() == requestToken && bitmap != null) {
+                            currentTarget.setImageBitmap(bitmap);
+                        }
+                    }
+                });
             }
+        });
+    }
+
+    private static Bitmap maskedThemeLargePreviewBitmapCached(Context context, Resources resources, String themeId) {
+        String key = themeLargePreviewKey(context, resources, themeId);
+        synchronized (sThemeLargePreviewCache) {
+            Bitmap cached = sThemeLargePreviewCache.get(key);
+            if (cached != null) return cached;
         }
         Bitmap source = themeLargePreviewBitmap(context, themeId);
         Bitmap masked = source == null ? null : maskedThemeLargePreviewBitmap(resources, source);
+        if (source != null && masked != source) source.recycle();
         synchronized (sThemeLargePreviewCache) {
-            sThemeLargePreviewCache.put(key, masked);
+            if (masked != null) sThemeLargePreviewCache.put(key, masked);
         }
         return masked;
     }
@@ -14332,7 +15017,7 @@ public final class MaintainedLauncherSettingsHost {
         dialog.setContentView(root);
         Window window = dialog.getWindow();
         if (window != null) window.setBackgroundDrawableResource(android.R.color.transparent);
-        dialog.show();
+        showDialogWithNavigation(dialog);
         window = dialog.getWindow();
         if (window != null) {
             window.setLayout(Math.min(dp(context, 420),
@@ -14900,7 +15585,7 @@ public final class MaintainedLauncherSettingsHost {
         if (window != null) {
             window.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(Color.TRANSPARENT));
         }
-        dialog.show();
+        showDialogWithNavigation(dialog);
         window = dialog.getWindow();
         if (window != null) {
             int screenWidth = activity.getResources().getDisplayMetrics().widthPixels;
@@ -15718,7 +16403,7 @@ public final class MaintainedLauncherSettingsHost {
             dialog.setContentView(root);
             Window window = dialog.getWindow();
             if (window != null) window.setBackgroundDrawableResource(android.R.color.transparent);
-            dialog.show();
+            showDialogWithNavigation(dialog);
             window = dialog.getWindow();
             if (window != null) {
                 int screenWidth = activity.getResources().getDisplayMetrics().widthPixels;
@@ -16324,7 +17009,13 @@ public final class MaintainedLauncherSettingsHost {
                 16, 0xff333333, false);
         message.setGravity(Gravity.CENTER);
         root.addView(message, new LinearLayout.LayoutParams(-1, -2));
-        activity.setContentView(root);
+        if (LauncherSettingsOverlayHost.isShowing(activity)) {
+            LauncherSettingsOverlayHost.showPageDirect(activity, root);
+        } else if (LauncherSettingsOverlayHost.isLauncherActivity(activity)) {
+            Log.e(LOG_TAG, "SETTINGS_FAILURE_AFTER_OVERLAY_CLOSED", t);
+        } else {
+            activity.setContentView(root);
+        }
         Toast.makeText(activity, "maintained 设置页加载失败：" + t.getClass().getSimpleName(), Toast.LENGTH_LONG).show();
     }
 
@@ -16469,7 +17160,6 @@ public final class MaintainedLauncherSettingsHost {
         private final boolean local;
         private final ArrayList<ThemeEntry> entries;
         private String currentThemeId;
-        private boolean previewRefreshPending;
 
         ThemePreviewAdapter(Activity activity, SettingsResourceContext context, Resources resources, boolean local) {
             this.activity = activity;
@@ -16501,19 +17191,6 @@ public final class MaintainedLauncherSettingsHost {
             super.notifyDataSetChanged();
         }
 
-        void notifyPreviewLoaded() {
-            if (previewRefreshPending) {
-                return;
-            }
-            previewRefreshPending = true;
-            new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
-                public void run() {
-                    previewRefreshPending = false;
-                    notifyDataSetChanged();
-                }
-            }, 120L);
-        }
-
         public View getView(int position, View convertView, android.view.ViewGroup parent) {
             if (convertView == null) {
                 int layoutId = resources.getIdentifier("theme_preview_block", "layout", SETTINGS_PKG);
@@ -16528,15 +17205,18 @@ public final class MaintainedLauncherSettingsHost {
             TextView downloading = (TextView) byId(convertView, resources, "theme_downloading_text");
             View progress = byId(convertView, resources, "theme_block_downloading_progress");
             if (preview != null) {
+                String previewKey = entry.id + "#" + readLauncherMode(activity);
                 Bitmap bitmap = cachedThemePreviewBitmap(activity, entry.id);
                 if (bitmap != null) {
                     preview.setImageBitmap(bitmap);
-                } else {
+                    preview.setTag("loaded:" + previewKey);
+                } else if (!("loaded:" + previewKey).equals(preview.getTag())) {
+                    preview.setTag("pending:" + previewKey);
                     int fallback = drawable(resources, "theme_preview_phone_black");
                     if (fallback != 0) {
                         preview.setImageResource(fallback);
                     }
-                    requestThemePreview(activity, entry.id, this);
+                    requestThemePreview(activity, entry.id, preview);
                 }
             }
             if (name != null) {

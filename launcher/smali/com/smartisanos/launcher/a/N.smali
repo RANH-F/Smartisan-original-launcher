@@ -127,51 +127,6 @@
 
     invoke-static {v0, v5, v3, v2}, Lcom/smartisanos/launcher/theme/MaintainedLauncherSettingsHost;->startActivityForUser(Landroid/content/Context;Landroid/content/Intent;Landroid/os/Bundle;I)V
 
-    invoke-virtual {v5}, Landroid/content/Intent;->getComponent()Landroid/content/ComponentName;
-
-    move-result-object v5
-
-    if-eqz v5, :cond_settings_enter_done
-
-    invoke-virtual {v5}, Landroid/content/ComponentName;->getPackageName()Ljava/lang/String;
-
-    move-result-object v6
-
-    const-string v3, "com.smartisanos.launcher"
-
-    invoke-virtual {v3, v6}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
-
-    move-result v6
-
-    if-eqz v6, :cond_settings_enter_done
-
-    invoke-virtual {v5}, Landroid/content/ComponentName;->getClassName()Ljava/lang/String;
-
-    move-result-object v5
-
-    const-string v6, "com.smartisanos.launcher.theme.ThemeChooserActivity"
-
-    invoke-virtual {v6, v5}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
-
-    move-result v5
-
-    if-eqz v5, :cond_settings_enter_done
-
-    invoke-static {}, Lcom/smartisanos/launcher/J;->getInstance()Lcom/smartisanos/launcher/J;
-
-    move-result-object v5
-
-    invoke-virtual {v5}, Lcom/smartisanos/launcher/J;->getActivity()Landroid/app/Activity;
-
-    move-result-object v5
-
-    if-eqz v5, :cond_settings_enter_done
-
-    sget v6, Lcom/smartisanos/launcher/R$anim;->settings_enter:I
-
-    invoke-virtual {v5, v6, v1}, Landroid/app/Activity;->overridePendingTransition(II)V
-
-    :cond_settings_enter_done
     goto :goto_0
 
     if-ne v2, v5, :cond_2

@@ -10,8 +10,6 @@ build/
 !icons/drawable/*.png
 *.jpg
 *.jpeg
-!/build/
-!/build/**
 !docs/*.png
 !launcher/assets/settings_native/
 !launcher/assets/settings_native/*.png

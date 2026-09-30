@@ -3,6 +3,7 @@ package com.smartisanos.launcher.backup;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.content.Context;
+import android.util.Log;
 
 import com.smartisanos.launcher.profile.DoppelgangerCompat;
 
@@ -33,8 +34,8 @@ public final class LayoutSnapshotExporter {
         try {
             JSONObject root = new JSONObject();
             root.put("schemaVersion", BackupManifest.DATABASE_SCHEMA_VERSION);
-            root.put("pages", readTable(database, "table_pageinfos", PAGE_COLUMNS,
-                    "pageIndex ASC, _id ASC"));
+            root.put("pages", normalizeReservedPages(readTable(database, "table_pageinfos",
+                    PAGE_COLUMNS, "pageIndex ASC, _id ASC")));
             JSONArray items = readTable(database, "table_iteminfos", ITEM_COLUMNS,
                     "pageIndex ASC, cellIndex ASC, folderIndex ASC, _id ASC");
             annotateIdentity(context, items);
@@ -112,7 +113,8 @@ public final class LayoutSnapshotExporter {
         JSONArray pages = root.getJSONArray("pages");
         JSONArray items = root.getJSONArray("items");
         if (pages.length() > 1000 || items.length() > 20000) {
-            throw new IllegalArgumentException("Layout limits exceeded");
+            throw new IllegalArgumentException("Layout limits exceeded: pages=" + pages.length()
+                    + " items=" + items.length());
         }
         java.util.HashSet<Long> pageIds = new java.util.HashSet<Long>();
         for (int i = 0; i < pages.length(); i++) {
@@ -144,6 +146,56 @@ public final class LayoutSnapshotExporter {
                 throw new IllegalArgumentException("Invalid component identity");
             }
         }
+    }
+
+    /** The original database preallocates 1000 page rows, including unused -1 slots. */
+    static boolean isUnusedPageSlot(JSONObject page) {
+        if (page.optInt("pageIndex", Integer.MIN_VALUE) != -1
+                || page.optInt("status", -1) != 0
+                || page.optString("pageTitle", "").length() != 0) return false;
+        if (page.has("containment") && !page.isNull("containment")
+                && page.optInt("containment", -1) != 0) return false;
+        for (String key : new String[]{"data1", "data2", "data3"}) {
+            if (page.has(key) && !page.isNull(key)) return false;
+        }
+        return page.optLong("_id", -1L) > 0L;
+    }
+
+    private static JSONArray normalizeReservedPages(JSONArray pages) throws Exception {
+        if (pages.length() <= 1000) return pages;
+        java.util.TreeMap<Long, JSONObject> extra = new java.util.TreeMap<Long, JSONObject>();
+        java.util.TreeSet<Long> slots = new java.util.TreeSet<Long>();
+        for (int i = 0; i < pages.length(); i++) {
+            JSONObject page = pages.getJSONObject(i);
+            long id = page.getLong("_id");
+            if (id > 1000L && !isUnusedPageSlot(page)) extra.put(id, page);
+            else if (id <= 1000L && isUnusedPageSlot(page)) slots.add(id);
+        }
+        if (extra.size() > slots.size()) {
+            throw new IllegalArgumentException("No reserved page slots for overflow: pages="
+                    + pages.length() + " active=" + extra.size());
+        }
+        java.util.HashMap<Long, JSONObject> replacements = new java.util.HashMap<Long, JSONObject>();
+        for (JSONObject page : extra.values()) {
+            long slotId = slots.pollFirst();
+            JSONObject replacement = new JSONObject(page.toString());
+            replacement.put("_id", slotId);
+            replacements.put(slotId, replacement);
+        }
+        JSONArray normalized = new JSONArray();
+        for (int i = 0; i < pages.length(); i++) {
+            JSONObject page = pages.getJSONObject(i);
+            long id = page.getLong("_id");
+            if (id > 1000L && (extra.containsKey(id) || isUnusedPageSlot(page))) continue;
+            JSONObject replacement = replacements.get(id);
+            normalized.put(replacement == null ? page : replacement);
+        }
+        if (normalized.length() > 1000) {
+            throw new IllegalArgumentException("Layout limits exceeded: pages=" + normalized.length());
+        }
+        Log.i("DesktopBackup", "BACKUP_PAGE_SLOTS_NORMALIZED original=" + pages.length()
+                + " normalized=" + normalized.length() + " remapped=" + replacements.size());
+        return normalized;
     }
 
     private static int checkedInt(JSONObject json, String key, int min, int max) throws Exception {

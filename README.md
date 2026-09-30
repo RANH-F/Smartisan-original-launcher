@@ -17,8 +17,8 @@
 
 <p align="center">
   <img alt="Android" src="https://img.shields.io/badge/Android-8.0%2B-brightgreen?style=flat-square">
-  <img alt="Version" src="https://img.shields.io/badge/version-v1.5.7-blue?style=flat-square">
-  <img alt="Build" src="https://img.shields.io/badge/build-32-orange?style=flat-square">
+  <img alt="Version" src="https://img.shields.io/badge/version-v1.5.8-blue?style=flat-square">
+  <img alt="Build" src="https://img.shields.io/badge/build-33-orange?style=flat-square">
   <img alt="Status" src="https://img.shields.io/badge/status-active-success?style=flat-square">
 </p>
 
@@ -49,11 +49,27 @@
 
 ## 当前状态
 
-当前版本：**v1.5.7 / versionCode 32**
+当前版本：**v1.5.8 / versionCode 33**
 支持系统：**Android 8.0 及以上**
 测试环境：已在 **Android 12 / Android 15 / Android 16** 环境开展兼容测试。
 
 不同厂商 ROM 在应用分身、后台限制、主题行为、解锁广播和系统入口暴露方式上仍可能存在差异，本项目会持续针对真实设备反馈进行适配。
+
+### v1.5.8 更新摘要
+
+#### 新增与完善
+
+* **自定义状态栏高度、DOCK栏高度**：新增状态栏高度自定义、dock栏高度自定义。
+* **备份界面优化**：增加备份/恢复共用预览、归档设置清单、快捷桌面配置与在线图标归档；兼容旧备份和包名式图标文件名，单个损坏或缺失图标不再使整份归档失败。
+* **新增T9键盘输入法**：搜索界面支持T9原版输入法，默认开启，关闭后将使用手机自动输入法。
+* **解锁动画优化**：修正解锁时间单位和 GL 会话完成回执，处理重复广播、连续锁屏、过期回调、应用覆盖返回及失焦/仍锁屏时误播；保留原版动画资源与单一会话控制。
+* **新增桌面设置过渡动画**：桌面设置打开、关闭支持过渡动画，默认跟随系统。
+* **多处界面细节优化**：加载动画去除文字，多处功能改名并增加描述、翻页动画界面细节优化。
+* **密码与按键反馈**：补齐隐私密码错误时的原版提示、红点、摇动和按键按下状态反馈，并统一锁屏验证页与设置验证页的提示几何。
+* **新增默认应用图标框**：修复 DEFAULT 自适应圆形图标四端平边、原版图标 MD5 命中时不必要的重试；跟进主题切换后的状态栏颜色和在线图标备份。
+* **冷重载加载时间优化**：优化加载速度，提升大约2S左右。
+* **四指横滑切换主题优化**：修复oriain os下，桌面四指横滑切换主题后状态栏颜色不跟随的问题。
+* **搜索页面图标逻辑修复**：修复微信分身关闭后，搜索界面微信图标不显示的问题。
 
 ### v1.5.7 更新摘要
 
@@ -76,6 +92,7 @@
 * **解锁动画时序修复**：恢复原版 Resume 预滚语义并保留单 Session 去重，改善解锁后桌面先静止再播放的问题，同时避免普通应用返回或重复广播误播。
 * **设置与系统栏动画修复**：补齐桌面与设置主页的进入、退出动画，修正“音乐与快捷支付”返回上一级时方向相反的问题；桌面铺满布局不再与隐藏导航控件绑定。
 * **原版视觉资源恢复**：恢复 v1.5.4 白色描边编辑齿轮、原版纵向初始化加载面板及默认主题状态栏背景。
+
 
 ### v1.5.6 更新摘要
 

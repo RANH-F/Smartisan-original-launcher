@@ -41,6 +41,7 @@ public final class RestoreIconSourceReconciler {
         JSONArray records = new JSONArray();
         File cache = new File(context.getFilesDir(), CACHE_DIR);
         File[] files = cache.listFiles();
+        long totalBytes = 0L;
         if (files != null) {
             java.util.Arrays.sort(files, new java.util.Comparator<File>() {
                 public int compare(File left, File right) {
@@ -49,7 +50,7 @@ public final class RestoreIconSourceReconciler {
             });
             for (File source : files) {
                 String name = source.getName();
-                if (!source.isFile() || !name.matches("[0-9a-f]{1,8}\\.png")) continue;
+                if (!source.isFile() || !isPortableSourceName(name)) continue;
                 if (source.length() <= 0 || source.length() > MAX_SOURCE_BYTES) {
                     Log.w(TAG, "BACKUP_ICON_SOURCE_REJECTED file=" + name
                             + " bytes=" + source.length());
@@ -61,6 +62,7 @@ public final class RestoreIconSourceReconciler {
                     continue;
                 }
                 BackupFileUtils.writeBytes(new File(outputDirectory, name), data);
+                totalBytes += data.length;
                 JSONObject record = new JSONObject();
                 record.put("portableFile", name);
                 record.put("sha256", sha256(data));
@@ -68,7 +70,7 @@ public final class RestoreIconSourceReconciler {
             }
         }
         root.put("records", records);
-        Log.i(TAG, "BACKUP_ICON_SOURCES count=" + records.length());
+        Log.i(TAG, "BACKUP_ICON_SOURCES count=" + records.length() + " bytes=" + totalBytes);
         return root;
     }
 
@@ -91,7 +93,7 @@ public final class RestoreIconSourceReconciler {
         for (int i = 0; i < records.length(); i++) {
             JSONObject record = records.getJSONObject(i);
             String name = record.getString("portableFile");
-            if (!name.matches("[0-9a-f]{1,8}\\.png") || !names.add(name)) {
+            if (!isPortableSourceName(name) || !names.add(name)) {
                 throw new IllegalArgumentException("Invalid portable icon source name");
             }
             File source = new File(new File(extractedRoot, "icons/sources"), name);
@@ -166,7 +168,7 @@ public final class RestoreIconSourceReconciler {
         if (files == null) return;
         for (File source : files) {
             String name = source.getName();
-            if (!source.isFile() || !name.matches("[0-9a-f]{1,8}\\.png")) continue;
+            if (!source.isFile() || !isPortableSourceName(name)) continue;
             if (source.length() <= 0 || source.length() > MAX_SOURCE_BYTES) continue;
             byte[] data = BackupFileUtils.readBytes(source, MAX_SOURCE_BYTES);
             if (validSource(data)) BackupFileUtils.writeBytes(new File(next, name), data);
@@ -181,6 +183,14 @@ public final class RestoreIconSourceReconciler {
         Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
         return bitmap != null && bitmap.getWidth() >= 48 && bitmap.getHeight() >= 48
                 && bitmap.getWidth() <= 1024 && bitmap.getHeight() <= 1024;
+    }
+
+    static boolean isPortableSourceName(String name) {
+        if (name == null || name.length() > 260 || name.startsWith(".")) return false;
+        if (!name.matches("[A-Za-z0-9._-]+\\.png")) return false;
+        String sourceId = name.substring(0, name.length() - 4);
+        return sourceId.length() > 0 && !sourceId.contains("..")
+                && !".".equals(sourceId) && !"..".equals(sourceId);
     }
 
     private static String sha256(byte[] data) throws Exception {

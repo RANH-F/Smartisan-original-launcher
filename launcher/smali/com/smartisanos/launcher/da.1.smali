@@ -4,17 +4,25 @@
 
 
 # instance fields
+.field private final unlockSessionId:J
+
 .field final synthetic this$0:Lcom/smartisanos/launcher/ja;
 
 
 # direct methods
 .method constructor <init>(Lcom/smartisanos/launcher/ja;I)V
-    .locals 0
+    .locals 2
 
     .line 1
     iput-object p1, p0, Lcom/smartisanos/launcher/da;->this$0:Lcom/smartisanos/launcher/ja;
 
     invoke-direct {p0, p2}, Lcom/smartisanos/smengine/n;-><init>(I)V
+
+    invoke-static {}, Lcom/smartisanos/launcher/theme/LauncherBelowKeyguardCompat;->getSessionId()J
+
+    move-result-wide v0
+
+    iput-wide v0, p0, Lcom/smartisanos/launcher/da;->unlockSessionId:J
 
     return-void
 .end method
@@ -22,7 +30,19 @@
 
 # virtual methods
 .method public run()V
-    .locals 1
+    .locals 3
+
+    iget-wide v1, p0, Lcom/smartisanos/launcher/da;->unlockSessionId:J
+
+    invoke-static {v1, v2}, Lcom/smartisanos/launcher/theme/LauncherBelowKeyguardCompat;->beginGlForceFinish(J)Z
+
+    move-result v0
+
+    if-nez v0, :unlock_finish_current
+
+    return-void
+
+    :unlock_finish_current
 
     .line 1
     sget-boolean p0, Lcom/smartisanos/launcher/va;->DBG:Z
@@ -74,5 +94,7 @@
     invoke-virtual {p0}, Lcom/smartisanos/smengine/Ra;->wt()V
 
     :cond_1
+    invoke-static {v1, v2}, Lcom/smartisanos/launcher/theme/LauncherBelowKeyguardCompat;->onForceFinishComplete(J)V
+
     return-void
 .end method

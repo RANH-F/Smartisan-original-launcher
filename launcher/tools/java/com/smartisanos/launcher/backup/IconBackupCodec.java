@@ -3,6 +3,7 @@ package com.smartisanos.launcher.backup;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.BitmapFactory;
+import android.util.Log;
 
 import com.smartisanos.launcher.data.redirectIcon.RedirectIconDB;
 import com.smartisanos.launcher.data.redirectIcon.RedirectIconInfo;
@@ -29,20 +30,29 @@ public final class IconBackupCodec {
             RedirectIconInfo info = RedirectIconDB.getRedirectIconInfo(
                     context, summary.packageName, summary.componentName);
             JSONObject record = new JSONObject();
+            String mode = RedirectIconDB.modeOf(info);
+            String drawable = info.drawableName == null ? "" : info.drawableName;
+            boolean customIconValid = true;
+            if (RedirectIconDB.MODE_CUSTOM.equals(mode)) {
+                customIconValid = info.iconData != null && info.iconData.length <= MAX_ICON_BYTES
+                        && BitmapFactory.decodeByteArray(info.iconData, 0, info.iconData.length) != null;
+            }
+            if (RedirectIconDB.MODE_CUSTOM.equals(mode) && !customIconValid) {
+                Log.w("DesktopBackup", "BACKUP_CUSTOM_ICON_MISSING fallback=original package="
+                        + info.packageName);
+                mode = RedirectIconDB.MODE_ORIGINAL;
+                drawable = RedirectIconDB.MODE_ORIGINAL;
+            }
             record.put("packageName", info.packageName);
             record.put("componentName", info.componentName);
-            record.put("mode", RedirectIconDB.modeOf(info));
-            record.put("drawableName", info.drawableName == null ? "" : info.drawableName);
+            record.put("mode", mode);
+            record.put("drawableName", drawable);
             record.put("use", info.useImprovedAppIcon);
             record.put("installTime", info.installTime);
             record.put("ownerId", info.ownerId);
             record.put("displayName", info.displayName == null ? "" : info.displayName);
             record.put("originalName", info.originalName == null ? "" : info.originalName);
-            if (RedirectIconDB.MODE_CUSTOM.equals(RedirectIconDB.modeOf(info)) && info.iconData != null) {
-                if (info.iconData.length > MAX_ICON_BYTES
-                        || BitmapFactory.decodeByteArray(info.iconData, 0, info.iconData.length) == null) {
-                    throw new IllegalArgumentException("Invalid custom icon");
-                }
+            if (RedirectIconDB.MODE_CUSTOM.equals(mode)) {
                 String fileName = Integer.toHexString(primaryKey(info).hashCode()) + ".png";
                 BackupFileUtils.writeBytes(new File(customOutputDirectory, fileName), info.iconData);
                 record.put("customFile", fileName);
@@ -73,6 +83,12 @@ public final class IconBackupCodec {
             String prefix = "r." + key + ".";
             String mode = record.optString("mode", RedirectIconDB.MODE_ORIGINAL);
             String drawable = record.optString("drawableName", mode);
+            if (RedirectIconDB.MODE_CUSTOM.equals(mode)
+                    && record.optString("customFile", "").length() == 0) {
+                Log.w("DesktopBackup", "RESTORE_CUSTOM_ICON_MISSING fallback=original package=" + pkg);
+                mode = RedirectIconDB.MODE_ORIGINAL;
+                drawable = RedirectIconDB.MODE_ORIGINAL;
+            }
             if (!validMode(mode, drawable)) throw new IllegalArgumentException("Invalid icon mode");
             editor.putString(prefix + "pkg", pkg);
             editor.putString(prefix + "cmp", cmp);
@@ -86,13 +102,20 @@ public final class IconBackupCodec {
             index.append(key);
 
             if (RedirectIconDB.MODE_CUSTOM.equals(mode)) {
-                String name = checkedFileName(record.getString("customFile"));
-                File source = new File(new File(extractedRoot, "icons/custom"), name);
-                byte[] data = BackupFileUtils.readBytes(source, MAX_ICON_BYTES);
-                if (BitmapFactory.decodeByteArray(data, 0, data.length) == null) {
-                    throw new IllegalArgumentException("Invalid custom PNG");
+                String name = record.optString("customFile", "");
+                try {
+                    name = checkedFileName(name);
+                    File source = new File(new File(extractedRoot, "icons/custom"), name);
+                    byte[] data = BackupFileUtils.readBytes(source, MAX_ICON_BYTES);
+                    if (BitmapFactory.decodeByteArray(data, 0, data.length) == null) {
+                        throw new IllegalArgumentException("Invalid custom PNG");
+                    }
+                    BackupFileUtils.writeBytes(new File(next, Integer.toHexString(key.hashCode()) + ".png"), data);
+                } catch (Exception invalidCustomIcon) {
+                    Log.w("DesktopBackup", "RESTORE_CUSTOM_ICON_INVALID fallback=original package=" + pkg,
+                            invalidCustomIcon);
+                    editor.putString(prefix + "drawable", RedirectIconDB.MODE_ORIGINAL);
                 }
-                BackupFileUtils.writeBytes(new File(next, Integer.toHexString(key.hashCode()) + ".png"), data);
             }
         }
         editor.putString("__index__", index.toString());

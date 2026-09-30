@@ -388,7 +388,6 @@
     ],
     "com.android.settings": [
       "com.android.settings.png",
-      "system.settings.classic_gear.png",
       "system.settings.silver_gear.png"
     ],
     "com.android.stk": [
@@ -534,9 +533,6 @@
     ],
     "com.baosight.carsharing": [
       "com.baosight.carsharing.png"
-    ],
-    "com.bbk.cloud": [
-      "com.bbk.cloud.png"
     ],
     "com.bbk.iqoo.feedback": [
       "com.bbk.iqoo.feedback.png"
@@ -3531,8 +3527,7 @@
       "com.yoho_2.png"
     ],
     "com.yoloho.dayima": [
-      "com.yoloho.dayima.png",
-      "com.yoloho.dayima_2.png"
+      "com.yoloho.dayima.png"
     ],
     "com.yongche.android": [
       "com.yongche.android.png",
@@ -10763,9 +10758,6 @@
     ],
     "com.smartisanos.clock": [
       "com.smartisanos.clock.png"
-    ],
-    "com.smartisanos.cloudagent": [
-      "com.smartisanos.cloudagent.png"
     ],
     "com.smartisanos.cloudsync": [
       "com.smartisanos.cloudsync.png"

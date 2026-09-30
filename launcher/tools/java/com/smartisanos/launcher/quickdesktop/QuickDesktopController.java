@@ -8,10 +8,12 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
+import android.view.View;
 import android.view.ViewGroup;
 import android.view.VelocityTracker;
 import android.view.ViewConfiguration;
 import android.widget.PopupWindow;
+import com.smartisanos.launcher.theme.LauncherSettingBridge;
 
 import java.lang.ref.WeakReference;
 
@@ -66,7 +68,7 @@ public final class QuickDesktopController {
         if (context == null) {
             return false;
         }
-        return preferences(context).getBoolean(KEY_ENABLED, true);
+        return preferences(context).getBoolean(KEY_ENABLED, false);
     }
 
     public static void setEnabled(Context context, boolean enabled) {
@@ -165,7 +167,6 @@ public final class QuickDesktopController {
         QuickDesktopHostView host = new QuickDesktopHostView(root.getContext());
         hostView = host;
         rootRef = new WeakReference<>(root);
-        QuickDesktopBackgroundCapture.schedule(root, host, 700L);
         Log.i(TAG, "QD_HOST_ATTACHED enabled=" + isEnabled(root.getContext()));
     }
 
@@ -180,6 +181,21 @@ public final class QuickDesktopController {
                 consumeRootGestureUntilEnd = false;
             }
             return 2;
+        }
+        if (action == MotionEvent.ACTION_POINTER_DOWN && event.getPointerCount() > 1
+                && openingGesture) {
+            // The original multi-touch recognizer owns this sequence from here onward.
+            openingGesture = false;
+            openingStartAllowed = false;
+            captureStartedForGesture = false;
+            recycleOpeningVelocityTracker();
+            QuickDesktopBackgroundCapture.cancel("multi-touch-owner");
+            QuickDesktopHostView activeHost = host();
+            if (activeHost != null && activeHost.getOpenProgress() > 0.0f) {
+                activeHost.closeImmediately("multi-touch-owner");
+            }
+            Log.i(TAG, "QD_ROOT_GESTURE_CANCEL reason=multi-touch-owner");
+            return 0;
         }
         QuickDesktopHostView host = host();
         if (host == null || !isEnabled(host.getContext())) {
@@ -313,10 +329,6 @@ public final class QuickDesktopController {
         QuickDesktopHostView host = host();
         if (host != null) {
             host.closeImmediately("home-intent");
-            ViewGroup root = rootRef.get();
-            if (root != null) {
-                QuickDesktopBackgroundCapture.schedule(root, host, 300L);
-            }
         }
         openingGesture = false;
         captureStartedForGesture = false;
@@ -423,6 +435,11 @@ public final class QuickDesktopController {
         if (host == null || root == null || root.getWindowToken() == null) {
             return;
         }
+        int systemUi = root.getSystemUiVisibility();
+        if (LauncherSettingBridge.readBool(root.getContext(), "launcher_hide_navigation_bar", false)) {
+            systemUi |= View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
+        }
+        host.setSystemUiVisibility(systemUi);
         if (hostWindow == null) {
             PopupWindow popup = new PopupWindow(host,
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT, false);

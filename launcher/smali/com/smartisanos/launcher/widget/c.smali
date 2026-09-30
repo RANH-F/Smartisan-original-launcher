@@ -192,6 +192,8 @@
 
     invoke-virtual {v0}, Lsmartisanos/app/SmartisanProgressDialog;->show()V
 
+    invoke-static {v0}, Lcom/smartisanos/launcher/theme/MaintainedLauncherSettingsHost;->onOriginalThemeLoadingUiShown(Landroid/app/Dialog;)V
+
     const/4 v0, 0x1
 
     .line 2

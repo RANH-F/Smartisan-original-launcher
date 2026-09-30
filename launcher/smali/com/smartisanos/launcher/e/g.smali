@@ -288,6 +288,8 @@
     and-int/2addr v13, v14
 
     :goto_port_apply_light_status_bar
+    invoke-static {v11}, Lcom/smartisanos/launcher/theme/LauncherSettingBridge;->applyThemeStatusBarWindowPolicy(Landroid/view/WindowManager$LayoutParams;)V
+
     invoke-virtual {v4, v11}, Landroid/view/Window;->setAttributes(Landroid/view/WindowManager$LayoutParams;)V
 
     invoke-virtual {v12, v13}, Landroid/view/View;->setSystemUiVisibility(I)V

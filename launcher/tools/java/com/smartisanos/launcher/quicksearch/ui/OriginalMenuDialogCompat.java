@@ -10,6 +10,7 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import com.smartisanos.launcher.theme.MaintainedLauncherSettingsHost;
 
 import smartisan.widget.MenuDialogTitleBar;
 import smartisan.widget.ShadowButton;
@@ -87,7 +88,9 @@ final class OriginalMenuDialogCompat extends Dialog {
     }
 
     @Override public void show() {
+        MaintainedLauncherSettingsHost.applyNavigationBarToWindow(getContext(), getWindow());
         super.show();
+        MaintainedLauncherSettingsHost.applyNavigationBarToWindow(getContext(), getWindow());
         Window window = getWindow();
         if (window != null) {
             window.setGravity(Gravity.BOTTOM);

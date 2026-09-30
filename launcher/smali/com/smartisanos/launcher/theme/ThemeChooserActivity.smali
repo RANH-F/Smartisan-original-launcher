@@ -26,20 +26,6 @@
 
 
 # virtual methods
-.method public finish()V
-    .locals 2
-
-    invoke-super {p0}, Landroid/app/Activity;->finish()V
-
-    const/4 v0, 0x0
-
-    sget v1, Lcom/smartisanos/launcher/R$anim;->settings_exit:I
-
-    invoke-virtual {p0, v0, v1}, Landroid/app/Activity;->overridePendingTransition(II)V
-
-    return-void
-.end method
-
 .method protected onCreate(Landroid/os/Bundle;)V
     .locals 0
 
@@ -65,14 +51,21 @@
 .end method
 
 .method protected onNewIntent(Landroid/content/Intent;)V
-    .locals 0
+    .locals 1
 
     invoke-super {p0, p1}, Landroid/app/Activity;->onNewIntent(Landroid/content/Intent;)V
 
     invoke-virtual {p0, p1}, Landroid/app/Activity;->setIntent(Landroid/content/Intent;)V
 
+    invoke-static {p0, p1}, Lcom/smartisanos/launcher/theme/MaintainedLauncherSettingsHost;->keepSettingsPageOnDesktopReturn(Landroid/app/Activity;Landroid/content/Intent;)Z
+
+    move-result v0
+
+    if-nez v0, :done
+
     invoke-static {p0}, Lcom/smartisanos/launcher/theme/MaintainedLauncherSettingsHost;->show(Landroid/app/Activity;)V
 
+    :done
     return-void
 .end method
 
@@ -93,6 +86,19 @@
 
     invoke-static {p0}, Lcom/smartisanos/launcher/theme/MaintainedLauncherSettingsHost;->onSettingsHostResumed(Landroid/app/Activity;)V
 
+    return-void
+.end method
+
+.method public onWindowFocusChanged(Z)V
+    .locals 0
+
+    invoke-super {p0, p1}, Landroid/app/Activity;->onWindowFocusChanged(Z)V
+
+    if-eqz p1, :done
+
+    invoke-static {p0}, Lcom/smartisanos/launcher/theme/MaintainedLauncherSettingsHost;->applyLauncherNavigationBarSetting(Landroid/app/Activity;)V
+
+    :done
     return-void
 .end method
 
@@ -132,4 +138,25 @@
     invoke-super {p0}, Landroid/app/Activity;->onBackPressed()V
 
     return-void
+.end method
+
+.method public dispatchTouchEvent(Landroid/view/MotionEvent;)Z
+    .locals 1
+
+    invoke-static {p0, p1}, Lcom/smartisanos/launcher/theme/MaintainedLauncherSettingsHost;->blockSettingsHomeGestureScroll(Landroid/app/Activity;Landroid/view/MotionEvent;)Z
+
+    move-result v0
+
+    if-eqz v0, :dispatch_original
+
+    const/4 v0, 0x1
+
+    return v0
+
+    :dispatch_original
+    invoke-super {p0, p1}, Landroid/app/Activity;->dispatchTouchEvent(Landroid/view/MotionEvent;)Z
+
+    move-result v0
+
+    return v0
 .end method

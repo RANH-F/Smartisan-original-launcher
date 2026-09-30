@@ -1,8 +1,8 @@
 {
   "schema": 1,
-  "updated": "2026-08-24",
+  "updated": "2026-09-30",
   "path": "icons/drawable/{packageName}.png",
-  "count": 5317,
+  "count": 5313,
   "note": "Multiple artwork files for the same application are declared in icons/variants.json.",
   "mirrors": [
     "https://gitee.com/RANH-F/Smartisan-original-launcher-download/raw/master/icons/drawable/",
@@ -4070,12 +4070,6 @@
       "file": "com.bbk.appstore.png",
       "bytes": 27163,
       "sha256": "6efc1cd99d3d75c1d5e1959d865fb61907feb281ee04b5c36f661afa99cadf2a"
-    },
-    {
-      "package": "com.bbk.cloud",
-      "file": "com.bbk.cloud.png",
-      "bytes": 7603,
-      "sha256": "a613f88617f5cb66c27a8dda349727364a475625f857c3f20490cd6d4bd18b1c"
     },
     {
       "package": "com.bbk.iqoo.feedback",
@@ -21142,12 +21136,6 @@
       "sha256": "5576b269cbcd35ca313759bef476feaefecd09087bf264a32e045f27512ab795"
     },
     {
-      "package": "com.smartisanos.cloudagent",
-      "file": "com.smartisanos.cloudagent.png",
-      "bytes": 13024,
-      "sha256": "e5b681277bb8f87c509293781030250297681bf9e55ecf53b92e3217bf2d4c9e"
-    },
-    {
       "package": "com.smartisanos.cloudsync",
       "file": "com.smartisanos.cloudsync.png",
       "bytes": 7946,
@@ -27598,12 +27586,6 @@
       "sha256": "47fd8d6348af77e4d84332de226ae3c2341b6eb8af6de920972e6c4accf1f437"
     },
     {
-      "package": "com.yoloho.dayima_2",
-      "file": "com.yoloho.dayima_2.png",
-      "bytes": 37348,
-      "sha256": "cf88e386dd06bf7859f1cf90ba31451b7a5ec5221d97ed987987b8aee1de5fca"
-    },
-    {
       "package": "com.yongche.android",
       "file": "com.yongche.android.png",
       "bytes": 24528,
@@ -31424,12 +31406,6 @@
       "file": "suxin.dribble.png",
       "bytes": 29736,
       "sha256": "7ecd02e88d4b66693ccabd9ca168a79b4c24acd8c8f7ea9fa34d77e0a02fc575"
-    },
-    {
-      "package": "system.settings.classic_gear",
-      "file": "system.settings.classic_gear.png",
-      "bytes": 38844,
-      "sha256": "8cd9a263b3d0c8a6d8805b9bfac3a8515fd4e4050ee5b6b6b2b734bead80728a"
     },
     {
       "package": "system.settings.silver_gear",

@@ -304,17 +304,25 @@
 .end method
 
 
-# virtual methods
-.method public Ee()V
-    .locals 13
+.method private updateUnlockTiming()V
+    .locals 3
 
-    .line 1
     iget-object v0, p0, Lcom/smartisanos/launcher/animations/c/k;->vq:Lcom/smartisanos/launcher/animations/c/n;
-
-    if-eqz v0, :cond_d
 
     .line 2
     iget v1, v0, Lcom/smartisanos/launcher/animations/c/n;->Gm:F
+
+    # XML seconds are wall-clock seconds, not accelerated engine seconds.
+    # Scale only this animation's durations/delays; keep other animations intact.
+    invoke-static {}, Lcom/smartisanos/launcher/view/Eb;->getInstance()Lcom/smartisanos/launcher/view/Eb;
+
+    move-result-object v2
+
+    invoke-virtual {v2}, Lcom/smartisanos/launcher/view/Eb;->getAnimationTimeScale()F
+
+    move-result v2
+
+    mul-float/2addr v1, v2
 
     iput v1, p0, Lcom/smartisanos/launcher/animations/c/k;->mTotalDuration:F
 
@@ -333,6 +341,20 @@
     div-float/2addr v0, v1
 
     iput v0, p0, Lcom/smartisanos/launcher/animations/c/k;->kq:F
+
+    return-void
+.end method
+
+# virtual methods
+.method public Ee()V
+    .locals 13
+
+    .line 1
+    iget-object v0, p0, Lcom/smartisanos/launcher/animations/c/k;->vq:Lcom/smartisanos/launcher/animations/c/n;
+
+    if-eqz v0, :cond_d
+
+    invoke-direct {p0}, Lcom/smartisanos/launcher/animations/c/k;->updateUnlockTiming()V
 
     const/4 v0, 0x0
 
@@ -910,6 +932,9 @@
 
     .line 22
     :cond_7
+    # Gaussian background and cell timelines share the same converted duration.
+    invoke-direct {p0}, Lcom/smartisanos/launcher/animations/c/k;->updateUnlockTiming()V
+
     new-instance v0, Lcom/smartisanos/smengine/g;
 
     invoke-direct {v0}, Lcom/smartisanos/smengine/g;-><init>()V

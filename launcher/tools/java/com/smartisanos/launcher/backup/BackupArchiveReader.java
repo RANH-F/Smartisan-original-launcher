@@ -21,6 +21,7 @@ public final class BackupArchiveReader {
         public final JSONObject icons;
         public final JSONObject shortcutIcons;
         public final JSONObject portableSources;
+        public String sourceName = "";
 
         ValidatedBackup(File archive, File extractedRoot, BackupManifest manifest,
                 JSONObject layout, JSONObject settings, JSONObject theme, JSONObject icons,

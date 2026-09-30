@@ -28,6 +28,19 @@ public final class LoadingUiWindowCompat {
         }
     }
 
+    /** Covers the outgoing Activity until the opaque reload window draws its first frame. */
+    public static void hideNavigation(Window window) {
+        if (window == null) return;
+        View decor = window.getDecorView();
+        if (decor == null) return;
+        int flags = decor.getSystemUiVisibility()
+                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
+        if (decor.getSystemUiVisibility() != flags) decor.setSystemUiVisibility(flags);
+        if (Build.VERSION.SDK_INT >= 30 && window.getInsetsController() != null) {
+            window.getInsetsController().hide(WindowInsets.Type.navigationBars());
+        }
+    }
+
     public static void apply(Window window) {
         if (window == null) {
             return;

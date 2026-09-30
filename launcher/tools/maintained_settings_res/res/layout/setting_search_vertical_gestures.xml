@@ -50,6 +50,13 @@
             <com.smartisanos.home.widget.sys.TipsView android:id="@+id/item_id_vertical_gesture_direction_reversed_tips"
                 android:layout_marginTop="@dimen/settings_item_title_margin_top"
                 android:text="@string/vertical_gesture_direction_normal_tips" style="@style/SettingItemTipsStyle" />
+            <com.smartisanos.home.settings.SettingItemSwitch android:id="@+id/item_id_dock_slide_reverse"
+                android:layout_marginTop="@dimen/settings_item_top_bottom_margin"
+                setting:setting_item_switch_title="@string/dock_slide_reverse_title"
+                style="@style/SettingSubItemSingleStyle" />
+            <com.smartisanos.home.widget.sys.TipsView
+                android:layout_marginTop="@dimen/settings_item_title_margin_top"
+                android:text="@string/dock_slide_reverse_tips" style="@style/SettingItemTipsStyle" />
             <include layout="@layout/item_bottom_shadow_layout" />
         </LinearLayout>
     </ScrollView>

@@ -20,6 +20,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 public final class LayoutSnapshotImporter {
     private static final String TAG = "DesktopRestore";
@@ -91,10 +92,15 @@ public final class LayoutSnapshotImporter {
             Set<Integer> existingPageIndexes = new HashSet<Integer>();
             int maxPage = -1;
             long maxPageId = 0L;
+            int pageRows = backupPages.length();
+            TreeSet<Long> unusedPageSlots = new TreeSet<Long>();
             JSONObject lastPage = null;
             for (int i = 0; i < backupPages.length(); i++) {
                 JSONObject page = backupPages.getJSONObject(i);
                 maxPageId = Math.max(maxPageId, page.optLong("_id", 0L));
+                if (LayoutSnapshotExporter.isUnusedPageSlot(page)) {
+                    unusedPageSlots.add(Long.valueOf(page.getLong("_id")));
+                }
                 ContentValues values = values(page, PAGE_COLUMNS, false);
                 if (database.insertOrThrow("table_pageinfos", null, values) < 0) {
                     throw new IllegalStateException("Page insert failed");
@@ -177,8 +183,12 @@ public final class LayoutSnapshotImporter {
                 }
             }
             if (!existingPageIndexes.contains(Integer.valueOf(maxPage))) {
-                lastPage = defaultPage(++maxPageId, maxPage);
-                database.insertOrThrow("table_pageinfos", null, values(lastPage, PAGE_COLUMNS, false));
+                boolean reuseSlot = !unusedPageSlots.isEmpty();
+                if (!reuseSlot && pageRows >= 1000) throw new IllegalStateException("No available page slot");
+                long pageId = reuseSlot ? unusedPageSlots.pollFirst().longValue() : ++maxPageId;
+                lastPage = defaultPage(pageId, maxPage);
+                persistPage(database, lastPage, reuseSlot);
+                if (!reuseSlot) pageRows++;
                 existingPageIndexes.add(Integer.valueOf(maxPage));
             }
             for (JSONObject item : preserved) {
@@ -187,8 +197,12 @@ public final class LayoutSnapshotImporter {
                     maxPage++;
                     maxCell = 0;
                     if (!existingPageIndexes.contains(Integer.valueOf(maxPage))) {
-                        JSONObject page = clonePage(lastPage, ++maxPageId, maxPage);
-                        database.insertOrThrow("table_pageinfos", null, values(page, PAGE_COLUMNS, false));
+                        boolean reuseSlot = !unusedPageSlots.isEmpty();
+                        if (!reuseSlot && pageRows >= 1000) throw new IllegalStateException("No available page slot");
+                        long pageId = reuseSlot ? unusedPageSlots.pollFirst().longValue() : ++maxPageId;
+                        JSONObject page = clonePage(lastPage, pageId, maxPage);
+                        persistPage(database, page, reuseSlot);
+                        if (!reuseSlot) pageRows++;
                         lastPage = page;
                         existingPageIndexes.add(Integer.valueOf(maxPage));
                     }
@@ -352,6 +366,22 @@ public final class LayoutSnapshotImporter {
         page.put("status", 0);
         page.put("pageTitle", "");
         return page;
+    }
+
+    private static void persistPage(SQLiteDatabase database, JSONObject page, boolean reuseSlot)
+            throws Exception {
+        ContentValues pageValues = values(page, PAGE_COLUMNS, reuseSlot);
+        if (reuseSlot) {
+            long pageId = page.getLong("_id");
+            if (database.update("table_pageinfos", pageValues, "_id=?",
+                    new String[]{String.valueOf(pageId)}) != 1) {
+                throw new IllegalStateException("Reserved page slot update failed: " + pageId);
+            }
+            Log.i(TAG, "RESTORE_PAGE_SLOT_REUSED id=" + pageId
+                    + " pageIndex=" + page.getInt("pageIndex"));
+        } else {
+            database.insertOrThrow("table_pageinfos", null, pageValues);
+        }
     }
 
     private static void verifyDatabase(SQLiteDatabase database) throws Exception {

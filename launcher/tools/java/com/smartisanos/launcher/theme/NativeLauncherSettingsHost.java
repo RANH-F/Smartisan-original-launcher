@@ -33,6 +33,7 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.view.Window;
+import com.smartisanos.launcher.reload.LoadingUiWindowCompat;
 
 import java.io.InputStream;
 
@@ -76,7 +77,6 @@ public final class NativeLauncherSettingsHost {
                 }),
                 iconRow(activity, "应用图标", "可选用精心设计过的图标替换应用默认图标", "setting_item_icon_launcher.png", toastClick(activity, "应用图标页后续迁移"))));
         content.addView(card(activity,
-                disabledSwitchRow(activity, "桌面图标感知光影", false),
                 switchRow(activity, "隐藏桌面图标名称", "launcher_hide_lable", false),
                 disabledSwitchRow(activity, "解锁时桌面的动画效果", true)));
         section(activity, content, "单板块视图切换至多板块视图");
@@ -428,13 +428,7 @@ public final class NativeLauncherSettingsHost {
     }
 
     private static void tuneWindowForLoading(Activity activity) {
-        if (Build.VERSION.SDK_INT >= 21) {
-            activity.getWindow().setStatusBarColor(Color.BLACK);
-            activity.getWindow().setNavigationBarColor(Color.BLACK);
-        }
-        if (Build.VERSION.SDK_INT >= 23) {
-            activity.getWindow().getDecorView().setSystemUiVisibility(0);
-        }
+        LoadingUiWindowCompat.apply(activity.getWindow());
     }
 
     private static final class RestartLoadingView extends View implements Runnable {

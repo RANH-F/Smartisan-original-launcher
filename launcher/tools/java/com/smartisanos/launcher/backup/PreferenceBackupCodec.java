@@ -2,6 +2,7 @@ package com.smartisanos.launcher.backup;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.provider.Settings;
 import android.util.Log;
 
 import com.smartisanos.launcher.quickdesktop.QuickDesktopController;
@@ -154,6 +155,20 @@ public final class PreferenceBackupCodec {
 
     public static void restore(Context context, JSONObject root) throws Exception {
         JSONObject files = root.getJSONObject("files");
+        JSONObject launcherSettings = files.optJSONObject("launcher_settings");
+        JSONObject legacyLauncherPrefs = files.optJSONObject("com.smartisanos.launcher_prefs");
+        if (launcherSettings == null) {
+            launcherSettings = new JSONObject();
+            files.put("launcher_settings", launcherSettings);
+        }
+        if (legacyLauncherPrefs != null) {
+            JSONObject legacyIconSize = legacyLauncherPrefs.optJSONObject("launcher_icon_size");
+            if (!launcherSettings.has("launcher_icon_size") && legacyIconSize != null) {
+                launcherSettings.put("launcher_icon_size", legacyIconSize);
+            }
+            // launcher_settings is the canonical owner; old archives may contain a stale copy.
+            legacyLauncherPrefs.remove("launcher_icon_size");
+        }
         for (String file : FILES) {
             JSONObject values = files.optJSONObject(file);
             if (values == null) continue;
@@ -196,6 +211,19 @@ public final class PreferenceBackupCodec {
             return complete;
         }
         if ("com.smartisanos.launcher_prefs".equals(file)) {
+            // This legacy duplicate can lag behind launcher_settings and must not win on restore.
+            complete.remove("launcher_icon_size");
+            // The original reader falls back to Settings.Global before the preference exists.
+            // Record that effective value so even an implicit default can be restored.
+            if (!complete.containsKey("launcher_page_animation")) {
+                int animation = 0;
+                try {
+                    animation = Settings.Global.getInt(context.getContentResolver(),
+                            "launcher_page_animation", 0);
+                } catch (Throwable ignored) {
+                }
+                complete.put("launcher_page_animation", animation);
+            }
             if (!complete.containsKey("launcher_default_icon_shape_v1")) {
                 complete.put("launcher_default_icon_shape_v1", "circle");
             }

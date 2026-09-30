@@ -4,8 +4,6 @@ import android.app.Activity;
 import android.app.KeyguardManager;
 import android.content.Context;
 import android.content.Intent;
-import android.os.Handler;
-import android.os.Looper;
 import android.os.PowerManager;
 import android.os.SystemClock;
 import android.util.Log;
@@ -24,12 +22,8 @@ public final class LauncherBelowKeyguardCompat {
 
     private static final String TAG = "UnlockAnimation";
     private static final Object LOCK = new Object();
-    private static final Handler MAIN_HANDLER = new Handler(Looper.getMainLooper());
-    // v1.5.4 lifecycle fallback dispatched the original unlock chain 120 ms
-    // after Launcher Resume. Keep that proven timing while retaining the
-    // strict modern Keyguard session and exactly-once ownership below.
-    private static final long V154_RESUME_PRE_ROLL_DELAY_MS = 120L;
-    private static final String V154_RESUME_PRE_ROLL = "V1_5_4_RESUME_PRE_ROLL";
+    // This preference selects the maintained unlock compatibility behavior.
+    // The persisted key stays unchanged so existing settings and backups survive.
     public static final String KEY_WAIT_FOR_FOCUS = "launcher_unlock_wait_for_focus";
 
     private static Context applicationContext;
@@ -48,7 +42,9 @@ public final class LauncherBelowKeyguardCompat {
     private static boolean unlockAnimationRunning;
     private static boolean originalPlayDispatched;
     private static boolean auxiliaryTransitionRunning;
-    private static boolean ignoreReplacedAnimationFinish;
+    // Written by GL events; callbacks retain this identity when a Timeline is built.
+    private static long renderSessionId;
+    private static boolean forceFinishExecuting;
 
     private static long lastLauncherResumeUptime;
     private static long lastWindowFocusTrueUptime;
@@ -63,9 +59,8 @@ public final class LauncherBelowKeyguardCompat {
     private static long sessionCommitPlayUptime;
     private static long sessionAnimationStartUptime;
     private static String sessionArmSource;
-    private static long preRollScheduledSessionId;
     // Snapshot the preference when arming so a session never changes policy midway.
-    private static boolean sessionWaitForFocus;
+    private static boolean sessionMaintainedCompatMode;
 
     private LauncherBelowKeyguardCompat() {
     }
@@ -89,7 +84,6 @@ public final class LauncherBelowKeyguardCompat {
             logLocked(activity, "UNLOCK_LAUNCHER_RESUME", null);
         }
         tryCommitUnlockAnimation(activity, "RESUME");
-        scheduleV154ResumePreRoll(activity);
     }
 
     public static void onLauncherPaused(Activity activity) {
@@ -167,9 +161,13 @@ public final class LauncherBelowKeyguardCompat {
             }
             pausedVisibleCandidate = false;
             logLocked(activity, "UNLOCK_LAUNCHER_STOP", null);
-            if (keyguardSessionActive && unlockDismissPending && interactive
-                    && !keyguardLocked && !unlockConsumed) {
+            if (keyguardSessionActive && interactive && !keyguardLocked && !unlockConsumed) {
                 cancelLocked("UNLOCK_CANCEL_NOT_DIRECT_HOME", activity);
+                forceFinish = true;
+            } else if (unlockConsumed && interactive && !keyguardLocked) {
+                // A target app can cover HOME before the original GL timeline finishes.
+                // Finish that session while HOME is stopped so it cannot resume on return.
+                cancelLocked("UNLOCK_CANCEL_COVERED_BY_APP", activity);
                 forceFinish = true;
             }
         }
@@ -199,7 +197,8 @@ public final class LauncherBelowKeyguardCompat {
             // If this same lock session has already consumed its pre-roll,
             // treating that late broadcast as a new generation truncates the
             // animation and prepares a second, stale scene.
-            if (unlockConsumed && launcherWasBelowKeyguard && isKeyguardLocked(context)) {
+            if (unlockConsumed && launcherWasBelowKeyguard && isKeyguardLocked(context)
+                    && !visibleLauncherBeforeLock) {
                 logLocked(context, "UNLOCK_DUPLICATE_ARM_IGNORED",
                         "CONSUMED_LOCK_SESSION " + source);
                 return true;
@@ -211,8 +210,6 @@ public final class LauncherBelowKeyguardCompat {
             forcePrevious = unlockAnimationRunning || originalPlayDispatched
                     || auxiliaryTransitionRunning || internalPlayPermit || unlockConsumed;
             if (forcePrevious) {
-                ignoreReplacedAnimationFinish = unlockAnimationRunning
-                        || auxiliaryTransitionRunning;
                 logLocked(context, "UNLOCK_FORCE_FINISH_PREVIOUS_SESSION", source);
                 clearSessionLocked();
                 unlockAnimationRunning = false;
@@ -234,7 +231,7 @@ public final class LauncherBelowKeyguardCompat {
                 return false;
             }
             keyguardSessionId++;
-            sessionWaitForFocus = context.getSharedPreferences("launcher_settings",
+            sessionMaintainedCompatMode = context.getSharedPreferences("launcher_settings",
                     Context.MODE_PRIVATE).getBoolean(KEY_WAIT_FOR_FOCUS, false);
             keyguardSessionActive = true;
             launcherWasBelowKeyguard = true;
@@ -276,8 +273,11 @@ public final class LauncherBelowKeyguardCompat {
         }
     }
 
-    public static void onPrepareReady(Context context) {
+    public static void onPrepareReady(long sessionId, boolean initialized) {
+        Context context;
         synchronized (LOCK) {
+            context = applicationContext;
+            if (sessionId != keyguardSessionId || !initialized) return;
             if (!keyguardSessionActive || !launcherWasBelowKeyguard || unlockConsumed) {
                 logLocked(context, "UNLOCK_SKIP_NO_SESSION", "prepareReady");
                 return;
@@ -291,19 +291,24 @@ public final class LauncherBelowKeyguardCompat {
             logLocked(context, "UNLOCK_PREPARE_READY", null);
         }
         tryCommitUnlockAnimation(context, "PREPARE_READY");
-        scheduleV154ResumePreRoll(context);
     }
 
     public static void onPrepareFailed(Context context) {
         synchronized (LOCK) {
+            if (keyguardSessionActive) {
+                // Both maintained modes initialize in the GL play event when
+                // the lock-time Launcher scene was not ready yet.
+                sessionPrepareBeginUptime = 0L;
+                logLocked(context, "UNLOCK_PREPARE_DEFERRED_TO_PLAY", null);
+                return;
+            }
             cancelLocked("UNLOCK_SKIP_NOT_PREPARED", context);
         }
         dispatchOriginalAction(context, ACTION_INTERNAL_FORCE_FINISH);
     }
 
-    /** USER_PRESENT/dismiss commits only the current direct Keyguard handoff. */
+    /** Keep a real dismiss signal until the foreground desktop can accept it. */
     public static void onDismissSignal(Context context, String action) {
-        boolean forceFinish = false;
         synchronized (LOCK) {
             remember(context);
             logLocked(context, "UNLOCK_USER_PRESENT", action);
@@ -315,20 +320,11 @@ public final class LauncherBelowKeyguardCompat {
                 logLocked(context, "UNLOCK_SKIP_CONSUMED", action);
                 return;
             }
-            if (!launcherResumed || !resumeDuringKeyguardHandoff) {
-                cancelLocked("UNLOCK_CANCEL_NOT_DIRECT_HOME", context);
-                forceFinish = true;
-            } else {
-                unlockDismissPending = true;
-                if (sessionDismissUptime == 0L) {
-                    sessionDismissUptime = SystemClock.uptimeMillis();
-                }
-                logLocked(context, "UNLOCK_DISMISS_PENDING", action);
+            unlockDismissPending = true;
+            if (sessionDismissUptime == 0L) {
+                sessionDismissUptime = SystemClock.uptimeMillis();
             }
-        }
-        if (forceFinish) {
-            dispatchOriginalAction(context, ACTION_INTERNAL_FORCE_FINISH);
-            return;
+            logLocked(context, "UNLOCK_DISMISS_PENDING", action);
         }
         tryCommitUnlockAnimation(context, "DISMISS");
     }
@@ -342,10 +338,6 @@ public final class LauncherBelowKeyguardCompat {
             final boolean keyguardLocked = isKeyguardLocked(context);
             final boolean interactive = isInteractive(context);
             final boolean hasDirectDismissSignal = unlockDismissPending;
-            final boolean v154ResumePreRoll = V154_RESUME_PRE_ROLL.equals(source)
-                    && !sessionWaitForFocus
-                    && preRollScheduledSessionId == keyguardSessionId
-                    && resumeDuringKeyguardHandoff;
             final long now = SystemClock.uptimeMillis();
             if (keyguardSessionActive && interactive && !keyguardLocked
                     && sessionKeyguardUnlockedUptime == 0L) {
@@ -365,39 +357,18 @@ public final class LauncherBelowKeyguardCompat {
                 logLocked(context, unlockConsumed ? "UNLOCK_SKIP_CONSUMED" : "UNLOCK_SKIP_NO_SESSION", source);
             } else if (unlockConsumed) {
                 logLocked(context, "UNLOCK_SKIP_CONSUMED", source);
-            } else if (!unlockPrepared) {
-                if (!keyguardLocked && launcherResumed && launcherHasWindowFocus) {
-                    cancelLocked("UNLOCK_SKIP_NOT_PREPARED", context);
-                    forceFinish = true;
-                } else {
-                    logLocked(context, "UNLOCK_SKIP_NOT_PREPARED", source);
-                }
             } else if (!launcherResumed) {
                 logLocked(context, "UNLOCK_SKIP_NOT_RESUMED", source);
             } else if (!interactive) {
                 logLocked(context, "UNLOCK_SKIP_NOT_INTERACTIVE", source);
-            } else if (keyguardLocked && !v154ResumePreRoll) {
+            } else if (keyguardLocked) {
                 logLocked(context, "UNLOCK_SKIP_KEYGUARD_STILL_LOCKED", source);
-            } else if (!resumeDuringKeyguardHandoff) {
+            } else if (!hasDirectDismissSignal && !resumeDuringKeyguardHandoff) {
                 logLocked(context, "UNLOCK_SKIP_NO_UNLOCK_SIGNAL", source);
-            } else if (sessionWaitForFocus && !launcherHasWindowFocus) {
-                logLocked(context, "UNLOCK_SKIP_COMPAT_WAIT_FOCUS", source);
-            } else if (!v154ResumePreRoll
-                    && !hasDirectDismissSignal && !launcherHasWindowFocus) {
-                // A real USER_PRESENT/action_keyguard_to_dismiss belongs to the
-                // current direct Keyguard handoff and commits without waiting
-                // for focus. ROMs without that signal still commit at focus.
+            } else if (!launcherHasWindowFocus) {
                 logLocked(context, "UNLOCK_SKIP_NO_FOCUS", source);
             } else {
-                unlockConsumed = true;
-                unlockDismissPending = false;
-                keyguardSessionActive = false;
-                internalPlayPermit = true;
-                sessionCommitPlayUptime = now;
-                logLocked(context, "UNLOCK_SESSION_CONSUMED", source);
-                logLocked(context, "UNLOCK_COMMIT_PLAY",
-                        source + " " + timingSummaryLocked(false));
-                dispatch = true;
+                dispatch = consumeForPlayLocked(context, source, now);
             }
         }
         if (forceFinish) dispatchOriginalAction(context, ACTION_INTERNAL_FORCE_FINISH);
@@ -406,33 +377,16 @@ public final class LauncherBelowKeyguardCompat {
         }
     }
 
-    private static void scheduleV154ResumePreRoll(final Context context) {
-        final long sessionId;
-        synchronized (LOCK) {
-            remember(context);
-            if (sessionWaitForFocus || !keyguardSessionActive || !launcherWasBelowKeyguard || !unlockPrepared
-                    || unlockConsumed || !launcherResumed || !resumeDuringKeyguardHandoff
-                    || !isInteractive(context) || !isKeyguardLocked(context)
-                    || preRollScheduledSessionId == keyguardSessionId) {
-                return;
-            }
-            sessionId = keyguardSessionId;
-            preRollScheduledSessionId = sessionId;
-            logLocked(context, "UNLOCK_V154_PRE_ROLL_SCHEDULED",
-                    "delayMs=" + V154_RESUME_PRE_ROLL_DELAY_MS);
-        }
-        MAIN_HANDLER.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                synchronized (LOCK) {
-                    if (keyguardSessionId != sessionId || unlockConsumed
-                            || !keyguardSessionActive) {
-                        return;
-                    }
-                }
-                tryCommitUnlockAnimation(context, V154_RESUME_PRE_ROLL);
-            }
-        }, V154_RESUME_PRE_ROLL_DELAY_MS);
+    private static boolean consumeForPlayLocked(Context context, String source, long now) {
+        unlockConsumed = true;
+        unlockDismissPending = false;
+        keyguardSessionActive = false;
+        internalPlayPermit = true;
+        sessionCommitPlayUptime = now;
+        logLocked(context, "UNLOCK_SESSION_CONSUMED", source);
+        logLocked(context, "UNLOCK_COMMIT_PLAY",
+                source + " " + timingSummaryLocked(false));
+        return true;
     }
 
     public static boolean takeInternalPlayPermit(Context context) {
@@ -446,6 +400,56 @@ public final class LauncherBelowKeyguardCompat {
         }
     }
 
+    public static boolean isMaintainedCompatMode() {
+        synchronized (LOCK) {
+            return sessionMaintainedCompatMode;
+        }
+    }
+
+    public static long getSessionId() {
+        synchronized (LOCK) { return keyguardSessionId; }
+    }
+
+    public static long getRenderSessionId() {
+        synchronized (LOCK) { return renderSessionId; }
+    }
+
+    /** Reject cancelled queued work before it can alter the scene. */
+    public static boolean beginGlEvent(long sessionId, boolean play) {
+        synchronized (LOCK) {
+            if (sessionId != keyguardSessionId || !launcherWasBelowKeyguard
+                    || !(keyguardSessionActive || unlockConsumed)
+                    || (play && (!unlockConsumed || !launcherResumed))) {
+                logLocked(applicationContext, "UNLOCK_STALE_GL_EVENT_IGNORED",
+                        "eventSession=" + sessionId);
+                return false;
+            }
+            renderSessionId = sessionId;
+            return true;
+        }
+    }
+
+    public static boolean beginGlForceFinish(long sessionId) {
+        synchronized (LOCK) {
+            // Cleanup queued for an older scene must not kill a newer GL scene.
+            if (renderSessionId > sessionId) return false;
+            forceFinishExecuting = true;
+            return true;
+        }
+    }
+
+    /** A renderer callback is not proof of SurfaceFlinger presentation. */
+    public static void onRendererFrame() {
+        Context context;
+        synchronized (LOCK) {
+            if (!keyguardSessionActive || !launcherResumed || !launcherHasWindowFocus
+                    || !(unlockDismissPending || resumeDuringKeyguardHandoff)) return;
+            context = applicationContext;
+            if (!isInteractive(context) || isKeyguardLocked(context)) return;
+        }
+        tryCommitUnlockAnimation(context, "RENDER_FRAME");
+    }
+
     public static boolean isLauncherBelowKeyguard(Context context) {
         synchronized (LOCK) {
             return context != null && launcherWasBelowKeyguard
@@ -453,8 +457,9 @@ public final class LauncherBelowKeyguardCompat {
         }
     }
 
-    public static void onOriginalPlayDispatched() {
+    public static void onOriginalPlayDispatched(long sessionId) {
         synchronized (LOCK) {
+            if (sessionId != keyguardSessionId || !unlockConsumed) return;
             originalPlayDispatched = true;
             logLocked(applicationContext, "UNLOCK_ORIGINAL_PLAY_DISPATCHED", null);
             if (auxiliaryTransitionRunning) {
@@ -469,11 +474,12 @@ public final class LauncherBelowKeyguardCompat {
         }
     }
 
-    public static void onUnlockAnimationStarted() {
+    public static void onUnlockAnimationStarted(long sessionId) {
         boolean stale;
         boolean auxiliary;
         Context context;
         synchronized (LOCK) {
+            if (sessionId != keyguardSessionId || forceFinishExecuting) return;
             context = applicationContext;
             boolean committedPlay = originalPlayDispatched && unlockConsumed
                     && launcherWasBelowKeyguard;
@@ -496,10 +502,9 @@ public final class LauncherBelowKeyguardCompat {
         if (stale) dispatchOriginalAction(context, ACTION_INTERNAL_FORCE_FINISH);
     }
 
-    public static void onUnlockAnimationFinished() {
+    public static void onUnlockAnimationFinished(long sessionId) {
         synchronized (LOCK) {
-            if (ignoreReplacedAnimationFinish) {
-                ignoreReplacedAnimationFinish = false;
+            if (sessionId != keyguardSessionId || forceFinishExecuting) {
                 logLocked(applicationContext, "UNLOCK_REPLACED_FINISH_IGNORED", null);
                 return;
             }
@@ -514,8 +519,10 @@ public final class LauncherBelowKeyguardCompat {
         }
     }
 
-    public static void onForceFinishComplete() {
+    public static void onForceFinishComplete(long sessionId) {
         synchronized (LOCK) {
+            forceFinishExecuting = false;
+            if (sessionId != keyguardSessionId) return;
             unlockAnimationRunning = false;
             logLocked(applicationContext, "UNLOCK_FORCE_FINISH", null);
             clearSessionLocked();
@@ -579,7 +586,7 @@ public final class LauncherBelowKeyguardCompat {
     }
 
     private static String timingSummaryLocked(boolean includeAnimationStart) {
-        return "mode=" + (sessionWaitForFocus ? "WAIT_FOR_FOCUS" : "RESUME_PRE_ROLL")
+        return "mode=" + (sessionMaintainedCompatMode ? "MAINTAINED_COMPAT" : "MAINTAINED_DEFAULT")
                 + " screenOff=" + sessionScreenOffUptime
                 + " prepareBegin=" + sessionPrepareBeginUptime
                 + " prepareReady=" + sessionPrepareReadyUptime

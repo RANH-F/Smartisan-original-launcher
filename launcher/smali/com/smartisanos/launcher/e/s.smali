@@ -5014,7 +5014,9 @@
 .end method
 
 .method public static a(Lcom/smartisanos/launcher/data/ItemInfo;Z)[B
-    .locals 6
+    .locals 7
+
+    move-object v6, p0
 
     .line 93
     iget-wide v0, p0, Lcom/smartisanos/launcher/data/ItemInfo;->id:J
@@ -5128,7 +5130,7 @@
 
     move-result-object p0
 
-    if-eqz p0, :cond_5
+    if-eqz p0, :cond_cached_unchanged
 
     .line 105
     invoke-static {}, Lcom/smartisanos/launcher/e/s;->rg()Ljava/lang/String;
@@ -5144,6 +5146,11 @@
 
     .line 107
     invoke-static {p0}, Lcom/smartisanos/launcher/data/a/h;->a(Landroid/content/ContentValues;)Z
+
+    goto :cond_5
+
+    :cond_cached_unchanged
+    iget-object v1, v6, Lcom/smartisanos/launcher/data/ItemInfo;->iconRawData:[B
 
     :cond_5
     :goto_1

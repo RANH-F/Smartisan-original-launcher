@@ -13,7 +13,7 @@ import java.io.FileOutputStream;
 public final class BackupOperationJournal {
     public enum State {
         IDLE, VALIDATING_LOCATION, WAITING_DATABASE, EXPORTING_LAYOUT,
-        BUILDING_ARCHIVE, COPYING_TO_DESTINATION, COMPLETE, CANCELLED, FAILED
+        BUILDING_ARCHIVE, PREVIEW_READY, COPYING_TO_DESTINATION, COMPLETE, CANCELLED, FAILED
     }
 
     public static final class Entry {

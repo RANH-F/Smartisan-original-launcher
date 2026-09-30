@@ -1390,6 +1390,17 @@
     if-nez p6, :cond_c
 
     .line 41
+    # The source MD5 matched the persisted icon. Keep that known-good bitmap
+    # available to the caller; null here means "no DB write", not "no icon".
+    if-eqz p0, :cond_no_item_cached
+
+    invoke-virtual {p0}, Lcom/smartisanos/launcher/data/ItemInfo;->Oe()[B
+
+    move-result-object v6
+
+    iput-object v6, p0, Lcom/smartisanos/launcher/data/ItemInfo;->iconRawData:[B
+
+    :cond_no_item_cached
     sget-object p6, Lcom/smartisanos/launcher/Aa;->log:Lcom/smartisanos/launcher/va;
 
     new-instance v2, Ljava/lang/StringBuilder;

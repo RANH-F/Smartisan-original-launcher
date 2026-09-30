@@ -1013,11 +1013,7 @@
     invoke-virtual {p0, p1, p2}, Lcom/smartisanos/launcher/J;->b(ZI)V
 
     .line 8
-    sget p2, Lcom/smartisanos/launcher/ob;->initializing:I
-
-    invoke-static {p2}, Lcom/smartisanos/launcher/e/s;->oa(I)Ljava/lang/String;
-
-    move-result-object p2
+    const-string p2, ""
 
     invoke-static {}, Lcom/smartisanos/launcher/reload/LauncherColdReloadCoordinator;->armInitializationLoadingWindow()V
 
@@ -2111,11 +2107,7 @@
     if-nez p1, :cond_1
 
     .line 50
-    sget p1, Lcom/smartisanos/launcher/ob;->initializing:I
-
-    invoke-static {p1}, Lcom/smartisanos/launcher/e/s;->oa(I)Ljava/lang/String;
-
-    move-result-object p1
+    const-string p1, ""
 
     invoke-static {}, Lcom/smartisanos/launcher/reload/LauncherColdReloadCoordinator;->armInitializationLoadingWindow()V
 

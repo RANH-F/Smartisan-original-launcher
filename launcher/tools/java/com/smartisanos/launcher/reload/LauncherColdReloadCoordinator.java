@@ -145,6 +145,7 @@ public final class LauncherColdReloadCoordinator {
             log("RELOAD_TOKEN_CREATED", token, reason, gridMode, themeMode);
             context.startActivity(intent);
             if (context instanceof Activity) {
+                LoadingUiWindowCompat.hideNavigation(((Activity) context).getWindow());
                 ((Activity) context).overridePendingTransition(0, 0);
             }
             return true;

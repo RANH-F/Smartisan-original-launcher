@@ -47,7 +47,21 @@
 .end method
 
 .method public onActivityResult(IILandroid/content/Intent;)V
-    .locals 0
+    .locals 1
+
+    invoke-static {p0}, Lcom/smartisanos/launcher/theme/LauncherSettingsOverlayHost;->isShowing(Landroid/app/Activity;)Z
+
+    move-result v0
+
+    if-eqz v0, :settings_overlay_result_done
+
+    invoke-static {p0, p1, p2, p3}, Lcom/smartisanos/launcher/theme/MaintainedLauncherSettingsHost;->onActivityResult(Landroid/app/Activity;IILandroid/content/Intent;)Z
+
+    move-result v0
+
+    if-nez v0, :settings_overlay_result_consumed
+
+    :settings_overlay_result_done
 
     .line 1
     invoke-static {}, Lcom/smartisanos/launcher/J;->getInstance()Lcom/smartisanos/launcher/J;
@@ -56,11 +70,43 @@
 
     invoke-virtual {p0, p1, p2, p3}, Lcom/smartisanos/launcher/J;->onActivityResult(IILandroid/content/Intent;)V
 
+    :settings_overlay_result_consumed
     return-void
 .end method
 
+.method public dispatchKeyEvent(Landroid/view/KeyEvent;)Z
+    .locals 1
+
+    invoke-static {p1}, Lcom/smartisanos/launcher/theme/LauncherSettingsOverlayHost;->handleSettingsBackKey(Landroid/view/KeyEvent;)Z
+
+    move-result v0
+
+    if-eqz v0, :original_key_dispatch
+
+    const/4 v0, 0x1
+
+    return v0
+
+    :original_key_dispatch
+    invoke-super {p0, p1}, Landroid/app/Activity;->dispatchKeyEvent(Landroid/view/KeyEvent;)Z
+
+    move-result v0
+
+    return v0
+.end method
+
 .method public onBackPressed()V
-    .locals 0
+    .locals 1
+
+    invoke-static {p0}, Lcom/smartisanos/launcher/theme/LauncherSettingsOverlayHost;->onBackPressed(Landroid/app/Activity;)Z
+
+    move-result v0
+
+    if-eqz v0, :overlay_probe_back_done
+
+    return-void
+
+    :overlay_probe_back_done
 
     invoke-static {}, Lcom/smartisanos/launcher/quickdesktop/QuickDesktopController;->onBackPressed()V
 
@@ -171,6 +217,10 @@
 .method public onDestroy()V
     .locals 2
 
+    invoke-static {p0}, Lcom/smartisanos/launcher/compat/StatusBarHeightCompat;->unbindWindow(Landroid/app/Activity;)V
+
+    invoke-static {p0}, Lcom/smartisanos/launcher/theme/LauncherSettingsOverlayHost;->onDestroyed(Landroid/app/Activity;)V
+
     invoke-static {}, Lcom/smartisanos/launcher/quickdesktop/QuickDesktopController;->onLauncherDestroyed()V
 
     .line 1
@@ -202,6 +252,16 @@
     invoke-virtual {p0, p1}, Landroid/app/Activity;->setIntent(Landroid/content/Intent;)V
 
     invoke-static {p0, p1}, Lcom/smartisanos/launcher/reload/LauncherColdReloadCoordinator;->captureLauncherReloadIntent(Landroid/app/Activity;Landroid/content/Intent;)V
+
+    invoke-static {p0, p1}, Lcom/smartisanos/launcher/theme/LauncherSettingsOverlayHost;->handleNewIntent(Landroid/app/Activity;Landroid/content/Intent;)Z
+
+    move-result v0
+
+    if-eqz v0, :overlay_probe_intent_done
+
+    return-void
+
+    :overlay_probe_intent_done
 
     if-nez p1, :cond_0
 
@@ -314,15 +374,35 @@
 
     invoke-static {p0}, Lcom/smartisanos/launcher/theme/MaintainedLauncherSettingsHost;->scheduleLauncherPostFirstFrameTasks(Landroid/app/Activity;)V
 
+    invoke-static {p0}, Lcom/smartisanos/launcher/theme/LauncherSettingsOverlayHost;->isShowing(Landroid/app/Activity;)Z
+
+    move-result v0
+
+    if-eqz v0, :settings_overlay_resume_done
+
+    invoke-static {p0}, Lcom/smartisanos/launcher/theme/MaintainedLauncherSettingsHost;->onSettingsHostResumed(Landroid/app/Activity;)V
+
+    :settings_overlay_resume_done
+
     return-void
 .end method
 
 .method public onRequestPermissionsResult(I[Ljava/lang/String;[I)V
-    .locals 0
+    .locals 1
 
     invoke-super {p0, p1, p2, p3}, Landroid/app/Activity;->onRequestPermissionsResult(I[Ljava/lang/String;[I)V
 
     invoke-static {p0, p1, p3}, Lcom/smartisanos/launcher/theme/WeatherBridge;->onRequestPermissionsResult(Landroid/app/Activity;I[I)V
+
+    invoke-static {p0}, Lcom/smartisanos/launcher/theme/LauncherSettingsOverlayHost;->isShowing(Landroid/app/Activity;)Z
+
+    move-result v0
+
+    if-eqz v0, :settings_overlay_permission_done
+
+    invoke-static {p0, p1, p2, p3}, Lcom/smartisanos/launcher/theme/MaintainedLauncherSettingsHost;->onRequestPermissionsResult(Landroid/app/Activity;I[Ljava/lang/String;[I)V
+
+    :settings_overlay_permission_done
 
     return-void
 .end method
@@ -354,11 +434,36 @@
     return p0
 .end method
 
+.method public static queueSettingsClickShadowReturn()V
+    .locals 3
+
+    invoke-static {}, Lcom/smartisanos/launcher/J;->getInstance()Lcom/smartisanos/launcher/J;
+
+    move-result-object v0
+
+    if-eqz v0, :done
+
+    new-instance v1, Lcom/smartisanos/launcher/w;
+
+    const/16 v2, 0x64
+
+    invoke-direct {v1, v0, v2}, Lcom/smartisanos/launcher/w;-><init>(Lcom/smartisanos/launcher/J;I)V
+
+    const/4 v0, 0x0
+
+    invoke-virtual {v1, v0}, Lcom/smartisanos/smengine/n;->q(F)V
+
+    :done
+    return-void
+.end method
+
 .method protected onStop()V
     .locals 0
 
     .line 1
     invoke-super {p0}, Landroid/app/Activity;->onStop()V
+
+    invoke-static {p0}, Lcom/smartisanos/launcher/theme/LauncherSettingsOverlayHost;->onLauncherStopped(Landroid/app/Activity;)V
 
     invoke-static {p0}, Lcom/smartisanos/launcher/theme/LauncherBelowKeyguardCompat;->onLauncherStopped(Landroid/app/Activity;)V
 

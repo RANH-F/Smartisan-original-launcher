@@ -908,6 +908,14 @@
 
     const/4 v1, 0x0
 
+    sget v2, Landroid/os/Build$VERSION;->SDK_INT:I
+
+    const/16 v8, 0x22
+
+    if-lt v2, v8, :cond_launcher_settings_flags_done
+
+    const/high16 v1, 0x10000000
+
     :cond_launcher_settings_flags_done
     invoke-virtual {v0, v1}, Landroid/content/Intent;->setFlags(I)Landroid/content/Intent;
 

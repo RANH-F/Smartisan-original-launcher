@@ -16,6 +16,7 @@ import android.view.WindowManager;
 import com.smartisanos.launcher.reload.LauncherColdReloadCoordinator;
 
 import java.lang.reflect.Field;
+import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.WeakHashMap;
 
@@ -116,12 +117,14 @@ public final class StatusBarHeightCompat {
         if (activity == null || activity.getWindow() == null || Build.VERSION.SDK_INT < 28) return;
         final View decor = activity.getWindow().getDecorView();
         if (decor == null) return;
+        final WeakReference<Activity> owner = new WeakReference<Activity>(activity);
         synchronized (BINDINGS) {
             if (BINDINGS.containsKey(decor)) return;
             View.OnLayoutChangeListener listener = new View.OnLayoutChangeListener() {
                 @Override public void onLayoutChange(View v, int left, int top, int right, int bottom,
                         int oldLeft, int oldTop, int oldRight, int oldBottom) {
-                    captureLiveInsets(activity, decor);
+                    Activity current = owner.get();
+                    if (current != null && !current.isDestroyed()) captureLiveInsets(current, v);
                 }
             };
             BINDINGS.put(decor, listener);
@@ -129,10 +132,22 @@ public final class StatusBarHeightCompat {
         }
         decor.post(new Runnable() {
             @Override public void run() {
-                if (Build.VERSION.SDK_INT >= 20) decor.requestApplyInsets();
-                captureLiveInsets(activity, decor);
+                Activity current = owner.get();
+                if (current == null || current.isDestroyed()) return;
+                View currentDecor = current.getWindow().getDecorView();
+                currentDecor.requestApplyInsets();
+                captureLiveInsets(current, currentDecor);
             }
         });
+    }
+
+    public static void unbindWindow(Activity activity) {
+        if (activity == null || activity.getWindow() == null) return;
+        View decor = activity.getWindow().getDecorView();
+        synchronized (BINDINGS) {
+            View.OnLayoutChangeListener listener = BINDINGS.remove(decor);
+            if (listener != null) decor.removeOnLayoutChangeListener(listener);
+        }
     }
 
     public static boolean isAutoEnabled(Context context) {

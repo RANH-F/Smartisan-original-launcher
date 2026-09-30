@@ -37,10 +37,16 @@ public final class DesktopBackupController {
     private static final long EXTERNAL_COPY_LIMIT = BackupValidator.MAX_ARCHIVE_BYTES;
     private static final Handler MAIN = new Handler(Looper.getMainLooper());
     private static volatile RunningOperation running;
+    private static volatile PreparedBackup preparedBackup;
 
     public interface Listener {
         void onState(String state, boolean cancellable);
         void onComplete(BackupRestoreResult result);
+    }
+
+    public interface PreviewListener extends Listener {
+        void onPreview(BackupArchiveReader.ValidatedBackup backup,
+                RestoreMergePlanner.Plan plan, String suggestedName);
     }
 
     public static final class CancellationToken {
@@ -63,9 +69,83 @@ public final class DesktopBackupController {
         RunningOperation(String token, Listener listener) { this.token = token; this.listener = listener; }
     }
 
+    private static final class PreparedBackup {
+        final String token;
+        final Context context;
+        final File staging;
+        final File archive;
+        final Uri treeUri;
+        final BackupArchiveReader.ValidatedBackup backup;
+        volatile boolean saving;
+        PreparedBackup(String token, Context context, File staging, File archive, Uri treeUri,
+                BackupArchiveReader.ValidatedBackup backup) {
+            this.token = token; this.context = context; this.staging = staging; this.archive = archive;
+            this.treeUri = treeUri; this.backup = backup;
+        }
+    }
+
     private DesktopBackupController() {}
 
     public static boolean hasRunningBackup() { return running != null; }
+
+    /** Builds and validates the exact archive that will later be copied after confirmation. */
+    public static void prepareBackupPreview(Context context, Uri treeUri, PreviewListener listener) {
+        if (context == null || treeUri == null || listener == null) return;
+        discardPreparedBackupPreview(context);
+        if (running != null || BackupOperationLock.isBusy()) {
+            complete(listener, BackupRestoreResult.error("BACKUP_OPERATION_BUSY",
+                    "桌面正在执行其他设置，请稍后再试。"));
+            return;
+        }
+        final Context app = context.getApplicationContext() == null ? context : context.getApplicationContext();
+        final RunningOperation operation = new RunningOperation(UUID.randomUUID().toString(), listener);
+        if (!BackupOperationLock.acquire(operation.token)) {
+            complete(listener, BackupRestoreResult.error("BACKUP_OPERATION_BUSY",
+                    "桌面正在执行其他设置，请稍后再试。"));
+            return;
+        }
+        running = operation;
+        final Uri targetTree = treeUri;
+        new Thread(new Runnable() {
+            public void run() { preparePreview(app, targetTree, operation); }
+        }, "DesktopBackupPreview").start();
+    }
+
+    /** Releases an unconfirmed preview and its staged archive. */
+    public static void discardPreparedBackupPreview(Context context) {
+        PreparedBackup current = preparedBackup;
+        if (current == null) return;
+        if (current.saving) return;
+        preparedBackup = null;
+        RunningOperation operation = running;
+        if (operation != null && current.token.equals(operation.token)) {
+            operation.cancellation.cancel();
+            running = null;
+        }
+        BackupFileUtils.deleteRecursively(current.staging);
+        if (context != null) new BackupOperationJournal(context).reset();
+        BackupOperationLock.release(current.token);
+    }
+
+    /** Copies the already-previewed archive; it does not take a second desktop snapshot. */
+    public static synchronized void startPreparedBackup(Context context, String fileName, boolean overwrite,
+            Listener listener) {
+        final PreparedBackup current = preparedBackup;
+        final RunningOperation operation = running;
+        final String normalized = normalizeBackupFileName(fileName);
+        if (current == null || operation == null || !current.token.equals(operation.token)
+                || normalized.length() == 0) {
+            complete(listener, BackupRestoreResult.error("BACKUP_EXPORT_FAILED",
+                    "备份预览已失效，请重新开始。"));
+            return;
+        }
+        if (current.saving) return;
+        current.saving = true;
+        operation.listener = listener;
+        new Thread(new Runnable() {
+            public void run() { copyPreparedArchive(current, normalized, overwrite, operation); }
+        }, "DesktopBackupSave").start();
+    }
 
     public static void attachListener(Listener listener) {
         RunningOperation operation = running;
@@ -97,6 +177,21 @@ public final class DesktopBackupController {
         } catch (Throwable ignored) {
         } finally { if (cursor != null) cursor.close(); }
         return "已选择目录";
+    }
+
+    public static String documentDisplayName(Context context, Uri uri) {
+        if (context == null || uri == null) return "";
+        Cursor cursor = null;
+        try {
+            cursor = context.getContentResolver().query(uri,
+                    new String[] {DocumentsContract.Document.COLUMN_DISPLAY_NAME}, null, null, null);
+            if (cursor != null && cursor.moveToFirst()) {
+                String value = cursor.getString(0);
+                if (value != null) return value;
+            }
+        } catch (Throwable ignored) {
+        } finally { if (cursor != null) cursor.close(); }
+        return uri.getLastPathSegment() == null ? "" : uri.getLastPathSegment();
     }
 
     /**
@@ -222,30 +317,8 @@ public final class DesktopBackupController {
             BackupFileUtils.deleteRecursively(staging);
             BackupFileUtils.ensureDirectory(new File(staging, "icons/custom"));
 
-            state(operation, journal, entry, BackupOperationJournal.State.WAITING_DATABASE,
-                    "WAITING_DATABASE", true);
-            final JSONObjectHolder layout = exportLayoutAtDatabaseSafePoint(context, operation.cancellation);
-            operation.cancellation.throwIfCancelled();
-            state(operation, journal, entry, BackupOperationJournal.State.EXPORTING_LAYOUT,
-                    "EXPORTING_LAYOUT", true);
-            int gridMode = readGridMode(context);
-            BackupManifest manifest = BackupManifest.create(context, gridMode);
-            Log.i(TAG, "BACKUP_SCHEMA formatVersion=" + manifest.formatVersion
-                    + " iconSourceSchemaVersion=" + manifest.iconSourceSchemaVersion
-                    + " shortcutSourceSchemaVersion=" + manifest.shortcutSourceSchemaVersion
-                    + " profileIdentitySchemaVersion=" + manifest.profileIdentitySchemaVersion);
-            org.json.JSONObject settings = PreferenceBackupCodec.encode(context);
-            org.json.JSONObject theme = ThemeBackupCodec.encode(context);
-            org.json.JSONObject icons = IconBackupCodec.encode(context, new File(staging, "icons/custom"));
-            org.json.JSONObject shortcutIcons = ShortcutIconBackupCodec.encode(context, layout.value,
-                    new File(staging, "icons/shortcuts"));
-            org.json.JSONObject portableSources = RestoreIconSourceReconciler.encodePortableSources(
-                    context, new File(staging, "icons/sources"));
-
-            state(operation, journal, entry, BackupOperationJournal.State.BUILDING_ARCHIVE,
-                    "正在构建压缩包", true);
-            File archive = BackupArchiveWriter.write(staging, manifest, layout.value, settings,
-                    theme, icons, shortcutIcons, portableSources, operation.cancellation);
+            JSONObjectHolder layout = createCurrentArchive(context, staging, operation, journal, entry);
+            File archive = new File(staging, "archive.slauncherbackup");
             operation.cancellation.throwIfCancelled();
             String baseName = requestedName;
             if (baseName.length() == 0) {
@@ -283,6 +356,147 @@ public final class DesktopBackupController {
             notifyComplete(operation, BackupRestoreResult.error(code, userMessage(code)));
         } finally {
             BackupFileUtils.deleteRecursively(staging);
+            BackupOperationLock.release(operation.token);
+            if (running == operation) running = null;
+        }
+    }
+
+    private static void preparePreview(Context context, Uri treeUri, RunningOperation operation) {
+        BackupOperationJournal journal = new BackupOperationJournal(context);
+        BackupOperationJournal.Entry entry = new BackupOperationJournal.Entry();
+        entry.token = operation.token;
+        File staging = new File(new File(context.getCacheDir(), "backup_preview"), operation.token);
+        entry.stagingPath = staging.getAbsolutePath();
+        boolean ready = false;
+        try {
+            state(operation, journal, entry, BackupOperationJournal.State.VALIDATING_LOCATION,
+                    "VALIDATING_LOCATION", true);
+            if (!hasPersistedTreePermission(context, treeUri)) throw coded("BACKUP_LOCATION_PERMISSION_LOST");
+            BackupFileUtils.deleteRecursively(staging);
+            BackupFileUtils.ensureDirectory(new File(staging, "icons/custom"));
+            createCurrentArchive(context, staging, operation, journal, entry);
+            File archive = new File(staging, "archive.slauncherbackup");
+            operation.cancellation.throwIfCancelled();
+            BackupArchiveReader.ValidatedBackup backup = BackupArchiveReader.read(archive,
+                    new File(staging, "preview_extracted"));
+            backup.sourceName = suggestedBackupName();
+            RestoreMergePlanner.Plan plan = RestoreMergePlanner.plan(context, backup);
+            operation.cancellation.throwIfCancelled();
+            preparedBackup = new PreparedBackup(operation.token, context, staging, archive, treeUri, backup);
+            journal.write(entry, BackupOperationJournal.State.PREVIEW_READY, null);
+            ready = true;
+            notifyPreview(operation, backup, plan, backup.sourceName);
+        } catch (BackupCancelledException cancelled) {
+            journal.write(entry, BackupOperationJournal.State.CANCELLED, "BACKUP_CANCELLED");
+            notifyComplete(operation, BackupRestoreResult.error("BACKUP_CANCELLED", "已取消本次备份"));
+        } catch (Throwable error) {
+            String code = error instanceof CodedIOException ? ((CodedIOException) error).code
+                    : (isNoSpace(error) ? "BACKUP_NO_SPACE" : "BACKUP_EXPORT_FAILED");
+            journal.write(entry, BackupOperationJournal.State.FAILED, code);
+            Log.w(TAG, "BACKUP_PREVIEW_FAILED token=" + safeToken(operation.token)
+                    + " errorCode=" + code, error);
+            notifyComplete(operation, BackupRestoreResult.error(code, userMessage(code)));
+        } finally {
+            if (!ready) {
+                BackupFileUtils.deleteRecursively(staging);
+                BackupOperationLock.release(operation.token);
+                if (running == operation) running = null;
+            }
+        }
+    }
+
+    private static JSONObjectHolder createCurrentArchive(Context context, File staging,
+            RunningOperation operation, BackupOperationJournal journal,
+            BackupOperationJournal.Entry entry) throws Exception {
+        state(operation, journal, entry, BackupOperationJournal.State.WAITING_DATABASE,
+                "WAITING_DATABASE", true);
+        final JSONObjectHolder layout = exportLayoutAtDatabaseSafePoint(context, operation.cancellation);
+        operation.cancellation.throwIfCancelled();
+        state(operation, journal, entry, BackupOperationJournal.State.EXPORTING_LAYOUT,
+                "EXPORTING_LAYOUT", true);
+        BackupManifest manifest = BackupManifest.create(context, readGridMode(context));
+        Log.i(TAG, "BACKUP_SCHEMA formatVersion=" + manifest.formatVersion
+                + " iconSourceSchemaVersion=" + manifest.iconSourceSchemaVersion
+                + " shortcutSourceSchemaVersion=" + manifest.shortcutSourceSchemaVersion
+                + " profileIdentitySchemaVersion=" + manifest.profileIdentitySchemaVersion);
+        // Resolve legacy icon-pack preferences through their existing owner before snapshotting.
+        com.smartisanos.home.settings.icons.IconSourceManager.get(context);
+        org.json.JSONObject settings = PreferenceBackupCodec.encode(context);
+        org.json.JSONObject theme = ThemeBackupCodec.encode(context);
+        org.json.JSONObject icons = IconBackupCodec.encode(context, new File(staging, "icons/custom"));
+        org.json.JSONObject shortcutIcons = ShortcutIconBackupCodec.encode(context, layout.value,
+                new File(staging, "icons/shortcuts"));
+        org.json.JSONObject portableSources = RestoreIconSourceReconciler.encodePortableSources(
+                context, new File(staging, "icons/sources"));
+        state(operation, journal, entry, BackupOperationJournal.State.BUILDING_ARCHIVE,
+                "正在构建压缩包", true);
+        BackupArchiveWriter.write(staging, manifest, layout.value, settings, theme, icons,
+                shortcutIcons, portableSources, operation.cancellation);
+        operation.cancellation.throwIfCancelled();
+        return layout;
+    }
+
+    private static boolean hasPersistedTreePermission(Context context, Uri treeUri) {
+        try {
+            for (android.content.UriPermission permission
+                    : context.getContentResolver().getPersistedUriPermissions()) {
+                if (treeUri.equals(permission.getUri()) && permission.isReadPermission()
+                        && permission.isWritePermission()) return true;
+            }
+        } catch (Throwable ignored) {
+        }
+        return false;
+    }
+
+    public static String suggestedBackupName() {
+        return new SimpleDateFormat("yyyy-MM-dd HH-mm", Locale.getDefault()).format(new Date());
+    }
+
+    private static void notifyPreview(final RunningOperation operation,
+            final BackupArchiveReader.ValidatedBackup backup, final RestoreMergePlanner.Plan plan,
+            final String suggestedName) {
+        MAIN.post(new Runnable() {
+            public void run() {
+                Listener target = operation.listener;
+                if (target instanceof PreviewListener) {
+                    ((PreviewListener) target).onPreview(backup, plan, suggestedName);
+                }
+            }
+        });
+    }
+
+    private static void copyPreparedArchive(PreparedBackup prepared, String fileName,
+            boolean overwrite, RunningOperation operation) {
+        Context context = prepared.context;
+        BackupOperationJournal journal = new BackupOperationJournal(context);
+        Uri partial = null;
+        try {
+            BackupOperationJournal.Entry entry = journal.read();
+            state(operation, journal, entry, BackupOperationJournal.State.COPYING_TO_DESTINATION,
+                    "COPYING_TO_DESTINATION", true);
+            Uri finalUri = writeToTree(context, prepared.treeUri, prepared.archive, fileName,
+                    overwrite, operation, journal, entry, prepared.staging);
+            partial = Uri.parse(entry.partialUri.length() == 0 ? finalUri.toString() : entry.partialUri);
+            SharedPreferences.Editor prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit();
+            prefs.putLong(KEY_LAST_BACKUP_TIME, System.currentTimeMillis());
+            prefs.putString(KEY_LAST_BACKUP_FILE_NAME, fileName);
+            prefs.putString(KEY_LAST_BACKUP_DOCUMENT_URI, finalUri.toString());
+            prefs.putBoolean("last_backup_incomplete", false);
+            if (!prefs.commit()) throw coded("BACKUP_COPY_FAILED");
+            journal.write(entry, BackupOperationJournal.State.COMPLETE, null);
+            notifyComplete(operation, BackupRestoreResult.ok("桌面备份已完成",
+                    prepared.backup.itemCount(), 0, 0));
+        } catch (Throwable error) {
+            if (context != null) deleteDocumentQuietly(context, partial);
+            String code = error instanceof CodedIOException ? ((CodedIOException) error).code
+                    : (isNoSpace(error) ? "BACKUP_NO_SPACE"
+                    : (error instanceof java.io.FileNotFoundException
+                    ? "BACKUP_LOCATION_PERMISSION_LOST" : "BACKUP_COPY_FAILED"));
+            if (context != null) journal.write(journal.read(), BackupOperationJournal.State.FAILED, code);
+            notifyComplete(operation, BackupRestoreResult.error(code, userMessage(code)));
+        } finally {
+            BackupFileUtils.deleteRecursively(prepared.staging);
+            preparedBackup = null;
             BackupOperationLock.release(operation.token);
             if (running == operation) running = null;
         }
@@ -388,6 +602,10 @@ public final class DesktopBackupController {
         if (entry.stagingPath.length() != 0) BackupFileUtils.deleteRecursively(new File(entry.stagingPath));
         if (entry.partialUri.length() != 0) {
             try { deleteDocumentQuietly(context, Uri.parse(entry.partialUri)); } catch (Throwable ignored) {}
+        }
+        if (entry.state == BackupOperationJournal.State.PREVIEW_READY) {
+            journal.reset();
+            return;
         }
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
                 .putBoolean("last_backup_incomplete", true).commit();

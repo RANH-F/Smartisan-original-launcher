@@ -116,7 +116,7 @@ public final class ReloadTransitionActivity extends Activity {
         int progressId = getResources().getIdentifier("loading_progress", "drawable",
                 getPackageName());
         loadingContent = OriginalLoadingContentFactory.create(this,
-                progressId == 0 ? null : getDrawable(progressId), "正在加载桌面...");
+                progressId == 0 ? null : getDrawable(progressId), null);
         root.addView(loadingContent.root, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         LinearLayout content = new LinearLayout(this);

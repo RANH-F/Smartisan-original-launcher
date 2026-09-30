@@ -124,6 +124,7 @@ public final class DesktopRestoreController {
             cancel.throwIfCancelled();
             BackupArchiveReader.ValidatedBackup backup = BackupArchiveReader.read(archive,
                     new File(directory, "extracted"));
+            backup.sourceName = DesktopBackupController.documentDisplayName(context, uri);
             RestoreMergePlanner.Plan plan = RestoreMergePlanner.plan(context, backup);
             entry.sourceFormatVersion = backup.manifest.formatVersion;
             entry.sourceLauncherVersion = backup.manifest.launcherVersionName;

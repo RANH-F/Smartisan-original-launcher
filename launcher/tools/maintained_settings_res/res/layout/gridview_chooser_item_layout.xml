@@ -2,7 +2,7 @@
 <LinearLayout android:orientation="vertical" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="222.0dp"
   xmlns:android="http://schemas.android.com/apk/res/android">
     <RelativeLayout android:layout_gravity="center_horizontal" android:id="@id/phone_layout" android:layout_width="77.0dp" android:layout_height="142.0dp" android:layout_marginTop="27.0dp">
-        <ImageView android:id="@id/icon" android:layout_width="58.0dp" android:layout_height="103.0dp" android:layout_marginTop="20.0dp" android:scaleType="fitXY" android:layout_centerHorizontal="true" />
+        <ImageView android:id="@id/icon" android:layout_width="58.0dp" android:layout_height="117.0dp" android:layout_marginTop="12.0dp" android:scaleType="fitXY" android:layout_centerHorizontal="true" />
         <ImageView android:id="@id/phone_bg" android:background="@drawable/phone_frame" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_alignParentBottom="true" android:layout_centerHorizontal="true" />
         <ImageView android:id="@id/checked_image" android:paddingLeft="51.0dp" android:paddingTop="1.0dp" android:visibility="gone" android:layout_width="wrap_content" android:layout_height="wrap_content" android:src="@drawable/preview_picture_selected" android:layout_alignParentTop="true" />
     </RelativeLayout>

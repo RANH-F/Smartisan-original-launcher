@@ -4,6 +4,8 @@
 
 
 # instance fields
+.field private final unlockSessionId:J
+
 .field final synthetic dB:Lcom/smartisanos/launcher/view/b/M;
 
 .field final synthetic this$0:Lcom/smartisanos/launcher/animations/c/k;
@@ -13,7 +15,7 @@
 
 # direct methods
 .method constructor <init>(Lcom/smartisanos/launcher/animations/c/k;Lcom/smartisanos/launcher/view/b/M;)V
-    .locals 0
+    .locals 2
 
     .line 1
     iput-object p1, p0, Lcom/smartisanos/launcher/animations/c/b;->this$0:Lcom/smartisanos/launcher/animations/c/k;
@@ -21,6 +23,12 @@
     iput-object p2, p0, Lcom/smartisanos/launcher/animations/c/b;->dB:Lcom/smartisanos/launcher/view/b/M;
 
     invoke-direct {p0}, Lcom/smartisanos/smengine/a;-><init>()V
+
+    invoke-static {}, Lcom/smartisanos/launcher/theme/LauncherBelowKeyguardCompat;->getRenderSessionId()J
+
+    move-result-wide v0
+
+    iput-wide v0, p0, Lcom/smartisanos/launcher/animations/c/b;->unlockSessionId:J
 
     const-wide/16 p1, 0x0
 
@@ -74,7 +82,9 @@
 
     invoke-static {}, Lcom/smartisanos/launcher/diagnostics/AnimationTimingDiagnostics;->onUnlockAnimationFinished()V
 
-    invoke-static {}, Lcom/smartisanos/launcher/theme/LauncherBelowKeyguardCompat;->onUnlockAnimationFinished()V
+    iget-wide v0, p0, Lcom/smartisanos/launcher/animations/c/b;->unlockSessionId:J
+
+    invoke-static {v0, v1}, Lcom/smartisanos/launcher/theme/LauncherBelowKeyguardCompat;->onUnlockAnimationFinished(J)V
 
     .line 1
     sget-boolean v0, Lcom/smartisanos/launcher/va;->DBG:Z
@@ -779,7 +789,9 @@
 
     invoke-static {}, Lcom/smartisanos/launcher/diagnostics/AnimationTimingDiagnostics;->onUnlockAnimationStarted()V
 
-    invoke-static {}, Lcom/smartisanos/launcher/theme/LauncherBelowKeyguardCompat;->onUnlockAnimationStarted()V
+    iget-wide v0, p0, Lcom/smartisanos/launcher/animations/c/b;->unlockSessionId:J
+
+    invoke-static {v0, v1}, Lcom/smartisanos/launcher/theme/LauncherBelowKeyguardCompat;->onUnlockAnimationStarted(J)V
 
     .line 1
     sget-boolean v0, Lcom/smartisanos/launcher/va;->DBG:Z

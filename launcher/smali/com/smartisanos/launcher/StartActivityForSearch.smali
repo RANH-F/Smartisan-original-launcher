@@ -196,6 +196,8 @@
     .line 1
     invoke-super {p0, p1}, Landroid/app/Activity;->onCreate(Landroid/os/Bundle;)V
 
+    invoke-static {p0}, Lcom/smartisanos/launcher/theme/MaintainedLauncherSettingsHost;->applyLauncherNavigationBarSetting(Landroid/app/Activity;)V
+
     .line 2
     sget-object p1, Lcom/smartisanos/launcher/StartActivityForSearch;->log:Lcom/smartisanos/launcher/va;
 

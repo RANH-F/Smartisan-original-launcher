@@ -9278,6 +9278,18 @@
     return-void
 .end method
 
+.method public getAnimationTimeScale()F
+    .locals 2
+
+    iget v0, p0, Lcom/smartisanos/launcher/view/Eb;->fx:F
+
+    const v1, 0x3d75c28f    # 0.06f, same conversion as update()
+
+    mul-float/2addr v0, v1
+
+    return v0
+.end method
+
 .method public m(F)V
     .locals 0
 
@@ -11081,8 +11093,6 @@
 
     iput-wide v1, p0, Lcom/smartisanos/launcher/view/Eb;->mStartTime:J
 
-    invoke-static {}, Lcom/smartisanos/launcher/animations/AnimationFrameRateController;->reset()V
-
     .line 1
     sget-boolean v0, Lcom/smartisanos/launcher/data/Constants;->ENABLE_LARGE_SCREEN_MODE:Z
 
@@ -11120,8 +11130,6 @@
     const-wide/16 v1, 0x0
 
     iput-wide v1, p0, Lcom/smartisanos/launcher/view/Eb;->mStartTime:J
-
-    invoke-static {}, Lcom/smartisanos/launcher/animations/AnimationFrameRateController;->reset()V
 
     const/4 v0, 0x1
 
@@ -12035,7 +12043,7 @@
 .end method
 
 .method public update()V
-    .locals 5
+    .locals 6
 
     .line 1
     invoke-direct {p0}, Lcom/smartisanos/launcher/view/Eb;->Hx()Z
@@ -12049,11 +12057,43 @@
 
     move-result-wide v0
 
-    invoke-static {v0, v1}, Lcom/smartisanos/launcher/animations/AnimationFrameRateController;->nextEngineStep(J)F
+    iget-wide v2, p0, Lcom/smartisanos/launcher/view/Eb;->mStartTime:J
 
-    move-result v2
+    const-wide/16 v4, 0x0
+
+    cmp-long v4, v2, v4
+
+    if-nez v4, :cond_unlock_delta_ready
+
+    const/4 v2, 0x0
+
+    goto :cond_unlock_delta_done
+
+    :cond_unlock_delta_ready
+    sub-long v2, v0, v2
+
+    long-to-float v2, v2
+
+    :cond_unlock_delta_done
 
     iput-wide v0, p0, Lcom/smartisanos/launcher/view/Eb;->mStartTime:J
+
+    const/high16 v3, 0x42c80000    # 100.0f
+
+    cmpg-float v4, v2, v3
+
+    if-lez v4, :cond_unlock_delta_capped
+
+    move v2, v3
+
+    :cond_unlock_delta_capped
+    iget v3, p0, Lcom/smartisanos/launcher/view/Eb;->fx:F
+
+    mul-float/2addr v2, v3
+
+    const v3, 0x3d75c28f    # 0.06f (= 1/16.6667)
+
+    mul-float/2addr v2, v3
 
     .line 7
     invoke-static {}, Lcom/smartisanos/smengine/Ra;->getInstance()Lcom/smartisanos/smengine/Ra;

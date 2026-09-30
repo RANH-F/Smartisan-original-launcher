@@ -5,8 +5,10 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.os.Build;
 import android.provider.Settings;
 import android.util.Log;
+import android.view.WindowManager;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.lang.reflect.Field;
@@ -46,6 +48,15 @@ public final class LauncherSettingBridge {
             "launcher_dynamic_weather_calendar_enabled";
 
     private LauncherSettingBridge() {
+    }
+
+    public static void applyThemeStatusBarWindowPolicy(WindowManager.LayoutParams attributes) {
+        if (Build.VERSION.SDK_INT != 36 || !"vivo".equalsIgnoreCase(Build.MANUFACTURER)) return;
+        // OriginOS 16 DisplayPolicy disables automatic icon inversion for dim windows.
+        // A zero-strength dim keeps the original scene/wallpaper visible, while allowing
+        // the original theme's status-bar colors to survive four-finger GL transitions.
+        attributes.dimAmount = 0f;
+        attributes.flags |= WindowManager.LayoutParams.FLAG_DIM_BEHIND;
     }
 
     public static boolean readBool(Context context, String key, boolean defValue) {

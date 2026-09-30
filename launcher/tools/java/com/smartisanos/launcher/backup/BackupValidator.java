@@ -1,6 +1,7 @@
 package com.smartisanos.launcher.backup;
 
 import android.graphics.BitmapFactory;
+import android.util.Log;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -149,13 +150,22 @@ public final class BackupValidator {
             if (name.length() == 0) continue;
             String normalized = normalizeEntryName("icons/custom/" + name);
             File icon = safeChild(root, normalized);
-            byte[] data = BackupFileUtils.readBytes(icon, 10L * 1024L * 1024L);
-            if (data.length < 8 || data[0] != (byte) 0x89 || data[1] != 0x50
-                    || data[2] != 0x4e || data[3] != 0x47 || data[4] != 0x0d
-                    || data[5] != 0x0a || data[6] != 0x1a || data[7] != 0x0a) {
-                throw invalid("Custom icon is not PNG");
+            if (!icon.isFile()) {
+                Log.w("DesktopBackup", "RESTORE_CUSTOM_ICON_MISSING fallback=original file=" + name);
+                continue;
             }
-            if (BitmapFactory.decodeByteArray(data, 0, data.length) == null) throw invalid("Invalid PNG");
+            try {
+                byte[] data = BackupFileUtils.readBytes(icon, 10L * 1024L * 1024L);
+                if (data.length < 8 || data[0] != (byte) 0x89 || data[1] != 0x50
+                        || data[2] != 0x4e || data[3] != 0x47 || data[4] != 0x0d
+                        || data[5] != 0x0a || data[6] != 0x1a || data[7] != 0x0a
+                        || BitmapFactory.decodeByteArray(data, 0, data.length) == null) {
+                    Log.w("DesktopBackup", "RESTORE_CUSTOM_ICON_INVALID fallback=original file=" + name);
+                }
+            } catch (Exception unreadableIcon) {
+                Log.w("DesktopBackup", "RESTORE_CUSTOM_ICON_UNREADABLE fallback=original file=" + name,
+                        unreadableIcon);
+            }
         }
     }
 
@@ -166,7 +176,7 @@ public final class BackupValidator {
         java.util.HashSet<String> names = new java.util.HashSet<String>();
         for (int i = 0; i < records.length(); i++) {
             String name = records.getJSONObject(i).optString("portableFile", "");
-            if (!name.matches("[0-9a-f]{1,8}\\.png") || !names.add(name)) {
+            if (!RestoreIconSourceReconciler.isPortableSourceName(name) || !names.add(name)) {
                 throw invalid("Invalid portable source name");
             }
             String normalized = normalizeEntryName("icons/sources/" + name);

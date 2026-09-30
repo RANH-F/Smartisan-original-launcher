@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" android:versionCode="32" android:versionName="v1.5.7" package="com.smartisanos.launcher">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" android:versionCode="33" android:versionName="v1.5.8" package="com.smartisanos.launcher">
   <uses-sdk android:minSdkVersion="23" android:targetSdkVersion="28" />
   <uses-feature android:glEsVersion="0x00020000" />
   <permission android:name="com.ranhf.smartisanlauncher.permission.READ_DATABASE" android:protectionLevel="signature" />
@@ -122,7 +122,7 @@
       </intent-filter>
       <meta-data android:name="revone_entry" android:value="com.smartisanos.desktop/com.smartisanos.launcher.ConfirmPasswordActivity" />
     </activity>
-    <activity android:theme="@0x7f0c015f" android:name="com.smartisanos.launcher.theme.ThemeChooserActivity" android:exported="true" android:taskAffinity="com.android.settings" android:excludeFromRecents="true" android:launchMode="1" android:screenOrientation="1">
+    <activity android:theme="@0x7f0c015f" android:name="com.smartisanos.launcher.theme.ThemeChooserActivity" android:exported="true" android:enableOnBackInvokedCallback="true" android:taskAffinity="com.android.settings" android:excludeFromRecents="true" android:launchMode="1" android:screenOrientation="1">
       <meta-data android:name="smartisanos.PACKAGELOCK_PACKAGENAME" android:value="com.android.settings" />
     </activity>
     <activity android:theme="@0x7f0c015f" android:name="com.smartisanos.launcher.theme.ThemeItemActivity" android:taskAffinity="com.android.settings" android:launchMode="1" android:screenOrientation="1">

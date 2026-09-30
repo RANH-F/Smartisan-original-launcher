@@ -125,6 +125,7 @@ public final class OriginalQuickSearchActivity extends Activity
     private LayoutInflater uiInflater;
     private long boundGeneration;
     private long hydratedIconSourceGeneration = -1L;
+    private long hydratedIconSnapshotGeneration = -1L;
     private boolean listenerBound;
     private boolean destroyed;
     private String currentQuery = "";
@@ -191,6 +192,7 @@ public final class OriginalQuickSearchActivity extends Activity
         super.onCreate(state);
         Log.i(TAG, "QS_ORIGINAL_UI_CREATE layoutName=qs_original_search_activity");
         configureWindow();
+        MaintainedLauncherSettingsHost.applyLauncherNavigationBarSetting(this);
         resourceContext = createResourceContext();
         t9Enabled = getSharedPreferences("launcher_settings", Context.MODE_PRIVATE)
                 .getBoolean(MaintainedLauncherSettingsHost.KEY_SEARCH_T9_ENABLED, false);
@@ -236,6 +238,7 @@ public final class OriginalQuickSearchActivity extends Activity
 
     @Override protected void onResume() {
         super.onResume();
+        MaintainedLauncherSettingsHost.applyLauncherNavigationBarSetting(this);
         resumed = true;
         maybeShowInitialIme("RESUME");
     }
@@ -247,6 +250,7 @@ public final class OriginalQuickSearchActivity extends Activity
 
     @Override public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
+        if (hasFocus) MaintainedLauncherSettingsHost.applyLauncherNavigationBarSetting(this);
         windowFocused = hasFocus;
         if (hasFocus) {
             QuickDesktopController.onSearchSurfaceReady();
@@ -819,14 +823,17 @@ public final class OriginalQuickSearchActivity extends Activity
 
     private void scheduleIconRefreshIfNeeded(final SearchSnapshot snapshot) {
         final long sourceGeneration = SearchIconBackend.getSourceGeneration();
-        if (hydratedIconSourceGeneration == sourceGeneration) return;
+        if (hydratedIconSourceGeneration == sourceGeneration
+                && hydratedIconSnapshotGeneration == snapshot.generation) return;
         hydratedIconSourceGeneration = sourceGeneration;
+        hydratedIconSnapshotGeneration = snapshot.generation;
         Log.i(QUERY_TAG, "QS_ICON_REHYDRATE_REQUEST sourceGeneration=" + sourceGeneration
                 + " entryCount=" + snapshot.entries.size());
         SearchIconBackend.scheduleHydration(this, snapshot,
                 new SearchIconBackend.HydrationCallback() {
                     @Override public void onHydrationFinished(long completedGeneration) {
-                        if (destroyed || completedGeneration != SearchIconBackend.getSourceGeneration()
+                        if (destroyed || snapshot.generation != boundGeneration
+                                || completedGeneration != SearchIconBackend.getSourceGeneration()
                                 || completedGeneration != hydratedIconSourceGeneration) return;
                         bindTopApps(snapshot.entries);
                         if (historySnapshot != null) bindHistory(historySnapshot);
@@ -1100,10 +1107,11 @@ public final class OriginalQuickSearchActivity extends Activity
                         ? contactRepository.snapshot().entries : Collections.<ContactSearchEntry>emptyList();
         matcherExecutor.execute(new Runnable() {
             @Override public void run() {
+                if (version != filterVersion.get() || Thread.currentThread().isInterrupted()) return;
                 final ArrayList<RowModel> apps = new ArrayList<RowModel>();
                 final ArrayList<RowModel> contactMatches = new ArrayList<RowModel>();
                 for (RowModel row : source) {
-                    if (Thread.currentThread().isInterrupted()) return;
+                    if (version != filterVersion.get() || Thread.currentThread().isInterrupted()) return;
                     int score = MaintainedLauncherSettingsHost.scorePreparedQuickSearchMatch(
                             needle, row.matchModel);
                     if (score >= 0) {
@@ -1112,12 +1120,14 @@ public final class OriginalQuickSearchActivity extends Activity
                     }
                 }
                 for (ContactSearchEntry contact : contacts) {
+                    if (version != filterVersion.get() || Thread.currentThread().isInterrupted()) return;
                     RowModel row = new RowModel(contact);
                     MaintainedLauncherSettingsHost.prepareQuickSearchMatchModel(row.matchModel);
                     int score = MaintainedLauncherSettingsHost.scorePreparedQuickSearchMatch(
                             needle, row.matchModel);
                     if (score >= 0 || contact.hasPhonePrefix(needle)) { row.score = score; contactMatches.add(row); }
                 }
+                if (version != filterVersion.get() || Thread.currentThread().isInterrupted()) return;
                 Comparator<RowModel> rowOrder = new Comparator<RowModel>() {
                     @Override public int compare(RowModel left, RowModel right) {
                         if (left.score != right.score) return left.score - right.score;

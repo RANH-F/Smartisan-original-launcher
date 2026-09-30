@@ -327,7 +327,7 @@ public final class SearchIndexRepository {
         if (TextUtils.isEmpty(packageName)) {
             return;
         }
-        SearchIconBackend.invalidatePackage(packageName);
+        SearchIconBackend.invalidatePackage(packageName, userId);
         synchronized (stateLock) {
             if (currentSnapshot.generation == 0L && state != State.BUILDING
                     && state != State.DIRTY) {

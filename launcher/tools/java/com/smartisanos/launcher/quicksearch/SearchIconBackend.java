@@ -49,6 +49,12 @@ public final class SearchIconBackend {
             new LinkedHashMap<String, DecodedValue>(16, 0.75f, true);
     private static final AtomicLong SOURCE_GENERATION = new AtomicLong(1L);
     private static final AtomicLong SCHEDULE_VERSION = new AtomicLong();
+    private static long hydrationSnapshotGeneration = -1L;
+    private static long hydrationSourceGeneration = -1L;
+    private static long hydrationSchedule;
+    private static boolean hydrationInFlight;
+    private static final ArrayList<HydrationCallback> HYDRATION_CALLBACKS =
+            new ArrayList<HydrationCallback>();
     private static long encodedBytes;
     private static long decodedBytes;
     private static volatile Map<String, Long> usageForegroundTimes =
@@ -82,14 +88,18 @@ public final class SearchIconBackend {
     public static final class IconRequest {
         private final String cacheKey;
         private final String iconKey;
+        private final String packageName;
+        private final int userId;
         private final long sourceGeneration;
         private final IconCallback callback;
         private volatile boolean cancelled;
 
-        private IconRequest(String cacheKey, String iconKey, long sourceGeneration,
+        private IconRequest(String cacheKey, SearchEntry entry, long sourceGeneration,
                 IconCallback callback) {
             this.cacheKey = cacheKey;
-            this.iconKey = iconKey;
+            this.iconKey = entry.iconKey;
+            this.packageName = entry.packageName;
+            this.userId = entry.userId;
             this.sourceGeneration = sourceGeneration;
             this.callback = callback;
         }
@@ -118,13 +128,27 @@ public final class SearchIconBackend {
         final Context app = context.getApplicationContext() == null
                 ? context : context.getApplicationContext();
         final SearchSnapshot target = snapshot;
-        final long schedule = SCHEDULE_VERSION.incrementAndGet();
-        final HydrationCallback completion = callback;
+        final long schedule;
+        synchronized (CACHE_LOCK) {
+            if (hydrationInFlight && hydrationSnapshotGeneration == snapshot.generation
+                    && hydrationSourceGeneration == SOURCE_GENERATION.get()
+                    && hydrationSchedule == SCHEDULE_VERSION.get()) {
+                if (callback != null) HYDRATION_CALLBACKS.add(callback);
+                return;
+            }
+            schedule = SCHEDULE_VERSION.incrementAndGet();
+            hydrationSchedule = schedule;
+            hydrationSnapshotGeneration = snapshot.generation;
+            hydrationSourceGeneration = SOURCE_GENERATION.get();
+            hydrationInFlight = true;
+            HYDRATION_CALLBACKS.clear();
+            if (callback != null) HYDRATION_CALLBACKS.add(callback);
+        }
         EXECUTOR.execute(new Runnable() {
             @Override
             public void run() {
                 if (schedule != SCHEDULE_VERSION.get()) return;
-                hydrate(app, target, schedule, completion);
+                hydrate(app, target, schedule);
             }
         });
     }
@@ -151,7 +175,7 @@ public final class SearchIconBackend {
         if (context == null || entry == null || callback == null) return null;
         final long generation = SOURCE_GENERATION.get();
         final String requestKey = cacheKey(entry.iconKey);
-        final IconRequest request = new IconRequest(requestKey, entry.iconKey, generation,
+        final IconRequest request = new IconRequest(requestKey, entry, generation,
                 callback);
         Bitmap ready = getDecoded(entry);
         if (ready != null) {
@@ -161,6 +185,7 @@ public final class SearchIconBackend {
         final byte[] encoded = getEncoded(entry);
         if (encoded == null || encoded.length == 0) return null;
         boolean startDecode = false;
+        final ArrayList<IconRequest> decodingRequests;
         synchronized (CACHE_LOCK) {
             ArrayList<IconRequest> requests = PENDING.get(requestKey);
             if (requests == null) {
@@ -169,6 +194,7 @@ public final class SearchIconBackend {
                 startDecode = true;
             }
             requests.add(request);
+            decodingRequests = requests;
         }
         if (startDecode) {
             final int targetPx = searchIconPixels(context);
@@ -178,7 +204,9 @@ public final class SearchIconBackend {
                     Bitmap bitmap = decodeTarget(encoded, targetPx);
                     ArrayList<IconRequest> requests;
                     synchronized (CACHE_LOCK) {
-                        requests = PENDING.remove(requestKey);
+                        // An invalidated decode must not consume a newer request for the same key.
+                        requests = PENDING.get(requestKey) == decodingRequests
+                                ? PENDING.remove(requestKey) : null;
                         if (requests != null && bitmap != null
                                 && generation == SOURCE_GENERATION.get()) {
                             putDecoded(entry, bitmap, decodedLimitBytes(targetPx));
@@ -212,10 +240,16 @@ public final class SearchIconBackend {
 
     /** Package events invalidate only the affected identities. */
     public static void invalidatePackage(String packageName) {
+        invalidatePackage(packageName, -1);
+    }
+
+    public static void invalidatePackage(String packageName, int userId) {
         if (packageName == null || packageName.length() == 0) return;
         SCHEDULE_VERSION.incrementAndGet();
         synchronized (CACHE_LOCK) {
-            removePackageLocked(packageName);
+            HYDRATION_CALLBACKS.clear();
+            hydrationInFlight = false;
+            removePackageLocked(packageName, userId);
         }
     }
 
@@ -224,6 +258,8 @@ public final class SearchIconBackend {
         SCHEDULE_VERSION.incrementAndGet();
         SOURCE_GENERATION.incrementAndGet();
         synchronized (CACHE_LOCK) {
+            HYDRATION_CALLBACKS.clear();
+            hydrationInFlight = false;
             ENCODED.clear();
             encodedBytes = 0L;
             recycleDecodedLocked();
@@ -236,8 +272,7 @@ public final class SearchIconBackend {
                 + " sourceGeneration=" + SOURCE_GENERATION.get());
     }
 
-    private static void hydrate(Context context, SearchSnapshot snapshot, long schedule,
-            HydrationCallback completion) {
+    private static void hydrate(Context context, SearchSnapshot snapshot, long schedule) {
         try {
             Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
         } catch (Throwable ignored) {
@@ -273,7 +308,10 @@ public final class SearchIconBackend {
                     if (ready) alreadyReady++;
                     else dbLoaded++;
                     totalSourceBytes += bytes.length;
-                    putEncoded(entry, bytes, encodedLimitBytes());
+                    synchronized (CACHE_LOCK) {
+                        if (schedule != SCHEDULE_VERSION.get()) return;
+                        putEncoded(entry, bytes, encodedLimitBytes());
+                    }
                     warm.add(new WarmCandidate(entry, modelValue.usageCount));
                 } catch (Throwable ignored) {
                     misses++;
@@ -291,18 +329,34 @@ public final class SearchIconBackend {
             Map<String, Long> usage = readUsageForegroundTimes(context);
             usageForegroundTimes = Collections.unmodifiableMap(usage);
             warmTop5(context, warm, usage, schedule);
-            if (schedule == SCHEDULE_VERSION.get() && completion != null) {
+            final ArrayList<HydrationCallback> completions;
+            synchronized (CACHE_LOCK) {
+                if (schedule != SCHEDULE_VERSION.get()) return;
+                hydrationInFlight = false;
+                completions = new ArrayList<HydrationCallback>(HYDRATION_CALLBACKS);
+                HYDRATION_CALLBACKS.clear();
+            }
+            if (!completions.isEmpty()) {
                 final long sourceGeneration = SOURCE_GENERATION.get();
                 MAIN_HANDLER.post(new Runnable() {
                     @Override public void run() {
                         if (schedule == SCHEDULE_VERSION.get()) {
-                            completion.onHydrationFinished(sourceGeneration);
+                            for (HydrationCallback completion : completions) {
+                                completion.onHydrationFinished(sourceGeneration);
+                            }
                         }
                     }
                 });
             }
         } catch (Throwable error) {
             Log.e(TAG, "QS_ICON_HYDRATE_FAILED type=" + error.getClass().getName());
+        } finally {
+            synchronized (CACHE_LOCK) {
+                if (hydrationSchedule == schedule) {
+                    hydrationInFlight = false;
+                    HYDRATION_CALLBACKS.clear();
+                }
+            }
         }
     }
 
@@ -346,7 +400,13 @@ public final class SearchIconBackend {
             }
             long bytes = bitmapBytes(bitmap);
             allocationBytes += bytes;
-            putDecoded(entry, bitmap, decodedLimitBytes(targetPx));
+            synchronized (CACHE_LOCK) {
+                if (schedule != SCHEDULE_VERSION.get()) {
+                    bitmap.recycle();
+                    return;
+                }
+                putDecoded(entry, bitmap, decodedLimitBytes(targetPx));
+            }
             decoded++;
         }
         Log.i(TAG, "QS_ICON_WARMUP_END requested=" + requested
@@ -402,6 +462,7 @@ public final class SearchIconBackend {
                 String packageName = stringField(item, "packageName");
                 String className = stringField(item, "componentName");
                 int userId = intField(item, "userId");
+                if (userId < 0) userId = Process.myUid() / 100000;
                 int usageCount = intField(item, "usageCount");
                 result.put(modelKey(packageName, className, userId),
                         new ModelValue(item, usageCount));
@@ -473,7 +534,7 @@ public final class SearchIconBackend {
         synchronized (CACHE_LOCK) {
             EncodedValue previous = ENCODED.remove(key);
             if (previous != null) encodedBytes -= previous.bytes.length;
-            ENCODED.put(key, new EncodedValue(entry.packageName, bytes));
+            ENCODED.put(key, new EncodedValue(entry.packageName, entry.userId, bytes));
             encodedBytes += bytes.length;
             Iterator<Map.Entry<String, EncodedValue>> iterator = ENCODED.entrySet().iterator();
             while (encodedBytes > limit && iterator.hasNext()) {
@@ -492,7 +553,7 @@ public final class SearchIconBackend {
                 decodedBytes -= previous.bytes;
             }
             long bytes = bitmapBytes(bitmap);
-            DECODED.put(key, new DecodedValue(entry.packageName, bitmap, bytes));
+            DECODED.put(key, new DecodedValue(entry.packageName, entry.userId, bitmap, bytes));
             decodedBytes += bytes;
             Iterator<Map.Entry<String, DecodedValue>> iterator = DECODED.entrySet().iterator();
             while (decodedBytes > limit && iterator.hasNext()) {
@@ -503,21 +564,27 @@ public final class SearchIconBackend {
         }
     }
 
-    private static void removePackageLocked(String packageName) {
+    private static void removePackageLocked(String packageName, int userId) {
         Iterator<Map.Entry<String, ArrayList<IconRequest>>> pendingIterator =
                 PENDING.entrySet().iterator();
         while (pendingIterator.hasNext()) {
             Map.Entry<String, ArrayList<IconRequest>> pending = pendingIterator.next();
-            if (pending.getKey().startsWith(packageName + "/")) {
-                for (IconRequest request : pending.getValue()) request.cancel();
-                pendingIterator.remove();
+            Iterator<IconRequest> requests = pending.getValue().iterator();
+            while (requests.hasNext()) {
+                IconRequest request = requests.next();
+                if (packageName.equals(request.packageName)
+                        && (userId < 0 || request.userId == userId)) {
+                    request.cancel();
+                    requests.remove();
+                }
             }
+            if (pending.getValue().isEmpty()) pendingIterator.remove();
         }
         Iterator<Map.Entry<String, EncodedValue>> encodedIterator =
                 ENCODED.entrySet().iterator();
         while (encodedIterator.hasNext()) {
             EncodedValue value = encodedIterator.next().getValue();
-            if (packageName.equals(value.packageName)) {
+            if (packageName.equals(value.packageName) && (userId < 0 || value.userId == userId)) {
                 encodedBytes -= value.bytes.length;
                 encodedIterator.remove();
             }
@@ -526,7 +593,7 @@ public final class SearchIconBackend {
                 DECODED.entrySet().iterator();
         while (decodedIterator.hasNext()) {
             DecodedValue value = decodedIterator.next().getValue();
-            if (packageName.equals(value.packageName)) {
+            if (packageName.equals(value.packageName) && (userId < 0 || value.userId == userId)) {
                 decodedBytes -= value.bytes;
                 decodedIterator.remove();
             }
@@ -592,21 +659,25 @@ public final class SearchIconBackend {
 
     private static final class EncodedValue {
         final String packageName;
+        final int userId;
         final byte[] bytes;
 
-        EncodedValue(String packageName, byte[] bytes) {
+        EncodedValue(String packageName, int userId, byte[] bytes) {
             this.packageName = packageName;
+            this.userId = userId;
             this.bytes = bytes;
         }
     }
 
     private static final class DecodedValue {
         final String packageName;
+        final int userId;
         final Bitmap bitmap;
         final long bytes;
 
-        DecodedValue(String packageName, Bitmap bitmap, long bytes) {
+        DecodedValue(String packageName, int userId, Bitmap bitmap, long bytes) {
             this.packageName = packageName;
+            this.userId = userId;
             this.bitmap = bitmap;
             this.bytes = bytes;
         }

@@ -57,8 +57,6 @@
 
     invoke-virtual {p0, p1}, Lcom/smartisanos/smengine/n;->q(F)V
 
-    invoke-static {}, Lcom/smartisanos/launcher/theme/LauncherBelowKeyguardCompat;->onForceFinishComplete()V
-
     return-void
 
     :cond_codex_not_force_finish
@@ -348,8 +346,6 @@
 
     invoke-virtual {p0, v1}, Lcom/smartisanos/smengine/n;->q(F)V
 
-    invoke-static {v7}, Lcom/smartisanos/launcher/theme/LauncherBelowKeyguardCompat;->onPrepareReady(Landroid/content/Context;)V
-
     goto/16 :goto_2
 
     .line 24
@@ -579,6 +575,39 @@
 
     .line 40
     :cond_14
+    invoke-static {}, Lcom/smartisanos/launcher/theme/LauncherBelowKeyguardCompat;->isMaintainedCompatMode()Z
+
+    move-result v2
+
+    if-eqz v2, :cond_codex_maintained_compat_done
+
+    invoke-static {}, Lcom/smartisanos/launcher/view/Eb;->getInstance()Lcom/smartisanos/launcher/view/Eb;
+
+    move-result-object v2
+
+    invoke-virtual {v2}, Lcom/smartisanos/launcher/view/Eb;->Gh()Lcom/smartisanos/launcher/view/b/fa;
+
+    move-result-object v2
+
+    invoke-virtual {v2}, Lcom/smartisanos/launcher/view/b/fa;->Sq()Lcom/smartisanos/launcher/animations/r;
+
+    move-result-object v2
+
+    invoke-virtual {v2}, Lcom/smartisanos/launcher/animations/r;->Kd()Z
+
+    move-result v3
+
+    if-nez v3, :cond_codex_maintained_compat_done
+
+    iget-object v3, p0, Lcom/smartisanos/launcher/ia;->this$0:Lcom/smartisanos/launcher/ja;
+
+    invoke-virtual {v3}, Lcom/smartisanos/launcher/ja;->hb()Lcom/smartisanos/smengine/n;
+
+    move-result-object v3
+
+    invoke-virtual {v3, v1}, Lcom/smartisanos/smengine/n;->q(F)V
+
+    :cond_codex_maintained_compat_done
     iget-object p0, p0, Lcom/smartisanos/launcher/ia;->this$0:Lcom/smartisanos/launcher/ja;
 
     invoke-static {p0}, Lcom/smartisanos/launcher/ja;->k(Lcom/smartisanos/launcher/ja;)Lcom/smartisanos/smengine/n;
@@ -586,8 +615,6 @@
     move-result-object p0
 
     .line 41
-    invoke-static {}, Lcom/smartisanos/launcher/theme/LauncherBelowKeyguardCompat;->onOriginalPlayDispatched()V
-
     invoke-virtual {p0, v1}, Lcom/smartisanos/smengine/n;->q(F)V
 
     goto :goto_2
@@ -623,8 +650,6 @@
     move-result-object p0
 
     invoke-virtual {p0, v1}, Lcom/smartisanos/smengine/n;->q(F)V
-
-    invoke-static {}, Lcom/smartisanos/launcher/theme/LauncherBelowKeyguardCompat;->onForceFinishComplete()V
 
     :cond_18
     :goto_2

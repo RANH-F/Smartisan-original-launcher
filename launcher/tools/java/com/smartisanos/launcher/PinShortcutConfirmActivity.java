@@ -11,6 +11,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.ContextThemeWrapper;
+import com.smartisanos.launcher.theme.MaintainedLauncherSettingsHost;
 
 /** One Android O+ PinItemRequest is handled by one short-lived activity. */
 public final class PinShortcutConfirmActivity extends Activity {
@@ -25,6 +26,7 @@ public final class PinShortcutConfirmActivity extends Activity {
 
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
+        MaintainedLauncherSettingsHost.applyLauncherNavigationBarSetting(this);
         Log.i(TAG, identity("PIN_ACTIVITY_CREATED requestValid=unknown"));
         extractRequest(getIntent());
     }
@@ -74,7 +76,9 @@ public final class PinShortcutConfirmActivity extends Activity {
             dialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
                 @Override public void onCancel(DialogInterface value) { cancelCurrent(); }
             });
+            MaintainedLauncherSettingsHost.applyNavigationBarToWindow(this, dialog.getWindow());
             dialog.show();
+            MaintainedLauncherSettingsHost.applyNavigationBarToWindow(this, dialog.getWindow());
             Log.i(TAG, identity("PIN_DIALOG_SHOWN requestValid=true"));
         } catch (RuntimeException e) {
             Log.e(TAG, identity("PIN_COMMIT_FAILED stage=dialog type=" + e.getClass().getSimpleName()), e);
