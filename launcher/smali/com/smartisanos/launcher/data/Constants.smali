@@ -5148,6 +5148,11 @@
 
     sput p0, Lcom/smartisanos/launcher/data/Constants;->sIconBlendColor:F
 
+    # Publish only after both ordinary and wallpaper-backed label colors are resolved.
+    const-string v1, "DESKTOP_TEXT_RESOLVED"
+
+    invoke-static {v0, v1}, Lcom/smartisanos/launcher/e/s;->d(Lcom/smartisanos/launcher/theme/v;Ljava/lang/String;)V
+
     return-void
 .end method
 

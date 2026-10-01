@@ -3,6 +3,10 @@ package com.smartisanos.launcher.reload;
 import android.content.Context;
 import android.graphics.drawable.GradientDrawable;
 import android.view.Gravity;
+import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
+import android.os.Build;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
@@ -41,6 +45,30 @@ public final class OriginalLoadingContentFactory {
     }
 
     private OriginalLoadingContentFactory() {
+    }
+
+    /** Let the existing dim root cover the cutout band as well as the content. */
+    public static void coverLoadingWindow(Window window, Context context, String message) {
+        if (window == null) return;
+        if (Build.VERSION.SDK_INT >= 28) {
+            WindowManager.LayoutParams attributes = window.getAttributes();
+            attributes.layoutInDisplayCutoutMode =
+                    WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+            window.setAttributes(attributes);
+        }
+        View decor = window.getDecorView();
+        int visibility = decor.getSystemUiVisibility()
+                | View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN;
+        if (MaintainedLauncherSettingsHost.isThemeChangingMessage(context, message)) {
+            // Hiding SystemUI here animates its black background over the dim root.
+            // Keep the bar visible and draw the original loading root behind it instead.
+            window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN
+                    | WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+            window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+            window.setStatusBarColor(android.graphics.Color.TRANSPARENT);
+            visibility &= ~(View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+        }
+        decor.setSystemUiVisibility(visibility);
     }
 
     public static Content create(Context context, Drawable progressDrawable, String messageText) {

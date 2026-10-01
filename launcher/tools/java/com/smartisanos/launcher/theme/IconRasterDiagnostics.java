@@ -24,7 +24,53 @@ public final class IconRasterDiagnostics {
     private static final Set<String> REPORTED = new HashSet<String>();
     private static final int DIAGNOSTIC_ALPHA_CUTOFF = 40;
     private static final String SOURCE_CANVAS_VERSION = "source-canvas:v13-default-circle-sync-pref";
-    private static final String RASTER_CACHE_VERSION = "raster:v27-default-circle-sync-pref";
+    private static final String RASTER_CACHE_VERSION = "raster:v29-follow-app-content-box";
+
+    /**
+     * The original theme transition evicts target textures while the outgoing
+     * scene can still draw one frame. Rebuild only our generated application
+     * texture keys from their ItemInfo instead of treating them as APK paths.
+     */
+    public static Bitmap recoverMissingGeneratedTexture(String key) {
+        if (key == null || !key.startsWith("target/--/")
+                || !key.contains("#" + RASTER_CACHE_VERSION + ":")
+                || (!key.contains(":STATIC_APPLICATION_COMPOSER:")
+                && !key.contains(":ORIGINAL_ACTIVE_ICON:"))) {
+            return null;
+        }
+        try {
+            int idStart = "target/--/".length();
+            int idEnd = key.indexOf('_', idStart);
+            if (idEnd <= idStart) return missingGeneratedTexture(key, "invalid_item_id");
+            long id = Long.parseLong(key.substring(idStart, idEnd));
+            int modeStart = key.indexOf(":grid=");
+            if (modeStart < 0) return missingGeneratedTexture(key, "missing_grid_mode");
+            modeStart += ":grid=".length();
+            int modeEnd = key.indexOf(':', modeStart);
+            if (modeEnd < 0) return missingGeneratedTexture(key, "invalid_grid_mode");
+            int pageMode = Integer.parseInt(key.substring(modeStart, modeEnd));
+            Class<?> model = Class.forName("com.smartisanos.launcher.Aa");
+            Object item = model.getMethod("i", Long.TYPE).invoke(null, Long.valueOf(id));
+            if (item == null) return missingGeneratedTexture(key, "item_removed");
+            Bitmap source = (Bitmap) model.getMethod("g", Long.TYPE)
+                    .invoke(null, Long.valueOf(id));
+            Bitmap restored = composeStaticApplicationIconTexture(item, source, pageMode);
+            if (restored != null && !restored.isRecycled()) {
+                Log.w(TAG, "ICON_GENERATED_TEXTURE_RECOVERED itemId=" + id
+                        + " pageMode=" + pageMode);
+                return restored;
+            }
+            return missingGeneratedTexture(key, "source_unavailable");
+        } catch (Exception error) {
+            Log.w(TAG, "ICON_GENERATED_TEXTURE_RECOVERY_FAILED", error);
+            return missingGeneratedTexture(key, "recovery_failed");
+        }
+    }
+
+    private static Bitmap missingGeneratedTexture(String key, String reason) {
+        Log.w(TAG, "ICON_GENERATED_TEXTURE_STALE reason=" + reason + " key=" + key);
+        return Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
+    }
     private static final int CANONICAL_DEFAULT_SOURCE_SIZE = 256;
     private static final String BADGE_VERSION = "badge:v1";
     private static final String SHADOW_VERSION = "shadow:original-v1";
@@ -424,6 +470,18 @@ public final class IconRasterDiagnostics {
         }
         int logicalContent = resized
                 ? layoutSize(pageMode, "icon_size_origin_resize") : logicalArtwork;
+        // Original MODE_9 supplies the legacy resize box; restored MODE_12/20 do not.
+        // Follow their existing artwork box, as DesktopLabelMetrics already does.
+        // A missing optional field must never shrink valid app artwork to one pixel.
+        if (logicalContent <= 0) {
+            logicalContent = logicalArtwork;
+            synchronized (REPORTED) {
+                if (REPORTED.add("missing-resize-box:" + pageMode)) {
+                    Log.w(TAG, "ICON_RESIZE_BOX_ABSENT grid=" + pageMode
+                            + " usingNormalArtwork=" + logicalArtwork);
+                }
+            }
+        }
         float contentSize = Math.max(1f, Math.round(logicalContent * rasterScale));
         float contentInset = Math.max(0f, (artwork - contentSize) * 0.5f);
         Bitmap drawableBitmap = rawDrawable instanceof android.graphics.drawable.BitmapDrawable

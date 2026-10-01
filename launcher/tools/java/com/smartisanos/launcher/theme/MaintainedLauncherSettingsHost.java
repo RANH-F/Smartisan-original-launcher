@@ -5542,7 +5542,7 @@ public final class MaintainedLauncherSettingsHost {
         return false;
     }
 
-    /** Applies the original theme-changing Dialog dim to its owning settings window only. */
+    /** Preserve the settings state; the loading Dialog owns its full-screen dim root. */
     public static void onOriginalThemeLoadingUiPrepared(final Context context, Dialog dialog,
             String message) {
         if (!(context instanceof Activity) || dialog == null || !isThemeChangingMessage(context, message)) {
@@ -5554,30 +5554,17 @@ public final class MaintainedLauncherSettingsHost {
         if (window == null || decor == null) {
             return;
         }
-        final float dimAmount = dialogDimAmount(dialog);
         synchronized (MaintainedLauncherSettingsHost.class) {
             if (sThemeLoadingSystemBars != null && sThemeLoadingSystemBars.activity != activity) {
                 restoreThemeLoadingSystemBarsLocked(false);
             }
-            if (sThemeLoadingSystemBars == null) {
+            // Launcher colors belong to the live application text, not a pre-switch snapshot.
+            // Independent settings windows retain their own saved system-bar state.
+            if (!isLauncherActivity(activity) && sThemeLoadingSystemBars == null) {
                 sThemeLoadingSystemBars = new ThemeLoadingSystemBarsState(activity, window,
                         window.getStatusBarColor(), window.getNavigationBarColor(),
                         decor.getSystemUiVisibility(), sPendingThemeLoadingThemeId);
             }
-        }
-        ThemeLoadingSystemBarsState state = sThemeLoadingSystemBars;
-        if (Build.VERSION.SDK_INT >= 21) {
-            window.setStatusBarColor(dimmedColor(state.statusBarColor, dimAmount));
-            window.setNavigationBarColor(dimmedColor(state.navigationBarColor, dimAmount));
-        }
-        int systemUi = state.systemUiVisibility & ~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
-        if (Build.VERSION.SDK_INT >= 26) systemUi &= ~View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
-        decor.setSystemUiVisibility(systemUi);
-        if (Build.VERSION.SDK_INT >= 30) {
-            WindowInsetsController controller = window.getInsetsController();
-            if (controller != null) controller.setSystemBarsAppearance(0,
-                    WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
-                            | WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS);
         }
         if (LauncherSettingBridge.readBool(context, "launcher_hide_navigation_bar", false)) {
             applyNavigationBarToWindow(context, window);
@@ -5610,7 +5597,7 @@ public final class MaintainedLauncherSettingsHost {
         }
     }
 
-    private static boolean isThemeChangingMessage(Context context, String message) {
+    public static boolean isThemeChangingMessage(Context context, String message) {
         if (message == null || context == null) return false;
         try {
             int id = context.getResources().getIdentifier("theme_changing", "string",
@@ -5621,23 +5608,6 @@ public final class MaintainedLauncherSettingsHost {
         }
     }
 
-    private static float dialogDimAmount(Dialog dialog) {
-        try {
-            Window dialogWindow = dialog.getWindow();
-            if (dialogWindow != null && dialogWindow.getAttributes().dimAmount > 0f) {
-                return dialogWindow.getAttributes().dimAmount;
-            }
-        } catch (Throwable ignored) {
-        }
-        return 0.32f;
-    }
-
-    private static int dimmedColor(int color, float dimAmount) {
-        float keep = Math.max(0f, Math.min(1f, 1f - dimAmount));
-        return Color.rgb(Math.round(Color.red(color) * keep), Math.round(Color.green(color) * keep),
-                Math.round(Color.blue(color) * keep));
-    }
-
     private static void restoreThemeLoadingSystemBarsLocked(boolean restoreIfStillVisible) {
         ThemeLoadingSystemBarsState state = sThemeLoadingSystemBars;
         sThemeLoadingSystemBars = null;
@@ -5645,6 +5615,7 @@ public final class MaintainedLauncherSettingsHost {
                 || (Build.VERSION.SDK_INT >= 17 && state.activity.isDestroyed()) || !restoreIfStillVisible) {
             return;
         }
+        if (isLauncherActivity(state.activity)) return;
         Window window = state.window;
         View decor = window == null ? null : window.getDecorView();
         if (window == null || decor == null) return;

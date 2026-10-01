@@ -544,7 +544,7 @@
     <string name="icon_setting_footer_text">你可以选择一个普适性图标来替换未被重绘的应用程序的图标，在该应用的图标被重绘后，图标将被替换</string>
     <string name="unlock_animation_title">解锁动画</string>
     <string name="unlock_wait_for_focus_title">解锁动画兼容模式</string>
-    <string name="unlock_wait_for_focus_tips">仅在解锁动画缺失或显示异常时开启；会在解锁时补做动画初始化，部分设备可能出现重复播放。关闭时使用常规解锁动画。下次锁屏解锁生效，需先开启“解锁动画”。</string>
+    <string name="unlock_wait_for_focus_tips">开启后使用 1.5.7 的解锁起播方式，减少部分手机解锁后的等待；关闭时使用当前方式。两种方式的动画时长一致。下次锁屏解锁生效，需先开启“解锁动画”。</string>
     <string name="unlock_animation_tips">允许桌面解锁后播放缩放动画</string>
     <string name="transparent_theme_title">透明主题</string>
     <string name="dynamic_weather_title">动态天气</string>

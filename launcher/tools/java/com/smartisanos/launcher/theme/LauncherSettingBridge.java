@@ -8,7 +8,9 @@ import android.graphics.Paint;
 import android.os.Build;
 import android.provider.Settings;
 import android.util.Log;
-import android.view.WindowManager;
+import android.view.View;
+import android.view.Window;
+import android.view.WindowInsetsController;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.lang.reflect.Field;
@@ -50,13 +52,45 @@ public final class LauncherSettingBridge {
     private LauncherSettingBridge() {
     }
 
-    public static void applyThemeStatusBarWindowPolicy(WindowManager.LayoutParams attributes) {
-        if (Build.VERSION.SDK_INT != 36 || !"vivo".equalsIgnoreCase(Build.MANUFACTURER)) return;
-        // OriginOS 16 DisplayPolicy disables automatic icon inversion for dim windows.
-        // A zero-strength dim keeps the original scene/wallpaper visible, while allowing
-        // the original theme's status-bar colors to survive four-finger GL transitions.
-        attributes.dimAmount = 0f;
-        attributes.flags |= WindowManager.LayoutParams.FLAG_DIM_BEHIND;
+    public static void traceThemeBarState(String stage, int flags) {
+        try {
+            Class<?> constants = Class.forName("com.smartisanos.launcher.data.Constants");
+            Log.w("LauncherThemeBar", "stage=" + stage + " flags=" + Integer.toHexString(flags)
+                    + " transparent=" + readStaticField(constants, "isTransparentTheme")
+                    + " gaussian=" + readStaticField(constants, "sIsGaussianTheme")
+                    + " desktop=" + readStaticField(constants, "sGaussianResSuffix")
+                    + " status=" + readStaticField(constants, "sStatusbarColorSuffix")
+                    + " appTextColor=" + readStaticField(constants, "app_text_color"));
+        } catch (Exception error) {
+            Log.w("LauncherThemeBar", "STATE_UNAVAILABLE", error);
+        }
+    }
+
+    public static void applyDesktopStatusBarAppearance(Window window, int appTextColor) {
+        if (window == null) return;
+        boolean darkText = (appTextColor & 0x00ffffff) < 0x00808080;
+        View decor = window.getDecorView();
+        if (Build.VERSION.SDK_INT >= 23) {
+            int flags = decor.getSystemUiVisibility();
+            flags = darkText ? flags | View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
+                    : flags & ~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+            decor.setSystemUiVisibility(flags);
+        }
+        if (Build.VERSION.SDK_INT >= 30) {
+            WindowInsetsController controller = window.getInsetsController();
+            if (controller != null) {
+                // Explicit appearance ownership takes precedence over legacy flags.
+                // Both interfaces must receive the same resolved application text color.
+                controller.setSystemBarsAppearance(darkText
+                                ? WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS : 0,
+                        WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS);
+            }
+        }
+        traceThemeBarState("WINDOW_APPLIED", decor.getSystemUiVisibility());
+        if (Build.VERSION.SDK_INT >= 30 && window.getInsetsController() != null) {
+            Log.w("LauncherThemeBar", "appearance="
+                    + Integer.toHexString(window.getInsetsController().getSystemBarsAppearance()));
+        }
     }
 
     public static boolean readBool(Context context, String key, boolean defValue) {

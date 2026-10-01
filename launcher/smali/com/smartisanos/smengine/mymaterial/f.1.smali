@@ -2109,6 +2109,15 @@
 
     .line 14
     :cond_4
+    invoke-static {p1}, Lcom/smartisanos/launcher/theme/IconRasterDiagnostics;->recoverMissingGeneratedTexture(Ljava/lang/String;)Landroid/graphics/Bitmap;
+
+    move-result-object v0
+
+    if-eqz v0, :load_asset_bitmap
+
+    return-object v0
+
+    :load_asset_bitmap
     invoke-static {p1}, Lcom/smartisanos/launcher/xa;->getBitmap(Ljava/lang/String;)Landroid/graphics/Bitmap;
 
     move-result-object p0

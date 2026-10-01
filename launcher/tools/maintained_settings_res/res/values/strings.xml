@@ -687,7 +687,7 @@
     <string name="update_available_title">更新提示</string>
     <string name="unlock_animation_title">Unlock Animation</string>
     <string name="unlock_wait_for_focus_title">Unlock animation compatibility</string>
-    <string name="unlock_wait_for_focus_tips">Enable only if the unlock animation is missing or abnormal. It reinitializes the animation at unlock and may play twice on some devices. Off uses the normal unlock animation. Takes effect on the next lock and unlock; requires Unlock Animation.</string>
+    <string name="unlock_wait_for_focus_tips">Enable to use the v1.5.7 unlock start behavior and reduce handoff waiting on some devices. Off keeps the current behavior. Animation duration is the same in both modes. Takes effect on the next lock and unlock; requires Unlock Animation.</string>
     <string name="unlock_animation_tips">Play scale animation after unlock</string>
     <string name="transparent_theme_title">Transparent Theme</string>
     <string name="dynamic_weather_title">Dynamic weather</string>

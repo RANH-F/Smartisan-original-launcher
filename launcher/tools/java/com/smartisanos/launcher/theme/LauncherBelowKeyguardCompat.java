@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.app.KeyguardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.PowerManager;
 import android.os.SystemClock;
 import android.util.Log;
@@ -22,7 +24,11 @@ public final class LauncherBelowKeyguardCompat {
 
     private static final String TAG = "UnlockAnimation";
     private static final Object LOCK = new Object();
-    // This preference selects the maintained unlock compatibility behavior.
+    private static final Handler MAIN_HANDLER = new Handler(Looper.getMainLooper());
+    private static final long V157_RESUME_PRE_ROLL_DELAY_MS = 120L;
+    private static final String V157_RESUME_PRE_ROLL = "V1_5_7_RESUME_PRE_ROLL";
+    private static long preRollScheduledSessionId;
+    // Compatibility uses v1.5.7 handoff timing; default retains focus gating.
     // The persisted key stays unchanged so existing settings and backups survive.
     public static final String KEY_WAIT_FOR_FOCUS = "launcher_unlock_wait_for_focus";
 
@@ -84,6 +90,7 @@ public final class LauncherBelowKeyguardCompat {
             logLocked(activity, "UNLOCK_LAUNCHER_RESUME", null);
         }
         tryCommitUnlockAnimation(activity, "RESUME");
+        scheduleV157ResumePreRoll(activity);
     }
 
     public static void onLauncherPaused(Activity activity) {
@@ -291,6 +298,7 @@ public final class LauncherBelowKeyguardCompat {
             logLocked(context, "UNLOCK_PREPARE_READY", null);
         }
         tryCommitUnlockAnimation(context, "PREPARE_READY");
+        scheduleV157ResumePreRoll(context);
     }
 
     public static void onPrepareFailed(Context context) {
@@ -338,6 +346,10 @@ public final class LauncherBelowKeyguardCompat {
             final boolean keyguardLocked = isKeyguardLocked(context);
             final boolean interactive = isInteractive(context);
             final boolean hasDirectDismissSignal = unlockDismissPending;
+            final boolean legacyPreRoll = sessionMaintainedCompatMode
+                    && V157_RESUME_PRE_ROLL.equals(source)
+                    && preRollScheduledSessionId == keyguardSessionId
+                    && resumeDuringKeyguardHandoff;
             final long now = SystemClock.uptimeMillis();
             if (keyguardSessionActive && interactive && !keyguardLocked
                     && sessionKeyguardUnlockedUptime == 0L) {
@@ -357,15 +369,18 @@ public final class LauncherBelowKeyguardCompat {
                 logLocked(context, unlockConsumed ? "UNLOCK_SKIP_CONSUMED" : "UNLOCK_SKIP_NO_SESSION", source);
             } else if (unlockConsumed) {
                 logLocked(context, "UNLOCK_SKIP_CONSUMED", source);
+            } else if (sessionMaintainedCompatMode && !unlockPrepared) {
+                logLocked(context, "UNLOCK_SKIP_NOT_PREPARED", source);
             } else if (!launcherResumed) {
                 logLocked(context, "UNLOCK_SKIP_NOT_RESUMED", source);
             } else if (!interactive) {
                 logLocked(context, "UNLOCK_SKIP_NOT_INTERACTIVE", source);
-            } else if (keyguardLocked) {
+            } else if (keyguardLocked && !legacyPreRoll) {
                 logLocked(context, "UNLOCK_SKIP_KEYGUARD_STILL_LOCKED", source);
             } else if (!hasDirectDismissSignal && !resumeDuringKeyguardHandoff) {
                 logLocked(context, "UNLOCK_SKIP_NO_UNLOCK_SIGNAL", source);
-            } else if (!launcherHasWindowFocus) {
+            } else if (!launcherHasWindowFocus
+                    && !(sessionMaintainedCompatMode && (legacyPreRoll || hasDirectDismissSignal))) {
                 logLocked(context, "UNLOCK_SKIP_NO_FOCUS", source);
             } else {
                 dispatch = consumeForPlayLocked(context, source, now);
@@ -375,6 +390,30 @@ public final class LauncherBelowKeyguardCompat {
         if (dispatch) {
             dispatchOriginalAction(context, ACTION_INTERNAL_PLAY);
         }
+    }
+
+    /** v1.5.7 pre-roll is opt-in and belongs to the current lock generation only. */
+    private static void scheduleV157ResumePreRoll(final Context context) {
+        final long sessionId;
+        synchronized (LOCK) {
+            if (!sessionMaintainedCompatMode || !keyguardSessionActive
+                    || !launcherWasBelowKeyguard || !unlockPrepared || unlockConsumed
+                    || !launcherResumed || !resumeDuringKeyguardHandoff
+                    || !isInteractive(context) || !isKeyguardLocked(context)
+                    || preRollScheduledSessionId == keyguardSessionId) return;
+            sessionId = keyguardSessionId;
+            preRollScheduledSessionId = sessionId;
+            logLocked(context, "UNLOCK_V157_PRE_ROLL_SCHEDULED", "delayMs=120");
+        }
+        MAIN_HANDLER.postDelayed(new Runnable() {
+            @Override public void run() {
+                synchronized (LOCK) {
+                    if (sessionId != keyguardSessionId || !sessionMaintainedCompatMode
+                            || !keyguardSessionActive || unlockConsumed) return;
+                }
+                tryCommitUnlockAnimation(context, V157_RESUME_PRE_ROLL);
+            }
+        }, V157_RESUME_PRE_ROLL_DELAY_MS);
     }
 
     private static boolean consumeForPlayLocked(Context context, String source, long now) {
@@ -554,6 +593,7 @@ public final class LauncherBelowKeyguardCompat {
 
     private static void clearSessionLocked() {
         keyguardSessionActive = false;
+        preRollScheduledSessionId = 0L;
         launcherWasBelowKeyguard = false;
         unlockPrepared = false;
         unlockDismissPending = false;
@@ -586,7 +626,7 @@ public final class LauncherBelowKeyguardCompat {
     }
 
     private static String timingSummaryLocked(boolean includeAnimationStart) {
-        return "mode=" + (sessionMaintainedCompatMode ? "MAINTAINED_COMPAT" : "MAINTAINED_DEFAULT")
+        return "mode=" + (sessionMaintainedCompatMode ? "V157_COMPAT" : "FOCUS_DEFAULT")
                 + " screenOff=" + sessionScreenOffUptime
                 + " prepareBegin=" + sessionPrepareBeginUptime
                 + " prepareReady=" + sessionPrepareReadyUptime

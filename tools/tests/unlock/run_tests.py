@@ -34,6 +34,15 @@ public class KeyguardManager { public static boolean locked;
     "android/os/PowerManager.java": '''package android.os;
 public class PowerManager { public static boolean interactive=true;
  public boolean isInteractive(){return interactive;} }''',
+    "android/os/Looper.java": 'package android.os; public class Looper { public static Looper getMainLooper(){return new Looper();} }',
+    "android/os/Handler.java": '''package android.os;
+public class Handler {
+ public static java.util.ArrayList<Runnable> pending=new java.util.ArrayList<>();
+ public Handler(Looper l){} public boolean postDelayed(Runnable r,long ms){
+  if(ms!=120)throw new AssertionError("wrong legacy delay");pending.add(r);return true;}
+ public static void drain(){java.util.ArrayList<Runnable> copy=new java.util.ArrayList<>(pending);
+  pending.clear();for(Runnable r:copy)r.run();}
+}''',
     "android/os/SystemClock.java": '''package android.os;
 public class SystemClock { private static long clock=100;
  public static long uptimeMillis(){return ++clock;} }''',
@@ -82,6 +91,7 @@ public class UnlockSessionTest {
    else f.set(null,null);
   }
   ia.prepares=ia.plays=ia.finishes=0;
+  Handler.pending.clear();
   KeyguardManager.locked=false;PowerManager.interactive=true;
   android.content.SharedPreferences.compat=false;
   com.smartisanos.launcher.data.Constants.ENABLE_UNLOCK_ANIMATION=true;
@@ -145,6 +155,35 @@ public class UnlockSessionTest {
   check(LauncherBelowKeyguardCompat.isMaintainedCompatMode(),"session policy changed midway");
   LauncherBelowKeyguardCompat.onUnlockSettingChanged(false);
   check(!LauncherBelowKeyguardCompat.beginGlEvent(first,false),"disabled queued init accepted");
+  reset();android.content.SharedPreferences.compat=true;first=lock();
+  LauncherBelowKeyguardCompat.onPrepareReady(first,true);resumeLocked();dismiss();
+  check(ia.plays==1,"legacy dismiss waited for focus");Handler.drain();focus();dismiss();
+  check(ia.plays==1,"legacy delayed callback replayed consumed session");
+  reset();android.content.SharedPreferences.compat=true;first=lock();
+  resumeLocked();check(Handler.pending.isEmpty(),"scheduled before real preparation");
+  LauncherBelowKeyguardCompat.onPrepareReady(first,true);
+  check(Handler.pending.size()==1,"prepared locked resume did not schedule");
+  Handler.drain();check(ia.plays==1,"legacy pre-roll failed behind keyguard");
+  dismiss();focus();check(ia.plays==1,"legacy dismiss replayed pre-roll");
+  reset();android.content.SharedPreferences.compat=true;first=lock();
+  LauncherBelowKeyguardCompat.onPrepareReady(first,true);resumeLocked();
+  LauncherBelowKeyguardCompat.onUnlockSettingChanged(false);Handler.drain();
+  check(ia.plays==0,"cancelled legacy pre-roll played");
+  reset();android.content.SharedPreferences.compat=true;first=lock();
+  LauncherBelowKeyguardCompat.onPrepareReady(first,true);resumeLocked();
+  KeyguardManager.locked=false;LauncherBelowKeyguardCompat.onLauncherPaused(a);
+  LauncherBelowKeyguardCompat.onLauncherStopped(a);Handler.drain();
+  check(ia.plays==0,"legacy pre-roll played after app covered HOME");
+  reset();android.content.SharedPreferences.compat=true;first=lock();
+  LauncherBelowKeyguardCompat.onPrepareReady(first,true);resumeLocked();
+  LauncherBelowKeyguardCompat.onUnlockSettingChanged(false);
+  com.smartisanos.launcher.data.Constants.ENABLE_UNLOCK_ANIMATION=true;
+  KeyguardManager.locked=false;focus();
+  second=lock();LauncherBelowKeyguardCompat.onPrepareReady(second,true);resumeLocked();
+  Handler.drain();check(ia.plays==1,"stale callback consumed or duplicated new pre-roll");
+  reset();first=lock();LauncherBelowKeyguardCompat.onPrepareReady(first,true);resumeLocked();
+  check(Handler.pending.isEmpty(),"default scheduled legacy pre-roll");
+  dismiss();check(ia.plays==0,"default bypassed focus");focus();check(ia.plays==1,"default failed");
   System.out.println("PASS: GL completion, visibility gates, duplicates, relock, stale callbacks, app return, eligibility, preference snapshot");
  }
 }''',

@@ -6803,6 +6803,21 @@
     invoke-virtual {p0}, Lcom/smartisanos/launcher/view/Eb;->onPause()V
 
     :cond_4
+    if-eqz p1, :cond_port_focus_color_done
+
+    sget v0, Lcom/smartisanos/launcher/data/Constants;->app_text_color:I
+
+    if-eqz v0, :cond_port_focus_color_done
+
+    invoke-static {}, Lcom/smartisanos/launcher/theme/X;->eg()Lcom/smartisanos/launcher/theme/v;
+
+    move-result-object v0
+
+    const-string v1, "DESKTOP_FOCUS_GAINED"
+
+    invoke-static {v0, v1}, Lcom/smartisanos/launcher/e/s;->d(Lcom/smartisanos/launcher/theme/v;Ljava/lang/String;)V
+
+    :cond_port_focus_color_done
     return-void
 .end method
 

@@ -85,6 +85,12 @@
 
     invoke-virtual {p1, v0, v0}, Landroid/view/Window;->setFlags(II)V
 
+    iget-object v2, p0, Lsmartisanos/app/SmartisanProgressDialog;->mContext:Landroid/content/Context;
+
+    iget-object v3, p0, Lsmartisanos/app/SmartisanProgressDialog;->mMessage:Ljava/lang/String;
+
+    invoke-static {p1, v2, v3}, Lcom/smartisanos/launcher/reload/OriginalLoadingContentFactory;->coverLoadingWindow(Landroid/view/Window;Landroid/content/Context;Ljava/lang/String;)V
+
     :cond_done
     return-void
 .end method

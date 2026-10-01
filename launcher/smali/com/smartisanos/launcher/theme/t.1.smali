@@ -6707,11 +6707,14 @@
 
     invoke-virtual {p0}, Lcom/smartisanos/launcher/view/Ha;->oe()V
 
-    new-instance v0, Lcom/smartisanos/launcher/theme/W;
+    # Queue after the theme-loading window is dismissed, for every switch entry point.
+    invoke-static {}, Lcom/smartisanos/launcher/theme/X;->eg()Lcom/smartisanos/launcher/theme/v;
 
-    invoke-direct {v0}, Lcom/smartisanos/launcher/theme/W;-><init>()V
+    move-result-object v0
 
-    invoke-virtual {v0}, Lcom/smartisanos/launcher/theme/W;->run()V
+    const-string v1, "THEME_SWITCH_COMPLETED"
+
+    invoke-static {v0, v1}, Lcom/smartisanos/launcher/e/s;->d(Lcom/smartisanos/launcher/theme/v;Ljava/lang/String;)V
 
     return-void
 .end method
