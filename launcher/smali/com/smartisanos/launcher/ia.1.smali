@@ -92,6 +92,8 @@
 
     if-eqz p2, :cond_codex_unlock_action_ready
 
+    invoke-static {}, Lcom/smartisanos/launcher/theme/MaintainedLauncherSettingsHost;->onSettingsScreenOff()V
+
     const-string p1, "SCREEN_OFF"
 
     invoke-static {v7, p1}, Lcom/smartisanos/launcher/theme/LauncherBelowKeyguardCompat;->armAndPrepareIfNeeded(Landroid/content/Context;Ljava/lang/String;)Z

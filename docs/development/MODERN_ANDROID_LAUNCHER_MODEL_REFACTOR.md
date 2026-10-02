@@ -71,6 +71,8 @@ Phase 2 已完成实现收口；禁止进入 Phase 3，等待用户确认。核�
 
 Package REMOVE 已不再把 package 当作删除对象：`LauncherModelRepository.commitPackageRemovals()` 从当前 `Aa.fi` 快照枚举同 `packageName + legacyUserId` 的条目，为每个 `itemType == 0` 的普通应用建立独立 `RemovalRequest` 并再次经过 `RemovalGateway`。QuickLaunch、shortcut、folder、placeholder 及其他特殊 type 只记录 `REMOVE_SKIP_SPECIAL`，不得由系统 package event 删除。
 
+2026-10-02 系统卸载动画兼容修复：系统确认框返回时，`finishSystemUninstall()` 仅对本次普通应用条目通过既有 Package/Profile 事实源和 RemovalGateway 补查；确认移除仍交给同一 `commitRemove → Aa.a(ItemInfo)` 执行器，未知／暂不可用不删除。已提交移除保留原回收站动画；未确认移除走原版 GL 取消回位事件。Sc 的回收站匹配由包名／组件字符串改为数据库条目 ID，避免同组件分身触发另一图标的动画；快捷方式与特殊类型保留原路径。补齐同一执行器的底层边界：A.q 的普通应用分支只删除已确认行，不按包扩展至其他入口、分身或快捷方式；逐条目 GL 任务等待原卸载两阶段完成后，由 Qc/Pc 继续现有队列，避免 forceFinish 截断。data/w 优先级同时使用确切条目 ID。这是当前卸载缺陷修复，不进入 Phase 3。生产模型 169 项隔离／状态检查及生产 Smali 行级执行／队列保护检查通过，真机动画验收见 DEVELOPMENT_LOG 最新记录。
+
 静态隔离证明（尚非真机验证）：
 
 ```text

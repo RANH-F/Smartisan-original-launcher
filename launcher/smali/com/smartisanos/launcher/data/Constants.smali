@@ -12560,6 +12560,11 @@
     .line 2
     sget-object v1, Lcom/smartisanos/launcher/data/Constants;->ICON_TYPE:Lcom/smartisanos/launcher/data/Constants$IconType;
 
+    # Transparent is a third state, not an existing Dark selection.
+    sget-object v2, Lcom/smartisanos/launcher/data/Constants$IconType;->TZ:Lcom/smartisanos/launcher/data/Constants$IconType;
+
+    if-eq v1, v2, :cond_codex_refresh_icon_type
+
     sget-object v2, Lcom/smartisanos/launcher/data/Constants$IconType;->SZ:Lcom/smartisanos/launcher/data/Constants$IconType;
 
     if-ne v1, v2, :cond_0
@@ -12574,6 +12579,7 @@
     :goto_0
     if-eq v0, v1, :cond_2
 
+    :cond_codex_refresh_icon_type
     if-eqz v0, :cond_1
 
     .line 3

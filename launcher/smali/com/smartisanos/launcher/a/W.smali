@@ -29,13 +29,19 @@
 
     move-result-object v0
 
+    if-eqz v0, :cancel_scene_missing
+
     invoke-virtual {v0}, Lcom/smartisanos/launcher/view/Eb;->zh()Lcom/smartisanos/launcher/view/V;
 
     move-result-object v0
 
+    if-eqz v0, :cancel_scene_missing
+
     invoke-virtual {v0}, Lcom/smartisanos/launcher/view/V;->Xo()Lcom/smartisanos/launcher/view/Sc;
 
     move-result-object v0
+
+    if-eqz v0, :cancel_scene_missing
 
     invoke-virtual {v0}, Lcom/smartisanos/launcher/view/Sc;->mq()Z
 
@@ -60,6 +66,9 @@
 
     .line 3
     :cond_0
+    # A rapid system return may overlap trash entry. Finish safely on GL.
+    invoke-static {}, Lcom/smartisanos/launcher/a/oa;->hd()V
+
     invoke-static {v1}, Lcom/smartisanos/launcher/a/oa;->w(Z)Z
 
     return-void
@@ -260,5 +269,10 @@
     .line 28
     invoke-virtual {v3}, Lcom/smartisanos/smengine/g;->start()V
 
+    return-void
+
+    :cancel_scene_missing
+    const/4 v0, 0x0
+    invoke-static {v0}, Lcom/smartisanos/launcher/a/oa;->w(Z)Z
     return-void
 .end method

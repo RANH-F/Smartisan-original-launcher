@@ -339,10 +339,6 @@
     .line 1
     invoke-super {p0}, Landroid/app/Activity;->onPause()V
 
-    # Queue the original cancellation on the GL thread before the public
-    # package installer covers this activity.
-    invoke-static {}, Lcom/smartisanos/launcher/a/oa;->fd()V
-
     invoke-static {p0}, Lcom/smartisanos/launcher/theme/LauncherBelowKeyguardCompat;->onLauncherPaused(Landroid/app/Activity;)V
 
     .line 2
@@ -367,6 +363,10 @@
     move-result-object v0
 
     invoke-virtual {v0}, Lcom/smartisanos/launcher/J;->onResume()V
+
+    invoke-static {}, Lcom/smartisanos/launcher/compat/UninstallCompat;->onLauncherResumed()V
+
+    invoke-static {p0}, Lcom/smartisanos/launcher/theme/MaintainedLauncherSettingsHost;->onSettingsDesktopResumed(Landroid/app/Activity;)V
 
     invoke-static {p0}, Lcom/smartisanos/launcher/theme/LauncherBelowKeyguardCompat;->onLauncherResumed(Landroid/app/Activity;)V
 

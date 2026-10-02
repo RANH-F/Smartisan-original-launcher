@@ -26,9 +26,10 @@ icons/drawable/com.tencent.wework.png
 2. GitHub `main` 分支镜像。
 3. 两个镜像都失败时使用应用原图。
 
-成功下载后写入桌面本地持久缓存 `filesDir/online_icon_cache_v3`。只有两个镜像都明确返回 404 时才写入短期 miss 缓存；网络超时、DNS/TLS 错误等临时失败不会污染不存在记录，后续加载可以继续重试。
+成功下载后写入桌面本地持久缓存 `filesDir/online_icon_cache_v4`。只有两个镜像都明确返回 404 时才写入短期 miss 缓存；网络超时、DNS/TLS 错误等临时失败不会污染不存在记录，后续加载可以继续重试。
 更新同名图片后，如需立即让已下载用户刷新，应递增代码中的缓存目录版本，
-例如从 `online_icon_cache_v2` 改为 `online_icon_cache_v3`。
+本轮从 `online_icon_cache_v3` 改为 `online_icon_cache_v4`，下载、预览和备份恢复的源码缓存使用同一版本。
+发布新 APK 前应先同步 GitHub／Gitee 图片库，否则新缓存仍可能下载到镜像中的旧图片；图片库不打包进主 APK。
 
 ## 应用图标选择
 

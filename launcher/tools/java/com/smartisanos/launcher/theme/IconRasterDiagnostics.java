@@ -73,7 +73,7 @@ public final class IconRasterDiagnostics {
     }
     private static final int CANONICAL_DEFAULT_SOURCE_SIZE = 256;
     private static final String BADGE_VERSION = "badge:v1";
-    private static final String SHADOW_VERSION = "shadow:original-v1";
+    private static final String SHADOW_VERSION = "shadow:original-icon-type-v2";
     private static volatile String sLifecycle = "COLD";
     /** Enable only in an acceptance build; production builds do not write icon bitmaps. */
     private static final boolean DEBUG_RASTER_DUMP = false;
@@ -237,6 +237,7 @@ public final class IconRasterDiagnostics {
     public static Bitmap prepareStaticSource(Object itemInfo, Bitmap cachedSource) {
         if (isQuickLaunchItem(itemInfo)) return cachedSource;
         StaticSource resolved = resolveStaticSource(itemInfo, cachedSource);
+        if (isDesktopSettingsShortcut(itemInfo) && resolved.drawable == null) return null;
         if (resolved.drawable != null) {
             if ("DEFAULT".equals(resolved.type)
                     && DefaultIconCircleRenderer.isCircleEnabled(
@@ -267,7 +268,7 @@ public final class IconRasterDiagnostics {
     public static boolean shouldUseHighResolutionDesktopRaster(Object itemInfo) {
         return itemInfo != null
                 && !isQuickLaunchItem(itemInfo)
-                && !isSpecialSettingButton(itemInfo)
+                && (!isSpecialSettingButton(itemInfo) || isDesktopSettingsShortcut(itemInfo))
                 && !itemInfo.getClass().getName().endsWith(".FolderInfo")
                 && !itemField(itemInfo, "packageName").isEmpty()
                 && !isOriginalActiveIcon(itemInfo);
@@ -283,7 +284,52 @@ public final class IconRasterDiagnostics {
                 || title.contains("设置") || title.toLowerCase().contains("setting"));
     }
 
+    private static boolean isDesktopSettingsShortcut(Object itemInfo) {
+        return "com.smartisanos.launcher".equals(itemField(itemInfo, "packageName"))
+                && "com.smartisanos.launcher.theme.ThemeChooserActivity".equals(
+                        itemField(itemInfo, "componentName"));
+    }
+
+    /** Keeps projection masks available when an existing final texture is reused. */
+    public static void prepareSettingsIconProjection(Object itemInfo, String key) {
+        if (!IconIlluminationCompat.enabled() || key == null
+                || !isDesktopSettingsShortcut(itemInfo)) return;
+        android.content.Context context = MaintainedLauncherSettingsHost.currentApplicationContext();
+        int resource = context.getResources().getIdentifier(
+                "icon_setting", "drawable", context.getPackageName());
+        if (resource == 0) {
+            Log.w(TAG, "SETTINGS_ICON_PROJECTION_SOURCE_MISSING");
+            return;
+        }
+        Bitmap artwork;
+        try {
+            artwork = sourceBitmap(context.getResources().getDrawable(resource));
+        } catch (android.content.res.Resources.NotFoundException error) {
+            Log.w(TAG, "SETTINGS_ICON_PROJECTION_SOURCE_MISSING", error);
+            return;
+        }
+        if (artwork == null) return;
+        try {
+            IconIlluminationCompat.write(key, artwork, false);
+        } finally {
+            artwork.recycle();
+        }
+    }
+
     private static Drawable loadCurrentDesktopDrawable(Object itemInfo) {
+        if (isDesktopSettingsShortcut(itemInfo)) {
+            android.content.Context context = MaintainedLauncherSettingsHost.currentApplicationContext();
+            if (context == null) return null;
+            int resource = context.getResources().getIdentifier(
+                    "icon_setting", "drawable", context.getPackageName());
+            if (resource == 0) return null;
+            try {
+                return context.getResources().getDrawable(resource);
+            } catch (android.content.res.Resources.NotFoundException error) {
+                Log.w(TAG, "SETTINGS_ICON_SOURCE_MISSING", error);
+                return null;
+            }
+        }
         try {
             Class<?> launcher = Class.forName("com.smartisanos.launcher.ja");
             Object instance = launcher.getMethod("getInstance").invoke(null);
@@ -304,6 +350,11 @@ public final class IconRasterDiagnostics {
     private static StaticSource resolveStaticSource(Object itemInfo, Bitmap legacyBitmap) {
         if (itemInfo == null) {
             return new StaticSource(null, "DEFAULT", "NO_ITEM", legacyBitmap != null);
+        }
+        if (isDesktopSettingsShortcut(itemInfo)) {
+            // Never treat a retained, already decorated DB texture as RAW.
+            return new StaticSource(loadCurrentDesktopDrawable(itemInfo),
+                    "RESOURCE", "launcher:icon_setting", false);
         }
         String selectedType = MaintainedLauncherSettingsHost.desktopIconSourceType(itemInfo);
         String identity = MaintainedLauncherSettingsHost.desktopIconSourceIdentity(itemInfo);
@@ -449,6 +500,7 @@ public final class IconRasterDiagnostics {
             Object itemInfo, int pageMode, boolean resized) {
         StaticSource resolved = resolveStaticSource(itemInfo, source);
         Drawable rawDrawable = resolved.drawable;
+        if (isDesktopSettingsShortcut(itemInfo) && rawDrawable == null) return source;
         boolean defaultCircle = "DEFAULT".equals(resolved.type)
                 && DefaultIconCircleRenderer.isCircleEnabled(
                 MaintainedLauncherSettingsHost.currentApplicationContext());
@@ -535,6 +587,10 @@ public final class IconRasterDiagnostics {
         if (decoratedArtwork != null && decoratedArtwork != physicalArtwork) {
             physicalArtwork.recycle();
             physicalArtwork = decoratedArtwork;
+        }
+        // The settings Cell retains its existing fixed-resource projection path.
+        if (!isDesktopSettingsShortcut(itemInfo)) {
+            IconIlluminationCompat.prepare(itemInfo, physicalArtwork);
         }
         Bitmap result = LauncherSettingBridge.composeStaticIconTextureWithOriginalShadow(
                 physicalArtwork, texture, rasterScale);
@@ -944,8 +1000,10 @@ public final class IconRasterDiagnostics {
         String componentName = itemField(itemInfo, "componentName");
         String userId = itemField(itemInfo, "userId");
         String sourceHash = resolvedSourceHash(itemInfo);
-        String sourceType = MaintainedLauncherSettingsHost.desktopIconSourceType(itemInfo);
-        String sourceIdentity = MaintainedLauncherSettingsHost.desktopIconSourceIdentity(itemInfo);
+        String sourceType = isDesktopSettingsShortcut(itemInfo) ? "RESOURCE"
+                : MaintainedLauncherSettingsHost.desktopIconSourceType(itemInfo);
+        String sourceIdentity = isDesktopSettingsShortcut(itemInfo) ? "launcher:icon_setting"
+                : MaintainedLauncherSettingsHost.desktopIconSourceIdentity(itemInfo);
         String themeMode = String.valueOf(currentConstant("isTransparentTheme", 0));
         int iconPercent = Math.round(logicalArtwork * 100f / Math.max(1, baseIconSize(pageMode)));
         String pipeline = isOriginalActiveIcon(itemInfo) ? "ORIGINAL_ACTIVE_ICON"
@@ -967,7 +1025,10 @@ public final class IconRasterDiagnostics {
                 + ":fitPolicy=source-full-canvas"
                 + ":alphaGeometryUsed=false"
                 + ":badgeVersion=" + BADGE_VERSION
-                + ":shadowVersion=" + SHADOW_VERSION;
+                + ":shadowVersion=" + SHADOW_VERSION
+                + ":shadowSpec=" + LauncherSettingBridge.iconShadowCacheToken()
+                + ":projection=" + (IconIlluminationCompat.enabled()
+                ? IconIlluminationCompat.VERSION : "off");
         Log.i(TAG, "ICON_CACHE_PIPELINE_KEY packageName=" + packageName
                 + " pipeline=" + pipeline + " finalCacheKey=" + key);
         return key;

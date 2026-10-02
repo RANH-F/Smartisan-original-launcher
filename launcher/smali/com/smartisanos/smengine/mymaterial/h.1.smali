@@ -50,10 +50,7 @@
     .line 8
     invoke-virtual {p0, p1}, Lcom/smartisanos/smengine/mymaterial/f;->xc(I)V
 
-    const/16 p1, 0x23
-
-    .line 9
-    invoke-virtual {p0, p1}, Lcom/smartisanos/smengine/mymaterial/f;->xc(I)V
+    # uShadowRadius is inactive; Mali removes it from the linked program.
 
     const/16 p1, 0x26
 

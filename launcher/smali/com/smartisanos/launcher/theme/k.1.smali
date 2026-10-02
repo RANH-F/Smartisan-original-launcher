@@ -53,6 +53,25 @@
 
     invoke-static {v2, v0}, Lcom/smartisanos/launcher/theme/t;->b(Lcom/smartisanos/launcher/theme/t;Lcom/smartisanos/launcher/theme/v;)V
 
+    # The old Gaussian cover is transparent at this point. Restoring white
+    # before r() exposes it through the cube seams for a queued render frame.
+    sget-boolean v0, Lcom/smartisanos/launcher/data/Constants;->ENABLE_LARGE_SCREEN_MODE:Z
+
+    if-nez v0, :clear_color_handoff_complete
+
+    invoke-static {}, Lcom/smartisanos/smengine/Ra;->getInstance()Lcom/smartisanos/smengine/Ra;
+
+    move-result-object v0
+
+    invoke-virtual {v0}, Lcom/smartisanos/smengine/Ra;->it()Lcom/smartisanos/smengine/J;
+
+    move-result-object v0
+
+    const/high16 v2, 0x3f800000    # 1.0f
+
+    invoke-virtual {v0, v2}, Lcom/smartisanos/smengine/J;->s(F)V
+
+    :clear_color_handoff_complete
     .line 4
     iget-object v0, p0, Lcom/smartisanos/launcher/theme/k;->this$1:Lcom/smartisanos/launcher/theme/l;
 

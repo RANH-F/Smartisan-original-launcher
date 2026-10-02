@@ -183,5 +183,14 @@
     invoke-static {}, Lcom/smartisanos/launcher/e/s;->Gg()V
 
     :cond_5
+    const-string v0, "UninstallAnimation"
+
+    const-string v1, "trash_relayout complete"
+
+    invoke-static {v0, v1}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
+
+    # Resume the existing package queue after the trash/relayout phase unlocks.
+    invoke-static {}, Lcom/smartisanos/launcher/data/z;->Ge()V
+
     return-void
 .end method

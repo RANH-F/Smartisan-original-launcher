@@ -22,7 +22,7 @@
 
 # virtual methods
 .method public run()V
-    .locals 3
+    .locals 7
 
     .line 1
     sget-boolean v0, Lcom/smartisanos/launcher/va;->DBG:Z
@@ -131,21 +131,37 @@
     if-eqz v1, :cond_2
 
     .line 7
+    # Prioritize the selected database row, not every component of its package.
+    iget-wide v3, v1, Lcom/smartisanos/launcher/data/ItemInfo;->id:J
+
     iget-object v1, p0, Lcom/smartisanos/launcher/data/w;->WD:Lcom/smartisanos/launcher/data/z;
 
-    iget-object v1, v1, Lcom/smartisanos/launcher/data/z;->packageName:Ljava/lang/String;
+    iget-object v1, v1, Lcom/smartisanos/launcher/data/z;->Yj:Ljava/util/List;
 
-    invoke-virtual {v0}, Lcom/smartisanos/launcher/view/a/g;->Rl()Lcom/smartisanos/launcher/data/ItemInfo;
+    if-eqz v1, :cond_2
 
-    move-result-object v0
+    invoke-interface {v1}, Ljava/util/List;->iterator()Ljava/util/Iterator;
 
-    iget-object v0, v0, Lcom/smartisanos/launcher/data/ItemInfo;->packageName:Ljava/lang/String;
+    move-result-object v1
 
-    invoke-virtual {v1, v0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+    :remove_find_selected
+    invoke-interface {v1}, Ljava/util/Iterator;->hasNext()Z
 
     move-result v0
 
     if-eqz v0, :cond_2
+
+    invoke-interface {v1}, Ljava/util/Iterator;->next()Ljava/lang/Object;
+
+    move-result-object v0
+
+    check-cast v0, Lcom/smartisanos/launcher/data/ItemInfo;
+
+    iget-wide v5, v0, Lcom/smartisanos/launcher/data/ItemInfo;->id:J
+
+    cmp-long v0, v3, v5
+
+    if-nez v0, :remove_find_selected
 
     .line 8
     invoke-static {}, Lcom/smartisanos/launcher/data/z;->u()Ljava/util/List;

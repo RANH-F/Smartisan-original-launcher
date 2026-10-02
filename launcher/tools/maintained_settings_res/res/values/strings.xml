@@ -850,7 +850,7 @@
     <string name="grid_mode_20">20-cell grid</string>
     <string name="backup_default_theme">Default theme</string>
     <string name="restore_preview_failed">Unable to show the restore preview.</string>
-    <string name="restore_confirm_message">Restore replaces the current Home layout and backed-up Home settings.\nCurrent new apps and valid shortcuts are kept at the end of Home.\nThe current state is saved automatically before restore.\nThe restore can be undone.\nWallpaper is not changed.</string>
+    <string name="restore_confirm_message">Restore replaces the current Home layout and backed-up Home settings, keeping current new apps and valid shortcuts at the end of Home; the current state is saved automatically beforehand, so the restore can be undone. Wallpaper stays unchanged.</string>
     <string name="restore_action">Restore</string>
     <string name="undo_restore_confirm_message">Home will return to the state before the last restore.\nLayout and settings changes made after that restore will also be replaced.</string>
     <string name="undo_action">Undo</string>
@@ -896,7 +896,7 @@
     <string name="usage_tips_shortcut_missing_title">Shortcut does not appear</string>
     <string name="usage_tips_shortcut_missing_summary">Check that Smartisan Launcher is the default Home app, and allow WeChat or Alipay to create Home shortcuts in system permission settings.</string>
     <string name="quick_desktop_enabled_title">Quick desktop</string>
-    <string name="quick_desktop_enabled_summary">Swipe right on the first Home screen to open it. When enabled, tap the label to configure its content.</string>
+    <string name="quick_desktop_enabled_summary">Swipe right on the first Home screen to open it. When enabled, tap the label to configure its content. Enabling this increases performance overhead.</string>
     <string name="transparent_theme_summary">Show the wallpaper through a translucent Home background</string>
     <string name="dynamic_weather_calendar_summary">Show current weather and today\'s date on the Home icons</string>
     <string name="quick_desktop_settings_title">Quick desktop settings</string>
@@ -945,4 +945,18 @@
     <string name="status_bar_confirm">Apply</string>
     <string name="status_bar_save_failed">Unable to save status bar settings</string>
     <string name="status_bar_reload_failed">Unable to reload Launcher. Return Home and try again.</string>
+    <string name="icon_illumination_title">Icon light and shadow</string>
+    <string name="icon_illumination_summary">When enabled, desktop icon shadows change dynamically with the current weather, lighting conditions and device holding angle. Enabling this feature increases launcher battery consumption.</string>
+    <string name="backup_switch_on">On</string>
+    <string name="backup_switch_off">Off</string>
+    <string name="backup_excluded_switches_title">Switches that cannot be backed up</string>
+    <string name="backup_switch_count_suffix"> switches</string>
+    <string name="backup_excluded_switches_intro">These switches depend on system permissions and cannot be transferred with a backup:</string>
+    <string name="restore_excluded_switches_intro">These switches were not transferred with the backup. Enable them manually in their settings and grant the requested permissions:</string>
+    <string name="backup_excluded_location">Automatic weather location</string>
+    <string name="backup_excluded_dynamic_icons">Dynamic weather and calendar</string>
+    <string name="backup_excluded_badges">App notification badges</string>
+    <string name="backup_excluded_badge_clean">Swipe to clear notification badges</string>
+    <string name="backup_excluded_contacts">Contact search</string>
+    <string name="backup_excluded_system_panels">Swipe down to open system panels</string>
 </resources>

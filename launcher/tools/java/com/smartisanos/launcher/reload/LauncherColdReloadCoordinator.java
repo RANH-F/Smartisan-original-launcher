@@ -83,6 +83,10 @@ public final class LauncherColdReloadCoordinator {
         return beginReload(context, "DEFAULT_ICON_SHAPE_CHANGE", -1, readThemeMode(context));
     }
 
+    public static boolean beginIconIlluminationReload(Context context) {
+        return beginReload(context, "ICON_ILLUMINATION_CHANGE", -1, readThemeMode(context));
+    }
+
     public static boolean beginDesktopTextSizeReload(Context context, int oldSize, int newSize) {
         if (oldSize == newSize) return true;
         return beginReload(context, "DESKTOP_TEXT_SIZE_CHANGE", -1, readThemeMode(context));

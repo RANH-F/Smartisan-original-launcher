@@ -14281,6 +14281,10 @@
 
     .line 4
     :cond_2
+    iget-object v1, p0, Lcom/smartisanos/launcher/view/a/g;->Rj:Lcom/smartisanos/launcher/data/ItemInfo;
+
+    invoke-static {v1, v0}, Lcom/smartisanos/launcher/theme/IconRasterDiagnostics;->prepareSettingsIconProjection(Ljava/lang/Object;Ljava/lang/String;)V
+
     iget-object v1, p0, Lcom/smartisanos/launcher/view/a/g;->dH:Lcom/smartisanos/launcher/data/LayoutProperty;
 
     iget v1, v1, Lcom/smartisanos/launcher/data/LayoutProperty;->icon_size_with_shadow:F

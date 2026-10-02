@@ -17346,6 +17346,39 @@
     :cond_0
     iget-byte v1, v0, Lcom/smartisanos/launcher/data/ItemInfo;->itemType:B
 
+    # The modern removal gate has already confirmed this exact application row.
+    # Never expand it to package siblings, clone users or shortcut rows here.
+    if-nez v1, :remove_legacy_item
+
+    invoke-static {v0}, Lcom/smartisanos/launcher/data/a/l;->i(Lcom/smartisanos/launcher/data/ItemInfo;)V
+
+    new-instance v1, Ljava/util/ArrayList;
+
+    invoke-direct {v1}, Ljava/util/ArrayList;-><init>()V
+
+    invoke-virtual {v1, v0}, Ljava/util/ArrayList;->add(Ljava/lang/Object;)Z
+
+    iget-object v2, v0, Lcom/smartisanos/launcher/data/ItemInfo;->packageName:Ljava/lang/String;
+
+    new-instance v3, Lcom/smartisanos/launcher/data/z;
+
+    const/4 v4, 0x2
+
+    invoke-direct {v3, v2, v4, v1}, Lcom/smartisanos/launcher/data/z;-><init>(Ljava/lang/String;ILjava/util/List;)V
+
+    new-instance v1, Lcom/smartisanos/launcher/data/q;
+
+    const/16 v4, 0x65
+
+    invoke-direct {v1, v4, v3, v2, v0}, Lcom/smartisanos/launcher/data/q;-><init>(ILcom/smartisanos/launcher/data/z;Ljava/lang/String;Lcom/smartisanos/launcher/data/ItemInfo;)V
+
+    const/4 v2, 0x0
+
+    invoke-virtual {v1, v2}, Lcom/smartisanos/smengine/n;->q(F)V
+
+    return-void
+
+    :remove_legacy_item
     const/4 v2, 0x2
 
     if-eqz v1, :cond_1

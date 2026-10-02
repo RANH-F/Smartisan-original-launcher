@@ -559,24 +559,17 @@
 .method public static fd()V
     .locals 2
 
-    sget-object v0, Lcom/smartisanos/launcher/a/oa;->jk:Landroid/app/AlertDialog;
+    # J.onPause also calls this entry. Keep trash visible under system UI.
+    invoke-static {}, Lcom/smartisanos/launcher/compat/UninstallCompat;->isSystemUninstallPending()Z
 
-    if-nez v0, :cond_1
+    move-result v0
 
-    sget-boolean v0, Lcom/smartisanos/launcher/va;->DBG:Z
+    if-eqz v0, :queue_cancel_scene
 
-    if-eqz v0, :cond_0
-
-    sget-object v0, Lcom/smartisanos/launcher/a/oa;->log:Lcom/smartisanos/launcher/va;
-
-    const-string v1, "cancelUninstallWithoutAnim nothing to do by mUninstallDialog is null"
-
-    invoke-virtual {v0, v1}, Lcom/smartisanos/launcher/va;->info(Ljava/lang/String;)V
-
-    :cond_0
     return-void
 
-    :cond_1
+    :queue_cancel_scene
+    # Public uninstall UI has no private dialog. Always queue scene cleanup.
     const/4 v0, 0x1
 
     sput-boolean v0, Lcom/smartisanos/launcher/a/oa;->kk:Z
@@ -601,6 +594,26 @@
     sget-boolean v0, Lcom/smartisanos/launcher/a/oa;->hk:Z
 
     return v0
+.end method
+
+.method public static cancelSystemUninstall()V
+    .locals 3
+
+    # Reuse the original foreground cancellation event and its completion callback.
+    const/4 v0, 0x0
+    sput-boolean v0, Lcom/smartisanos/launcher/a/oa;->kk:Z
+
+    const/4 v0, 0x1
+    sput-boolean v0, Lcom/smartisanos/launcher/a/oa;->hk:Z
+
+    new-instance v0, Lcom/smartisanos/launcher/a/oa;
+    invoke-direct {v0}, Lcom/smartisanos/launcher/a/oa;-><init>()V
+    const/4 v1, 0x1
+    invoke-virtual {v0, v1}, Lcom/smartisanos/launcher/a/oa;->Y(I)Lcom/smartisanos/smengine/n;
+    move-result-object v0
+    const/4 v1, 0x0
+    invoke-virtual {v0, v1}, Lcom/smartisanos/smengine/n;->q(F)V
+    return-void
 .end method
 
 .method public static hd()V

@@ -1543,6 +1543,63 @@
     return-void
 .end method
 
+.method public getStaticTargetTextureName()Ljava/lang/String;
+    .locals 4
+
+    # The incoming face already owns the final raster. Do not rebuild its key
+    # from the outgoing Cell, whose shadow identity belongs to the old theme.
+    iget-object v0, p0, Lcom/smartisanos/launcher/view/a/pa;->lQ:[Lcom/smartisanos/launcher/view/a/g;
+
+    if-eqz v0, :cond_no_static_target
+
+    const/4 v1, 0x1
+
+    aget-object v0, v0, v1
+
+    if-eqz v0, :cond_no_static_target
+
+    iget-object v1, v0, Lcom/smartisanos/launcher/view/a/g;->Rj:Lcom/smartisanos/launcher/data/ItemInfo;
+
+    if-eqz v1, :cond_no_static_target
+
+    iget-boolean v2, v1, Lcom/smartisanos/launcher/data/ItemInfo;->mFGTransparentAndBlackWhiteFlag:Z
+
+    invoke-static {v1, v2}, Lcom/smartisanos/launcher/theme/IconRasterDiagnostics;->useStaticApplicationPipeline(Ljava/lang/Object;Z)Z
+
+    move-result v1
+
+    if-eqz v1, :cond_no_static_target
+
+    iget-object v0, v0, Lcom/smartisanos/launcher/view/a/g;->sc:[Lcom/smartisanos/smengine/SceneNode;
+
+    const/4 v1, 0x0
+
+    aget-object v0, v0, v1
+
+    if-eqz v0, :cond_no_static_target
+
+    invoke-virtual {v0, v1}, Lcom/smartisanos/smengine/SceneNode;->getTextureName(I)Ljava/lang/String;
+
+    move-result-object v0
+
+    if-eqz v0, :cond_no_static_target
+
+    const-string v1, ":STATIC_APPLICATION_COMPOSER:"
+
+    invoke-virtual {v0, v1}, Ljava/lang/String;->contains(Ljava/lang/CharSequence;)Z
+
+    move-result v1
+
+    if-eqz v1, :cond_no_static_target
+
+    return-object v0
+
+    :cond_no_static_target
+    const/4 v0, 0x0
+
+    return-object v0
+.end method
+
 .method public destroy()V
     .locals 6
 

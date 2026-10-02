@@ -17,11 +17,18 @@ import android.widget.Toast;
  */
 public final class UninstallCompat {
     private static final String TAG = "UninstallCompat";
+    private static volatile boolean sPendingSystemUninstall;
+    private static volatile Object sPendingItem;
+    private static volatile boolean sRemovalCommitted;
 
     private UninstallCompat() {
     }
 
     public static void requestUninstall(String packageName) {
+        requestUninstall(packageName, null);
+    }
+
+    private static void requestUninstall(String packageName, Object item) {
         if (TextUtils.isEmpty(packageName)) {
             return;
         }
@@ -49,9 +56,13 @@ public final class UninstallCompat {
             }
         }
         if (context == null) {
+            queueSceneCleanup();
             Log.w(TAG, "requestUninstall ignored: no context for " + packageName);
             return;
         }
+        sPendingItem = item;
+        sRemovalCommitted = false;
+        sPendingSystemUninstall = true;
         try {
             Intent intent = new Intent(Intent.ACTION_UNINSTALL_PACKAGE, Uri.parse("package:" + packageName));
             intent.putExtra(Intent.EXTRA_RETURN_RESULT, false);
@@ -63,6 +74,9 @@ public final class UninstallCompat {
                 fallback.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 context.startActivity(fallback);
             } catch (Throwable fallbackError) {
+                sPendingSystemUninstall = false;
+                sPendingItem = null;
+                queueSceneCleanup();
                 Log.w(TAG, "requestUninstall failed for " + packageName, fallbackError);
                 try {
                     Toast.makeText(context, "无法打开系统卸载界面", Toast.LENGTH_SHORT).show();
@@ -72,14 +86,65 @@ public final class UninstallCompat {
         }
     }
 
+    /** Preserve the trash scene under system confirmation; restore it on return. */
+    public static boolean isSystemUninstallPending() {
+        return sPendingSystemUninstall;
+    }
+
+    public static void onLauncherResumed() {
+        if (!sPendingSystemUninstall) return;
+        sPendingSystemUninstall = false;
+        Object item = sPendingItem;
+        sPendingItem = null;
+        boolean removed = sRemovalCommitted;
+        sRemovalCommitted = false;
+        if (removed || (item != null
+                && com.smartisanos.launcher.model.LauncherModelRepository.finishSystemUninstall(item))) {
+            // Keep Sc.SO: the confirmed item-level removal owns the original trash animation.
+            return;
+        }
+        try {
+            Class.forName("com.smartisanos.launcher.a.oa")
+                    .getMethod("cancelSystemUninstall").invoke(null);
+        } catch (Throwable error) {
+            Log.w(TAG, "Cannot queue animated uninstall cancellation", error);
+            queueSceneCleanup();
+        }
+    }
+
+    /** Called only after the existing guarded item-level executor accepted removal. */
+    public static void onRemovalCommitted(Object item) {
+        Object pending = sPendingItem;
+        if (pending == null || item == null) return;
+        try {
+            long expected = ((Number) pending.getClass().getField("id").get(pending)).longValue();
+            long actual = ((Number) item.getClass().getField("id").get(item)).longValue();
+            int expectedUser = ((Number) pending.getClass().getField("userId").get(pending)).intValue();
+            int actualUser = ((Number) item.getClass().getField("userId").get(item)).intValue();
+            if (expected >= 0 && expected == actual && expectedUser == actualUser) sRemovalCommitted = true;
+        } catch (ReflectiveOperationException ignored) {
+        }
+    }
+
+    private static void queueSceneCleanup() {
+        try {
+            // fd queues the existing GL event; hd must never run on this thread.
+            Class.forName("com.smartisanos.launcher.a.oa").getMethod("fd").invoke(null);
+        } catch (Throwable error) {
+            Log.w(TAG, "Cannot queue uninstall scene cleanup", error);
+        }
+    }
+
     public static void requestUninstallItem(Object itemInfo) {
         if (itemInfo == null) {
             return;
         }
         try {
+            Object type = itemInfo.getClass().getField("itemType").get(itemInfo);
+            if (!(type instanceof Number) || ((Number) type).intValue() != 0) return;
             Object value = itemInfo.getClass().getField("packageName").get(itemInfo);
             if (value instanceof String) {
-                requestUninstall((String) value);
+                requestUninstall((String) value, itemInfo);
             }
         } catch (Throwable t) {
             Log.w(TAG, "requestUninstallItem ignored", t);

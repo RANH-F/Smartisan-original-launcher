@@ -138,6 +138,27 @@ public final class LauncherModelRepository {
     public void restoreAvailable(LauncherItemKey key, String reason) {
         Log.i(TAG, "[MODEL][RESTORE] key=" + key + " reason=" + reason);
     }
+
+    /** System UI has returned; reconcile only its exact application item through the frozen gate. */
+    public static boolean finishSystemUninstall(Object item) {
+        Context context = launcherApplication();
+        if (context == null || item == null || longField(item, "itemType", -1L) != 0L) return false;
+        long id = longField(item, "id", -1L);
+        int legacyUser = legacyUserId(item);
+        ProfileRepository profiles = new ProfileRepository(context);
+        UserHandle user = profiles.userForLegacyId(legacyUser);
+        LauncherItemKey key = new LauncherItemKey(profiles.serialFor(user), stringField(item, "packageName"),
+                stringField(item, "componentName"));
+        if (id < 0 || !key.isValid()) return false;
+        PackageState state = new PackageStateRepository(context, profiles).query(key, user, false).state;
+        RemovalGateway gate = new RemovalGateway();
+        RemovalGateway.RemovalRequest request = new RemovalGateway.RemovalRequest(key,
+                "system_uninstall_return", "SYSTEM_REMOVAL", false, state, profiles.stateFor(user),
+                id, legacyUser, 0);
+        if (gate.evaluate(request).outcome != RemovalGateway.Outcome.CONFIRMED) return false;
+        // A broadcast may already have committed this same item while the system window was open.
+        return currentModelItem(id) == null || new LauncherModelRepository(context).commitRemove(request);
+    }
     /**
      * System removal executor. It deliberately accepts an item identity, never a package-only request.
      * Aa.a(ItemInfo) is the original single-item writer; this facade has no package-wide executor.
@@ -161,6 +182,7 @@ public final class LauncherModelRepository {
             Class<?> itemInfo = Class.forName("com.smartisanos.launcher.data.ItemInfo");
             Class<?> aa = Class.forName("com.smartisanos.launcher.Aa");
             aa.getMethod("a", itemInfo).invoke(null, item);
+            com.smartisanos.launcher.compat.UninstallCompat.onRemovalCommitted(item);
             SearchIndexRepository.noteModelPackageDispatch(request.key.packageName, request.legacyUserId, "removed");
             MaintainedLauncherSettingsHost.clearCachedImprovedIcon(app, request.key.packageName);
             Log.i(TAG, "[MODEL][REMOVE_COMMIT] itemId=" + request.itemId + " key=" + request.key

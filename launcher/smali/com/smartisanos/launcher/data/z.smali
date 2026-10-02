@@ -840,6 +840,20 @@
 
     .line 27
     :cond_e
+    # Item-level removals may arrive in the same GL batch. Let both original
+    # uninstall phases finish before any following task can force-finish Sc.
+    invoke-static {}, Lcom/smartisanos/launcher/ub;->getInstance()Lcom/smartisanos/launcher/ub;
+
+    move-result-object v12
+
+    const/high16 v11, 0x10000
+
+    invoke-virtual {v12, v11}, Lcom/smartisanos/launcher/ub;->S(I)Z
+
+    move-result v12
+
+    if-nez v12, :goto_5
+
     invoke-virtual {v0}, Lcom/smartisanos/launcher/view/Eb;->Wh()V
 
     .line 28

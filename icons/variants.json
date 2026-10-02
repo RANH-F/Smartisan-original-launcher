@@ -23,8 +23,7 @@
       "am.sunrise.android.calendar.png"
     ],
     "android.zhibo8": [
-      "android.zhibo8.png",
-      "android.zhibo8_2.png"
+      "android.zhibo8.png"
     ],
     "app.kz_bot": [
       "app.kz_bot.png"
@@ -87,8 +86,7 @@
       "cn.com.whty.hfcard.png"
     ],
     "cn.damai": [
-      "cn.damai.png",
-      "cn.damai_2.png"
+      "cn.damai.png"
     ],
     "cn.deepink.reader": [
       "cn.deepink.reader.png"
@@ -97,8 +95,7 @@
       "cn.dxy.idxyer.png"
     ],
     "cn.dxy.medicinehelper": [
-      "cn.dxy.medicinehelper.png",
-      "cn.dxy.medicinehelper_2.png"
+      "cn.dxy.medicinehelper.png"
     ],
     "cn.eclicks.wzsearch": [
       "cn.eclicks.wzsearch.png"
@@ -152,7 +149,8 @@
       "cn.nubia.calculator2.preset.png"
     ],
     "cn.nubia.contacts": [
-      "cn.nubia.contacts.png"
+      "cn.nubia.contacts.png",
+      "cn.nubia.contacts_2.png"
     ],
     "cn.nubia.deskclock.preset": [
       "cn.nubia.deskclock.preset.png"
@@ -240,13 +238,11 @@
     ],
     "com.Kingdee.Express": [
       "com.Kingdee.Express.png",
-      "com.Kingdee.Express_2.png",
       "com.Kingdee.Express_3.png"
     ],
     "com.MobileTicket": [
       "com.MobileTicket.png",
-      "com.MobileTicket_2.png",
-      "com.MobileTicket_3.png"
+      "com.MobileTicket_2.png"
     ],
     "com.One.WoodenLetter": [
       "com.One.WoodenLetter.png",
@@ -296,8 +292,7 @@
       "com.aiwu.market.png"
     ],
     "com.alensw.PicFolder": [
-      "com.alensw.PicFolder.png",
-      "com.alensw.PicFolder_2.png"
+      "com.alensw.PicFolder.png"
     ],
     "com.ali.money.shield": [
       "com.ali.money.shield.png",
@@ -319,8 +314,7 @@
     ],
     "com.alibaba.wireless": [
       "com.alibaba.wireless.png",
-      "com.alibaba.wireless_3.png",
-      "com.alibaba.wireless_4.png"
+      "com.alibaba.wireless_3.png"
     ],
     "com.alicloud.databox": [
       "com.alicloud.databox.png",
@@ -343,8 +337,7 @@
       "com.amamiya.nanoiconpack.miracles.png"
     ],
     "com.amazon.kindlefc": [
-      "com.amazon.kindlefc.png",
-      "com.amazon.kindlefc_2.png"
+      "com.amazon.kindlefc.png"
     ],
     "com.ancda.parents": [
       "com.ancda.parents.png"
@@ -358,7 +351,6 @@
     ],
     "com.android.bankabc": [
       "com.android.bankabc.png",
-      "com.android.bankabc_2.png",
       "com.android.bankabc_3.png"
     ],
     "com.android.bbk.lockscreen3": [
@@ -392,7 +384,6 @@
     ],
     "com.android.stk": [
       "com.android.stk.png",
-      "com.android.stk_2.png",
       "com.android.stk_3.png",
       "com.android.stk_10.png",
       "com.android.stk_15.png",
@@ -405,16 +396,13 @@
       "com.android.thememanager.png"
     ],
     "com.android36kr.app": [
-      "com.android36kr.app.png",
-      "com.android36kr.app_2.png"
+      "com.android36kr.app.png"
     ],
     "com.androidesk": [
-      "com.androidesk.png",
-      "com.androidesk_2.png"
+      "com.androidesk.png"
     ],
     "com.anjuke.android.app": [
-      "com.anjuke.android.app.png",
-      "com.anjuke.android.app_2.png"
+      "com.anjuke.android.app.png"
     ],
     "com.antfortune.wealth": [
       "com.antfortune.wealth.png",
@@ -422,8 +410,7 @@
     ],
     "com.antutu.ABenchMark": [
       "com.antutu.ABenchMark.png",
-      "com.antutu.ABenchMark_2.png",
-      "com.antutu.ABenchMark_3.png"
+      "com.antutu.ABenchMark_2.png"
     ],
     "com.anydo": [
       "com.anydo.png"
@@ -449,8 +436,7 @@
       "com.appsfree.android.png"
     ],
     "com.aquila.bible": [
-      "com.aquila.bible.png",
-      "com.aquila.bible_2.png"
+      "com.aquila.bible.png"
     ],
     "com.artron.toutiao": [
       "com.artron.toutiao.png"
@@ -505,8 +491,7 @@
       "com.baidu.youavideo_2.png"
     ],
     "com.baidu.yuedu": [
-      "com.baidu.yuedu.png",
-      "com.baidu.yuedu_2.png"
+      "com.baidu.yuedu.png"
     ],
     "com.baixiang.chuxing": [
       "com.baixiang.chuxing.png"
@@ -599,9 +584,6 @@
       "com.caij.see.png",
       "com.caij.see_2.png"
     ],
-    "com.cainiao.wireless": [
-      "com.cainiao.wireless_2.png"
-    ],
     "com.camerasideas.instashot": [
       "com.camerasideas.instashot.png"
     ],
@@ -653,19 +635,16 @@
     ],
     "com.chinamworld.bocmbci": [
       "com.chinamworld.bocmbci.png",
-      "com.chinamworld.bocmbci_2.png",
       "com.chinamworld.bocmbci_3.png"
     ],
     "com.chinamworld.main": [
-      "com.chinamworld.main.png",
-      "com.chinamworld.main_2.png"
+      "com.chinamworld.main.png"
     ],
     "com.chinarainbow.tft": [
       "com.chinarainbow.tft.png"
     ],
     "com.chinatelecom.bestpayclient": [
       "com.chinatelecom.bestpayclient.png",
-      "com.chinatelecom.bestpayclient_2.png",
       "com.chinatelecom.bestpayclient_10.png"
     ],
     "com.chlova.kanqiula": [
@@ -784,12 +763,10 @@
       "com.crgt.ilife.png"
     ],
     "com.cs_credit_bank": [
-      "com.cs_credit_bank.png",
-      "com.cs_credit_bank_2.png"
+      "com.cs_credit_bank.png"
     ],
     "com.csair.mbp": [
-      "com.csair.mbp.png",
-      "com.csair.mbp_2.png"
+      "com.csair.mbp.png"
     ],
     "com.csd.newyunketang": [
       "com.csd.newyunketang.png"
@@ -806,8 +783,7 @@
       "com.cubic.autohome_2.png"
     ],
     "com.dangdang.buy2": [
-      "com.dangdang.buy2.png",
-      "com.dangdang.buy2_2.png"
+      "com.dangdang.buy2.png"
     ],
     "com.dangdang.reader": [
       "com.dangdang.reader.png"
@@ -831,8 +807,7 @@
       "com.dictionary_2.png"
     ],
     "com.didapinche.booking": [
-      "com.didapinche.booking.png",
-      "com.didapinche.booking_2.png"
+      "com.didapinche.booking.png"
     ],
     "com.didi.es.psngr": [
       "com.didi.es.psngr.png",
@@ -918,9 +893,7 @@
       "com.duokan.fiction.png"
     ],
     "com.duokan.phone.remotecontroller": [
-      "com.duokan.phone.remotecontroller.png",
-      "com.duokan.phone.remotecontroller_2.png",
-      "com.duokan.phone.remotecontroller_3.png"
+      "com.duokan.phone.remotecontroller.png"
     ],
     "com.duokan.reader": [
       "com.duokan.reader.png"
@@ -980,9 +953,7 @@
       "com.esbook.reader.png"
     ],
     "com.estrongs.android.pop": [
-      "com.estrongs.android.pop.png",
-      "com.estrongs.android.pop_2.png",
-      "com.estrongs.android.pop_3.png"
+      "com.estrongs.android.pop.png"
     ],
     "com.eusoft.dehelper": [
       "com.eusoft.dehelper.png"
@@ -1013,8 +984,7 @@
       "com.excean.gspace.b64.png"
     ],
     "com.facebook.katana": [
-      "com.facebook.katana.png",
-      "com.facebook.katana_2.png"
+      "com.facebook.katana.png"
     ],
     "com.facebook.mlite": [
       "com.facebook.mlite.png"
@@ -1169,8 +1139,7 @@
       "com.google.android.GoogleCameraGood.png"
     ],
     "com.google.android.apps.authenticator2": [
-      "com.google.android.apps.authenticator2.png",
-      "com.google.android.apps.authenticator2_2.png"
+      "com.google.android.apps.authenticator2.png"
     ],
     "com.google.android.apps.docs": [
       "com.google.android.apps.docs.png",
@@ -1180,8 +1149,7 @@
       "com.google.android.apps.docs_5.png"
     ],
     "com.google.android.apps.fitness": [
-      "com.google.android.apps.fitness.png",
-      "com.google.android.apps.fitness_2.png"
+      "com.google.android.apps.fitness.png"
     ],
     "com.google.android.apps.genie.geniewidget": [
       "com.google.android.apps.genie.geniewidget.png",
@@ -1220,7 +1188,6 @@
     ],
     "com.google.android.gm": [
       "com.google.android.gm.png",
-      "com.google.android.gm_2.png",
       "com.google.android.gm_3.png"
     ],
     "com.google.android.gms": [
@@ -1237,16 +1204,13 @@
     ],
     "com.google.android.inputmethod.latin": [
       "com.google.android.inputmethod.latin.png",
-      "com.google.android.inputmethod.latin_2.png",
       "com.google.android.inputmethod.latin_3.png"
     ],
     "com.google.android.inputmethod.pinyin": [
-      "com.google.android.inputmethod.pinyin.png",
-      "com.google.android.inputmethod.pinyin_2.png"
+      "com.google.android.inputmethod.pinyin.png"
     ],
     "com.google.android.keep": [
-      "com.google.android.keep.png",
-      "com.google.android.keep_2.png"
+      "com.google.android.keep.png"
     ],
     "com.google.android.music": [
       "com.google.android.music.png",
@@ -1291,8 +1255,7 @@
     ],
     "com.greenpoint.android.mc10086.activity": [
       "com.greenpoint.android.mc10086.activity.png",
-      "com.greenpoint.android.mc10086.activity_2.png",
-      "com.greenpoint.android.mc10086.activity_3.png"
+      "com.greenpoint.android.mc10086.activity_2.png"
     ],
     "com.gstarmc.android": [
       "com.gstarmc.android.png"
@@ -1321,12 +1284,10 @@
       "com.haier.uhome.uplus_2.png"
     ],
     "com.halfbrick.fruitninjafree": [
-      "com.halfbrick.fruitninjafree.png",
-      "com.halfbrick.fruitninjafree_2.png"
+      "com.halfbrick.fruitninjafree.png"
     ],
     "com.handsgo.jiakao.android": [
-      "com.handsgo.jiakao.android.png",
-      "com.handsgo.jiakao.android_2.png"
+      "com.handsgo.jiakao.android.png"
     ],
     "com.haodou.recipe": [
       "com.haodou.recipe.png"
@@ -1408,8 +1369,7 @@
     ],
     "com.homelink.android": [
       "com.homelink.android.png",
-      "com.homelink.android_2.png",
-      "com.homelink.android_3.png"
+      "com.homelink.android_2.png"
     ],
     "com.honeybee.app": [
       "com.honeybee.app.png"
@@ -1431,8 +1391,7 @@
       "com.hpplay.happycast.png"
     ],
     "com.htinns": [
-      "com.htinns.png",
-      "com.htinns_2.png"
+      "com.htinns.png"
     ],
     "com.huami.watch.hmwatchmanager": [
       "com.huami.watch.hmwatchmanager.png",
@@ -1467,8 +1426,7 @@
       "com.huodao.hdphone.png"
     ],
     "com.hupu.shihuo": [
-      "com.hupu.shihuo.png",
-      "com.hupu.shihuo_2.png"
+      "com.hupu.shihuo.png"
     ],
     "com.hxcx.morefun": [
       "com.hxcx.morefun.png"
@@ -1484,17 +1442,13 @@
       "com.icbc.im.png"
     ],
     "com.ichi2.anki": [
-      "com.ichi2.anki.png",
-      "com.ichi2.anki_2.png"
+      "com.ichi2.anki.png"
     ],
     "com.icloudoor.bizranking": [
-      "com.icloudoor.bizranking.png",
-      "com.icloudoor.bizranking_2.png"
+      "com.icloudoor.bizranking.png"
     ],
     "com.icoolme.android.weather": [
-      "com.icoolme.android.weather.png",
-      "com.icoolme.android.weather_2.png",
-      "com.icoolme.android.weather_3.png"
+      "com.icoolme.android.weather.png"
     ],
     "com.ifeng.news2": [
       "com.ifeng.news2.png"
@@ -1521,8 +1475,7 @@
       "com.imibaby.client.png"
     ],
     "com.immomo.momo": [
-      "com.immomo.momo.png",
-      "com.immomo.momo_2.png"
+      "com.immomo.momo.png"
     ],
     "com.imusic.iting": [
       "com.imusic.iting.png"
@@ -1538,16 +1491,13 @@
     ],
     "com.instagram.android": [
       "com.instagram.android.png",
-      "com.instagram.android_2.png",
-      "com.instagram.android_4.png"
+      "com.instagram.android_2.png"
     ],
     "com.intsig.BCRLite": [
-      "com.intsig.BCRLite.png",
-      "com.intsig.BCRLite_2.png"
+      "com.intsig.BCRLite.png"
     ],
     "com.intsig.camscanner": [
-      "com.intsig.camscanner.png",
-      "com.intsig.camscanner_2.png"
+      "com.intsig.camscanner.png"
     ],
     "com.invictus.impossiball": [
       "com.invictus.impossiball.png"
@@ -1570,8 +1520,7 @@
       "com.jd.app.reader_2.png"
     ],
     "com.jd.jrapp": [
-      "com.jd.jrapp.png",
-      "com.jd.jrapp_2.png"
+      "com.jd.jrapp.png"
     ],
     "com.jd.pingou": [
       "com.jd.pingou.png",
@@ -1603,8 +1552,7 @@
       "com.jingdong.app.mall_3.png"
     ],
     "com.jingdong.pdj": [
-      "com.jingdong.pdj.png",
-      "com.jingdong.pdj_2.png"
+      "com.jingdong.pdj.png"
     ],
     "com.jingyao.easybike": [
       "com.jingyao.easybike.png",
@@ -1629,7 +1577,6 @@
     ],
     "com.jsmcc": [
       "com.jsmcc.png",
-      "com.jsmcc_2.png",
       "com.jsmcc_3.png"
     ],
     "com.juapp8": [
@@ -1659,8 +1606,7 @@
       "com.kanlixiang.android.png"
     ],
     "com.kaola": [
-      "com.kaola.png",
-      "com.kaola_2.png"
+      "com.kaola.png"
     ],
     "com.kiloo.subwaysurf": [
       "com.kiloo.subwaysurf.png"
@@ -1670,15 +1616,13 @@
       "com.kingpoint.gmcchh_2.png"
     ],
     "com.kingsoft": [
-      "com.kingsoft.png",
-      "com.kingsoft_2.png"
+      "com.kingsoft.png"
     ],
     "com.kmplayer": [
       "com.kmplayer.png"
     ],
     "com.kmxs.reader": [
-      "com.kmxs.reader.png",
-      "com.kmxs.reader_2.png"
+      "com.kmxs.reader.png"
     ],
     "com.komoxo.octopusime": [
       "com.komoxo.octopusime.png"
@@ -1768,8 +1712,7 @@
       "com.lianjia.beike_2.png"
     ],
     "com.lietou.mishu": [
-      "com.lietou.mishu.png",
-      "com.lietou.mishu_2.png"
+      "com.lietou.mishu.png"
     ],
     "com.lilithgames.hgame.cn": [
       "com.lilithgames.hgame.cn.png"
@@ -1778,12 +1721,10 @@
       "com.lima.doodlejump.png"
     ],
     "com.lingan.seeyou": [
-      "com.lingan.seeyou.png",
-      "com.lingan.seeyou_2.png"
+      "com.lingan.seeyou.png"
     ],
     "com.lingan.yunqi": [
-      "com.lingan.yunqi.png",
-      "com.lingan.yunqi_2.png"
+      "com.lingan.yunqi.png"
     ],
     "com.linroid.zlive": [
       "com.linroid.zlive.png"
@@ -1818,7 +1759,6 @@
     ],
     "com.luojilab.player": [
       "com.luojilab.player.png",
-      "com.luojilab.player_2.png",
       "com.luojilab.player_3.png"
     ],
     "com.m1905.mobilefree": [
@@ -1831,8 +1771,7 @@
       "com.maimemo.android.momo.png"
     ],
     "com.manmanbuy.bijia": [
-      "com.manmanbuy.bijia.png",
-      "com.manmanbuy.bijia_2.png"
+      "com.manmanbuy.bijia.png"
     ],
     "com.mapp": [
       "com.mapp.png"
@@ -1864,8 +1803,7 @@
       "com.meitu.makeup.png"
     ],
     "com.meitu.meiyancamera": [
-      "com.meitu.meiyancamera.png",
-      "com.meitu.meiyancamera_2.png"
+      "com.meitu.meiyancamera.png"
     ],
     "com.meituan.banma.errand": [
       "com.meituan.banma.errand.png"
@@ -1904,8 +1842,7 @@
       "com.meizu.todolist.png"
     ],
     "com.meizu.voiceassistant": [
-      "com.meizu.voiceassistant.png",
-      "com.meizu.voiceassistant_2.png"
+      "com.meizu.voiceassistant.png"
     ],
     "com.meizu.wear": [
       "com.meizu.wear.png"
@@ -1918,12 +1855,8 @@
       "com.merriamwebster.png",
       "com.merriamwebster_2.png"
     ],
-    "com.mfp.jelly.oppo": [
-      "com.mfp.jelly.oppo.png"
-    ],
     "com.mfw.roadbook": [
-      "com.mfw.roadbook.png",
-      "com.mfw.roadbook_2.png"
+      "com.mfw.roadbook.png"
     ],
     "com.mfw.voiceguide": [
       "com.mfw.voiceguide.png"
@@ -1949,8 +1882,7 @@
       "com.miantan.myoface.png"
     ],
     "com.microsoft.bing": [
-      "com.microsoft.bing.png",
-      "com.microsoft.bing_2.png"
+      "com.microsoft.bing.png"
     ],
     "com.microsoft.emmx": [
       "com.microsoft.emmx.png"
@@ -1960,7 +1892,6 @@
     ],
     "com.microsoft.office.officehub": [
       "com.microsoft.office.officehub.png",
-      "com.microsoft.office.officehub_2.png",
       "com.microsoft.office.officehub_3.png"
     ],
     "com.microsoft.office.officelens": [
@@ -1980,8 +1911,7 @@
       "com.microsoft.office.word.png"
     ],
     "com.microsoft.skydrive": [
-      "com.microsoft.skydrive.png",
-      "com.microsoft.skydrive_2.png"
+      "com.microsoft.skydrive.png"
     ],
     "com.microsoft.todos": [
       "com.microsoft.todos.png"
@@ -1994,14 +1924,14 @@
       "com.midea.ai.appliances_2.png"
     ],
     "com.mihoyo.hyperion": [
-      "com.mihoyo.hyperion.png",
-      "com.mihoyo.hyperion_2.png"
+      "com.mihoyo.hyperion.png"
     ],
     "com.minitech.miniworld.TMobile.mi": [
       "com.minitech.miniworld.TMobile.mi.png"
     ],
     "com.miui.calculator": [
-      "com.miui.calculator.png"
+      "com.miui.calculator.png",
+      "com.miui.calculator_2.png"
     ],
     "com.miui.video": [
       "com.miui.video.png",
@@ -2014,8 +1944,7 @@
       "com.mjxq.app.png"
     ],
     "com.mmbox.xbrowser": [
-      "com.mmbox.xbrowser.png",
-      "com.mmbox.xbrowser_2.png"
+      "com.mmbox.xbrowser.png"
     ],
     "com.mmmono.mono": [
       "com.mmmono.mono.png"
@@ -2036,7 +1965,6 @@
     ],
     "com.moji.mjweather": [
       "com.moji.mjweather.png",
-      "com.moji.mjweather_2.png",
       "com.moji.mjweather_3.png"
     ],
     "com.mosoink.teach": [
@@ -2049,9 +1977,7 @@
       "com.mt.mtgif.png"
     ],
     "com.mt.mtxx.mtxx": [
-      "com.mt.mtxx.mtxx.png",
-      "com.mt.mtxx.mtxx_2.png",
-      "com.mt.mtxx.mtxx_3.png"
+      "com.mt.mtxx.mtxx.png"
     ],
     "com.mutangtech.qianji": [
       "com.mutangtech.qianji.png",
@@ -2099,7 +2025,10 @@
     "com.netease.cloudmusic": [
       "com.netease.cloudmusic.png",
       "com.netease.cloudmusic_2.png",
-      "com.netease.cloudmusic_3.png"
+      "com.netease.cloudmusic_3.png",
+      "com.netease.cloudmusic_4.png",
+      "com.netease.cloudmusic_5.png",
+      "com.netease.cloudmusic_6.png"
     ],
     "com.netease.edu.study": [
       "com.netease.edu.study.png"
@@ -2185,16 +2114,13 @@
       "com.nike.plusgpschina_2.png"
     ],
     "com.niksoftware.snapseed": [
-      "com.niksoftware.snapseed.png",
-      "com.niksoftware.snapseed_3.png"
+      "com.niksoftware.snapseed.png"
     ],
     "com.niu.cloud": [
-      "com.niu.cloud.png",
-      "com.niu.cloud_2.png"
+      "com.niu.cloud.png"
     ],
     "com.nowcasting.activity": [
       "com.nowcasting.activity.png",
-      "com.nowcasting.activity_2.png",
       "com.nowcasting.activity_3.png"
     ],
     "com.nowcoder.app.florida": [
@@ -2253,8 +2179,7 @@
       "com.pdfbuddies.pdfutilspro.png"
     ],
     "com.peopledailychina.activity": [
-      "com.peopledailychina.activity.png",
-      "com.peopledailychina.activity_2.png"
+      "com.peopledailychina.activity.png"
     ],
     "com.piaopiao.idphoto": [
       "com.piaopiao.idphoto.png"
@@ -2272,8 +2197,7 @@
       "com.pingan.carowner.png"
     ],
     "com.pingan.lifeinsurance": [
-      "com.pingan.lifeinsurance.png",
-      "com.pingan.lifeinsurance_2.png"
+      "com.pingan.lifeinsurance.png"
     ],
     "com.pingan.pabank.activity": [
       "com.pingan.pabank.activity.png"
@@ -2288,8 +2212,7 @@
     "com.pinguo.edit.sdk": [
       "com.pinguo.edit.sdk.png",
       "com.pinguo.edit.sdk_2.png",
-      "com.pinguo.edit.sdk_3.png",
-      "com.pinguo.edit.sdk_4.png"
+      "com.pinguo.edit.sdk_3.png"
     ],
     "com.pinterest": [
       "com.pinterest.png",
@@ -2316,8 +2239,7 @@
       "com.pmp.ppmoney.png"
     ],
     "com.popcap.pvz": [
-      "com.popcap.pvz.png",
-      "com.popcap.pvz_2.png"
+      "com.popcap.pvz.png"
     ],
     "com.ppdai.loan": [
       "com.ppdai.loan.png"
@@ -2327,8 +2249,7 @@
     ],
     "com.pplive.androidphone": [
       "com.pplive.androidphone.png",
-      "com.pplive.androidphone_2.png",
-      "com.pplive.androidphone_3.png"
+      "com.pplive.androidphone_2.png"
     ],
     "com.pumpkinteam.pumpkinplayer": [
       "com.pumpkinteam.pumpkinplayer.png"
@@ -2349,12 +2270,10 @@
       "com.qihoo.appstore.png"
     ],
     "com.qihoo.browser": [
-      "com.qihoo.browser.png",
-      "com.qihoo.browser_2.png"
+      "com.qihoo.browser.png"
     ],
     "com.qihoo.cleandroid_cn": [
       "com.qihoo.cleandroid_cn.png",
-      "com.qihoo.cleandroid_cn_2.png",
       "com.qihoo.cleandroid_cn_3.png"
     ],
     "com.qihoo.dr": [
@@ -2375,7 +2294,6 @@
     ],
     "com.qihoo360.mobilesafe": [
       "com.qihoo360.mobilesafe.png",
-      "com.qihoo360.mobilesafe_2.png",
       "com.qihoo360.mobilesafe_3.png",
       "com.qihoo360.mobilesafe_4.png"
     ],
@@ -2401,16 +2319,13 @@
       "com.qq.ac.android_2.png"
     ],
     "com.qq.reader": [
-      "com.qq.reader.png",
-      "com.qq.reader_2.png"
+      "com.qq.reader.png"
     ],
     "com.qqgame.happymj": [
-      "com.qqgame.happymj.png",
-      "com.qqgame.happymj_2.png"
+      "com.qqgame.happymj.png"
     ],
     "com.qqgame.hlddz": [
       "com.qqgame.hlddz.png",
-      "com.qqgame.hlddz_2.png",
       "com.qqgame.hlddz_10.png"
     ],
     "com.quanleimu.activity": [
@@ -2470,7 +2385,6 @@
     ],
     "com.rytong.ceair": [
       "com.rytong.ceair.png",
-      "com.rytong.ceair_2.png",
       "com.rytong.ceair_3.png"
     ],
     "com.samsung.android.app.edgetouch": [
@@ -2554,8 +2468,7 @@
       "com.sankuai.meituan.takeoutnew_2.png"
     ],
     "com.sankuai.movie": [
-      "com.sankuai.movie.png",
-      "com.sankuai.movie_2.png"
+      "com.sankuai.movie.png"
     ],
     "com.screeclibinvoke.RatCrack": [
       "com.screeclibinvoke.RatCrack.png"
@@ -2573,20 +2486,16 @@
     "com.sdu.didi.psnger": [
       "com.sdu.didi.psnger.png",
       "com.sdu.didi.psnger_2.png",
-      "com.sdu.didi.psnger_3.png",
-      "com.sdu.didi.psnger_4.png",
       "com.sdu.didi.psnger_10.png"
     ],
     "com.seblong.idream": [
       "com.seblong.idream.png"
     ],
     "com.sec.android.app.samsungapps": [
-      "com.sec.android.app.samsungapps.png",
-      "com.sec.android.app.samsungapps_2.png"
+      "com.sec.android.app.samsungapps.png"
     ],
     "com.sec.android.app.shealth": [
-      "com.sec.android.app.shealth.png",
-      "com.sec.android.app.shealth_2.png"
+      "com.sec.android.app.shealth.png"
     ],
     "com.seeyon.cmp": [
       "com.seeyon.cmp.png"
@@ -2595,8 +2504,7 @@
       "com.seven.two.zero.yun.png"
     ],
     "com.sf.activity": [
-      "com.sf.activity.png",
-      "com.sf.activity_3.png"
+      "com.sf.activity.png"
     ],
     "com.sgcc.cs": [
       "com.sgcc.cs.png"
@@ -2656,8 +2564,7 @@
       "com.sina.oasis.png"
     ],
     "com.sinovatech.unicom.ui": [
-      "com.sinovatech.unicom.ui.png",
-      "com.sinovatech.unicom.ui_2.png"
+      "com.sinovatech.unicom.ui.png"
     ],
     "com.sitech.ac": [
       "com.sitech.ac.png",
@@ -2697,8 +2604,7 @@
       "com.soft.blued_2.png"
     ],
     "com.sogou.activity.src": [
-      "com.sogou.activity.src.png",
-      "com.sogou.activity.src_2.png"
+      "com.sogou.activity.src.png"
     ],
     "com.sogou.map.android.maps": [
       "com.sogou.map.android.maps.png"
@@ -2713,16 +2619,13 @@
     ],
     "com.sohu.sohuvideo": [
       "com.sohu.sohuvideo.png",
-      "com.sohu.sohuvideo_2.png",
       "com.sohu.sohuvideo_3.png"
     ],
     "com.sony.playmemories.mobile": [
-      "com.sony.playmemories.mobile.png",
-      "com.sony.playmemories.mobile_2.png"
+      "com.sony.playmemories.mobile.png"
     ],
     "com.sonyericsson.conversations": [
-      "com.sonyericsson.conversations.png",
-      "com.sonyericsson.conversations_2.png"
+      "com.sonyericsson.conversations.png"
     ],
     "com.sonymobile.cinemapro": [
       "com.sonymobile.cinemapro.png"
@@ -2754,7 +2657,9 @@
     ],
     "com.spotify.music": [
       "com.spotify.music.png",
-      "com.spotify.music_2.png"
+      "com.spotify.music_3.png",
+      "com.spotify.music_4.png",
+      "com.spotify.music_6.png"
     ],
     "com.ss.android.article.news": [
       "com.ss.android.article.news.png"
@@ -2840,15 +2745,13 @@
       "com.tal.kaoyan.png"
     ],
     "com.taobao.etao": [
-      "com.taobao.etao.png",
-      "com.taobao.etao_2.png"
+      "com.taobao.etao.png"
     ],
     "com.taobao.homeai": [
       "com.taobao.homeai.png"
     ],
     "com.taobao.idlefish": [
-      "com.taobao.idlefish.png",
-      "com.taobao.idlefish_2.png"
+      "com.taobao.idlefish.png"
     ],
     "com.taobao.litetao": [
       "com.taobao.litetao.png"
@@ -2872,12 +2775,10 @@
       "com.taobao.shoppingstreets_2.png"
     ],
     "com.taou.maimai": [
-      "com.taou.maimai.png",
-      "com.taou.maimai_2.png"
+      "com.taou.maimai.png"
     ],
     "com.taptap": [
-      "com.taptap.png",
-      "com.taptap_2.png"
+      "com.taptap.png"
     ],
     "com.teambition.teambition": [
       "com.teambition.teambition.png"
@@ -2902,7 +2803,6 @@
     "com.tencent.androidqqmail": [
       "com.tencent.androidqqmail.png",
       "com.tencent.androidqqmail_2.png",
-      "com.tencent.androidqqmail_3.png",
       "com.tencent.androidqqmail_10.png"
     ],
     "com.tencent.cmocmna": [
@@ -3018,8 +2918,7 @@
       "com.tencent.qqgame.png",
       "com.tencent.qqgame_2.png",
       "com.tencent.qqgame_3.png",
-      "com.tencent.qqgame_4.png",
-      "com.tencent.qqgame_5.png"
+      "com.tencent.qqgame_4.png"
     ],
     "com.tencent.qqmusic": [
       "com.tencent.qqmusic.png",
@@ -3027,12 +2926,10 @@
       "com.tencent.qqmusic_3.png"
     ],
     "com.tencent.qqpim": [
-      "com.tencent.qqpim.png",
-      "com.tencent.qqpim_2.png"
+      "com.tencent.qqpim.png"
     ],
     "com.tencent.qqpimsecure": [
       "com.tencent.qqpimsecure.png",
-      "com.tencent.qqpimsecure_2.png",
       "com.tencent.qqpimsecure_3.png"
     ],
     "com.tencent.qqpinyin": [
@@ -3041,8 +2938,7 @@
       "com.tencent.qqpinyin_3.png"
     ],
     "com.tencent.qqsports": [
-      "com.tencent.qqsports.png",
-      "com.tencent.qqsports_2.png"
+      "com.tencent.qqsports.png"
     ],
     "com.tencent.qt.qtl": [
       "com.tencent.qt.qtl.png",
@@ -3050,16 +2946,14 @@
       "com.tencent.qt.qtl_3.png"
     ],
     "com.tencent.qt.sns": [
-      "com.tencent.qt.sns.png",
-      "com.tencent.qt.sns_2.png"
+      "com.tencent.qt.sns.png"
     ],
     "com.tencent.radio": [
       "com.tencent.radio.png",
       "com.tencent.radio_2.png"
     ],
     "com.tencent.research.drop": [
-      "com.tencent.research.drop.png",
-      "com.tencent.research.drop_2.png"
+      "com.tencent.research.drop.png"
     ],
     "com.tencent.shootgame": [
       "com.tencent.shootgame.png",
@@ -3072,8 +2966,7 @@
       "com.tencent.tgp.png"
     ],
     "com.tencent.tim": [
-      "com.tencent.tim.png",
-      "com.tencent.tim_2.png"
+      "com.tencent.tim.png"
     ],
     "com.tencent.tmgp.WePop": [
       "com.tencent.tmgp.WePop.png"
@@ -3098,8 +2991,7 @@
       "com.tencent.tmgp.sgame_2.png"
     ],
     "com.tencent.tmgp.speedmobile": [
-      "com.tencent.tmgp.speedmobile.png",
-      "com.tencent.tmgp.speedmobile_2.png"
+      "com.tencent.tmgp.speedmobile.png"
     ],
     "com.tencent.tmgp.supercell.brawlstars": [
       "com.tencent.tmgp.supercell.brawlstars.png"
@@ -3115,8 +3007,7 @@
     ],
     "com.tencent.token": [
       "com.tencent.token.png",
-      "com.tencent.token_2.png",
-      "com.tencent.token_3.png"
+      "com.tencent.token_2.png"
     ],
     "com.tencent.transfer": [
       "com.tencent.transfer.png"
@@ -3140,8 +3031,7 @@
       "com.tencent.weread.png"
     ],
     "com.tencent.wework": [
-      "com.tencent.wework.png",
-      "com.tencent.wework_2.png"
+      "com.tencent.wework.png"
     ],
     "com.tencent.wifimanager": [
       "com.tencent.wifimanager.png"
@@ -3150,8 +3040,7 @@
       "com.tencent.xriver.png"
     ],
     "com.tencent.zebra": [
-      "com.tencent.zebra.png",
-      "com.tencent.zebra_2.png"
+      "com.tencent.zebra.png"
     ],
     "com.teslacoilsw.launcher": [
       "com.teslacoilsw.launcher.png",
@@ -3165,7 +3054,6 @@
     ],
     "com.thestore.main": [
       "com.thestore.main.png",
-      "com.thestore.main_2.png",
       "com.thestore.main_3.png"
     ],
     "com.tianqi2345": [
@@ -3186,12 +3074,10 @@
     ],
     "com.tmri.app.main": [
       "com.tmri.app.main.png",
-      "com.tmri.app.main_2.png",
       "com.tmri.app.main_3.png"
     ],
     "com.todoist": [
-      "com.todoist.png",
-      "com.todoist_2.png"
+      "com.todoist.png"
     ],
     "com.togic.livevideo": [
       "com.togic.livevideo.png"
@@ -3200,8 +3086,7 @@
       "com.tomato.bookreader.png"
     ],
     "com.tongcheng.android": [
-      "com.tongcheng.android.png",
-      "com.tongcheng.android_2.png"
+      "com.tongcheng.android.png"
     ],
     "com.topjohnwu.magisk": [
       "com.topjohnwu.magisk.png",
@@ -3218,13 +3103,11 @@
       "com.tsy.tsy.png"
     ],
     "com.tuan800.tao800": [
-      "com.tuan800.tao800.png",
-      "com.tuan800.tao800_2.png"
+      "com.tuan800.tao800.png"
     ],
     "com.tudou.android": [
       "com.tudou.android.png",
-      "com.tudou.android_2.png",
-      "com.tudou.android_3.png"
+      "com.tudou.android_2.png"
     ],
     "com.tulingweier.yw.minihorsetravelapp": [
       "com.tulingweier.yw.minihorsetravelapp.png"
@@ -3241,8 +3124,7 @@
       "com.tuyoo.doudizhu.maintu.png"
     ],
     "com.twitter.android": [
-      "com.twitter.android.png",
-      "com.twitter.android_2.png"
+      "com.twitter.android.png"
     ],
     "com.ucamera.ucam": [
       "com.ucamera.ucam.png"
@@ -3277,8 +3159,7 @@
     ],
     "com.valvesoftware.android.steam.community": [
       "com.valvesoftware.android.steam.community.png",
-      "com.valvesoftware.android.steam.community_2.png",
-      "com.valvesoftware.android.steam.community_3.png"
+      "com.valvesoftware.android.steam.community_2.png"
     ],
     "com.videogo": [
       "com.videogo.png"
@@ -3302,17 +3183,14 @@
       "com.vsco.cam_3.png"
     ],
     "com.wacai365": [
-      "com.wacai365.png",
-      "com.wacai365_2.png"
+      "com.wacai365.png"
     ],
     "com.wandafilm.app": [
       "com.wandafilm.app.png",
-      "com.wandafilm.app_2.png",
       "com.wandafilm.app_3.png"
     ],
     "com.wandoujia.eyepetizer": [
-      "com.wandoujia.eyepetizer.png",
-      "com.wandoujia.eyepetizer_2.png"
+      "com.wandoujia.eyepetizer.png"
     ],
     "com.wandoujia.phoenix2": [
       "com.wandoujia.phoenix2.png"
@@ -3347,8 +3225,7 @@
       "com.wepie.wespy.png"
     ],
     "com.whatsapp": [
-      "com.whatsapp.png",
-      "com.whatsapp_2.png"
+      "com.whatsapp.png"
     ],
     "com.when.coco": [
       "com.when.coco.png"
@@ -3379,7 +3256,6 @@
     ],
     "com.wuba.zhuanzhuan": [
       "com.wuba.zhuanzhuan.png",
-      "com.wuba.zhuanzhuan_2.png",
       "com.wuba.zhuanzhuan_3.png"
     ],
     "com.wudaokou.hippo": [
@@ -3399,8 +3275,7 @@
       "com.xhey.xcamera.png"
     ],
     "com.xiachufang": [
-      "com.xiachufang.png",
-      "com.xiachufang_2.png"
+      "com.xiachufang.png"
     ],
     "com.xiaoji.emulator": [
       "com.xiaoji.emulator.png",
@@ -3421,16 +3296,14 @@
       "com.xiaomi.mitv.phone.tvassistant_2.png"
     ],
     "com.xiaomi.router": [
-      "com.xiaomi.router.png",
-      "com.xiaomi.router_2.png"
+      "com.xiaomi.router.png"
     ],
     "com.xiaomi.scanner": [
       "com.xiaomi.scanner.png",
       "com.xiaomi.scanner_2.png"
     ],
     "com.xiaomi.smarthome": [
-      "com.xiaomi.smarthome.png",
-      "com.xiaomi.smarthome_2.png"
+      "com.xiaomi.smarthome.png"
     ],
     "com.xiaomi.xiaoailite": [
       "com.xiaomi.xiaoailite.png"
@@ -3462,31 +3335,26 @@
       "com.xt.retouch.png"
     ],
     "com.xueqiu.android": [
-      "com.xueqiu.android.png",
-      "com.xueqiu.android_2.png"
+      "com.xueqiu.android.png"
     ],
     "com.xuexiaoyi.xxy": [
       "com.xuexiaoyi.xxy.png"
     ],
     "com.xunlei.downloadprovider": [
-      "com.xunlei.downloadprovider.png",
-      "com.xunlei.downloadprovider_2.png",
-      "com.xunlei.downloadprovider_3.png"
+      "com.xunlei.downloadprovider.png"
     ],
     "com.yaya.zone": [
       "com.yaya.zone.png",
       "com.yaya.zone_2.png"
     ],
     "com.yek.android.kfc.activitys": [
-      "com.yek.android.kfc.activitys.png",
-      "com.yek.android.kfc.activitys_2.png"
+      "com.yek.android.kfc.activitys.png"
     ],
     "com.yek.android.uniqlo": [
       "com.yek.android.uniqlo.png"
     ],
     "com.ygkj.chelaile.standard": [
-      "com.ygkj.chelaile.standard.png",
-      "com.ygkj.chelaile.standard_2.png"
+      "com.ygkj.chelaile.standard.png"
     ],
     "com.yiban.app": [
       "com.yiban.app.png",
@@ -3508,9 +3376,6 @@
     "com.yitantech.gaigai": [
       "com.yitantech.gaigai.png"
     ],
-    "com.yitong.mbank.psbc": [
-      "com.yitong.mbank.psbc_4.png"
-    ],
     "com.yitong.zjrc.mfs.android": [
       "com.yitong.zjrc.mfs.android.png",
       "com.yitong.zjrc.mfs.android_2.png"
@@ -3519,8 +3384,7 @@
       "com.yiyou.ga.png"
     ],
     "com.ylmf.androidclient": [
-      "com.ylmf.androidclient.png",
-      "com.ylmf.androidclient_2.png"
+      "com.ylmf.androidclient.png"
     ],
     "com.yoho": [
       "com.yoho.png",
@@ -3538,7 +3402,6 @@
     ],
     "com.youdao.note": [
       "com.youdao.note.png",
-      "com.youdao.note_2.png",
       "com.youdao.note_3.png"
     ],
     "com.youdao.translator": [
@@ -3549,8 +3412,7 @@
     ],
     "com.youku.phone": [
       "com.youku.phone.png",
-      "com.youku.phone_2.png",
-      "com.youku.phone_3.png"
+      "com.youku.phone_2.png"
     ],
     "com.yto.client.activity": [
       "com.yto.client.activity.png"
@@ -3572,8 +3434,7 @@
     ],
     "com.zhaopin.social": [
       "com.zhaopin.social.png",
-      "com.zhaopin.social_2.png",
-      "com.zhaopin.social_3.png"
+      "com.zhaopin.social_2.png"
     ],
     "com.zhihu.android": [
       "com.zhihu.android.png",
@@ -3587,8 +3448,7 @@
       "com.zhuofu.png"
     ],
     "com.ziroom.ziroomcustomer": [
-      "com.ziroom.ziroomcustomer.png",
-      "com.ziroom.ziroomcustomer_2.png"
+      "com.ziroom.ziroomcustomer.png"
     ],
     "com.zol.android": [
       "com.zol.android.png"
@@ -3626,9 +3486,7 @@
       "fm.qingting.customize.samsung.png"
     ],
     "fm.qingting.qtradio": [
-      "fm.qingting.qtradio.png",
-      "fm.qingting.qtradio_2.png",
-      "fm.qingting.qtradio_3.png"
+      "fm.qingting.qtradio.png"
     ],
     "fm.xiami.main": [
       "fm.xiami.main.png",
@@ -3704,8 +3562,7 @@
       "me.pkhope.longscreenshot.png"
     ],
     "me.tangke.gamecores": [
-      "me.tangke.gamecores.png",
-      "me.tangke.gamecores_2.png"
+      "me.tangke.gamecores.png"
     ],
     "me.weishu.exp": [
       "me.weishu.exp.png"
@@ -3733,8 +3590,7 @@
       "net.csdn.csdnplus_2.png"
     ],
     "net.dinglisch.android.taskerm": [
-      "net.dinglisch.android.taskerm.png",
-      "net.dinglisch.android.taskerm_2.png"
+      "net.dinglisch.android.taskerm.png"
     ],
     "net.evecom.android.mztapp": [
       "net.evecom.android.mztapp.png",
@@ -3754,8 +3610,7 @@
       "notion.id_2.png"
     ],
     "nutstore.android": [
-      "nutstore.android.png",
-      "nutstore.android_2.png"
+      "nutstore.android.png"
     ],
     "ola.com.user": [
       "ola.com.user.png"
@@ -3783,8 +3638,7 @@
       "org.mokee.recorder.png"
     ],
     "org.mozilla.firefox": [
-      "org.mozilla.firefox.png",
-      "org.mozilla.firefox_2.png"
+      "org.mozilla.firefox.png"
     ],
     "org.wikipedia": [
       "org.wikipedia.png",
@@ -3792,15 +3646,13 @@
     ],
     "org.zwanoo.android.speedtest": [
       "org.zwanoo.android.speedtest.png",
-      "org.zwanoo.android.speedtest_2.png",
       "org.zwanoo.android.speedtest_3.png"
     ],
     "photo.editor.polarr": [
       "photo.editor.polarr.png"
     ],
     "pinkdiary.xiaoxiaotu.com": [
-      "pinkdiary.xiaoxiaotu.com.png",
-      "pinkdiary.xiaoxiaotu.com_2.png"
+      "pinkdiary.xiaoxiaotu.com.png"
     ],
     "pl.solidexplorer2": [
       "pl.solidexplorer2.png"
@@ -3839,7 +3691,6 @@
     ],
     "tv.danmaku.bili": [
       "tv.danmaku.bili.png",
-      "tv.danmaku.bili_2.png",
       "tv.danmaku.bili_3.png",
       "tv.danmaku.bili_4.png",
       "tv.danmaku.bili_5.png",
@@ -4186,9 +4037,6 @@
     ],
     "cn.com.yunma.school.app": [
       "cn.com.yunma.school.app.png"
-    ],
-    "cn.com.zolsecond_hand": [
-      "cn.com.zolsecond_hand.png"
     ],
     "cn.com.zoltablet": [
       "cn.com.zoltablet.png"
@@ -4600,9 +4448,6 @@
     "com.adsafe": [
       "com.adsafe.png"
     ],
-    "com.adsk.sketchbookhdexpress": [
-      "com.adsk.sketchbookhdexpress.png"
-    ],
     "com.agilebits.onepassword": [
       "com.agilebits.onepassword.png"
     ],
@@ -4902,7 +4747,8 @@
       "com.anjuke.android.haozu.png"
     ],
     "com.anthropic.claude": [
-      "com.anthropic.claude.png"
+      "com.anthropic.claude.png",
+      "com.anthropic.claude_2.png"
     ],
     "com.ants360.yicamera": [
       "com.ants360.yicamera.png"
@@ -5003,9 +4849,6 @@
     "com.askfm": [
       "com.askfm.png"
     ],
-    "com.aspir.g3wlan.client": [
-      "com.aspir.g3wlan.client.png"
-    ],
     "com.aspire.g3wlan.client": [
       "com.aspire.g3wlan.client.png"
     ],
@@ -5038,9 +4881,6 @@
     ],
     "com.auramarker.zine": [
       "com.auramarker.zine.png"
-    ],
-    "com.aurora.store.nightly": [
-      "com.aurora.store.nightly.png"
     ],
     "com.autoconnectwifi.app": [
       "com.autoconnectwifi.app.png"
@@ -5315,8 +5155,7 @@
       "com.besttone.travelsky.png"
     ],
     "com.bet007.mobile.score": [
-      "com.bet007.mobile.score.png",
-      "com.bet007.mobile.score_2.png"
+      "com.bet007.mobile.score.png"
     ],
     "com.bf.sgs.hdexp": [
       "com.bf.sgs.hdexp.png"
@@ -6300,7 +6139,9 @@
       "com.duole.game.client.niuniu.png"
     ],
     "com.duolingo": [
-      "com.duolingo.png"
+      "com.duolingo.png",
+      "com.duolingo_2.png",
+      "com.duolingo_3.png"
     ],
     "com.duomi.android": [
       "com.duomi.android.png"
@@ -7150,9 +6991,6 @@
     "com.hcg.cok.gp": [
       "com.hcg.cok.gp.png"
     ],
-    "com.hcg.cok.mi": [
-      "com.hcg.cok.mi.png"
-    ],
     "com.hctforgf.gff": [
       "com.hctforgf.gff.png"
     ],
@@ -7619,9 +7457,6 @@
     "com.hyhy.view": [
       "com.hyhy.view.png"
     ],
-    "com.hypergryph.arknights.bilibili": [
-      "com.hypergryph.arknights.bilibili.png"
-    ],
     "com.hyww.wisdomtree": [
       "com.hyww.wisdomtree.png"
     ],
@@ -7810,9 +7645,6 @@
     ],
     "com.intlime.mark": [
       "com.intlime.mark.png"
-    ],
-    "com.intsig.BizCardReader": [
-      "com.intsig.BizCardReader.png"
     ],
     "com.intsig.camdict": [
       "com.intsig.camdict.png"
@@ -8186,8 +8018,7 @@
       "com.kanshushenqi.ebook.app.png"
     ],
     "com.kapp.ifont": [
-      "com.kapp.ifont.png",
-      "com.kapp.ifont_2.png"
+      "com.kapp.ifont.png"
     ],
     "com.kascend.chushou": [
       "com.kascend.chushou.png"
@@ -8281,9 +8112,6 @@
     ],
     "com.kiteguard": [
       "com.kiteguard.png"
-    ],
-    "com.kiwibrowser.browser.dev": [
-      "com.kiwibrowser.browser.dev.png"
     ],
     "com.kk.dict.chengyu": [
       "com.kk.dict.chengyu.png"
@@ -8732,9 +8560,6 @@
     "com.mapbar.rainbowbus": [
       "com.mapbar.rainbowbus.png"
     ],
-    "com.maple.madherogo.hlx": [
-      "com.maple.madherogo.hlx.png"
-    ],
     "com.mappn.gfan": [
       "com.mappn.gfan.png"
     ],
@@ -9074,7 +8899,8 @@
       "com.miui.personalassistant.png"
     ],
     "com.miui.player": [
-      "com.miui.player.png"
+      "com.miui.player.png",
+      "com.miui.player_2.png"
     ],
     "com.miui.powerkeeper": [
       "com.miui.powerkeeper.png"
@@ -9205,8 +9031,7 @@
       "com.modernsky.istv.png"
     ],
     "com.mojang.minecraftpe": [
-      "com.mojang.minecraftpe.png",
-      "com.mojang.minecraftpe_2.png"
+      "com.mojang.minecraftpe.png"
     ],
     "com.moliplayer.android": [
       "com.moliplayer.android.png"
@@ -9430,9 +9255,6 @@
     "com.netease.dhxy": [
       "com.netease.dhxy.png"
     ],
-    "com.netease.dwrg.aligames": [
-      "com.netease.dwrg.aligames.png"
-    ],
     "com.netease.enterprise.work": [
       "com.netease.enterprise.work.png"
     ],
@@ -9449,7 +9271,6 @@
       "com.netease.huatian.png"
     ],
     "com.netease.hyxd": [
-      "com.netease.hyxd.png",
       "com.netease.hyxd_2.png"
     ],
     "com.netease.loftercam.activity": [
@@ -9484,11 +9305,7 @@
       "com.netease.ntespm.png"
     ],
     "com.netease.onmyoji": [
-      "com.netease.onmyoji.png",
-      "com.netease.onmyoji_2.png"
-    ],
-    "com.netease.party.mi": [
-      "com.netease.party.mi.png"
+      "com.netease.onmyoji.png"
     ],
     "com.netease.pes": [
       "com.netease.pes.png"
@@ -9608,9 +9425,6 @@
     ],
     "com.nmhai.ideashow": [
       "com.nmhai.ideashow.png"
-    ],
-    "com.nononsenseapps.feeder.play": [
-      "com.nononsenseapps.feeder.play.png"
     ],
     "com.noodlecake.anothercasesolved": [
       "com.noodlecake.anothercasesolved.png"
@@ -9844,9 +9658,6 @@
     ],
     "com.panda.videoliveplatform": [
       "com.panda.videoliveplatform.png"
-    ],
-    "com.pandadastudio.ninjamustdie3.bilibili": [
-      "com.pandadastudio.ninjamustdie3.bilibili.png"
     ],
     "com.pandora.android": [
       "com.pandora.android.png"
@@ -10345,8 +10156,7 @@
       "com.rongcai.show.png"
     ],
     "com.rovio.angrybirds": [
-      "com.rovio.angrybirds.png",
-      "com.rovio.angrybirds_2.png"
+      "com.rovio.angrybirds.png"
     ],
     "com.rovio.angrybirdsfriends": [
       "com.rovio.angrybirdsfriends.png"
@@ -10641,8 +10451,7 @@
     ],
     "com.sina.mail": [
       "com.sina.mail.png",
-      "com.sina.mail_2.png",
-      "com.sina.mail_3.png"
+      "com.sina.mail_2.png"
     ],
     "com.sina.news": [
       "com.sina.news.png",
@@ -11363,9 +11172,6 @@
     ],
     "com.tencent.reading": [
       "com.tencent.reading.png"
-    ],
-    "com.tencent.readingplus": [
-      "com.tencent.readingplus.png"
     ],
     "com.tencent.tmgp.TCrossSGJQ": [
       "com.tencent.tmgp.TCrossSGJQ.png"
@@ -12649,9 +12455,6 @@
     "com.yidian.xiaomi": [
       "com.yidian.xiaomi.png"
     ],
-    "com.yidian.zxpad": [
-      "com.yidian.zxpad.png"
-    ],
     "com.yiding.jianhuo": [
       "com.yiding.jianhuo.png"
     ],
@@ -13084,9 +12887,6 @@
     ],
     "com.zhihu.daily.android": [
       "com.zhihu.daily.android.png"
-    ],
-    "com.zhihu.explore": [
-      "com.zhihu.explore.png"
     ],
     "com.zhiliaoapp.musically": [
       "com.zhiliaoapp.musically.png"
@@ -13624,9 +13424,6 @@
     "ly.pp.justpiano": [
       "ly.pp.justpiano.png"
     ],
-    "mark.via.gp": [
-      "mark.via.gp.png"
-    ],
     "mark.via": [
       "mark.via.png"
     ],
@@ -14009,24 +13806,19 @@
       "org.telegram.btcchat.png"
     ],
     "org.telegram.messenger": [
-      "org.telegram.messenger.png",
-      "org.telegram.messenger_2.png"
+      "org.telegram.messenger.png"
     ],
     "org.thunderdog.challegram": [
       "org.thunderdog.challegram.png"
     ],
     "org.videolan.vlc": [
-      "org.videolan.vlc.png",
-      "org.videolan.vlc_2.png"
+      "org.videolan.vlc.png"
     ],
     "org.wanmen.wanmenuni": [
       "org.wanmen.wanmenuni.png"
     ],
     "org.wen.taskman": [
       "org.wen.taskman.png"
-    ],
-    "org.wikipedia2": [
-      "org.wikipedia2.png"
     ],
     "org.xiequ.android.speedtest": [
       "org.xiequ.android.speedtest.png"
@@ -14055,9 +13847,6 @@
     "pl.idreams.pottery": [
       "pl.idreams.pottery.png"
     ],
-    "pl.idreams.potterylite.fhp": [
-      "pl.idreams.potterylite.fhp.png"
-    ],
     "pl.idreams.skyforce.mi": [
       "pl.idreams.skyforce.mi.png"
     ],
@@ -14069,12 +13858,6 @@
     ],
     "plus.H5A84F959": [
       "plus.H5A84F959.png"
-    ],
-    "portal_ring_inner_holo_large.9": [
-      "portal_ring_inner_holo_large.9.png"
-    ],
-    "portal_ring_inner_holo_large_dark.9": [
-      "portal_ring_inner_holo_large_dark.9.png"
     ],
     "pro.com.lantern": [
       "pro.com.lantern.png"

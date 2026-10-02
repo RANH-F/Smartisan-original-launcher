@@ -51,7 +51,15 @@
 
     const/16 v1, 0xb
 
+    if-eq v0, v1, :rotation_vector
+
+    const/16 v1, 0x14
+    if-eq v0, v1, :rotation_vector
+
+    const/16 v1, 0xf
     if-ne v0, v1, :cond_1
+
+    :rotation_vector
 
     .line 2
     iget-object p1, p1, Landroid/hardware/SensorEvent;->values:[F

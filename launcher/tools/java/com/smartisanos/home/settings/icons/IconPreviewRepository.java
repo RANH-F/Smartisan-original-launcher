@@ -281,7 +281,8 @@ public final class IconPreviewRepository implements ComponentCallbacks2 {
             for (Object t : tasks) {
                 if (t instanceof RenderTask) {
                     RenderTask task = (RenderTask) t;
-                    if (task.key != null && !hasActiveConsumers(task.key)) {
+                    if ((task.key != null && !hasActiveConsumers(task.key, task.callbacks))
+                            || (task.key == null && session.equals(task.session))) {
                         if (decodePool.getQueue().remove(t)) {
                             removedTasks++;
                         }
@@ -292,10 +293,10 @@ public final class IconPreviewRepository implements ComponentCallbacks2 {
         logSession("ICON_SESSION_CANCEL", session, pendingCount(), decodePool.getQueue().size(), removedCallbacks);
     }
 
-    private boolean hasActiveConsumers(IconRenderKey key) {
+    private boolean hasActiveConsumers(IconRenderKey key, ArrayList<PendingCallback> expected) {
         synchronized (pending) {
             ArrayList<PendingCallback> list = pending.get(key);
-            if (list == null || list.isEmpty()) return false;
+            if (list == null || list.isEmpty() || (expected != null && list != expected)) return false;
             for (PendingCallback pc : list) {
                 if (pc.session == null || isSessionActive(pc.session)) {
                     return true;
@@ -363,18 +364,21 @@ public final class IconPreviewRepository implements ComponentCallbacks2 {
             return;
         }
         logPerf("ICON_CACHE_MISS", key.packageName, key.componentName, key.userSerial, key.sourceType, key.targetPixelSize, 0);
+        final ArrayList<PendingCallback> requestCallbacks;
         synchronized (pending) {
             ArrayList<PendingCallback> callbacks = pending.get(key);
             if (callbacks != null) {
-                if (callback != null) callbacks.add(new PendingCallback(session, callback));
+                callbacks.add(new PendingCallback(session, callback));
                 return;
             }
             callbacks = new ArrayList<PendingCallback>();
-            if (callback != null) callbacks.add(new PendingCallback(session, callback));
+            // A prefetch has a consumer even though it has no UI callback.
+            callbacks.add(new PendingCallback(session, callback));
             pending.put(key, callbacks);
+            requestCallbacks = callbacks;
         }
         if (priority == Priority.P2_IDLE && pauseP2) {
-            finish(key, null);
+            finish(key, null, requestCallbacks);
             return;
         }
 
@@ -382,7 +386,8 @@ public final class IconPreviewRepository implements ComponentCallbacks2 {
             trimSessionQueueIfNeeded(session);
         }
 
-        decodePool.execute(new RenderTask(session, key, priority, loader, sequence.incrementAndGet()));
+        decodePool.execute(new RenderTask(session, key, priority, loader,
+                requestCallbacks, sequence.incrementAndGet()));
     }
 
     private void trimSessionQueueIfNeeded(RequestSession session) {
@@ -395,7 +400,7 @@ public final class IconPreviewRepository implements ComponentCallbacks2 {
                     sessionTasks.add((RenderTask) t);
                 }
             }
-            if (sessionTasks.size() > MAX_SESSION_QUEUE_SIZE) {
+            if (sessionTasks.size() >= MAX_SESSION_QUEUE_SIZE) {
                 RenderTask candidateToEvict = null;
                 for (RenderTask t : sessionTasks) {
                     if (t.priority == Priority.P2_IDLE) { candidateToEvict = t; break; }
@@ -406,8 +411,12 @@ public final class IconPreviewRepository implements ComponentCallbacks2 {
                     }
                 }
                 if (candidateToEvict != null) {
-                    decodePool.getQueue().remove(candidateToEvict);
-                    logSession("ICON_QUEUE_TRIM", session, pendingCount(), decodePool.getQueue().size(), sessionTasks.size());
+                    if (decodePool.getQueue().remove(candidateToEvict)) {
+                        if (candidateToEvict.key != null) {
+                            finish(candidateToEvict.key, null, candidateToEvict.callbacks);
+                        }
+                        logSession("ICON_QUEUE_TRIM", session, pendingCount(), decodePool.getQueue().size(), sessionTasks.size());
+                    }
                 }
             }
         } catch (Throwable ignored) {}
@@ -415,11 +424,17 @@ public final class IconPreviewRepository implements ComponentCallbacks2 {
 
     /** Schedules metadata/disk preparation without retaining or rasterizing a Bitmap. */
     public void schedule(Priority priority, final Runnable operation) {
-        if (operation == null || (priority == Priority.P2_IDLE && pauseP2)) return;
+        schedule(null, priority, operation);
+    }
+
+    public void schedule(RequestSession session, Priority priority, final Runnable operation) {
+        if (operation == null || (session != null && !isSessionActive(session))
+                || (priority == Priority.P2_IDLE && pauseP2)) return;
         if (priority != Priority.P2_IDLE) pauseP2 = false;
-        decodePool.execute(new RenderTask(null, priority, new DrawableLoader() {
+        if (session != null) trimSessionQueueIfNeeded(session);
+        decodePool.execute(new RenderTask(session, null, priority, new DrawableLoader() {
             public Drawable load() { operation.run(); return null; }
-        }, sequence.incrementAndGet()));
+        }, null, sequence.incrementAndGet()));
     }
 
     public Drawable cachedDrawable(String serializedKey) {
@@ -462,7 +477,7 @@ public final class IconPreviewRepository implements ComponentCallbacks2 {
     }
 
     private void trimOnlineDiskCache() {
-        File dir = new File(app.getFilesDir(), "online_icon_cache_v3");
+        File dir = new File(app.getFilesDir(), "online_icon_cache_v4");
         File[] files = dir.listFiles();
         if (files == null) return;
         long total = 0;
@@ -489,20 +504,31 @@ public final class IconPreviewRepository implements ComponentCallbacks2 {
 
     private final class RenderTask implements Runnable, Comparable<RenderTask> {
         final RequestSession session; final IconRenderKey key; final Priority priority; final DrawableLoader loader; final long order;
-        RenderTask(RequestSession session, IconRenderKey key, Priority priority, DrawableLoader loader, long order) {
-            this.session = session; this.key = key; this.priority = priority; this.loader = loader; this.order = order;
+        final ArrayList<PendingCallback> callbacks;
+        RenderTask(RequestSession session, IconRenderKey key, Priority priority, DrawableLoader loader,
+                   ArrayList<PendingCallback> callbacks, long order) {
+            this.session = session; this.key = key; this.priority = priority; this.loader = loader;
+            this.callbacks = callbacks; this.order = order;
         }
         RenderTask(IconRenderKey key, Priority priority, DrawableLoader loader, long order) {
-            this(null, key, priority, loader, order);
+            this(null, key, priority, loader, null, order);
         }
         public int compareTo(RenderTask other) {
             int result = priority.ordinal() - other.priority.ordinal();
             return result != 0 ? result : (order < other.order ? -1 : (order == other.order ? 0 : 1));
         }
         public void run() {
-            if (key != null && !hasActiveConsumers(key)) {
+            if (key == null) {
+                if ((session != null && !isSessionActive(session))
+                        || (priority == Priority.P2_IDLE && pauseP2)) return;
+                try { loader.load(); } catch (Exception error) {
+                    android.util.Log.w("SmartisanPerf", "ICON_METADATA_PREPARE_FAILED", error);
+                }
+                return;
+            }
+            if ((priority == Priority.P2_IDLE && pauseP2) || !hasActiveConsumers(key, callbacks)) {
                 logPerf("ICON_TASK_SKIP_NO_CONSUMER", key.packageName, key.componentName, key.userSerial, key.sourceType, key.targetPixelSize, 0);
-                finish(key, null);
+                finish(key, null, callbacks);
                 return;
             }
             Bitmap bitmap = null;
@@ -516,15 +542,27 @@ public final class IconPreviewRepository implements ComponentCallbacks2 {
             if (key != null) {
                 logPerf("ICON_DECODE_END", key.packageName, key.componentName, key.userSerial, key.sourceType, key.targetPixelSize, durationMs);
             }
-            if (key != null && bitmap != null) cache.put(key, bitmap);
-            if (key != null) finish(key, bitmap);
+            synchronized (pending) {
+                // Cancellation can remove this batch while a loader is still running.
+                if (!hasActiveConsumers(key, callbacks)) {
+                    if (bitmap != null) bitmap.recycle();
+                    return;
+                }
+                if (bitmap != null) cache.put(key, bitmap);
+            }
+            finish(key, bitmap, callbacks);
         }
     }
 
-    private void finish(final IconRenderKey key, final Bitmap bitmap) {
+    private void finish(final IconRenderKey key, final Bitmap bitmap,
+                        final ArrayList<PendingCallback> expected) {
+        final ArrayList<PendingCallback> callbacks;
+        synchronized (pending) {
+            if (pending.get(key) != expected) return;
+            callbacks = pending.remove(key);
+        }
+        // Detach before posting, so a visible retry never joins an evicted batch.
         main.post(new Runnable() { public void run() {
-            ArrayList<PendingCallback> callbacks;
-            synchronized (pending) { callbacks = pending.remove(key); }
             if (callbacks == null) return;
             int dropped = 0;
             for (PendingCallback item : callbacks) {
@@ -626,7 +664,7 @@ public final class IconPreviewRepository implements ComponentCallbacks2 {
         if (id != 0) return true;
 
         // Check local disk cache
-        File dir = new File(app.getFilesDir(), "online_icon_cache_v3");
+        File dir = new File(app.getFilesDir(), "online_icon_cache_v4");
         File diskFile = new File(dir, key + ".png");
         if (diskFile.exists() && diskFile.length() > 0) return true;
 
@@ -652,7 +690,7 @@ public final class IconPreviewRepository implements ComponentCallbacks2 {
             } catch (Throwable ignored) {}
         }
         // 2. Local disk cache
-        File dir = new File(app.getFilesDir(), "online_icon_cache_v3");
+        File dir = new File(app.getFilesDir(), "online_icon_cache_v4");
         File diskFile = new File(dir, sourceId + ".png");
         if (diskFile.exists() && diskFile.length() > 0) {
             try {
@@ -716,7 +754,7 @@ public final class IconPreviewRepository implements ComponentCallbacks2 {
             } catch (Throwable ignored) {}
         }
         // 2. Local disk cache
-        File dir = new File(app.getFilesDir(), "online_icon_cache_v3");
+        File dir = new File(app.getFilesDir(), "online_icon_cache_v4");
         File diskFile = new File(dir, sourceId + ".png");
         if (diskFile.exists() && diskFile.length() > 0) {
             try {
@@ -784,7 +822,7 @@ public final class IconPreviewRepository implements ComponentCallbacks2 {
 
     private void saveToDiskCache(String sourceId, byte[] data) {
         try {
-            File dir = new File(app.getFilesDir(), "online_icon_cache_v3");
+            File dir = new File(app.getFilesDir(), "online_icon_cache_v4");
             if (!dir.exists()) dir.mkdirs();
             File target = new File(dir, sourceId + ".png");
             File tmp = new File(dir, sourceId + ".tmp");

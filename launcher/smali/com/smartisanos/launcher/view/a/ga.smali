@@ -2219,6 +2219,33 @@
 .method public Li()V
     .locals 5
 
+    # Hand the actual incoming raster to the desktop before removing the cube.
+    # Active icons and legacy/special textures keep their original handoff.
+    iget-object v0, p0, Lcom/smartisanos/launcher/view/a/ga;->Zy:Lcom/smartisanos/launcher/view/a/pa;
+
+    if-eqz v0, :cond_static_handoff_done
+
+    invoke-virtual {v0}, Lcom/smartisanos/launcher/view/a/pa;->getStaticTargetTextureName()Ljava/lang/String;
+
+    move-result-object v0
+
+    if-eqz v0, :cond_static_handoff_done
+
+    iget-object v1, p0, Lcom/smartisanos/launcher/view/a/ga;->Qj:Lcom/smartisanos/launcher/view/a/g;
+
+    invoke-virtual {v1, v0}, Lcom/smartisanos/launcher/view/a/g;->La(Ljava/lang/String;)V
+
+    iget-object v1, v1, Lcom/smartisanos/launcher/view/a/g;->sc:[Lcom/smartisanos/smengine/SceneNode;
+
+    const/4 v2, 0x0
+
+    aget-object v1, v1, v2
+
+    if-eqz v1, :cond_static_handoff_done
+
+    invoke-virtual {v1, v0}, Lcom/smartisanos/smengine/SceneNode;->setImageName(Ljava/lang/String;)V
+
+    :cond_static_handoff_done
     const/4 v0, 0x1
 
     .line 1

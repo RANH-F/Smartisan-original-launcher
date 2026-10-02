@@ -385,5 +385,8 @@
 
     invoke-static {p0, v0}, Lcom/smartisanos/launcher/view/Sc;->b(Lcom/smartisanos/launcher/view/Sc;Lcom/smartisanos/smengine/g;)Lcom/smartisanos/smengine/g;
 
+    # Non-trash removals finish here; trash removals stay gated until Pc.
+    invoke-static {}, Lcom/smartisanos/launcher/data/z;->Ge()V
+
     return-void
 .end method

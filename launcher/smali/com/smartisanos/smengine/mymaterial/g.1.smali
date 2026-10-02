@@ -5222,7 +5222,8 @@
 
     invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
 
-    const-string v1, "vec2 SFSOffset(in vec3 lightPos, in vec3 planePos,in float dist, in float lightRadius){\n\t// when z = 0 ,get x-y distance from ray to icon\n\tfloat rDist2D = sqrt(pow(lightPos.x-planePos.x,2.0) + pow(lightPos.y - planePos.y,2.0));\n\t// get 3D Distance from ray to icon\n\tfloat length2Icon = length(lightPos - planePos);\n\t// get 3D & 2D Distance\'s Cos Value\n\tfloat cosTheta = rDist2D/length2Icon;\n\t// get 2D Distance Value and X Axis\'s cos Value\n\tfloat cosBeta = lightPos.x/rDist2D;\n\t// get 2D Distance Value and Y Axis\'s cos Value\n\tfloat sinBeta = lightPos.y/rDist2D;\n\n\tfloat lightPosZ = max(0.0,lightPos.z/lightRadius);\n\n\t// Max Shadow Offset in Pixel,distValue*1000.0 = pixel\n\tfloat distValue  = dist;\n\t// Shadow Offset Distance in 2D\n\tfloat pl = distValue / 1000.0 * cosTheta;\n\t// Shadow Offset Distance in X\n\tfloat px = pl*cosBeta;\n\t// Shadow Offset Distance in Y\n\tfloat py = pl*sinBeta;\n\treturn vec2(px,py);\n\n}\n"
+    # Preserve measured Adreno 640 mediump projection without Mali overflow.
+    const-string v1, "vec2 SFSOffset(in vec3 lightPos, in vec3 planePos, in float dist, in float lightRadius) {\n    vec3 scaledLight = lightPos * (1.0 / 4096.0);\n    vec3 scaledPlane = planePos * (1.0 / 4096.0);\n    float distanceToIcon = min(max(length(scaledLight - scaledPlane) * 4096.0, 0.001), 256.0);\n    return (dist / 1000.0) * (lightPos.xy / distanceToIcon);\n}\n"
 
     invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
 

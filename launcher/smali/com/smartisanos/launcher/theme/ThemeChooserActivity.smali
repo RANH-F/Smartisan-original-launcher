@@ -105,7 +105,7 @@
 .method protected onDestroy()V
     .locals 1
 
-    invoke-static {p0}, Lcom/smartisanos/launcher/theme/MaintainedLauncherSettingsHost;->clearSettingsBackActionPublic(Landroid/app/Activity;)V
+    invoke-static {p0}, Lcom/smartisanos/launcher/theme/MaintainedLauncherSettingsHost;->onSettingsHostDestroyed(Landroid/app/Activity;)V
 
     invoke-super {p0}, Landroid/app/Activity;->onDestroy()V
 
@@ -159,4 +159,34 @@
     move-result v0
 
     return v0
+.end method
+
+.method protected onPause()V
+    .locals 0
+
+    invoke-static {p0}, Lcom/smartisanos/launcher/theme/MaintainedLauncherSettingsHost;->onSettingsHostPaused(Landroid/app/Activity;)V
+
+    invoke-super {p0}, Landroid/app/Activity;->onPause()V
+
+    return-void
+.end method
+
+.method public startActivityForResult(Landroid/content/Intent;I)V
+    .locals 0
+
+    invoke-super {p0, p1, p2}, Landroid/app/Activity;->startActivityForResult(Landroid/content/Intent;I)V
+
+    invoke-static {p0}, Lcom/smartisanos/launcher/theme/MaintainedLauncherSettingsHost;->onSettingsExternalLaunch(Landroid/app/Activity;)V
+
+    return-void
+.end method
+
+.method public startActivityForResult(Landroid/content/Intent;ILandroid/os/Bundle;)V
+    .locals 0
+
+    invoke-super {p0, p1, p2, p3}, Landroid/app/Activity;->startActivityForResult(Landroid/content/Intent;ILandroid/os/Bundle;)V
+
+    invoke-static {p0}, Lcom/smartisanos/launcher/theme/MaintainedLauncherSettingsHost;->onSettingsExternalLaunch(Landroid/app/Activity;)V
+
+    return-void
 .end method

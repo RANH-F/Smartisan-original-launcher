@@ -171,6 +171,9 @@ public final class MaintainedLauncherSettingsHost {
     private static Thread sQuickSearchTokenThread;
     private static android.os.Handler sThemePageHandler;
     private static Runnable sThemePageRunnable;
+    private static WeakReference<Activity> sThemePollingOwner;
+    private static WeakReference<ThemePreviewAdapter> sThemePollingInstalled;
+    private static WeakReference<ThemePreviewAdapter> sThemePollingOnline;
     private static volatile String sPendingThemeLoadingThemeId;
     private static ThemeLoadingSystemBarsState sThemeLoadingSystemBars;
     private static boolean sDynamicWeatherLocationPermissionPending;
@@ -365,14 +368,30 @@ public final class MaintainedLauncherSettingsHost {
     private static Object sSystemSettingsBackCallback;
     private static final Map<Activity, SettingsHomeGestureState> sSettingsHomeGestures =
             new WeakHashMap<Activity, SettingsHomeGestureState>();
+    private static final Map<Activity, SettingsSession> sSettingsSessions =
+            new WeakHashMap<Activity, SettingsSession>();
+
+    // A UI session ends only after an ordinary desktop return followed by screen-off.
+    static final class SettingsSession {
+        boolean resumed;
+        boolean returnedToDesktop;
+        boolean externalLaunch;
+        void resume() { resumed = true; returnedToDesktop = false; externalLaunch = false; }
+        void pause() { resumed = false; }
+        void desktopReturn() { if (!resumed) returnedToDesktop = true; }
+        void externalLaunch() { externalLaunch = true; returnedToDesktop = false; }
+        boolean closeOnScreenOff() { return !resumed && returnedToDesktop && !externalLaunch; }
+    }
+
     private static final Map<String, Integer> sSettingsPageScrollStates =
             new HashMap<String, Integer>();
     public static volatile boolean sLauncherFrameReportPending;
-    private static final String SMARTISAN_ICON_CACHE_PREFS = "online_icon_cache_v3";
-    private static final String SMARTISAN_ICON_CACHE_DIR = "online_icon_cache_v3";
+    private static final String SMARTISAN_ICON_CACHE_PREFS = "online_icon_cache_v4";
+    private static final String SMARTISAN_ICON_CACHE_DIR = "online_icon_cache_v4";
     private static final String ICON_RASTER_REVISION_PREF = "icon_raster_revision";
     private static final String ICON_RASTER_REVISION = "composer:v2|geometry:v"
-            + IconVisualMetrics.REVISION + "|unified-outer-envelope:v2|resize-equals-origin";
+            + IconVisualMetrics.REVISION + "|unified-outer-envelope:v2|resize-equals-origin"
+            + "|sources:" + SMARTISAN_ICON_CACHE_DIR;
     private static Map<String, List<String>> sIconVariants;
     // Mirrors can fail temporarily. A week-long miss cache made recognized
     // system apps (notably vendor Gallery aliases) look permanently unknown.
@@ -574,6 +593,64 @@ public final class MaintainedLauncherSettingsHost {
                 + (activity == null ? "null" : activity.getClass().getSimpleName()));
     }
 
+    private static boolean ownsSettingsSession(Activity activity) {
+        return activity != null && "com.smartisanos.launcher.theme.ThemeChooserActivity"
+                .equals(activity.getClass().getName());
+    }
+
+    public static void onSettingsExternalLaunch(Activity activity) {
+        if (!ownsSettingsSession(activity)) return;
+        SettingsSession session = sSettingsSessions.get(activity);
+        if (session != null) session.externalLaunch();
+    }
+
+    public static void onSettingsHostPaused(Activity activity) {
+        SettingsSession session = sSettingsSessions.get(activity);
+        if (session != null) session.pause();
+        if (sThemePollingOwner != null && sThemePollingOwner.get() == activity) {
+            pauseThemePagePolling();
+        }
+    }
+
+    public static void onSettingsDesktopResumed(Activity launcher) {
+        PowerManager power = (PowerManager) launcher.getSystemService(Context.POWER_SERVICE);
+        android.app.KeyguardManager keyguard = (android.app.KeyguardManager)
+                launcher.getSystemService(Context.KEYGUARD_SERVICE);
+        // A HOME window restored underneath Keyguard is not a user desktop return.
+        if (power == null || !power.isInteractive() || keyguard == null
+                || keyguard.isKeyguardLocked()) return;
+        for (SettingsSession session : sSettingsSessions.values()) session.desktopReturn();
+    }
+
+    public static void onSettingsScreenOff() {
+        for (Activity activity : new ArrayList<Activity>(sSettingsSessions.keySet())) {
+            SettingsSession session = sSettingsSessions.get(activity);
+            if (activity == null || session == null || !session.closeOnScreenOff()
+                    || activity.isFinishing() || activity.isDestroyed()) continue;
+            // Backup/restore work owns its completion UI until the operation finishes.
+            if (sPendingBackupPreviewRoot != null
+                    || com.smartisanos.launcher.backup.BackupOperationLock.isBusy()) continue;
+            Log.i("SettingsNavigation", "SETTINGS_SESSION_END reason=DESKTOP_SCREEN_OFF");
+            onSettingsHostDestroyed(activity);
+            activity.finish();
+        }
+    }
+
+    public static void onSettingsHostDestroyed(Activity activity) {
+        clearSettingsBackActionPublic(activity);
+        if (!ownsSettingsSession(activity)) return;
+        sSettingsSessions.remove(activity);
+        if (sCurrentIconPageOwner != null && sCurrentIconPageOwner.get() == activity) {
+            cancelCurrentIconPageSession(activity);
+        }
+        if (sThemePollingOwner != null && sThemePollingOwner.get() == activity) {
+            stopThemePagePolling();
+        }
+        sThemePageScrollY = -1;
+        sRestoreIconPageScrollY = -1;
+        clearThemePreviews();
+    }
+
     public static void show(Activity activity) {
         show(activity, -1, false);
     }
@@ -605,6 +682,7 @@ public final class MaintainedLauncherSettingsHost {
     private static final class SettingsHomeGestureState {
         boolean fromBottom;
         boolean consuming;
+        float downRawX;
         float downRawY;
     }
 
@@ -624,11 +702,17 @@ public final class MaintainedLauncherSettingsHost {
             View decor = activity.getWindow().getDecorView();
             float guard = 48f * activity.getResources().getDisplayMetrics().density;
             state.fromBottom = event.getY() >= decor.getHeight() - guard;
+            state.downRawX = event.getRawX();
             state.downRawY = event.getRawY();
             state.consuming = false;
         } else if (action == MotionEvent.ACTION_MOVE && state.fromBottom && !state.consuming) {
             float threshold = 4f * activity.getResources().getDisplayMetrics().density;
-            if (state.downRawY - event.getRawY() > threshold) {
+            float horizontal = Math.abs(event.getRawX() - state.downRawX);
+            float upward = state.downRawY - event.getRawY();
+            // A bottom control that owns a horizontal drag keeps that gesture.
+            if (horizontal > threshold && horizontal > Math.abs(upward)) {
+                state.fromBottom = false;
+            } else if (upward > threshold && upward > horizontal) {
                 MotionEvent cancel = MotionEvent.obtain(event);
                 cancel.setAction(MotionEvent.ACTION_CANCEL);
                 activity.getWindow().superDispatchTouchEvent(cancel);
@@ -4102,6 +4186,9 @@ public final class MaintainedLauncherSettingsHost {
                                               final ThemePreviewAdapter installedAdapter,
                                               final ThemePreviewAdapter onlineAdapter) {
         stopThemePagePolling();
+        sThemePollingOwner = new WeakReference<Activity>(activity);
+        sThemePollingInstalled = new WeakReference<ThemePreviewAdapter>(installedAdapter);
+        sThemePollingOnline = new WeakReference<ThemePreviewAdapter>(onlineAdapter);
         sThemePageHandler = new android.os.Handler(android.os.Looper.getMainLooper());
         sThemePageRunnable = new Runnable() {
             public void run() {
@@ -4121,6 +4208,8 @@ public final class MaintainedLauncherSettingsHost {
                 if (onlineAdapter != null) onlineAdapter.notifyDataSetChanged();
                 if (hasActive && sThemePageHandler != null) {
                     sThemePageHandler.postDelayed(this, 1000);
+                } else {
+                    pauseThemePagePolling();
                 }
             }
         };
@@ -4128,6 +4217,13 @@ public final class MaintainedLauncherSettingsHost {
     }
 
     private static void stopThemePagePolling() {
+        pauseThemePagePolling();
+        sThemePollingOwner = null;
+        sThemePollingInstalled = null;
+        sThemePollingOnline = null;
+    }
+
+    private static void pauseThemePagePolling() {
         if (sThemePageHandler != null && sThemePageRunnable != null) {
             sThemePageHandler.removeCallbacks(sThemePageRunnable);
             sThemePageHandler = null;
@@ -4349,6 +4445,7 @@ public final class MaintainedLauncherSettingsHost {
     }
 
     private static IconPreviewRepository.RequestSession sCurrentIconPageSession;
+    private static WeakReference<Activity> sCurrentIconPageOwner;
 
     private static void cancelCurrentIconPageSession(Context context) {
         if (sCurrentIconPageSession != null) {
@@ -4356,6 +4453,7 @@ public final class MaintainedLauncherSettingsHost {
                 IconPreviewRepository.get(context).cancelSession(sCurrentIconPageSession);
             } catch (Throwable ignored) {}
             sCurrentIconPageSession = null;
+            sCurrentIconPageOwner = null;
         }
     }
 
@@ -4371,6 +4469,7 @@ public final class MaintainedLauncherSettingsHost {
         try {
             cancelCurrentIconPageSession(activity);
             sCurrentIconPageSession = IconPreviewRepository.get(activity).openSession("APP_ICON_LIST");
+            sCurrentIconPageOwner = new WeakReference<Activity>(activity);
             sRestoreIconPageScrollY = restoreScrollY;
             try {
                 Class.forName("com.smartisanos.home.settings.icons.IconPackManager")
@@ -5759,6 +5858,7 @@ public final class MaintainedLauncherSettingsHost {
                 .putBoolean(PREF_DYNAMIC_WEATHER_LOCATION_REQUESTED, true).commit();
         Log.i(LOG_TAG, "DYNAMIC_ICON_PERMISSION_REQUESTED permission=ACCESS_COARSE_LOCATION");
         try {
+            onSettingsExternalLaunch(activity);
             activity.requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
                     REQUEST_DYNAMIC_WEATHER_LOCATION);
         } catch (Throwable error) {
@@ -6503,6 +6603,26 @@ public final class MaintainedLauncherSettingsHost {
     public static void onSettingsHostResumed(Activity activity) {
         if (activity == null) {
             return;
+        }
+        if (ownsSettingsSession(activity)) {
+            SettingsSession session = sSettingsSessions.get(activity);
+            if (session == null) {
+                session = new SettingsSession();
+                sSettingsSessions.put(activity, session);
+            }
+            session.resume();
+            if (sThemePollingOwner != null && sThemePollingOwner.get() == activity) {
+                ViewGroup content = activity.findViewById(android.R.id.content);
+                View root = content == null || content.getChildCount() == 0 ? null
+                        : content.getChildAt(content.getChildCount() - 1);
+                if ("THEME_LIST".equals(settingsPageId(root))) {
+                    ThemePreviewAdapter installed = sThemePollingInstalled == null
+                            ? null : sThemePollingInstalled.get();
+                    ThemePreviewAdapter online = sThemePollingOnline == null
+                            ? null : sThemePollingOnline.get();
+                    startThemePagePolling(activity, installed, online);
+                }
+            }
         }
         applyLauncherNavigationBarSetting(activity);
         SharedPreferences settings = activity.getSharedPreferences("launcher_settings",
@@ -10359,13 +10479,19 @@ public final class MaintainedLauncherSettingsHost {
                 }
                 DownloadManager manager = (DownloadManager) activity.getSystemService(Context.DOWNLOAD_SERVICE);
                 if (manager == null) {
+                    if (btnDownload != null) btnDownload.setEnabled(true);
+                    Toast.makeText(activity, "系统下载服务不可用", Toast.LENGTH_SHORT).show();
                     return;
                 }
                 Cursor cursor = null;
                 try {
                     cursor = manager.query(new DownloadManager.Query().setFilterById(downloadId));
                     if (cursor == null || !cursor.moveToFirst()) {
-                        handler.postDelayed(this, 800);
+                        clearThemeDownloadRecord(activity, entry);
+                        if (btnDownload != null) btnDownload.setEnabled(true);
+                        Toast.makeText(activity, "下载任务已失效，请重新下载", Toast.LENGTH_SHORT).show();
+                        updateThemeDetail(activity, getMaintainedResources(activity), entry, null,
+                                btnOk, btnDownload, statusIcon);
                         return;
                     }
                     int status = cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS));
@@ -10395,7 +10521,11 @@ public final class MaintainedLauncherSettingsHost {
                     } else {
                         showMaintainedStatusIcon(getMaintainedResources(activity), statusIcon, "btn_loading", -1, null);
                     }
-                } catch (Throwable ignored) {
+                } catch (Throwable error) {
+                    Log.w(LOG_TAG, "THEME_DOWNLOAD_QUERY_FAILED", error);
+                    if (btnDownload != null) btnDownload.setEnabled(true);
+                    Toast.makeText(activity, "无法读取下载状态，请重试", Toast.LENGTH_SHORT).show();
+                    return;
                 } finally {
                     if (cursor != null) {
                         cursor.close();
@@ -10460,6 +10590,7 @@ public final class MaintainedLauncherSettingsHost {
                     == PackageManager.PERMISSION_GRANTED) {
                 return true;
             }
+            onSettingsExternalLaunch(activity);
             activity.requestPermissions(new String[]{"android.permission.WRITE_EXTERNAL_STORAGE"}, 2301);
             Toast.makeText(activity, "请允许存储权限后再次下载主题", Toast.LENGTH_SHORT).show();
             return false;
@@ -11026,9 +11157,7 @@ public final class MaintainedLauncherSettingsHost {
 
     private static void downloadUpdateApk(Activity activity, String url, String name, String tag) {
         try {
-            if (!ensureDownloadPermission(activity)) {
-                return;
-            }
+            // App-specific update storage needs no shared-storage permission.
             File dir = activity.getExternalFilesDir(null);
             if (dir == null) {
                 dir = activity.getFilesDir();
@@ -11079,6 +11208,7 @@ public final class MaintainedLauncherSettingsHost {
                                                              final File out, final String tag,
                                                              final UpdateDownloadProgress ui,
                                                              final int index) {
+        boolean enqueued = false;
         try {
             DownloadManager manager = (DownloadManager) activity.getSystemService(Context.DOWNLOAD_SERVICE);
             if (manager == null || urls == null || urls.length == 0 || index >= urls.length) {
@@ -11100,6 +11230,7 @@ public final class MaintainedLauncherSettingsHost {
                 request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
             }
             final long downloadId = manager.enqueue(request);
+            enqueued = true;
             activity.getSharedPreferences(THEME_DOWNLOAD_PREFS, Context.MODE_PRIVATE)
                     .edit()
                     .putLong(PREF_UPDATE_DOWNLOAD_ID, downloadId)
@@ -11114,6 +11245,12 @@ public final class MaintainedLauncherSettingsHost {
             notifyUpdateDownload(activity, index == 0 ? "正在连接国内镜像..." : "正在连接下载...", -1, false, downloadId);
             monitorUpdateDownload(activity, downloadId, ui, urls, out, tag, index);
         } catch (Throwable t) {
+            Log.w(LOG_TAG, "UPDATE_DOWNLOAD_MANAGER_START_FAILED", t);
+            if (!enqueued && urls != null && urls.length > 0 && out != null) {
+                // Reuse the existing background downloader only when system enqueue fails.
+                downloadUpdateApkDirect(activity, urls, out, ui);
+                return;
+            }
             dismissUpdateDownloadProgress(ui);
             notifyUpdateDownload(activity, "更新包下载失败", 0, true);
             Toast.makeText(activity, "更新包下载失败", Toast.LENGTH_SHORT).show();
@@ -11192,6 +11329,9 @@ public final class MaintainedLauncherSettingsHost {
                                 }
                             });
                         }
+                    }
+                    if (downloaded == 0 || (total > 0 && downloaded != total)) {
+                        throw new java.io.IOException("Incomplete update download");
                     }
                     output.flush();
                     handler.post(new Runnable() {
@@ -11341,7 +11481,9 @@ public final class MaintainedLauncherSettingsHost {
                 try {
                     cursor = manager.query(new DownloadManager.Query().setFilterById(downloadId));
                     if (cursor == null || !cursor.moveToFirst()) {
-                        handler.postDelayed(this, 800);
+                        dismissUpdateDownloadProgress(ui);
+                        notifyUpdateDownload(activity, "下载任务已失效，请重新下载", 0, true);
+                        Toast.makeText(activity, "下载任务已失效，请重新下载", Toast.LENGTH_SHORT).show();
                         return;
                     }
                     int status = cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS));
@@ -11371,7 +11513,11 @@ public final class MaintainedLauncherSettingsHost {
                         }
                         return;
                     }
-                } catch (Throwable ignored) {
+                } catch (Throwable error) {
+                    Log.w(LOG_TAG, "UPDATE_DOWNLOAD_QUERY_FAILED", error);
+                    dismissUpdateDownloadProgress(ui);
+                    notifyUpdateDownload(activity, "无法读取下载状态，请重新下载", 0, true);
+                    return;
                 } finally {
                     if (cursor != null) {
                         cursor.close();
@@ -11511,7 +11657,7 @@ public final class MaintainedLauncherSettingsHost {
                 return;
             }
             permissionPrefs.edit().putBoolean(PREF_SEARCH_CONTACTS_REQUESTED, true).commit();
-            try { activity.requestPermissions(new String[]{Manifest.permission.READ_CONTACTS}, REQUEST_SEARCH_CONTACTS_PERMISSION); }
+            try { onSettingsExternalLaunch(activity); activity.requestPermissions(new String[]{Manifest.permission.READ_CONTACTS}, REQUEST_SEARCH_CONTACTS_PERMISSION); }
             catch (Throwable error) { sSearchContactsSwitch = null; writeBoolSetting(activity, KEY_SEARCH_CONTACTS_ENABLED, false); item.setChecked(false); }
         }});
     }
@@ -12500,6 +12646,7 @@ public final class MaintainedLauncherSettingsHost {
         }
         sPendingStoragePicker = picker;
         try {
+            onSettingsExternalLaunch(activity);
             activity.requestPermissions(new String[] {Manifest.permission.WRITE_EXTERNAL_STORAGE},
                     REQUEST_BACKUP_STORAGE_PERMISSION);
         } catch (Throwable error) {
@@ -12999,12 +13146,13 @@ public final class MaintainedLauncherSettingsHost {
                 });
             }
             if (backup == null) {
+                bindBackupExcludedSwitches(activity, resources, root, null, creatingBackup);
                 String[] values = {"preview_source_version", "preview_format_version",
                         "preview_grid_mode", "preview_page_count", "preview_folder_count",
                         "preview_app_count", "preview_shortcut_count", "preview_custom_icon_count",
                         "preview_quick_desktop_component_count", "preview_theme_name",
                         "preview_page_animation", "preview_icon_pack", "preview_icon_size", "preview_default_icon_shape",
-                        "preview_desktop_text_size", "preview_status_height", "preview_dock_height"};
+                        "preview_desktop_text_size", "preview_icon_illumination", "preview_status_height", "preview_dock_height"};
                 for (String id : values) setBackupValue(resources, root, id, "…");
                 hidePreviewRow(resources, root, "preview_preserved_count");
                 hidePreviewRow(resources, root, "preview_preserved_shortcut_count");
@@ -13040,11 +13188,7 @@ public final class MaintainedLauncherSettingsHost {
             setBackupValue(resources, root, "preview_missing_icon_pack_count", String.valueOf(plan.missingIconPackCount));
             setBackupValue(resources, root, "preview_missing_theme_count", String.valueOf(plan.missingThemePackageCount));
 
-            View permissionValue = find(resources, root, "preview_permission_count_value");
-            if (permissionValue instanceof TextView) {
-                ((TextView) permissionValue).setText(getString(resources,
-                        "backup_manual_setting_count", "6 项"));
-            }
+            bindBackupExcludedSwitches(activity, resources, root, backup.settings, creatingBackup);
             setBackupPreviewDetails(activity, resources, root, backup.settings, creatingBackup);
             if (creatingBackup) {
                 hidePreviewRow(resources, root, "preview_preserved_count");
@@ -13076,6 +13220,38 @@ public final class MaintainedLauncherSettingsHost {
             if (creatingBackup) DesktopBackupController.discardPreparedBackupPreview(activity);
             return null;
         }
+    }
+
+    private static void bindBackupExcludedSwitches(final Activity activity, final Resources resources,
+            View root, org.json.JSONObject settings, final boolean creatingBackup) {
+        final java.util.List<String> keys = com.smartisanos.launcher.backup.PreferenceBackupCodec
+                .excludedSwitchKeys(settings);
+        final String title = getString(resources, creatingBackup
+                ? "backup_excluded_switches_title" : "permission_count",
+                creatingBackup ? "无法备份的开关" : "需要重新授权的功能");
+        View row = find(resources, root, "preview_permission_count");
+        View label = find(resources, root, "preview_permission_count_label");
+        if (label instanceof TextView) ((TextView) label).setText(title);
+        setBackupValue(resources, root, "preview_permission_count", keys.size()
+                + getString(resources, "backup_switch_count_suffix", " 项"));
+        if (row != null) row.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View view) {
+                StringBuilder message = new StringBuilder(getString(resources, creatingBackup
+                        ? "backup_excluded_switches_intro" : "restore_excluded_switches_intro",
+                        creatingBackup ? "以下开关依赖系统权限，无法随备份迁移："
+                                : "以下开关未随备份迁移，请在对应设置中手动开启，并按提示授予权限："));
+                for (String key : keys) {
+                    String name = "automatic_location".equals(key) ? "backup_excluded_location"
+                            : "launcher_dynamic_weather_calendar_enabled".equals(key) ? "backup_excluded_dynamic_icons"
+                            : "launcher_hide_badge".equals(key) ? "backup_excluded_badges"
+                            : "launcher_badge_swipe_clean".equals(key) ? "backup_excluded_badge_clean"
+                            : "search_contacts_enabled".equals(key) ? "backup_excluded_contacts"
+                            : "backup_excluded_system_panels";
+                    message.append("\n• ").append(getString(resources, name, key));
+                }
+                showInfoDialog(activity, title, message.toString());
+            }
+        });
     }
 
     private static String displayBackupName(String value) {
@@ -13141,6 +13317,12 @@ public final class MaintainedLauncherSettingsHost {
                 formatDesktopTextSize(backupSetting(settings, "launcher_desktop_text_size"),
                         getString(resources, "backup_archive_value_missing", "此备份未记录"),
                         getString(resources, "adjustment_default_value", "默认")));
+        Boolean illumination = backupSettingBooleanValue(
+                backupSetting(settings, "launcher_icon_illumination_enabled"));
+        setBackupValue(resources, root, "preview_icon_illumination",
+                getString(resources, illumination == null ? "backup_archive_value_missing"
+                        : illumination ? "backup_switch_on" : "backup_switch_off",
+                        illumination == null ? "此备份未记录" : illumination ? "开启" : "关闭"));
         Object autoStatusValue = backupSetting(settings, "status_bar_auto_enabled");
         Object statusExtraValue = backupSetting(settings, "status_bar_extra_dp");
         Boolean autoStatus = backupSettingBooleanValue(autoStatusValue);
@@ -13270,7 +13452,7 @@ public final class MaintainedLauncherSettingsHost {
         final Resources resources = getMaintainedResources(activity);
         showConfirmDialog(activity,
                 getString(resources, "restore_preview_title", "恢复桌面备份"),
-                getString(resources, "restore_confirm_message", "恢复将替换当前桌面布局和已备份的桌面设置。\n当前新安装的应用和有效快捷方式将保留到桌面末尾。\n恢复前会自动保存当前状态。\n恢复后可以撤销。\n当前壁纸不会改变。"),
+                getString(resources, "restore_confirm_message", "恢复将替换当前桌面布局及已备份的桌面设置，当前新安装的应用和有效快捷方式将保留到桌面末尾；恢复前会自动保存当前状态，恢复后可撤销。当前壁纸保持不变。"),
                 getString(resources, "cancel", "取消"),
                 getString(resources, "restore_action", "恢复"), new View.OnClickListener() {
                     public void onClick(View v) {
@@ -14738,7 +14920,7 @@ public final class MaintainedLauncherSettingsHost {
     private static View iconPageHeader(final Activity activity, SettingsResourceContext context, Resources resources) {
         LinearLayout root = new LinearLayout(context);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setLayoutParams(new AbsListView.LayoutParams(-1, dp(context, 224)));
+        root.setLayoutParams(new AbsListView.LayoutParams(-1, -2));
 
         root.addView(iconHeaderRow(activity, context, resources,
                 getString(resources, "icon_style_title", "图标样式"), iconSourceSubtitle(activity),
@@ -14779,11 +14961,47 @@ public final class MaintainedLauncherSettingsHost {
         View textSizeRow = iconHeaderRow(activity, context, resources,
                 getString(resources, "desktop_text_size_title", "桌面文字调整"),
                 desktopTextSizeSubtitle(activity),
-                "selector_setting_sub_item_bg_bottom", textSizeClick, false, 3);
+                "selector_setting_sub_item_bg_middle", textSizeClick, false, 3);
         textSizeRow.setClickable(true);
         textSizeRow.setOnClickListener(textSizeClick);
         root.addView(textSizeRow, new LinearLayout.LayoutParams(-1, dp(context, 56)));
+
+        final SettingItemSwitch illumination = new SettingItemSwitch(context);
+        illumination.setTitle(getString(resources, "icon_illumination_title", "图标感应光影"));
+        illumination.setChecked(IconIlluminationCompat.enabled(activity));
+        setBackground(illumination, resources, "selector_setting_sub_item_bg_bottom");
+        bindSwitchControlOnly(illumination, new View.OnClickListener() {
+            public void onClick(View view) { toggleIconIllumination(activity, illumination); }
+        });
+        root.addView(illumination, new LinearLayout.LayoutParams(-1, dp(context, 56)));
+        com.smartisanos.home.widget.sys.TipsView tips =
+                new com.smartisanos.home.widget.sys.TipsView(context);
+        tips.setText(getString(resources, "icon_illumination_summary",
+                "开启后，桌面图标的投影会跟随当前环境的天气、光照情况以及手机握持视角动态变化。开启此功能会增加桌面耗电"));
+        root.addView(tips, new LinearLayout.LayoutParams(-1, -2));
         return root;
+    }
+
+    private static void toggleIconIllumination(final Activity activity, SettingItemSwitch item) {
+        boolean previous = IconIlluminationCompat.enabled(activity);
+        boolean selected = !previous;
+        if (selected && !IconIlluminationCompat.supported(activity)) {
+            Toast.makeText(activity, "此设备不支持图标感应光影", Toast.LENGTH_LONG).show();
+            return;
+        }
+        if (!IconIlluminationCompat.setEnabled(activity, selected)) {
+            Toast.makeText(activity, "设置保存失败，请重试", Toast.LENGTH_LONG).show();
+            return;
+        }
+        item.setCheckedAnimated(selected);
+        if (LauncherColdReloadCoordinator.beginIconIlluminationReload(activity)) {
+            activity.finish();
+            activity.overridePendingTransition(0, 0);
+        } else {
+            IconIlluminationCompat.setEnabled(activity, previous);
+            item.setCheckedAnimated(previous);
+            Toast.makeText(activity, "桌面重载未启动，请返回桌面后重试", Toast.LENGTH_LONG).show();
+        }
     }
 
     private static View iconHeaderRow(final Activity activity, Context context, Resources resources, String titleText,
@@ -17459,10 +17677,12 @@ public final class MaintainedLauncherSettingsHost {
         private final List<RedirectIconInfo> apps = new ArrayList<RedirectIconInfo>();
         private final List<Object> rows = new ArrayList<Object>();
         private final LayoutInflater inflater;
+        private final IconPreviewRepository.RequestSession requestSession;
         private long iconDataGeneration;
 
         AppIconAdapter(Activity activity, SettingsResourceContext context, Resources resources) {
             this.activity = activity;
+            this.requestSession = sCurrentIconPageSession;
             this.context = context;
             this.resources = resources;
             this.inflater = LayoutInflater.from(activity).cloneInContext(context);
@@ -17479,6 +17699,7 @@ public final class MaintainedLauncherSettingsHost {
         AppIconAdapter(Activity activity, SettingsResourceContext context, Resources resources,
                        List<RedirectIconInfo> entries, IconManager iconManager) {
             this.activity = activity;
+            this.requestSession = sCurrentIconPageSession;
             this.context = context;
             this.resources = resources;
             this.inflater = LayoutInflater.from(activity).cloneInContext(context);
@@ -17614,7 +17835,7 @@ public final class MaintainedLauncherSettingsHost {
             holder.boundComponentName = info.componentName;
             holder.bindGeneration = (int) iconDataGeneration;
             final int bindGeneration = holder.bindGeneration;
-            previews.request(sCurrentIconPageSession, officialKey, IconPreviewRepository.Priority.P0_VISIBLE,
+            previews.request(requestSession, officialKey, IconPreviewRepository.Priority.P0_VISIBLE,
                     new IconPreviewRepository.DrawableLoader() {
                         public Drawable load() {
                             return resolveInfo == null ? null
@@ -17798,7 +18019,7 @@ public final class MaintainedLauncherSettingsHost {
                 IconPreviewRepository.IconRenderKey official = new IconPreviewRepository.IconRenderKey(
                         info.packageName, info.componentName, info.ownerId, "DEFAULT", "", version, px,
                         activity.getResources().getDisplayMetrics().densityDpi, 1);
-                previews.request(official, priority, new IconPreviewRepository.DrawableLoader() {
+                previews.request(requestSession, official, priority, new IconPreviewRepository.DrawableLoader() {
                     public Drawable load() { return resolved.loadIcon(activity.getPackageManager()); }
                 }, null);
                 String mode = RedirectIconDB.modeOf(info);
@@ -17811,7 +18032,7 @@ public final class MaintainedLauncherSettingsHost {
                         info.packageName, info.componentName, info.ownerId, iconSourceType(mode, global),
                         iconSourceId(info, global), version, px,
                         activity.getResources().getDisplayMetrics().densityDpi, 1);
-                previews.request(effective, priority, new IconPreviewRepository.DrawableLoader() {
+                previews.request(requestSession, effective, priority, new IconPreviewRepository.DrawableLoader() {
                     public Drawable load() {
                         return previewIconDrawable(activity.getApplicationContext(), resolved, resources);
                     }
@@ -17827,7 +18048,7 @@ public final class MaintainedLauncherSettingsHost {
                 if (!RedirectIconDB.MODE_AUTO.equals(RedirectIconDB.modeOf(info))) continue;
                 final ResolveInfo resolved = iconManager.getResolveInfo(info.packageName, info.componentName);
                 if (resolved == null || iconVariantNames(activity, info.packageName).isEmpty()) continue;
-                previews.schedule(IconPreviewRepository.Priority.P2_IDLE, new Runnable() {
+                previews.schedule(requestSession, IconPreviewRepository.Priority.P2_IDLE, new Runnable() {
                     public void run() {
                         smartisanIconDrawableCachedOnly(activity.getApplicationContext(), resolved, resources);
                     }

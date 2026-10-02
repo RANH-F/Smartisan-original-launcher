@@ -62,6 +62,7 @@ public final class PreferenceBackupCodec {
             "launcher_dynamic_weather_calendar_enabled",
             "launcher_hide_badge",
             "launcher_badge_swipe_clean",
+            "search_contacts_enabled",
             "swipe_down_system_panels_enabled"
     ));
 
@@ -74,6 +75,7 @@ public final class PreferenceBackupCodec {
             "prefs_key_launcher_mode",
             "launcher_icon_size",
             "launcher_default_icon_shape_v1",
+            "launcher_icon_illumination_enabled",
             "launcher_desktop_text_size",
             "launcher_page_animation",
             // Theme
@@ -150,7 +152,26 @@ public final class PreferenceBackupCodec {
             Log.i(TAG, "BACKUP_EXCLUDED_PERMISSION_SETTING key=" + key);
         }
         root.put("files", files);
+        JSONArray excluded = new JSONArray();
+        for (String key : excludedSwitchKeys(null)) excluded.put(key);
+        root.put("excludedSwitches", excluded);
         return root;
+    }
+
+    /** Names only: system grants and permission-dependent values are never serialized. */
+    public static java.util.List<String> excludedSwitchKeys(JSONObject archive) {
+        JSONArray recorded = archive == null ? null : archive.optJSONArray("excludedSwitches");
+        java.util.ArrayList<String> keys = new java.util.ArrayList<String>();
+        if (recorded == null) {
+            keys.addAll(NON_PORTABLE_PERMISSION_KEYS);
+            java.util.Collections.sort(keys);
+        } else {
+            for (int i = 0; i < recorded.length(); i++) {
+                String key = recorded.optString(i, "");
+                if (NON_PORTABLE_PERMISSION_KEYS.contains(key) && !keys.contains(key)) keys.add(key);
+            }
+        }
+        return keys;
     }
 
     public static void restore(Context context, JSONObject root) throws Exception {
@@ -226,6 +247,9 @@ public final class PreferenceBackupCodec {
             }
             if (!complete.containsKey("launcher_default_icon_shape_v1")) {
                 complete.put("launcher_default_icon_shape_v1", "circle");
+            }
+            if (!complete.containsKey("launcher_icon_illumination_enabled")) {
+                complete.put("launcher_icon_illumination_enabled", false);
             }
             return complete;
         }

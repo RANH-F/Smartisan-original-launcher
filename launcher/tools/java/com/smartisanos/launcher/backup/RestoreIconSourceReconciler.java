@@ -23,7 +23,7 @@ public final class RestoreIconSourceReconciler {
     private static final String TAG = "RestoreIconSource";
     private static final String PREF_PENDING = "restore_icon_source_reconcile_pending";
     private static final String PREF_TOKEN = "restore_icon_source_token";
-    private static final String CACHE_DIR = "online_icon_cache_v3";
+    private static final String CACHE_DIR = "online_icon_cache_v4";
     private static final long MAX_SOURCE_BYTES = 512L * 1024L;
 
     private RestoreIconSourceReconciler() {}

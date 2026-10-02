@@ -437,15 +437,13 @@
     # Preserve the original confirmation and EVENT_UNINSTALL_SHORTCUT path.
     iget-byte v1, v0, Lcom/smartisanos/launcher/data/ItemInfo;->itemType:B
 
-    const/4 v2, 0x1
+    if-nez v1, :cond_system_uninstall_continue
 
-    if-eq v1, v2, :cond_system_uninstall_continue
+    iget-object v1, v0, Lcom/smartisanos/launcher/data/ItemInfo;->packageName:Ljava/lang/String;
 
-    iget-object v0, v0, Lcom/smartisanos/launcher/data/ItemInfo;->packageName:Ljava/lang/String;
+    if-eqz v1, :cond_system_uninstall_continue
 
-    if-eqz v0, :cond_system_uninstall_continue
-
-    invoke-static {v0}, Lcom/smartisanos/launcher/compat/UninstallCompat;->requestUninstall(Ljava/lang/String;)V
+    invoke-static {v0}, Lcom/smartisanos/launcher/compat/UninstallCompat;->requestUninstallItem(Ljava/lang/Object;)V
 
     return-void
 

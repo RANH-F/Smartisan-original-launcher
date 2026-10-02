@@ -370,17 +370,19 @@ public final class LauncherSettingBridge {
 
     /**
      * Reads the exact mode and arrays already selected by the original Cell path.
-     * The Gaussian light/dark suffix is recalculated from wallpaper changes by
-     * Constants.initByTheme(), so this intentionally does not inspect theme names
-     * or launcher_grid_theme.
+     * ICON_TYPE owns the ordinary theme's Dark/Light choice and the original
+     * aero/trans/glime override. Wallpaper suffixes describe other theme
+     * resources and must not select the icon shadow.
      */
     private static EffectiveIconShadowSpec effectiveIconShadowSpec() {
         try {
             Class<?> constants = Class.forName("com.smartisanos.launcher.data.Constants");
-            boolean transparent = ((Boolean) readStaticField(constants, "isTransparentTheme")).booleanValue();
             String suffix = (String) readStaticField(constants, "sGaussianResSuffix");
-            int mode = transparent ? SHADOW_TRANSPARENT
-                    : (suffix != null && suffix.contains("_light") ? SHADOW_LIGHT : SHADOW_DARK);
+            Enum<?> iconType = (Enum<?>) readStaticField(constants, "ICON_TYPE");
+            int mode = iconType.ordinal();
+            if (mode < SHADOW_DARK || mode > SHADOW_TRANSPARENT) {
+                throw new IllegalStateException("Unknown original icon shadow type: " + iconType);
+            }
             int[] radii = (int[]) readStaticField(constants,
                     mode == SHADOW_TRANSPARENT
                             ? "ICON_SHADOW_RADIUS_TRANSPARENT" : "ICON_SHADOW_RADIUS");
@@ -396,6 +398,13 @@ public final class LauncherSettingBridge {
                     + error.getClass().getSimpleName() + " message=" + error.getMessage());
             return null;
         }
+    }
+
+    /** Final raster identity follows the same original mode and resource arrays. */
+    public static String iconShadowCacheToken() {
+        EffectiveIconShadowSpec spec = effectiveIconShadowSpec();
+        return spec == null ? "unavailable" : spec.mode + ":"
+                + Arrays.toString(spec.radii) + ":" + Arrays.toString(spec.colors);
     }
 
     private static Object readStaticField(Class<?> owner, String name) throws Exception {
@@ -1043,11 +1052,14 @@ public final class LauncherSettingBridge {
             Object cellShadow = nodes.length > 27 ? nodes[27] : null;
             if (cellShadow == null) return;
             Object dynamicShadow = activeRoot == null ? null : findLiveShadow(activeRoot);
+            boolean projection = IconIlluminationCompat.enabled();
             boolean dynamicOwnsShadow = dynamicShadow != null;
-            invoke(cellShadow, "setVisibility", Boolean.valueOf(!dynamicOwnsShadow));
+            // Original L.a retains the contact shadow underneath sc[27]'s moving projection.
+            // LiveShadow remains the ActiveIcon contact owner; sc[27] owns only projection.
+            invoke(cellShadow, "setVisibility", Boolean.valueOf(projection || !dynamicOwnsShadow));
             Log.i(TAG, "ACTIVE_ICON_SHADOW_OWNERSHIP owner="
                     + (dynamicOwnsShadow ? "DynamicShadowNode" : "OrdinaryCellShadow")
-                    + " ordinaryCellShadowVisible=" + (!dynamicOwnsShadow)
+                    + " ordinaryCellShadowVisible=" + (projection || !dynamicOwnsShadow)
                     + " liveShadowVisible=" + dynamicOwnsShadow);
         } catch (Throwable error) {
             Log.w(TAG, "ACTIVE_ICON_SHADOW_OWNERSHIP_FAILED class="

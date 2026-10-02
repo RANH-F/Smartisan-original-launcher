@@ -707,7 +707,7 @@
     <string name="grid_mode_20">二十宫格</string>
     <string name="backup_default_theme">默认主题</string>
     <string name="restore_preview_failed">无法显示恢复预览</string>
-    <string name="restore_confirm_message">恢复将替换当前桌面布局和已备份的桌面设置。\n当前新安装的应用和有效快捷方式将保留到桌面末尾。\n恢复前会自动保存当前状态。\n恢复后可以撤销。\n当前壁纸不会改变。</string>
+    <string name="restore_confirm_message">恢复将替换当前桌面布局及已备份的桌面设置，当前新安装的应用和有效快捷方式将保留到桌面末尾；恢复前会自动保存当前状态，恢复后可撤销。当前壁纸保持不变。</string>
     <string name="restore_action">恢复</string>
     <string name="undo_restore_confirm_message">桌面将恢复到上次恢复操作之前的状态。\n恢复完成后所做的布局和设置修改也会被替换。</string>
     <string name="undo_action">撤销</string>
@@ -753,7 +753,7 @@
     <string name="usage_tips_shortcut_missing_title">添加后没有显示</string>
     <string name="usage_tips_shortcut_missing_summary">请检查锤子桌面是否为默认桌面，并在系统权限管理中允许微信或支付宝创建桌面快捷方式。</string>
     <string name="quick_desktop_enabled_title">快捷桌面</string>
-    <string name="quick_desktop_enabled_summary">首屏右滑进入；开启后点击左侧可设置显示内容</string>
+    <string name="quick_desktop_enabled_summary">首屏右滑进入；开启后点击左侧可设置显示内容，并会增加性能开销</string>
     <string name="transparent_theme_summary">让桌面背景随壁纸呈现半透明效果</string>
     <string name="dynamic_weather_calendar_summary">天气图标显示当前天气，日历图标显示当天日期</string>
     <string name="quick_desktop_settings_title">快捷桌面设置</string>
@@ -802,4 +802,18 @@
     <string name="status_bar_confirm">确定</string>
     <string name="status_bar_save_failed">状态栏设置保存失败</string>
     <string name="status_bar_reload_failed">桌面重新加载失败，请返回桌面后重试</string>
+    <string name="icon_illumination_title">图标感应光影</string>
+    <string name="icon_illumination_summary">开启后，桌面图标的投影会跟随当前环境的天气、光照情况以及手机握持视角动态变化。开启此功能会增加桌面耗电</string>
+    <string name="backup_switch_on">开启</string>
+    <string name="backup_switch_off">关闭</string>
+    <string name="backup_excluded_switches_title">无法备份的开关</string>
+    <string name="backup_switch_count_suffix"> 项</string>
+    <string name="backup_excluded_switches_intro">以下开关依赖系统权限，无法随备份迁移：</string>
+    <string name="restore_excluded_switches_intro">以下开关未随备份迁移，请在对应设置中手动开启，并按提示授予权限：</string>
+    <string name="backup_excluded_location">天气自动定位</string>
+    <string name="backup_excluded_dynamic_icons">动态天气和日历</string>
+    <string name="backup_excluded_badges">应用通知角标</string>
+    <string name="backup_excluded_badge_clean">滑动清除角标</string>
+    <string name="backup_excluded_contacts">联系人搜索</string>
+    <string name="backup_excluded_system_panels">下滑打开系统面板</string>
 </resources>

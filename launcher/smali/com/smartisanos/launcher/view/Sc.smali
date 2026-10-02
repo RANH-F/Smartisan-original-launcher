@@ -441,7 +441,10 @@
 
     move-result-object v6
 
-    invoke-virtual {v6}, Lcom/smartisanos/launcher/data/ItemInfo;->id()Ljava/lang/String;
+    # Database ID is unique across components and clone users; id() is not.
+    iget-wide v10, v6, Lcom/smartisanos/launcher/data/ItemInfo;->id:J
+
+    invoke-static {v10, v11}, Ljava/lang/String;->valueOf(J)Ljava/lang/String;
 
     move-result-object v6
 
@@ -558,7 +561,9 @@
     check-cast v8, Lcom/smartisanos/launcher/data/ItemInfo;
 
     .line 27
-    invoke-virtual {v8}, Lcom/smartisanos/launcher/data/ItemInfo;->id()Ljava/lang/String;
+    iget-wide v10, v8, Lcom/smartisanos/launcher/data/ItemInfo;->id:J
+
+    invoke-static {v10, v11}, Ljava/lang/String;->valueOf(J)Ljava/lang/String;
 
     move-result-object v10
 
@@ -625,7 +630,9 @@
     check-cast v12, Lcom/smartisanos/launcher/data/ItemInfo;
 
     .line 37
-    invoke-virtual {v12}, Lcom/smartisanos/launcher/data/ItemInfo;->id()Ljava/lang/String;
+    iget-wide v13, v12, Lcom/smartisanos/launcher/data/ItemInfo;->id:J
+
+    invoke-static {v13, v14}, Ljava/lang/String;->valueOf(J)Ljava/lang/String;
 
     move-result-object v13
 
@@ -704,6 +711,12 @@
 
     .line 43
     :cond_14
+    const-string v0, "UninstallAnimation"
+
+    const-string v12, "fall_into_trash start"
+
+    invoke-static {v0, v12}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
+
     invoke-static {}, Lcom/smartisanos/launcher/view/Eb;->getInstance()Lcom/smartisanos/launcher/view/Eb;
 
     move-result-object v0

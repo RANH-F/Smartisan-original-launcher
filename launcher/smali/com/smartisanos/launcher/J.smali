@@ -2069,8 +2069,9 @@
 
     sput-wide v1, Lcom/smartisanos/launcher/data/Constants;->time_activity_onCreate_start:J
 
-    .line 45
-    sput-boolean v0, Lcom/smartisanos/launcher/data/Constants;->SHOW_ICON_SHADOW_LIST:Z
+    invoke-static {}, Lcom/smartisanos/launcher/theme/IconIlluminationCompat;->enabled()Z
+    move-result v3
+    sput-boolean v3, Lcom/smartisanos/launcher/data/Constants;->SHOW_ICON_SHADOW_LIST:Z
 
     .line 46
     invoke-virtual {p1, p2}, Landroid/view/View;->findViewById(I)Landroid/view/View;
@@ -3158,86 +3159,22 @@
 .end method
 
 .method public _a()V
-    .locals 4
-
-    .line 1
+    .locals 3
     sget-boolean v0, Lcom/smartisanos/launcher/data/Constants;->SHOW_ICON_SHADOW_LIST:Z
-
-    if-nez v0, :cond_0
-
-    return-void
-
-    .line 2
-    :cond_0
+    if-eqz v0, :done
     iget-boolean v0, p0, Lcom/smartisanos/launcher/J;->mRegistered:Z
-
-    if-eqz v0, :cond_1
-
-    return-void
-
-    .line 3
-    :cond_1
+    if-nez v0, :done
     iget-object v0, p0, Lcom/smartisanos/launcher/J;->Cg:Ljava/lang/Runnable;
-
-    if-eqz v0, :cond_2
-
-    .line 4
+    if-eqz v0, :register
     invoke-static {v0}, Lcom/smartisanos/launcher/Sa;->removeCallbacks(Ljava/lang/Runnable;)V
-
-    :cond_2
-    const/4 v0, 0x1
-
-    .line 5
+    :register
+    iget-object v0, p0, Lcom/smartisanos/launcher/J;->mActivity:Landroid/app/Activity;
+    iget-object v1, p0, Lcom/smartisanos/launcher/J;->xg:Landroid/hardware/SensorEventListener;
+    iget-object v2, p0, Lcom/smartisanos/launcher/J;->Ag:Landroid/hardware/SensorEventListener;
+    invoke-static {v0, v1, v2}, Lcom/smartisanos/launcher/theme/IconIlluminationCompat;->register(Landroid/content/Context;Landroid/hardware/SensorEventListener;Landroid/hardware/SensorEventListener;)Z
+    move-result v0
     iput-boolean v0, p0, Lcom/smartisanos/launcher/J;->mRegistered:Z
-
-    .line 6
-    iget-object v1, p0, Lcom/smartisanos/launcher/J;->mActivity:Landroid/app/Activity;
-
-    const-string v2, "sensor"
-
-    invoke-virtual {v1, v2}, Landroid/app/Activity;->getSystemService(Ljava/lang/String;)Ljava/lang/Object;
-
-    move-result-object v1
-
-    check-cast v1, Landroid/hardware/SensorManager;
-
-    const/16 v2, 0xb
-
-    .line 7
-    invoke-virtual {v1, v2}, Landroid/hardware/SensorManager;->getDefaultSensor(I)Landroid/hardware/Sensor;
-
-    move-result-object v2
-
-    if-eqz v2, :cond_3
-
-    .line 8
-    iget-object v3, p0, Lcom/smartisanos/launcher/J;->xg:Landroid/hardware/SensorEventListener;
-
-    invoke-virtual {v1, v3, v2, v0}, Landroid/hardware/SensorManager;->registerListener(Landroid/hardware/SensorEventListener;Landroid/hardware/Sensor;I)Z
-
-    :cond_3
-    const/4 v0, 0x5
-
-    .line 9
-    invoke-virtual {v1, v0}, Landroid/hardware/SensorManager;->getDefaultSensor(I)Landroid/hardware/Sensor;
-
-    move-result-object v0
-
-    iput-object v0, p0, Lcom/smartisanos/launcher/J;->yg:Landroid/hardware/Sensor;
-
-    .line 10
-    iget-object v0, p0, Lcom/smartisanos/launcher/J;->yg:Landroid/hardware/Sensor;
-
-    if-eqz v0, :cond_4
-
-    .line 11
-    iget-object p0, p0, Lcom/smartisanos/launcher/J;->Ag:Landroid/hardware/SensorEventListener;
-
-    const/16 v2, 0x7d0
-
-    invoke-virtual {v1, p0, v0, v2}, Landroid/hardware/SensorManager;->registerListener(Landroid/hardware/SensorEventListener;Landroid/hardware/Sensor;I)Z
-
-    :cond_4
+    :done
     return-void
 .end method
 
@@ -4557,34 +4494,13 @@
 .end method
 
 .method public fb()V
-    .locals 2
-
+    .locals 3
     const/4 v0, 0x0
-
-    .line 1
     iput-boolean v0, p0, Lcom/smartisanos/launcher/J;->mRegistered:Z
-
-    .line 2
     iget-object v0, p0, Lcom/smartisanos/launcher/J;->mActivity:Landroid/app/Activity;
-
-    const-string v1, "sensor"
-
-    invoke-virtual {v0, v1}, Landroid/app/Activity;->getSystemService(Ljava/lang/String;)Ljava/lang/Object;
-
-    move-result-object v0
-
-    check-cast v0, Landroid/hardware/SensorManager;
-
-    .line 3
     iget-object v1, p0, Lcom/smartisanos/launcher/J;->xg:Landroid/hardware/SensorEventListener;
-
-    invoke-virtual {v0, v1}, Landroid/hardware/SensorManager;->unregisterListener(Landroid/hardware/SensorEventListener;)V
-
-    .line 4
-    iget-object p0, p0, Lcom/smartisanos/launcher/J;->Ag:Landroid/hardware/SensorEventListener;
-
-    invoke-virtual {v0, p0}, Landroid/hardware/SensorManager;->unregisterListener(Landroid/hardware/SensorEventListener;)V
-
+    iget-object v2, p0, Lcom/smartisanos/launcher/J;->Ag:Landroid/hardware/SensorEventListener;
+    invoke-static {v0, v1, v2}, Lcom/smartisanos/launcher/theme/IconIlluminationCompat;->unregister(Landroid/content/Context;Landroid/hardware/SensorEventListener;Landroid/hardware/SensorEventListener;)V
     return-void
 .end method
 

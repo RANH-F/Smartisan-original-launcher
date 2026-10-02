@@ -28,26 +28,8 @@
 .method public onComplete()V
     .locals 5
 
-    .line 1
-    sget-boolean v0, Lcom/smartisanos/launcher/data/Constants;->ENABLE_LARGE_SCREEN_MODE:Z
-
-    if-nez v0, :cond_0
-
-    .line 2
-    invoke-static {}, Lcom/smartisanos/smengine/Ra;->getInstance()Lcom/smartisanos/smengine/Ra;
-
-    move-result-object v0
-
-    invoke-virtual {v0}, Lcom/smartisanos/smengine/Ra;->it()Lcom/smartisanos/smengine/J;
-
-    move-result-object v0
-
-    const/high16 v1, 0x3f800000    # 1.0f
-
-    invoke-virtual {v0, v1}, Lcom/smartisanos/smengine/J;->s(F)V
-
+    # Restore the steady clear color in k.run, after the scene handoff.
     .line 3
-    :cond_0
     invoke-static {}, Lcom/smartisanos/launcher/view/Eb;->getInstance()Lcom/smartisanos/launcher/view/Eb;
 
     move-result-object v0

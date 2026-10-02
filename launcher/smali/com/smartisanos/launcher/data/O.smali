@@ -863,21 +863,10 @@
 
     .line 62
     :cond_13
-    sget-object p0, Lcom/smartisanos/launcher/data/M;->rr:Ljava/lang/String;
-
-    invoke-static {p1, p0, v3}, Landroid/provider/Settings$Global;->getInt(Landroid/content/ContentResolver;Ljava/lang/String;I)I
-
+    invoke-static {v8}, Lcom/smartisanos/launcher/theme/IconIlluminationCompat;->enabled(Landroid/content/Context;)Z
     move-result p0
+    sput-boolean p0, Lcom/smartisanos/launcher/data/Constants;->SHOW_ICON_SHADOW_LIST:Z
 
-    .line 63
-    sput-boolean v3, Lcom/smartisanos/launcher/data/Constants;->SHOW_ICON_SHADOW_LIST:Z
-
-    if-ne p0, v2, :cond_14
-
-    .line 64
-    sput-boolean v2, Lcom/smartisanos/launcher/data/Constants;->SHOW_ICON_SHADOW_LIST:Z
-
-    .line 65
     :cond_14
     sget-boolean p0, Lcom/smartisanos/launcher/data/Constants;->ENABLE_LARGE_SCREEN_MODE:Z
 
