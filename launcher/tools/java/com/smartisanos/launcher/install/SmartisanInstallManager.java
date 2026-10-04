@@ -773,6 +773,9 @@ public final class SmartisanInstallManager {
         ensure(context);
         try {
             com.smartisanos.home.settings.icons.IconPackManager.invalidateIconPackList();
+            com.smartisanos.home.settings.icons.IconPackManager.invalidateIconPackPackage(packageName);
+            com.smartisanos.launcher.theme.MaintainedLauncherSettingsHost
+                    .onIconPackOverridesChanged(context, packageName);
         } catch (Throwable ignored) {}
         if (Intent.ACTION_PACKAGE_REMOVED.equals(action) && !replacing) {
             onPackageRemoved(context, packageName, userId, source);
@@ -999,14 +1002,18 @@ public final class SmartisanInstallManager {
                         ? "replaced"
                         : (Intent.ACTION_PACKAGE_CHANGED.equals(event.action)
                                 ? "changed" : "added"));
+        final boolean firstInstall = Intent.ACTION_PACKAGE_ADDED.equals(event.action)
+                && !event.replacing && event.newInstall;
+        if (firstInstall) {
+            // Both callers run on the existing serial install worker. Finish DB/pending IO
+            // before handing the original package notification back to MAIN.
+            com.smartisanos.launcher.backup.PendingItemRestoreHandler
+                    .onPackageAdded(context, event.packageName);
+        }
         Handler main = sHandler == null ? new Handler(Looper.getMainLooper()) : sHandler;
         main.post(new Runnable() {
             @Override public void run() {
-                boolean firstInstall = Intent.ACTION_PACKAGE_ADDED.equals(event.action)
-                        && !event.replacing && event.newInstall;
                 if (firstInstall) {
-                    com.smartisanos.launcher.backup.PendingItemRestoreHandler
-                            .onPackageAdded(context, event.packageName);
                     notifyOriginalPackageAdded(context, event.packageName);
                 } else {
                     // Aa.c inserts every launcher activity it currently resolves.  A PACKAGE_REPLACED
@@ -1300,6 +1307,9 @@ public final class SmartisanInstallManager {
                 for (String value : encoded) {
                     PendingPackageEvent event = PendingPackageEvent.decode(value);
                     if (event != null) {
+                        // Delivery belonged to the previous process. Reclassify through the
+                        // existing model/profile/package gates before dispatching again.
+                        event.dispatched = false;
                         PENDING_PACKAGE_EVENTS.put(pendingKey(event.packageName, event.userId,
                                 event.userSerial, event.action, event.componentName), event);
                     }

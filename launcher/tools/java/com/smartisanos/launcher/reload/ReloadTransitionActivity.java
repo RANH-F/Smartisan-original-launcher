@@ -205,6 +205,32 @@ public final class ReloadTransitionActivity extends Activity {
         retry.setVisibility(View.VISIBLE);
     }
 
+    void showRestoreFailure() {
+        showFailure();
+        status.setText("恢复已停止，请检查存储后重试");
+    }
+
+    void onRestoreApplyStarted() {
+        // Restore owns a durable transaction now. Its duration is not a first-frame timeout.
+        handler.removeCallbacks(timeout);
+        status.setVisibility(View.GONE);
+        retry.setVisibility(View.GONE);
+        showTransitionLoading();
+    }
+
+    void showRestoreBusy() {
+        showFailure();
+        status.setText("恢复仍在执行，请稍后重试");
+    }
+
+    void onRestoreApplyFinished() {
+        beginWaitingForFirstFrame();
+    }
+
+    void showLauncherStartFailure() {
+        showFailure();
+    }
+
     @Override
     protected void onDestroy() {
         LauncherColdReloadCoordinator.log("TRANSITION_DESTROYED", token,

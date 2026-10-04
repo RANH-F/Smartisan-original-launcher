@@ -6102,7 +6102,9 @@
 .end method
 
 .method public Ya(I)V
-    .locals 7
+    .locals 8
+
+    move v7, p1
 
     .line 1
     invoke-virtual {p0}, Lcom/smartisanos/launcher/view/a/g;->sm()Z
@@ -6258,6 +6260,8 @@
     invoke-virtual {p0}, Lcom/smartisanos/smengine/SceneNode;->setNeedDisplay()V
 
     :cond_5
+    invoke-static {p0, v7}, Lcom/smartisanos/launcher/theme/LauncherSettingBridge;->preserveOverviewIconAspect(Ljava/lang/Object;I)V
+
     return-void
 .end method
 
@@ -10076,6 +10080,8 @@
 
     .line 4
     :cond_2
+    invoke-static {p0}, Lcom/smartisanos/launcher/theme/LauncherSettingBridge;->alignStaticIconPixelGrid(Ljava/lang/Object;)V
+
     iget-boolean v0, p0, Lcom/smartisanos/launcher/view/a/g;->HH:Z
 
     if-eqz v0, :cond_3

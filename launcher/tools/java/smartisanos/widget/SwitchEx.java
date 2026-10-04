@@ -17,6 +17,23 @@ import android.view.MotionEvent;
 import android.widget.CompoundButton;
 
 public class SwitchEx extends CompoundButton {
+    private static final java.util.WeakHashMap<Resources, SwitchBitmaps> BITMAPS =
+            new java.util.WeakHashMap<Resources, SwitchBitmaps>();
+
+    private static final class SwitchBitmaps {
+        final android.content.res.Configuration configuration;
+        final int densityDpi;
+        final Bitmap[] images;
+        SwitchBitmaps(Resources resources, Bitmap[] images) {
+            configuration = new android.content.res.Configuration(resources.getConfiguration());
+            densityDpi = resources.getDisplayMetrics().densityDpi;
+            this.images = images;
+        }
+        boolean matches(Resources resources) {
+            return densityDpi == resources.getDisplayMetrics().densityDpi
+                    && configuration.equals(resources.getConfiguration());
+        }
+    }
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
     private final PorterDuffXfermode maskMode = new PorterDuffXfermode(PorterDuff.Mode.DST_IN);
     private Bitmap bottom;
@@ -143,10 +160,25 @@ public class SwitchEx extends CompoundButton {
             return;
         }
         Resources res = getResources();
-        bottom = bitmap(res, "switch_ex_bottom");
-        frame = bitmap(res, "switch_ex_frame");
-        mask = bitmap(res, "switch_ex_mask");
-        knob = bitmap(res, "switch_ex_unpressed");
+        synchronized (BITMAPS) {
+            SwitchBitmaps cached = BITMAPS.get(res);
+            if (cached == null || !cached.matches(res)) {
+                Bitmap[] images = {bitmap(res, "switch_ex_bottom"), bitmap(res, "switch_ex_frame"),
+                        bitmap(res, "switch_ex_mask"), bitmap(res, "switch_ex_unpressed")};
+                if (images[0] != null && images[1] != null && images[2] != null && images[3] != null) {
+                    cached = new SwitchBitmaps(res, images);
+                    BITMAPS.put(res, cached);
+                } else cached = null;
+                if (cached == null) {
+                    bottom = images[0]; frame = images[1]; mask = images[2]; knob = images[3];
+                }
+            }
+            if (cached != null) {
+                // Shared images are read-only; drawing and animation change only each View's Paint.
+                bottom = cached.images[0]; frame = cached.images[1];
+                mask = cached.images[2]; knob = cached.images[3];
+            }
+        }
         bitmapsLoaded = bottom != null && frame != null && mask != null && knob != null;
     }
 

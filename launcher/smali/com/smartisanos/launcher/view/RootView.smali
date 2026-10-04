@@ -206,8 +206,6 @@
 
     invoke-static {v2, v0}, Lcom/smartisanos/launcher/gesture/QuickDesktopGestureDiagnostics;->onProgress(FZ)V
 
-    invoke-static {v2, p2}, Lcom/smartisanos/launcher/quickdesktop/QuickDesktopController;->onProgress(FLandroid/view/MotionEvent;)V
-
     .line 8
     iget v2, p0, Lcom/smartisanos/launcher/view/RootView;->Ad:F
 
@@ -269,6 +267,10 @@
 
     if-eqz p1, :cond_4
 
+    iget v2, p0, Lcom/smartisanos/launcher/view/RootView;->Ad:F
+
+    invoke-static {v2, p2}, Lcom/smartisanos/launcher/quickdesktop/QuickDesktopController;->onProgress(FLandroid/view/MotionEvent;)V
+
     .line 12
     sget-boolean p0, Lcom/smartisanos/launcher/va;->DBG:Z
 
@@ -312,6 +314,12 @@
     .line 15
     :cond_6
     sget-boolean p1, Lcom/smartisanos/launcher/data/Constants;->sLeftScreenEnabled:Z
+
+    if-eqz p1, :cond_7
+
+    invoke-static {}, Lcom/smartisanos/launcher/quickdesktop/QuickDesktopController;->canRevealFromRoot()Z
+
+    move-result p1
 
     if-eqz p1, :cond_7
 
@@ -362,6 +370,10 @@
     invoke-direct {p0, p2}, Lcom/smartisanos/launcher/view/RootView;->j(Landroid/view/MotionEvent;)V
 
     :cond_9
+    iget v2, p0, Lcom/smartisanos/launcher/view/RootView;->Ad:F
+
+    invoke-static {v2, p2}, Lcom/smartisanos/launcher/quickdesktop/QuickDesktopController;->onProgress(FLandroid/view/MotionEvent;)V
+
     return-void
 .end method
 

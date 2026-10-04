@@ -65,20 +65,24 @@ public final class LayoutSnapshotImporter {
         List<JSONObject> currentItems = readCurrentItems(database);
         Map<String, ContentValues> shortcutFallback =
                 ShortcutIconBackupCodec.captureCurrent(database, currentItems);
+        ImportResult result = new ImportResult();
+        JSONArray targetItems = new JSONArray();
         Set<String> backupKeys = new HashSet<String>();
         for (int i = 0; i < backupItems.length(); i++) {
-            backupKeys.add(RestoreMergePlanner.stableKey(backupItems.getJSONObject(i)));
+            JSONObject target = remapIdentity(context, backupItems.getJSONObject(i), result);
+            if (target == null) continue;
+            targetItems.put(target);
+            backupKeys.add(RestoreMergePlanner.stableKey(target));
         }
         ArrayList<JSONObject> preserved = new ArrayList<JSONObject>();
         for (JSONObject item : currentItems) {
-            if (RestoreMergePlanner.isRestoreCandidate(item) && RestoreMergePlanner.isInstalled(context, item)
+            if (RestoreMergePlanner.isRestoreCandidate(item) && !RestoreMergePlanner.isMissingConfirmed(context, item)
                     && !backupKeys.contains(RestoreMergePlanner.stableKey(item))) {
                 preserved.add(item);
                 Log.i(TAG, "RESTORE_PRESERVE item=" + item.optString("packageName"));
             }
         }
 
-        ImportResult result = new ImportResult();
         JSONArray pending = new JSONArray();
 
         database.beginTransaction();
@@ -114,14 +118,13 @@ public final class LayoutSnapshotImporter {
             List<JSONObject> foldersToInsert = new ArrayList<>();
             List<JSONObject> itemsToInsert = new ArrayList<>();
 
-            for (int i = 0; i < backupItems.length(); i++) {
-                JSONObject item = remapIdentity(context, backupItems.getJSONObject(i), result);
-                if (item == null) continue;
+            for (int i = 0; i < targetItems.length(); i++) {
+                JSONObject item = targetItems.getJSONObject(i);
                 maxId = Math.max(maxId, item.optLong("_id", 0L));
                 
                 // Track max layout coordinates for appending preserved items
                 int pageIndex = item.optInt("pageIndex", -1);
-                if (pageIndex >= 0 && item.optInt("folderIndex", -1) < 0
+                if (pageIndex >= 0 && (item.optInt("folderIndex", -1) < 0 || RestoreMergePlanner.isFolder(item))
                         && item.optInt("cellIndex", -1) >= 0) {
                     if (pageIndex > maxPage) {
                         maxPage = pageIndex;
@@ -156,7 +159,7 @@ public final class LayoutSnapshotImporter {
                     Log.i(TAG, "SHORTCUT_UNRESOLVED package="
                             + item.optString("packageName", "") + " shortcutId=" + shortcutId(item));
                 }
-                if (RestoreMergePlanner.isRestoreCandidate(item) && !RestoreMergePlanner.isInstalled(context, item)) {
+                if (RestoreMergePlanner.isRestoreCandidate(item) && RestoreMergePlanner.isMissingConfirmed(context, item)) {
                     pending.put(pendingRecord(item));
                     result.missing++;
                     Log.i(TAG, "RESTORE_ITEM_PENDING pkg=" + item.optString("packageName"));
@@ -184,8 +187,8 @@ public final class LayoutSnapshotImporter {
             }
             if (!existingPageIndexes.contains(Integer.valueOf(maxPage))) {
                 boolean reuseSlot = !unusedPageSlots.isEmpty();
-                if (!reuseSlot && pageRows >= 1000) throw new IllegalStateException("No available page slot");
-                long pageId = reuseSlot ? unusedPageSlots.pollFirst().longValue() : ++maxPageId;
+                long pageId = nextRestorePageId(unusedPageSlots, maxPageId, pageRows, maxPage);
+                maxPageId = Math.max(maxPageId, pageId);
                 lastPage = defaultPage(pageId, maxPage);
                 persistPage(database, lastPage, reuseSlot);
                 if (!reuseSlot) pageRows++;
@@ -198,8 +201,8 @@ public final class LayoutSnapshotImporter {
                     maxCell = 0;
                     if (!existingPageIndexes.contains(Integer.valueOf(maxPage))) {
                         boolean reuseSlot = !unusedPageSlots.isEmpty();
-                        if (!reuseSlot && pageRows >= 1000) throw new IllegalStateException("No available page slot");
-                        long pageId = reuseSlot ? unusedPageSlots.pollFirst().longValue() : ++maxPageId;
+                        long pageId = nextRestorePageId(unusedPageSlots, maxPageId, pageRows, maxPage);
+                        maxPageId = Math.max(maxPageId, pageId);
                         JSONObject page = clonePage(lastPage, pageId, maxPage);
                         persistPage(database, page, reuseSlot);
                         if (!reuseSlot) pageRows++;
@@ -236,7 +239,7 @@ public final class LayoutSnapshotImporter {
         return result;
     }
 
-    private static JSONObject remapIdentity(Context context, JSONObject source,
+    static JSONObject remapIdentity(Context context, JSONObject source,
                                              ImportResult result) throws Exception {
         JSONObject item = new JSONObject(source.toString());
         int sourceUserId = item.optInt("sourceUserId", item.optInt("user", 0));
@@ -343,12 +346,20 @@ public final class LayoutSnapshotImporter {
 
     private static JSONObject pendingRecord(JSONObject item) throws Exception {
         JSONObject pending = new JSONObject();
-        String[] keys = {"packageName", "componentName", "pageIndex", "cellIndex", "folderIndex", "user", "itemType", "intent"};
+        String[] keys = {"packageName", "componentName", "pageIndex", "cellIndex", "folderIndex", "user", "targetProfileSerial", "itemType", "intent"};
         for (String key : keys) if (item.has(key)) pending.put(key, item.get(key));
         return pending;
     }
 
-    private static JSONObject defaultPage(long pageId, int pageIndex) throws Exception {
+    static long nextRestorePageId(TreeSet<Long> unusedSlots, long maxPageId, int pageRows,
+            int pageIndex) {
+        if (pageIndex < 0 || pageIndex > 999) throw new IllegalStateException("Desktop page index limit exceeded");
+        if (!unusedSlots.isEmpty()) return unusedSlots.pollFirst().longValue();
+        if (pageRows >= 1000) throw new IllegalStateException("No available page slot");
+        return maxPageId + 1L;
+    }
+
+    static JSONObject defaultPage(long pageId, int pageIndex) throws Exception {
         JSONObject page = new JSONObject();
         page.put("_id", pageId);
         page.put("pageIndex", pageIndex);
@@ -368,7 +379,7 @@ public final class LayoutSnapshotImporter {
         return page;
     }
 
-    private static void persistPage(SQLiteDatabase database, JSONObject page, boolean reuseSlot)
+    static void persistPage(SQLiteDatabase database, JSONObject page, boolean reuseSlot)
             throws Exception {
         ContentValues pageValues = values(page, PAGE_COLUMNS, reuseSlot);
         if (reuseSlot) {

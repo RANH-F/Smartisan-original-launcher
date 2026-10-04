@@ -1,70 +1,168 @@
 # 开发与修复记录
 
-## 最新专项补录（按结论优先级，不参与倒序日期轴）
+## 每日总览（倒序）
 
-> 本区按已有记录的日期倒序汇总；每个日期保留一条摘要，详细根因、修改、验证与风险见下方“每日修复记录”。跨日事项归入最终更新日并注明日期范围，没有记录的日期不补造总结。已废弃或已取代方案明确标记“【已废弃】”。
+上方按日期汇总，下方保存对应详细记录。每个日期保留一条摘要，修复结论、验证与风险以当日详细记录和后续更新为准；历史已废弃方案不得恢复。
 
-- 2026-10-02 卸载、图标光影与备份稳定性：取消／成功复用原版动画并修正逐条目删除与队列衔接，Android 9 用户确认正常；统一主题阴影、修复毛玻璃退出白线、补齐感应开关备份和权限清单，同步图标索引及 v4 缓存、修复预览调度与底部主题条横向触摸误拦截，Android 16 用户确认拖动正常；镜像发布、完整恢复及跨 ROM 回归范围见当日记录。
+- **2026-10-04** 应用图标搜索固定顶部并复用锤子圆角资源，补齐单应用多图标包候选；关于我们改为 Power by 赞助卡片；修复 Dock 感应投影深度遮挡、快捷桌面截图误触发与单页／多页触摸归属。S3 缓存比例校正反射元数据，5轮所测多页切换 CPU 长帧下降；S2 设置复用、主题状态与搜索资源优化，10轮所测 BACK 峰值为7.783–12.063ms（基线29.171ms）。已有构建、隔离检查与 Android16 真机证据；完整恢复、更多主题／宫格／倍率、长期性能及跨ROM仍待验。全项目方案与后续建议未全部实施，不能标为全场景通过。
 
-- 2026-10-01 主题状态栏与图标修复：统一状态栏颜色提交、修复毛玻璃退出纹理丢失崩溃及主题加载黑带，补齐跟随应用图标尺寸并调整解锁兼容接线；X21A 部分效果已验证，连续四指、透明覆盖和 Android 16 最终视觉仍待验收；当天感应光影／设置会话内容合并在 10 月 2 日跨日记录。
+- **2026-10-03** F01–F15 专项处理：F01／F02／F04–F08 的身份、槽、事务、后台调度与投影缓存修复保留；F09 GU 混合向量已复现并用原向量 monitor 修复，23,011 项 Android 检查通过。F10／F11 快捷桌面延后解码、draw 消费快照，12 项原生 View／Looper 检查及受控像素零差异通过；F12 恢复监听器／页面／READY 身份收口，F13 同规则 boolean 委托，F14 UNKNOWN 保留，F15 共享 hook 保留、安全删除 0 行。19 组本地与 10 组 Android 集中批次通过；最终包保留数据安装 vivo，手机与产物 SHA 一致，已测主题／快捷桌面／搜索／设置返回未见新回归，今天五个视觉保护文件哈希未变，临时快捷桌面开关已恢复关闭。完整恢复／OEM 分身／跨 ROM、Sensor 世代／真实队列、手持光影及帧预算仍待验收；完整范围见当日 F09–F15 记录。 F05 后续已把首帧日志／递归清理移到后台，122项线程、144项事务及Android 9／16各93项隔离检查通过；最新998968…包已保留数据安装Android 16 V2458A，所测三个静态图标区域RGB零差异。启动前同步恢复守卫／HOME等待预算仍待验收，详见下方 F05 后续记录。 最新F05启动旧备份清理也已离开MAIN，Android16的112项状态／阻塞／互斥隔离检查通过；0DB246…包已保留数据安装V2458A，设置返回和静态采样通过，数据库前恢复安全门保持。
 
-- 2026-09-30 主题、搜索内存与备份恢复：修复四指主题状态栏交接并优化搜索图标缓存、预览和监听器持有；恢复复用原版页面空槽，解决 1001 页导致无法备份／恢复，补翻页动画字段；含 9 月 29—30 日设置任务、加载与图标归档最终状态，Android 16 实际恢复已验证，其他路径按当日边界保留。
+- **2026-10-02** 卸载、图标光影与备份稳定性：F03 恢复改用现有 Package/Profile 状态并按目标身份去重，83 项 Android 9 隔离 SQLite 检查通过，真实分身恢复待验；F04 恢复日志失败现会停止后续阶段并保留恢复证据，141 项故障注入、57 项 Android 9 隔离运行检查及构建通过，真实断电／完整恢复待验；取消／成功复用原版动画并修正逐条目删除与队列衔接，Android 9 用户确认正常；统一主题阴影、修复毛玻璃退出白线、补齐感应开关备份和权限清单，同步图标索引及 v4 缓存、修复预览调度与底部主题条横向触摸误拦截，Android 16 用户确认拖动正常；镜像发布、完整恢复及跨 ROM 回归范围见当日记录。
 
-- 2026-09-28 设置、备份和隐私界面：统一备份预览／恢复清单，修正解锁时间单位与 GL 会话交接，调整密码提示、锁图标间距和 Dock 手势设置，补原版错误反馈及 Launcher 自有窗口隐藏虚拟键；多数项目构建通过、真机待验，HOME 覆盖层原型已标记【已废弃】。
+- **2026-10-01** 主题状态栏与图标修复：统一状态栏颜色提交、修复毛玻璃退出纹理丢失崩溃及主题加载黑带，补齐跟随应用图标尺寸并调整解锁兼容接线；X21A 部分效果已验证，连续四指、透明覆盖和 Android 16 最终视觉仍待验收；当天感应光影／设置会话内容合并在 10 月 2 日跨日记录。
 
-- 2026-09-27 启动和解锁链路：修复原版图标 MD5 缓存命中后重复生成的冷启动开销，加载动画去文字并收口触摸／解锁残留；应用覆盖取消解锁会话获得设备与用户反馈，完整动画矩阵仍待验证；旧感应实验与错误的动画运行判断标记【已废弃】，以更新日期的正式实现为准。
+- **2026-09-30** 主题、搜索内存与备份恢复：修复四指主题状态栏交接并优化搜索图标缓存、预览和监听器持有；恢复复用原版页面空槽，解决 1001 页导致无法备份／恢复，补翻页动画字段；含 9 月 29—30 日设置任务、加载与图标归档最终状态，Android 16 实际恢复已验证，其他路径按当日边界保留。
 
-- 2026-09-24 搜索 T9 与设置交互：增加可选原版 T9、修正键盘比例／匹配及按下反馈，开放快捷桌面左侧详情入口，并审计状态栏颜色任务交接；详情入口已真机验证，T9 实际搜索、震感及连续四指仍有待验项，旧解锁方案已标记【已废弃】。
+- **2026-09-28** 设置、备份和隐私界面：统一备份预览／恢复清单，修正解锁时间单位与 GL 会话交接，调整密码提示、锁图标间距和 Dock 手势设置，补原版错误反馈及 Launcher 自有窗口隐藏虚拟键；多数项目构建通过、真机待验，HOME 覆盖层原型已标记【已废弃】。
 
-- 2026-09-16 图标框、设置入口与备份：默认应用图标框切换接入既有冷重载，动态天气和日历／快捷桌面开放标签导航，补齐图标框及显示设置的默认值备份；构建签名通过，当日无在线设备，未将点击和完整恢复标为真机通过。
+- **2026-09-27** 启动和解锁链路：修复原版图标 MD5 缓存命中后重复生成的冷启动开销，加载动画去文字并收口触摸／解锁残留；应用覆盖取消解锁会话获得设备与用户反馈，完整动画矩阵仍待验证；旧感应实验与错误的动画运行判断标记【已废弃】，以更新日期的正式实现为准。
 
-- 2026-09-15 DEFAULT_SOURCE_CIRCLE_CROP：有效来源为 DEFAULT 的系统原图默认使用自身底色放大后圆形裁切，最终外径继续由原版 IconColor 分类、LayoutProperty 与用户倍率决定；vivo X21A 已通过十二/二十宫格、100%/150%、A/B 设置与翻页压力验证。
+- **2026-09-24** 搜索 T9 与设置交互：增加可选原版 T9、修正键盘比例／匹配及按下反馈，开放快捷桌面左侧详情入口，并审计状态栏颜色任务交接；详情入口已真机验证，T9 实际搜索、震感及连续四指仍有待验项，旧解锁方案已标记【已废弃】。
 
-- 2026-09-14 QUICK_DESKTOP_TOUCH_CLEANUP_AND_CAPTURE_MEMORY：快捷桌面增加统一幂等清理，Launcher Stop/Destroy、Host 异常分离和重新 attach 均先禁用并移除全屏触摸窗口；GL 截图删除全屏零填充数组和第二张全尺寸翻转图，后台处理改为 Latest-Wins 单线程，vivo 真机 10 次开关、Home 与设置覆盖返回通过。；STATUS_AND_DESKTOP_VISUAL_ADJUSTMENT_UI：状态栏设置改为确认后重载并移除重复操作项，桌面图标/文字统一显示相对默认值的调整量；桌面文字调整已接入最终字号 Owner，当前 vivo 真机 `+6/+10` 可见生效。
+- **2026-09-16** 图标框、设置入口与备份：默认应用图标框切换接入既有冷重载，动态天气和日历／快捷桌面开放标签导航，补齐图标框及显示设置的默认值备份；构建签名通过，当日无在线设备，未将点击和完整恢复标为真机通过。
 
-- 2026-09-13 QUICKSEARCH_ICON_TEXT_VISUAL_ALIGNMENT_AND_HISTORY_STABILITY：搜索历史保持原版自然换行，将标签字体、图标、图文间距和左右内边距小幅收窄，使当前 360dp 设备的实测前四项刚好占满一行；历史图标同时稳定补齐，搜索结果与历史标签的图文可见重心已对齐。；QUICKSEARCH_HISTORY_CANONICAL_ENTRY：搜索提交前先识别精确匹配的应用，匹配到即写入唯一应用记录并显示图标，未匹配才写纯文字；旧版双记录仅做一次迁移清理。；DOCK_V156_HEIGHT_BASELINE：1.5.7 不再把 Dock 高度套用真实屏幕与所选资源档位的 Placement 比例，恢复 1.5.6 的全高基准；构建通过，真机视觉待验收。
+- **2026-09-15** DEFAULT_SOURCE_CIRCLE_CROP：有效来源为 DEFAULT 的系统原图默认使用自身底色放大后圆形裁切，最终外径继续由原版 IconColor 分类、LayoutProperty 与用户倍率决定；vivo X21A 已通过十二/二十宫格、100%/150%、A/B 设置与翻页压力验证。
 
-- 2026-09-12 UNLOCK_WAIT_FOR_FOCUS_OPTION：在干净 1.5.7 基线上恢复可选解锁焦点等待模式，默认继续使用 120ms 预滚；两模式 Session 测试与完整构建通过，真机视觉待验收。
+- **2026-09-14** QUICK_DESKTOP_TOUCH_CLEANUP_AND_CAPTURE_MEMORY：快捷桌面增加统一幂等清理，Launcher Stop/Destroy、Host 异常分离和重新 attach 均先禁用并移除全屏触摸窗口；GL 截图删除全屏零填充数组和第二张全尺寸翻转图，后台处理改为 Latest-Wins 单线程，vivo 真机 10 次开关、Home 与设置覆盖返回通过。；STATUS_AND_DESKTOP_VISUAL_ADJUSTMENT_UI：状态栏设置改为确认后重载并移除重复操作项，桌面图标/文字统一显示相对默认值的调整量；桌面文字调整已接入最终字号 Owner，当前 vivo 真机 `+6/+10` 可见生效。
 
-- 2026-09-09 QUICK_DESKTOP_SEARCH_RETURN_HANDOFF_FIX：快捷桌面等待透明搜索窗口获得焦点后再关闭宿主，进入时由搜索首帧覆盖、返回时直接露出首页；构建与签名通过，设备离线导致真机动画验收待完成。
+- **2026-09-13** QUICKSEARCH_ICON_TEXT_VISUAL_ALIGNMENT_AND_HISTORY_STABILITY：搜索历史保持原版自然换行，将标签字体、图标、图文间距和左右内边距小幅收窄，使当前 360dp 设备的实测前四项刚好占满一行；历史图标同时稳定补齐，搜索结果与历史标签的图文可见重心已对齐。；QUICKSEARCH_HISTORY_CANONICAL_ENTRY：搜索提交前先识别精确匹配的应用，匹配到即写入唯一应用记录并显示图标，未匹配才写纯文字；旧版双记录仅做一次迁移清理。；DOCK_V156_HEIGHT_BASELINE：1.5.7 不再把 Dock 高度套用真实屏幕与所选资源档位的 Placement 比例，恢复 1.5.6 的全高基准；构建通过，真机视觉待验收。
 
-- 2026-09-08 QUICK_DESKTOP_CROSS_ROM_TOOL_RESOLVER：六个固定快捷工具保留原版动作语义，便签等系统工具新增标准 Intent、厂商包与系统应用身份三级解析；V2458A 五类系统工具解析通过，魅族及其他 ROM 真机点击仍待对应设备确认。；QUICK_DESKTOP_GESTURE_AND_RESTORE_TOKEN_FIX：快捷桌面动画开始即接管下一次触摸并补齐 100% 立即完成分支，解决快速切换卡住和误翻第二页；未执行的恢复预览令牌会在重新选文件时释放，正常旧备份不再被误报损坏，V2458A 真机由用户确认正常。；QUICK_DESKTOP_BACKUP_DEFAULT_STATE_FIX：快捷桌面备份已保存包含默认值的完整逻辑状态，X21A 新归档确认含全部 8 个字段且真机恢复重新生效；恢复预览同时显示启用组件数与总开关状态。
+- **2026-09-12** UNLOCK_WAIT_FOR_FOCUS_OPTION：在干净 1.5.7 基线上恢复可选解锁焦点等待模式，默认继续使用 120ms 预滚；两模式 Session 测试与完整构建通过，真机视觉待验收。
 
-- 2026-09-07 QUICK_DESKTOP_HALF_COMPLETE：9 月 6–7 日已完成原手势宿主、实时模糊背景、原版固定卡片及设置主链，V2458A 真机视觉与主要交互通过，整体约完成一半；AppWidgetHost、备份恢复实测和完整设备矩阵仍未完成。
+- **2026-09-09** QUICK_DESKTOP_SEARCH_RETURN_HANDOFF_FIX：快捷桌面等待透明搜索窗口获得焦点后再关闭宿主，进入时由搜索首帧覆盖、返回时直接露出首页；构建与签名通过，设备离线导致真机动画验收待完成。
 
-- 2026-09-06 QUICK_DESKTOP_PHASE2_MOTION_ACCEPTED：负一屏已恢复当前桌面实时截图、渐进模糊与整张内容页连续跟手，V2458A 真机确认悬停及打开正常，进入 Phase 3 设置与固定卡片功能接入。；QUICK_DESKTOP_PHASE3_SETTINGS_IN_PROGRESS：设置主页面合并为一个可开关并可进入详情的“负一屏”项，四类原版组件开关、天气数据与应用入口已接线，构建通过但新版待 ADB 重连后真机验收。
+- **2026-09-08** QUICK_DESKTOP_CROSS_ROM_TOOL_RESOLVER：六个固定快捷工具保留原版动作语义，便签等系统工具新增标准 Intent、厂商包与系统应用身份三级解析；V2458A 五类系统工具解析通过，魅族及其他 ROM 真机点击仍待对应设备确认。；QUICK_DESKTOP_GESTURE_AND_RESTORE_TOKEN_FIX：快捷桌面动画开始即接管下一次触摸并补齐 100% 立即完成分支，解决快速切换卡住和误翻第二页；未执行的恢复预览令牌会在重新选文件时释放，正常旧备份不再被误报损坏，V2458A 真机由用户确认正常。；QUICK_DESKTOP_BACKUP_DEFAULT_STATE_FIX：快捷桌面备份已保存包含默认值的完整逻辑状态，X21A 新归档确认含全部 8 个字段且真机恢复重新生效；恢复预览同时显示启用组件数与总开关状态。
 
-- 2026-09-05 UNLOCK_V154_RESUME_PRE_ROLL：恢复 v1.5.4 已有的 Resume 后 120ms 预滚时机，但继续使用当前严格 Session 防误播与去重，避免立即预滚过早及 USER_PRESENT 后播。；【已废弃，已被 DEFAULT_SOURCE_CIRCLE_CROP 取代】DEFAULT_VISIBLE_FIT；V154_SETTING_BUTTON_ASSETS：桌面编辑齿轮恢复 Git 标签 v1.5.4 归档 APK 的白色描边三层资源及原版 SceneNode 路径，不再使用 maintained 的深灰齿轮资源。；ORIGINAL_LOADING_PANEL：初始化加载页恢复 maintained 保存的原版 246×160dp 纵向面板、13sp 文案及原版进度帧，替换移植层自建横向胶囊。
+- **2026-09-07** QUICK_DESKTOP_HALF_COMPLETE：9 月 6–7 日已完成原手势宿主、实时模糊背景、原版固定卡片及设置主链，V2458A 真机视觉与主要交互通过，整体约完成一半；AppWidgetHost、备份恢复实测和完整设备矩阵仍未完成。
 
-- 2026-09-04 LAUNCHER_EDGE_TO_EDGE_NAV_VISIBLE：桌面铺满与隐藏导航控件解耦，默认关闭隐藏并复用 maintained 状态栏贴图；V2458A 真机已确认关闭开关时铺满并保留横条。；【已废弃，已被 UNLOCK_V154_RESUME_PRE_ROLL 取代】UNLOCK_LOCKED_RESUME_PRE_ROLL
+- **2026-09-06** QUICK_DESKTOP_PHASE2_MOTION_ACCEPTED：负一屏已恢复当前桌面实时截图、渐进模糊与整张内容页连续跟手，V2458A 真机确认悬停及打开正常，进入 Phase 3 设置与固定卡片功能接入。；QUICK_DESKTOP_PHASE3_SETTINGS_IN_PROGRESS：设置主页面合并为一个可开关并可进入详情的“负一屏”项，四类原版组件开关、天气数据与应用入口已接线，构建通过但新版待 ADB 重连后真机验收。
 
-- 2026-09-03 FOLDER_SHARED_TEXTURE_ROUTE：Open Folder 普通应用已恢复共享 Desktop cache/七参数入口，尺寸隔离保留，但三档真机仍有约 78–88ms 长帧，性能验收未通过。；UNLOCK_DIRECT_DISMISS_PRE_ROLL：【被 LOCKED_RESUME_PRE_ROLL 扩展】真实 USER_PRESENT 路径不等待 Focus，但无法覆盖 USER_PRESENT 晚于 Focus 的样本。；UNLOCK_RESOLUTION_EVIDENCE_BOUNDARY：【已被同机 A/B 与预滚动修复收口】高分辨率不是已证明的动画计算根因，当前可见停顿来自 Focus Gate 暴露静止 Launcher Layer。
+- **2026-09-05** UNLOCK_V154_RESUME_PRE_ROLL：恢复 v1.5.4 已有的 Resume 后 120ms 预滚时机，但继续使用当前严格 Session 防误播与去重，避免立即预滚过早及 USER_PRESENT 后播。；【已废弃，已被 DEFAULT_SOURCE_CIRCLE_CROP 取代】DEFAULT_VISIBLE_FIT；V154_SETTING_BUTTON_ASSETS：桌面编辑齿轮恢复 Git 标签 v1.5.4 归档 APK 的白色描边三层资源及原版 SceneNode 路径，不再使用 maintained 的深灰齿轮资源。；ORIGINAL_LOADING_PANEL：初始化加载页恢复 maintained 保存的原版 246×160dp 纵向面板、13sp 文案及原版进度帧，替换移植层自建横向胶囊。
 
-- 2026-09-02 ISSUE_11_DESKTOP_LOCAL_GEOMETRY：Cell 局部偏移与真实资源 profile 的 Placement 分离，几何测试通过，状态为 FIX_IMPLEMENTED_PENDING_REMOTE_ACCEPTANCE。
+- **2026-09-04** LAUNCHER_EDGE_TO_EDGE_NAV_VISIBLE：桌面铺满与隐藏导航控件解耦，默认关闭隐藏并复用 maintained 状态栏贴图；V2458A 真机已确认关闭开关时铺满并保留横条。；【已废弃，已被 UNLOCK_V154_RESUME_PRE_ROLL 取代】UNLOCK_LOCKED_RESUME_PRE_ROLL
 
-- 2026-09-01 UNLOCK_FIRST_GL_FRAME_EXTERNAL_TRACE：该样本派发与 CPU 绘制为毫秒级，但没有 FIRST_PRESENT，不足以确认 FIRST_BAD_UNLOCK_LAYER。
+- **2026-09-03** FOLDER_SHARED_TEXTURE_ROUTE：Open Folder 普通应用已恢复共享 Desktop cache/七参数入口，尺寸隔离保留，但三档真机仍有约 78–88ms 长帧，性能验收未通过。；UNLOCK_DIRECT_DISMISS_PRE_ROLL：【被 LOCKED_RESUME_PRE_ROLL 扩展】真实 USER_PRESENT 路径不等待 Focus，但无法覆盖 USER_PRESENT 晚于 Focus 的样本。；UNLOCK_RESOLUTION_EVIDENCE_BOUNDARY：【已被同机 A/B 与预滚动修复收口】高分辨率不是已证明的动画计算根因，当前可见停顿来自 Focus Gate 暴露静止 Launcher Layer。
 
-- 2026-08-31 FOLDER_WEATHER_OWNER_INITIAL_REPLAY_FIX：新 Folder 天气 Owner 已复用原链回放缓存数据，Open Folder 图标仅按约定小幅增大；V2458A 首次显示通过，既有首次打开 GL 卡顿仍未修复。
+- **2026-09-02** ISSUE_11_DESKTOP_LOCAL_GEOMETRY：Cell 局部偏移与真实资源 profile 的 Placement 分离，几何测试通过，状态为 FIX_IMPLEMENTED_PENDING_REMOTE_ACCEPTANCE。
 
-- 2026-08-30 DESKTOP_SETTINGS_ACTIVITY_TRANSITION_IMPLEMENTED：仅为桌面与设置主页面增加进入/退出转场，V2458A 双向各 20 次通过且未影响设置内部导航。
+- **2026-09-01** UNLOCK_FIRST_GL_FRAME_EXTERNAL_TRACE：该样本派发与 CPU 绘制为毫秒级，但没有 FIRST_PRESENT，不足以确认 FIRST_BAD_UNLOCK_LAYER。
 
-- 2026-08-29 MEIZU_WEATHER_PACKAGE_DETECTION_FIX_IMPLEMENTED：仅补充 Flyme 官方天气精确包名识别，逻辑与构建通过，Meizu/Flyme 真机运行时验证待完成。
+- **2026-08-31** FOLDER_WEATHER_OWNER_INITIAL_REPLAY_FIX：新 Folder 天气 Owner 已复用原链回放缓存数据，Open Folder 图标仅按约定小幅增大；V2458A 首次显示通过，既有首次打开 GL 卡顿仍未修复。
 
-- 2026-08-25 FOLDER_PREVIEW_CELL_MODE_CACHE_OWNER_FIX：Folder Preview 三类图标统一使用 Folder Cell 的真实 `Qj.fH` 生成缓存与合成，V2458A Calendar/Clock 尺寸及宫格切换验证通过。
+- **2026-08-30** DESKTOP_SETTINGS_ACTIVITY_TRANSITION_IMPLEMENTED：仅为桌面与设置主页面增加进入/退出转场，V2458A 双向各 20 次通过且未影响设置内部导航。
 
-- 2026-08-21 ACTIVEICON_REAL_STATIC_ORACLE_FIX：ActiveIcon 外层几何改为跟随真实 STATIC 节点，不再使用 synthetic geometry fallback；完整逐帧与跨比例矩阵仍待验证。；【已废弃】ACTIVEICON_STATIC_LIVE_GEOMETRY_AND_GOLDEN_BASELINE_FIX；【已废弃】ICON_RENDERING_CONTRACT_IMPLEMENTED_MATRIX_PENDING；ICON_RENDERING_CONTRACT_ARCHITECTURE_FROZEN：图标 Source、Geometry、Composer 与 ActiveIcon Sync 四层 Owner 已冻结到 `ICON_RENDERING_CONTRACT.md`，不得恢复固定倍率或多重合成。；【已废弃，已被 DEFAULT_VISIBLE_FIT 取代】EFFECTIVE_ICON_SOURCE_NORMALIZATION_FIX；ICON_UNIFICATION_DOCUMENT_AND_CODE_AUDIT：静态与动态图标仍存在未闭环的最终 Owner 和运行时矩阵，统一状态降级为 `ARCHITECTURE_PARTIAL / RUNTIME_UNVERIFIED`。；RESTORE_IMPROVED_ICON_SOURCE_FIRST_FIX：新 schema v3 备份已保存并恢复改进版 RAW source，V2458A 单次恢复重绑定通过，旧归档与其他来源仍受验证边界限制。；RESTORE_IMPROVED_ICON_SOURCE_SCOPE_CORRECTION：一次恢复只证明 V2458A 新 schema v3 的普通改进版 RAW source，不代表 QuickLaunch、旧归档、全部 raster 或跨 ROM 已通过。
+- **2026-08-29** MEIZU_WEATHER_PACKAGE_DETECTION_FIX_IMPLEMENTED：仅补充 Flyme 官方天气精确包名识别，逻辑与构建通过，Meizu/Flyme 真机运行时验证待完成。
 
-- 2026-08-20 SMS_NOTIFICATION_BADGE_RESOLUTION_FIX_FINAL：短信通知包与桌面包动态归集后，V2458A/OriginOS 数字角标验证通过，其他 ROM 仍需对应真机验证。
+- **2026-08-25** FOLDER_PREVIEW_CELL_MODE_CACHE_OWNER_FIX：Folder Preview 三类图标统一使用 Folder Cell 的真实 `Qj.fH` 生成缓存与合成，V2458A Calendar/Clock 尺寸及宫格切换验证通过。
 
-- 2026-08-18 ACTIVEICON_ICON_SIZE_FACTOR_FINAL_SCALE_OWNER_TRACE：诊断 APK 已安装，但尚未触发完整 Weather/Calendar 刷新取得 FIRST_FACTOR_LOSS_STAGE。；ACTIVEICON_ICON_SIZE_FACTOR_OWNER_BRANCH_FIX：用户倍率从永不执行的 mode 分支移到 H/m root 创建后的统一位置，静态实现完成但当时尚待运行时确认。；ACTIVEICON_ICON_SIZE_FACTOR_OWNER_RUNTIME_CONFIRM：V2458A 已确认 H/m root 从 1.0 正确进入当前用户倍率，证明最终倍率 Owner 在 root 创建后生效。；ACTIVEICON_STATIC_ARTWORK_BODY_BASELINE_ATTEMPT：STATIC/LIVE 对齐尝试改用 artwork body 语义，但后续合同已接管最终几何结论。
+- **2026-08-24** Open Folder 冷重载尺寸隔离与 Desktop Label 宽度适配。具体根因、验证结果及未验证边界见当日详细记录。
 
-- 2026-08-17 UNLOCK_ANIMATION_SESSION_GATE_FINAL：解锁触发收敛为单次 Keyguard Session 并移除伪造延迟信号，模拟器矩阵通过，多 ROM 真机仍待验证。；BACKGROUND_RUNTIME_TITLE_WIDTH_FIX_FINAL：后台运行设置的状态 TextView 改为按内容宽度占位，构建与安装验证通过，真机视觉确认待完成。
+- **2026-08-23** Folder GLThread 资源释放与 draw 状态门控修复；解锁动画非默认 HOME 前台资格与同步 Commit 修复；Open Folder Label Gap 与 Anchor 收口。具体根因、验证结果及未验证边界见当日详细记录。
 
-- 2026-08-16 ACTIVEICON_FOLLOW_CURRENT_STATIC_GEOMETRY_ATTEMPT：该阶段尝试让 LIVE root 跟随 STATIC world bounds，但没有运行时命中证据，不得标记视觉统一完成。；【已废弃，已被 Icon Rendering Contract 取代】ACTIVEICON_ICON_SIZE_PERCENT_PROPAGATION_ROOT_CAUSE
+- **2026-08-21** ACTIVEICON_REAL_STATIC_ORACLE_FIX：ActiveIcon 外层几何改为跟随真实 STATIC 节点，不再使用 synthetic geometry fallback；完整逐帧与跨比例矩阵仍待验证。；【已废弃】ACTIVEICON_STATIC_LIVE_GEOMETRY_AND_GOLDEN_BASELINE_FIX；【已废弃】ICON_RENDERING_CONTRACT_IMPLEMENTED_MATRIX_PENDING；ICON_RENDERING_CONTRACT_ARCHITECTURE_FROZEN：图标 Source、Geometry、Composer 与 ActiveIcon Sync 四层 Owner 已冻结到 `ICON_RENDERING_CONTRACT.md`，不得恢复固定倍率或多重合成。；【已废弃，已被 DEFAULT_VISIBLE_FIT 取代】EFFECTIVE_ICON_SOURCE_NORMALIZATION_FIX；ICON_UNIFICATION_DOCUMENT_AND_CODE_AUDIT：静态与动态图标仍存在未闭环的最终 Owner 和运行时矩阵，统一状态降级为 `ARCHITECTURE_PARTIAL / RUNTIME_UNVERIFIED`。；RESTORE_IMPROVED_ICON_SOURCE_FIRST_FIX：新 schema v3 备份已保存并恢复改进版 RAW source，V2458A 单次恢复重绑定通过，旧归档与其他来源仍受验证边界限制。；RESTORE_IMPROVED_ICON_SOURCE_SCOPE_CORRECTION：一次恢复只证明 V2458A 新 schema v3 的普通改进版 RAW source，不代表 QuickLaunch、旧归档、全部 raster 或跨 ROM 已通过。
+
+- **2026-08-20** SMS_NOTIFICATION_BADGE_RESOLUTION_FIX_FINAL：短信通知包与桌面包动态归集后，V2458A/OriginOS 数字角标验证通过，其他 ROM 仍需对应真机验证。
+
+- **2026-08-15** QuickLaunch 小程序最终渲染源隔离修复（V2458A 真机视觉 PASS）；【已废弃】QuickLaunch provider 圆环由 `e.s.a()` 生成、通过修改 `A.smali` 消除二次 compose 的判断；【已废弃】仅恢复 provider-first / `final_icon` 即可解决桌面最终显示微信宿主图标的判断。具体根因、验证结果及未验证边界见当日详细记录。
+
+- **2026-08-12** 【已废弃，历史实现已被 Icon Rendering Contract 取代】Icon & Folder Unified Geometry。具体根因、验证结果及未验证边界见当日详细记录。
+
+- **2026-08-11** QuickSearch Q12-B 真机联系人与图标水合验证。具体根因、验证结果及未验证边界见当日详细记录。
+
+- **2026-08-10** QuickSearch Q8-D.6 Emulator Presentation Runtime Closure。具体根因、验证结果及未验证边界见当日详细记录。
+
+- **2026-08-09** QuickSearch Q7 Original QuickSearch UI Binding + Formal Presentation Cutover；QuickSearch Q6.2 Original UI Pinyin Consumer Parity + Scroll Gate；QuickSearch Q6.1 Original UI Final Preview Verification；QuickSearch Q6 Original QuickSearch UI Skeleton；QuickSearch Q5.1 最终修正版最小真机闭环。具体根因、验证结果及未验证边界见当日详细记录。
+
+- **2026-08-08** 图标系统文档冻结与旧专项审计清理；【已废弃】当前 1080 与原版截图的图标尺度复核（基于面积补偿方案）；【已废弃】Weather/Calendar 静态 fallback 与动态外轮廓统一（基于面积补偿方案）；【已废弃】图标统一几何、静态合成与最终缓存收敛（面积补偿方案）。具体根因、验证结果及未验证边界见当日详细记录。
+
+- **2026-08-03** 搜索页常用应用的使用情况访问门控；备份恢复与小程序快捷方式图标隔离；【备份目录双路径已被 SAF-only 方案取代】备份目录选择器与设置项默认值。具体根因、验证结果及未验证边界见当日详细记录。
+
+- **2026-08-02** PIN 小程序图标、恢复去重与冷重载白闪。具体根因、验证结果及未验证边界见当日详细记录。
+
+- **2026-08-01** 关于页：移除操作日志并新增使用小技巧；桌面备份与恢复：原版页表兼容、页面统一与真实备份修复；移除 Shizuku 默认桌面通道。具体根因、验证结果及未验证边界见当日详细记录。
+
+- **2026-07-31** 【已废弃】桌面备份与恢复（早期实现与构建级验证）；【已废弃】Shizuku 可选默认桌面授权通道；Android 9窗口动画私有framework资源导致壁纸空白（修复、vivo真机验证完成）；【已废弃】动态天气/日历阴影复用静态原版生成器（v4/v5）。具体根因、验证结果及未验证边界见当日详细记录。
+
+- **2026-07-30** 【已废弃】受管静态图标独立复用原版主题阴影（v6）；设置页截图范围英文本地化补齐（构建、英文1440×3120模拟器关键页面验证完成）；普通桌面高分辨率图标与一次性高清纹理基线（构建、1440×3120模拟器当前20宫格验证完成）；【已废弃】普通桌面静态纹理真实 Cell 尺寸与缓存隔离（v5）。具体根因、验证结果及未验证边界见当日详细记录。
+
+- **2026-07-29** SMEngine稳定固定步长与刷新率识别（构建、60Hz OPPO真机验证完成）；打开文件夹内容组、标题和分页节点自适应（12/20宫格OPPO真机验证完成）；普通桌面与文件夹派生布局隔离（构建、OPPO 真机验证完成）。具体根因、验证结果及未验证边界见当日详细记录。
+
+- **2026-07-28** Android O+ PIN 快捷方式请求与桌面数据一致性（构建、安装完成；真机矩阵待验证）；应用图标有效来源与分组口径收敛（构建完成，真机待验收）；上滑搜索纳入已固定的小程序快捷方式（构建完成，真机待验证）。具体根因、验证结果及未验证边界见当日详细记录。
+
+- **2026-07-27** 解锁触发链恢复至 v1.5.3，保留高刷新率真实时间推进（构建完成，真机待验证）。具体根因、验证结果及未验证边界见当日详细记录。
+
+- **2026-07-24** 图标性能优化阶段 8.2 同进程最终长稳复测与数据修正（真机验证）；图标性能优化与初始化分阶段收敛（阶段 0 至 8 完成，已通过真机 3 轮验证）；版本号升级与文档同步（v1.5.5 / versionCode 30）；下滑系统面板与上滑搜索状态残留修复（构建完成，已增加低频日志）；自定义上传图标保存目录与列表刷新修复（构建完成）。具体根因、验证结果及未验证边界见当日详细记录。
+
+- **2026-07-23** 应用图标全局来源统一与真实预览（构建完成，真机未完成）；Android 8+ PIN 快捷方式的分身用户、原版数据库动作与图标框修复（构建完成，真机未完成）；设置页系统返回统一为左上角返回（构建完成，真机待验收）。具体根因、验证结果及未验证边界见当日详细记录。
+
+- **2026-07-21** 桌面设置“桌面设置”齿轮按钮高清物理纹理合成修复（构建与签名验证完成）。具体根因、验证结果及未验证边界见当日详细记录。
+
+- **2026-07-19** 【已废弃】桌面设置、动态天气和日历接入普通图标 RasterSpec（尺寸与阴影视觉方案错误）。具体根因、验证结果及未验证边界见当日详细记录。
+
+- **2026-07-18** 应用图标预览框收紧与关闭改进版图标时保持分组（真机验证完成）；设置页首个分组标题的垂直基准统一（真机验证完成）；应用图标与替换图标预览框共用视觉背景（最终结构已由同日后续记录覆盖）；跨品牌、跨 Android 版本启动兼容性审计（核心启动修复完成；Android 12 模拟器验证完成；多 ROM 真机回归待验证）；普通 Android Home 键兼容与原版回首页复用（核心实现完成；构建与签名验证完成；真机回归待验证）。具体根因、验证结果及未验证边界见当日详细记录。
+
+- **2026-07-17** SMEngine 全局动画时间源与暂停恢复基准（核心实现完成；完整真机回归待验证）；【已废弃】下滑系统面板所有权与 NEW 实时入库链（代码实现完成；构建、签名与二进制 Manifest 验证完成；真机回归待验证）；SMEngine 按真实墙钟 delta 推进，修复高刷新率动画加速（代码实现完成；构建、签名与二进制 Manifest 验证完成；真机回归待验证）；桌面上滑搜索与左右下滑系统面板（代码实现完成；构建与二进制 Manifest 验证完成；真机回归待验证）；NEW 标记不再被通知使用权或角标提醒隐藏（代码实现完成；真机回归待验证）。具体根因、验证结果及未验证边界见当日详细记录。
+
+- **2026-07-16** 应用图标即时刷新收敛（核心实现完成，基本验证完成；最终回归待完成）；系统视频自动图标改回原版锤子视频图（核心实现完成，基本验证完成；最终回归待完成）；宫格冷重载旧 token 二次启动（核心修复完成，基本验证完成；最终回归待完成）；首次冷启动“正在初始化”真机耗时基线（调查完成，未改业务逻辑）；冷重载两段 Loading 文案与几何一致性确认（核心实现完成，基本验证完成；最终回归待完成）。具体根因、验证结果及未验证边界见当日详细记录。
+
+- **2026-07-15** 图标大小变更复用冷重载过渡（核心修复完成，基本验证完成；最终回归待完成）；Dock 板块页码圆点等比缩放修复（核心修复完成，基本验证完成；最终回归待完成）；宫格冷重载唯一可见 LoadingUI（核心实现完成，基本验证完成；最终回归待完成）；宫格冷重载 LoadingUI 无窗口位移收口（核心修复完成，基本验证完成；最终回归待完成）；宫格连续切换闪退根因：任务归属错误与旧进程记录竞争（核心修复完成，基本验证完成；最终回归待完成）。具体根因、验证结果及未验证边界见当日详细记录。
+
+- **2026-07-13** 恢复所有设置页面的顶部/底部拉伸回弹；修复首页向右拖动无反馈，恢复原版边界回弹；动态天气/日历阴影根因修复与图标设置弹窗统一；桌面图标首帧恢复原版快速路径与分层缓存；修复动态天气和日历双层图标。具体根因、验证结果及未验证边界见当日详细记录。
+
+- **2026-07-12** 单应用替换图标页的持久缓存回填与在线候选刷新；设置页锤子风格弹窗容器与按钮栏统一；【已废弃】系统卸载取消后在 Launcher.onPause 无条件强制复位；【已废弃】在 Launcher.onPause 直接调用 oa.hd（非 GL 线程崩溃）；【已废弃】使用 Activity.recreate 重建卸载场景（可能触发空节点崩溃）。具体根因、验证结果及未验证边界见当日详细记录。
+
+- **2026-07-11** 应用改名即时刷新、设置页转场与角标开关修复；【已废弃】通知角标数字比例与宫格顺序迁移修复。具体根因、验证结果及未验证边界见当日详细记录。
+
+- **2026-07-10** 文件夹拖动/长按释放后图标行距漂移修复；应用图标选择页与默认图标状态修复。具体根因、验证结果及未验证边界见当日详细记录。
+
+- **2026-07-03** 主题保存成功但必须重开桌面才生效；天气多数据源容错与失败状态修复；客户诊断日志增强与应用图标列表完整性修复；文件夹、检查更新与图标系统历史记录清理；完整功能清单与后续状态重新盘点。具体根因、验证结果及未验证边界见当日详细记录。
+
+- **2026-07-02** 【映射/刷新结论保留，尺寸定版已撤销】动态图标、关闭动态后的标准图标映射与在线识别修复；跨机型冷启动、图标数据库与 Smartisan 框架兼容收口；日期变更崩溃、动态图切换缓存与在线图标持久化；天气位置即时刷新与城市搜索收口；【已废弃】动态图标视觉边界、日期高屏偏移与关闭缓存修复（尺寸方案错误）。具体根因、验证结果及未验证边界见当日详细记录。
+
+- **2026-07-01** 【已废弃】动态天气与日历开关、原版分层恢复和多屏尺寸收口；动态天气补丁导致 Launcher 启动 VerifyError；动态天气设置、自动定位与手动城市；普通 Android 动态天气恢复；【已废弃】动态日历尺寸与视觉中心统一。具体根因、验证结果及未验证边界见当日详细记录。
+
+- **2026-06-30** 文件夹背景打包链路改为 assets 直读；v1.5.2 桌面显示、搜索手势与在线图标收口。具体根因、验证结果及未验证边界见当日详细记录。
+
+- **2026-06-29** 应用分身落桌面与通知角标生命周期修复；应用分身诊断日志与角标隐藏开关修复。具体根因、验证结果及未验证边界见当日详细记录。
+
+- **2026-06-28** 普通 Android 通知角标与横扫清除；Moto G100 Android 16 启动兼容、页面锁搜索刷新与 v1.5.1；通用应用分身管理、首次加载和搜索启动；跨 ROM 安装、首次启动与下滑搜索性能收口。具体根因、验证结果及未验证边界见当日详细记录。
+
+- **2026-06-26** 隐私密码页宽度、黑色键盘和搜索解锁链路。具体根因、验证结果及未验证边界见当日详细记录。
+
+- **2026-06-25** 日历编辑页灰度最终回归记录。具体根因、验证结果及未验证边界见当日详细记录。
+
+- **2026-06-24** 设置页隐私密码入口与页面锁内置密码。具体根因、验证结果及未验证边界见当日详细记录。
+
+- **2026-06-22** Android 16 触摸、图标尺寸与文件夹动画修复。具体根因、验证结果及未验证边界见当日详细记录。
+
+- **2026-06-21** 厂商日历识别、日期刷新、双层错位与统一图标尺寸路径。具体根因、验证结果及未验证边界见当日详细记录。
+
+- **2026-06-20** 图标大小即时生效、文件夹对齐、冷启动网格与设置首页排版。具体根因、验证结果及未验证边界见当日详细记录。
+
+- **2026-06-19** 文件夹预览、展开排列和多分辨率适配。具体根因、验证结果及未验证边界见当日详细记录。
+
+- **2026-06-17** 更新下载通知与透明主题重启链路回归。具体根因、验证结果及未验证边界见当日详细记录。
+
+- **2026-06-16** 透明 / 毛玻璃主题文字随壁纸明暗修复与壁纸链路说明；自绘搜索页下滑误触与历史清除按钮修复；桌面设置页偶发自动返回桌面排查。具体根因、验证结果及未验证边界见当日详细记录。
+
+- **2026-06-07** v1.4.8 自绘搜索、主题详情与桌面恢复稳定性。具体根因、验证结果及未验证边界见当日详细记录。
+
+- **2026-06-06** 应用分身、图标识别、毛玻璃主题、搜索和更新下载修复；v1.4.7 更新下载与 Gitee 镜像测试版。具体根因、验证结果及未验证边界见当日详细记录。
+
+- **2026-06-04** v1.4.5 设置体验、主题详情和英文文案修复。具体根因、验证结果及未验证边界见当日详细记录。
+
+- **2026-06-03** 兼容安装与第一轮包体瘦身；v1.4.1 版本与内置搜索页继续修复；v1.4.2 兼容签名发布；刘海屏编辑态状态栏下移修复。具体根因、验证结果及未验证边界见当日详细记录。
+
+- **2026-06-02** 【已废弃】桌面图标大小滑块旧接入方式（旧 LayoutProperty 多字段缩放）；桌面设置缺口第一批补齐。具体根因、验证结果及未验证边界见当日详细记录。
+
+- **2026-06-01** 应用图标页交互、样式和刷新稳定性修复。具体根因、验证结果及未验证边界见当日详细记录。
 
 ## 本文档职责
 
-本文档负责记录 BUG 根因、修复方式、验证过程、回归注意和历史决策。每次修 BUG、改行为、推翻旧方案、做 ADB / 真机验证后，都要在这里新增倒序日期记录，并同步维护顶部“最新专项补录”的一句话结论。
+本文档负责记录 BUG 根因、修复方式、验证过程、回归注意和历史决策。每次修 BUG、改行为、推翻旧方案、做 ADB / 真机验证后，都要在这里新增倒序日期记录，并同步维护顶部“每日总览（倒序）”的当日摘要。
+
+顶部每日总览按日期倒序排列，每个有详细记录的日期保留一条摘要；同一天的新事项直接合并到当日摘要，不在总览前插入详细补录。
 
 每日记录只保留一个 `### YYYY-MM-DD` 日期标题；同一天的修复、优化和验收合并在该日期下，事项使用简短加粗标题，不再为每次尝试或反馈新建独立记录。同一问题合并保留最终根因、方案、验证和未验证范围，后续反馈直接更新原事项。跨日事项归入最终更新日，并注明原始日期范围。历史 `####` 事项标题可保留，不再重复建立日期标题。被推翻的事项在标题前标记 `【已废弃】`，只保留标题，不保留可能误导后续修改的旧正文。
 
@@ -73,7 +171,7 @@
 - README 只放当前安装方式、当前能力、版本 / 兼容基线和关键防回归规则；不要把本文档的每日流水复制进 README。
 - `docs/architecture/APK_STRUCTURE.md` 负责原始 APK、反编译目录、主题包身份和 Release 资产筛选规则；本文档只在修复过程需要时引用结论。
 - `docs/build/BUILD_GUIDE.md` 负责构建工具、PATH、签名、版本号写入点和二进制 Manifest 修改；本文档不重复这些脚本细节。
-- 如果本文档历史小节和顶部“最新专项补录”冲突，以最近日期的每日记录和真机验证结果为准。
+- 如果本文档历史小节和顶部“每日总览（倒序）”冲突，以最近日期的每日记录和真机验证结果为准。
 
 注意：本文档正文只保留当前可信结论和倒序每日修复记录。被真机验证推翻的整节方案只保留日期与标题，并统一标记为“【已废弃】”；正文已清空，不得根据标题猜测或恢复旧实现。如果其他文档与本文档冲突，以最新真机证据和最近日期的每日记录为准。
 
@@ -83,14 +181,284 @@
 
 建议按下面顺序接手，不要从文件中间的旧计划直接开始：
 
-1. 先读顶部“最新专项补录”，快速确认最新结论和待验证边界。
+1. 先读顶部“每日总览（倒序）”，快速确认最新结论和待验证边界。
 2. 再读“每日修复记录（倒序）”，按日期倒序查最近改动。
 3. 旧错误实验只保留日期和标题，并标记为“【已废弃】”；不得按标题猜测实现。
 4. 同一天只读一份合并记录；同一事项以后续确认的最终状态为准。标记“待验证”不等于“已废弃”，不能删除其风险边界。
 
 ## 每日修复记录（倒序）
 
+### 2026-10-04
+
+**应用图标页搜索固定顶部与锤子圆角资源复用**
+
+- **现象与根因**：搜索框原先追加在 ListView 页头设置项后方，随内容滚动；过滤只改变 adapter rows，设置卡片仍占据搜索结果上方空间。设置专用样式将原 QuickSearch 胶囊 NinePatch 拉伸，同时叠加 outline 裁切和系统 elevation，形状与阴影不协调。对照原 APK 的 clean_launcher 搜索布局和 maintained 的 app_icon_settings_layout，确认此应用图标页由现有兼容宿主拥有，保留原版桌面搜索入口及资源。
+- **最终实现**：用户最终选择锤子圆角矩形，复用 maintained 设置资源 `sub_item_back_ground_single.9.png` 的现有圆角、边缘和阴影，取消额外系统投影，不增加或改绘 PNG。只在 APP_ICON_LIST 的现有 RelativeLayout 中增加标题下方的固定搜索容器，ListView 排在其下；共享 XML 与替换图标页保持。继续复用 OriginalSearchBarCompat、现有查询索引、虚拟列表、会话和预览链路。保留一个 header slot 的位置契约；有有效关键词时收起设置 header，查询/聚焦将结果滚到可见位置，空关键词只滚过设置 header 而不隐藏它，清空后可向上滚回设置。原清空保持焦点与键盘的操作保留；未增加全局键盘、系统栏监听或定时器。
+- **验证**：标准 build.bat、apksigner verify、16KiB zipalign、aapt2 badging 通过，保留数据安装成功；v1.5.8/code33。最终安装 APK 拉取 SHA256 与本地产物一致：`853A1E8BDC3938FBD18A7F8D7FC7C5E88BC25E14569E41483370C30C8C8D5074`。vivo Android16 真机截图与 UI dump 确认滚动前后搜索编辑区坐标均为 `[196,402][1218,473]`，高于图标样式；Edge 搜索结果完整显示在键盘上方，无结果提示、清空、收起键盘后滚回顶部恢复设置、替换图标页及标题返回已检查。现有候选/查询生产受控平台回归344项、UI接线静态10项通过，未将这些静态检查当作真机证明。当前 Launcher PID6537日志未见FATAL、ANR、VerifyError或Fatal signal；全设备 crash buffer 中旧 media.swcodec 崩溃不当作 Launcher 新崩溃。
+- **文件与边界**：生产修改仅 MaintainedLauncherSettingsHost.java、OriginalSearchBarCompat.java，前者改固定布局/搜索滚动，后者改设置专用背景；既有48dp高度和裁切改动保留。未改变任何图标选择、主题、光影、宫格或用户设置值；未实际提交替换图标选择。跨ROM、横屏和更大字体/显示缩放仍未覆盖，不声称全项目流畅度得到新的测量收益。源码/已安装基线、构建日志、最终 APK 和截图保存在本地 `build/icon-search-pinned-20261004/`；未暂存、提交、推送，未更新项目或全局 MEMORY.md。
+
+**后续流畅度建议可行性复核（审计，未实施）**
+
+- **用户约束与范围**：用户要求仔细核对优化是否有效，同时保护稳定性。本轮只复核当前代码、原APK对应clean_launcher截图路径、maintained资源／渲染参考、正式APK资源与已有trace，复跑候选回归；未修改生产代码、构建或操作／安装手机。以下区分已测收益、代码可行性与未验证效果，不能把建议写成已完成优化。
+- **已实施S2收益重查**：原始settings-analysis与四个Perfetto样本重新读取。10轮正式设置样本健康检查及最后动作覆盖均通过；BACK峰值仍为7.783–12.063ms，对照基线29.171ms；inflate记录190→108（第10轮113）。S2a单独一轮BACK峰值反而32.886ms，不能把后续收益归给全部资源／异步化措施；没有单项配对实验，最终收益限定S2组合与所测设置往返。四段trace未查到MaintainedSet前缀线程记录，不据此认定迁移线程从未运行或无耗时。
+
+| 后续项 | 复核证据与实际能改变的事 | 稳定性边界与决策 |
+|---|---|---|
+| 初始化迁移去重 | show(MAIN)每次安排15秒后线程；三个迁移各有持久完成标记，完成后迅速返回。去重能减少重复排队／线程，尚无帧尖峰归因证据 | 可做小范围单飞；不能永久用进程boolean替代持久标记，不能漏首次／恢复后再次需要的迁移，不能将首次磁盘读取挪到MAIN。降为后台整理，不承诺明显改善滑动 |
+| 图标候选批量任务 | 已有两线程优先级池、6–16MiB按字节缓存、96项会话队列治理、request/session/generation与目标尺寸解码。一个P0 discovery仍串行load所有库候选／图标包，栅格化后完整一次发布；候选version每项还会查包信息 | 优先测真实ICON_CHOICE的排队／load／发布，考虑已有队列内分段及一次请求内元数据去重。完整列表、选中优先、稳定来源顺序、下载失败过滤、下载促进已有图标刷新、分身身份和离页取消保持。不能改成按完成顺序陆续出现，也不能删掉drawable有效性检查；减少阻塞其他任务不等于首个候选一定更早 |
+| 快捷桌面读回缓冲 | vc.b每次allocateDirect(width*height*4)，GL随后copy到独立Bitmap，worker只消费Bitmap。1260×2800单缓冲约13.46MiB，加Bitmap约26.92MiB；原版也是分配后glReadPixels，已删掉旧零填充数组 | 有条件复用GL独占缓冲；不影响原版另一截图调用。只能减少分配频率，readPixels／Bitmap创建仍在，峰值与揭露收益未证明；保留缓冲会增加闲时内存，引用释放不等于原生内存立即回收。尺寸／Surface／压力失效及像素、generation必须验证，暂不引入Bitmap池 |
+| 主题详情缩小原图 | 正式APK内70张delta_L/trident_L：68张626×1356、2张556×1204；手机框PNG714×1604，实际资源缩放另由density决定。详情已有后台解码及8MiB结果缓存 | 撤回笼统“大预览普遍降采样”建议；这些源图不是之前观测的1919²大图，普遍二分采样可能损失清晰度。只在实际源／目标与内存证据支持时采样，不改正文纹理、mask或图标Alpha |
+| 首次主题状态、启动／Loading | 主题首扫仍MAIN以保持完整正确首屏；后台刷新复用两线程主题预览池。首帧后搜索预热也复用已有池，资源create/isPrepared同步且miss内含copy／fsync | 先测首次打开／升级／资源提取并发与队列等待。MAIN遇到资源预热的锁可能等待（代码可达，未复现长等／死锁），不能笼统说全部准备已离开MAIN；主题刷新被预览队列延后也待测。恢复DB前安全门、锁、fsync、Loading token／真实首帧／10秒失败流程保留，无证据不改等待预算 |
+
+- **回归与验收条件**：既有候选生产方法受控平台／XML回归344项、UI接线静态检查10项通过，仅证明现有基线行为，不能证明尚未实施方案稳定或提速。候选新改动必须保持完整单次发布、排序／回退／下载副作用、应用切换／退出／包更新回调身份；截图须验证取消／Surface／内存压力／真实画面；首开预热须验证同资源竞争、HOME／锁屏与Loading前后。每项独立与相同冷热条件旧包配对，分别量排队、MAIN／GL、内存／分配与实际呈现；没有可重复收益则不保留复杂化补丁。窗口残留、触摸失灵、数据变化、错图／模糊、崩溃／ANR或持久增长任一新回归即停止该项，保留数据恢复已验证基线。多ROM零影响无法由单机／fixture保证。
+- **当前结论与文件**：下一步应先补真实候选路径与资源预热竞争的时序证据，迁移去重仅做有限后台整理，缓冲复用后置，主题详情普遍降采样不采纳；稳定性集中回归与性能测量配套进行。更新本条和专项计划审核说明；项目／全局MEMORY.md未更新，无暂存／提交／推送，既有staged修改保持。
+
+**流畅度S2后续：设置返回、主题状态与原搜索资源复用**
+
+- **范围与根因**：接续已授权的流畅度方案，保留S1/S3与触摸归属修复。应用图标页和原搜索共用的资源入口每次新建AssetManager／Resources并查询自身包信息；主题两组adapter分别扫描安装状态，首次poll再次扫描，格子绑定还可能查询DownloadManager；设置Activity返回MAIN则反复inflate。已核对当前Owner、原APK的clean_launcher资源／ThemeChooser、maintained参考，沿用现有资源Owner、SettingsHost、OverlayHost和预览队列，不更换原动画或页面结构。
+- **S2a修改**：OriginalQuickSearchResources只缓存一项资源数据，每次仍创建当前Context包装与独立Theme；自身APK路径／长度／时间、完整Configuration／DisplayMetrics及提取文件状态均参与失效。资源升级提取在临时文件完成copy／fsync后rename发布，失败不发布缓存。真实桌面首帧之后借已有IconPreviewRepository队列预热，未绕过恢复守卫或Loading首帧token。主题首次准确状态只扫描一次并共享给两组adapter；后续poll借已有主题executor查询，MAIN绑定，保留1000ms轮询周期；离页取消排队任务，已运行的迟到结果经owner／Handler／Runnable身份门丢弃。首次主题扫描仍在MAIN以保留完整正确首屏，未宣称已经完全异步化。
+- **S2b修改**：扩展已有MAIN缓存到同一个ThemeChooserActivity已离场页面，返回重绑设置值；当前页面仍附着的快速返回沿原重建路径，完整配置／密度变化则失效，销毁按匹配owner清理。Launcher overlay原有“新会话且pages为空”的条件保持。只复用MAIN，不缓存图标、权限、密码、备份等状态敏感页；原scroll／back／session及180ms子页、260/220ms主入口动画不变。复用新增配置快照是原缓存缺少失效条件所需，没有新增Manager／Service。
+- **正式设备对照**：vivo V2458A／Android16、经典蓝普通主题12宫格，同样20秒协议，每轮两组主题→MAIN、应用图标→MAIN、翻页动画→MAIN。实际基线APK8D877A…（保留同期赞助页更新）、S2a包280D28…与最终S2a+S2b包分别采样；基线与S2a各一轮，最终包10轮，共每个目标页20次打开及返回。页面截图核对正确标题／当前主题／图标列表，动作Activity身份与时间线完整，无data_loss／overrun。错误起始页或手机被操作打断的试采不计入结果。
+
+| 正式样本 | MAIN doFrame最大ms | BACK分发最大ms | inflate记录数 | 含App Deadline Missed的ThemeChooser帧 |
+|---|---:|---:|---:|---:|
+| 保存的实际安装基线 | 35.366 | 29.171 | 190 | 14 |
+| 只实施S2a | 22.839 | 32.886 | 186 | 11 |
+| S2a+S2b第1–5轮 | 28.214／28.305／23.556／27.371／17.359 | 11.426／8.291／8.701／9.013／8.556 | 各108 | 6／4／2／6／6 |
+| S2a+S2b第6–10轮 | 21.333／27.509／23.027／18.174／21.705 | 12.063／8.134／9.516／7.783／9.120 | 108／108／108／108／113 | 7／4／5／6／4 |
+
+- **结果解释**：复用后BACK处理峰值7.783–12.063ms，基线29.171ms；inflate记录明显减少。doFrame仍波动，Buffer Stuffing、Display HAL、Prediction Error与App Deadline Missed分开统计，不用混合计数宣称全项目FPS或零卡顿。基线只一轮，不能将最终10轮包装成10组基线配对。目标页所测收益支持保留补丁，其他路径不能据此验收。
+- **功能与隔离验证**：生产资源Owner在Android app_process隔离目录下完成434项资源共享／独立Theme／语言字体方向夜间与密度／升级／提取失败／文件丢失／并发检查；直接提取生产方法的受控JVM主题状态23项、MAIN owner／附着／快速返回／配置失效／销毁67项通过，fixture不代替真实平台完整矩阵。真机另核对隐私密码验证页（未输入密码）、强迫症、状态栏、搜索手势、快捷桌面设置打开／返回，五次MAIN滚动位置bounds一致；快捷桌面实际打开→原搜索输入edge显示Edge结果→清空→退出，Folder打开时桌面／Dock／投影全隐藏、外部关闭恢复均有实际画面。未修改用户主题、宫格、开关、密码或布局。
+- **产物与文件**：标准build.bat、apksigner verify、16KiB zipalign、aapt2 badging、保留数据安装及安装APK拉取hash一致；v1.5.8/code33，SHA256 `DB2C5CF79F051C5CDEDC3DDC88F7E88A4FC5C43DC76001977D3C0CA7C009BE99`。所测Launcher PID11261 crash buffer为空，进程日志未见FATAL／ANR／VerifyError；全设备旧media.swcodec崩溃未当作Launcher新崩溃，也不声称全设备crash buffer为空。生产文件为OriginalQuickSearchResources.java、MaintainedLauncherSettingsHost.java、LauncherSettingsOverlayHost.java；新增tools/tests/settings_resources下四个probe／入口文件，本条及专项计划已更新。基线、源码备份、trace、脚本、截图和安装APK保留在本地build/fluency-s2-20261004/。未更新项目／全局MEMORY.md，未暂存／提交／推送，同期赞助页及其他既有改动保持。
+- **未验边界**：主题下载安装／卸载恢复、真实配置变化与内存压力、开关改值重进、所有设置子页／权限系统页、overlay完整动画矩阵、五次冷进程／真实重载Loading、20宫格／更多主题／跨ROM仍未完整验收。S1b缓冲、S4候选预览、S5其余启动Loading项尚未实施；本轮不扩大页面缓存，不用固定等待或缩短动画补偿，保留专项计划后续阶段。
+
+**快捷桌面与单页／多页触摸归属修复**
+
+- **用户现象与现场**：用户明确该问题在此前版本已出现，普通单页和多页都可能发生，锁屏再解锁恢复；不能直接归因于本轮优化。现场进程29432仍存活，未见FATAL／ANR，InputDispatcher为enabled且未冻结；截图显示多页概览，窗口与输入dump却存在1260×2800的可触摸快捷桌面PopupWindow。其最后日志为一次打开释放后target=1，后续点击不再进入RootView。这是本次捕获的触摸窗口冲突，不能推断所有历史单页失灵均为同一原因。原onLauncherStopped清理窗口，与锁屏可恢复的现象吻合；未把锁屏当作修复手段。
+- **先恢复基线**：保存现场截图、进程／窗口／输入和故障APK，再保留数据安装已保存的0598DD…基线，截图确认桌面及Folder可用后才继续。基线同样允许在概览右滑触发快捷桌面，证明模式资格缺口早已存在；基线未复现相同不可见窗口卡死，不据此归因。最初两组测试结束在主题设置页，后续排除；不能把注入成功或安装成功当功能PASS。
+- **原版Owner核对**：对照原APK的clean_launcher RootView、J、Eb和view/b/fa；J.Ta只返回Activity可交互标志ng，并非页面模式资格。Eb.isEditMode仅表示图标编辑，概览时也可能false；当前px.Dl读取显示模式hH，普通十二／二十对应12／9，概览对应13／10。原RootView的j(MotionEvent)继续拥有SMEngine触摸派发，maintained参考不替换该链。
+- **最小修复**：复用QuickDesktopController，在候选DOWN、原RootView请求前、背景就绪及窗口显示前检查当前显示模式，仅普通12／9且非图标编辑可揭露；模式变化后旧截图不能覆盖概览。RootView不合资格时继续原页面派发。快捷桌面实际接管一次拖动后，其UP统一沿已有RootView取消路径向原引擎发送CANCEL，避免同一UP又完成原桌面翻页／按下状态；宿主本身仍按原进度和速度决定打开或关闭。原阈值、动画时长、曲线、图标／光影和主题资源不变，无新增Manager或随机延迟。
+- **真机有效采样**：用户暂停手动操作后，正式包进程20096完成普通单页20组快速左右滑动；截图确认仍为桌面，后续能继续切页。随后10组逐组回首页的快捷桌面打开及动画中连续反向滑动，日志为10次实际request／10次背景应用／10次引擎释放取消，各组最终close-release target=0；最终输入窗口列表无全屏PopupWindow，保留的input channel不算活动窗口。文件夹实际点开、外部关闭正常。多页概览20组边缘反向滑动，20次模式13拒绝、0request／0capture／0window；另一次完整左滑截图确认换到下一概览组，双指退出回普通单页正常。主题预览→HOME→快捷桌面→关闭→Folder亦有实际截图，未应用新主题，最终返回普通桌面。这些路径未用锁屏或重启来恢复，不能等同长期零复现。
+- **隔离与产物验证**：production Controller的83项资格、普通12／9、概览13／10、Folder8、图标编辑、模式中途变化、UP归属及迟到背景检查通过；production Capture的9项generation检查复跑通过。标准build.bat、apksigner verify、16KiB zipalign、aapt2 badging、保留数据安装及安装APK拉取hash一致；v1.5.8/code33，SHA256 `84F06AADC57E99F3D6DD23E71759E1EB63B222706BDE6ED843F047AFDA57FF7A`。所测正式进程crash buffer为空，未见FATAL／ANR／native fatal／VerifyError／模式读取失败；git diff --check通过。
+- **文件与证据**：本次追加生产修改为`RootView.smali`与`QuickDesktopController.java`；扩展`tools/tests/quickdesktop/QuickDesktopCaptureGateProbe.java`及fixture入口`run_capture_gate_probe.py`，沿用现有generation probe。现场、恢复、有效／无效采样和安装校验产物留在本地`build/swipe-freeze-20261004/`。本条及专项计划更新，项目／全局MEMORY.md未更新，既有staged文件保持，未暂存／提交／推送。
+- **风险边界**：实际20宫格、透明／毛玻璃、图标编辑拖放、长时间随机触摸、系统面板打断、锁屏与跨ROM完整矩阵仍待补足；用户历史单页冻结未在本轮捕获同样完整的故障链，保留此不确定性。此前S1/S3性能样本仍按其原范围有效，不能用本次触摸修复宣称全项目流畅度方案完成。
+
+**流畅度优化首批实施：快捷桌面截图触发与多页比例校正**
+
+- **范围与产物**：用户授权开始执行并允许操作手机；在既有 dirty 工作区上保留全部 staged 修改，未暂存／提交／推送。本地基线 APK `0598DD95FDD8DF48EE52AF497AE47A38E597E176E7F0DA688DED0AB2022CBF2E` 与相关源码已保存到 `build/fluency-s1-20261004/baseline/`。最终正式 APK SHA256 为 `3BF81D29ECD21E033874232949C1E512FE2EC90D2BAE75DA3316AB83FA1CA827`，v1.5.8 / code33；已保留数据安装 vivo V2458A / Android16，拉取已安装 APK 后 hash 一致。临时 `OVERVIEW_ICON_ASPECT` Trace 包装已移除，再走标准构建并验证正式包，手机最终停留原桌面。
+- **S1a 根因与修改**：ACTION_DOWN 提前刷新内容并申请整屏读回，普通点击／Folder／多页操作即使不打开快捷桌面也付出分配与截图成本。DOWN 现在只记录候选；复用原版 RootView 单指、方向、J.Ta()、sLeftScreenEnabled 允许分支的 requestShow，确认后只准备一次。onProgress 回调移入原允许链且依赖已取得的截图资格；不改变原手势阈值、Ad、派发和动画参数。背景处理完成后才揭露宿主窗口，避免空背景先出现再替换；后台模糊分辨率、锐利层和原参数保持。
+- **S1a 竞态保护**：在 GPU 读回前领取具体 generation，onGlFrame 携带同一编号；取消、第二指、HOME／detach 后旧读回只丢弃自身结果，不能领取新手势的 pendingHost。新增短状态锁仅保护请求发布／领取／取消，GPU／worker 不在锁内。沿用现有 Controller／Capture／Host，无新增 Manager／Service。
+- **S1a 实测**：正式包 Folder 连续20次正确打开／点击外部关闭，另一次截图检查，均无 capture 请求；3次快捷桌面打开为3请求、3背景应用。多页20次双向切换无请求；快速打开、ACTION_CANCEL、反向取消、揭露后第二指的真实注入路径及截图已检查。录屏抽帧检查背景交接，Folder 打开时桌面、Dock 和投影均隐藏，退出恢复，当前日历／时钟位置正确。主题／应用图标／翻页设置前进返回、HOME、重新打开快捷桌面、点击其搜索栏进入 OriginalQuickSearchActivity 及返回，共13个窗口状态检查通过；这不等于所有设置子页或竖滑搜索入口均验收。
+- **S3 新证据**：只消除误截图后，多页 GL CPU 尖峰仍有45.77–58.53 ms，不能将其算作 S1 的帧率收益。临时区段定位到 preserveOverviewIconAspect：四次切换687次调用共158.492 ms，四个长帧内该方法分别占33.994／44.670／35.997／43.345 ms；重复枚举继承方法与字段是实际热点。对照原版 SceneNode、Constants、clean_launcher 几何合同及 maintained 参考，继续使用现有兼容 Bridge。
+- **S3 修改**：复用 PIXEL_GRID_METHODS，以已确认的引擎签名按需取得 Method，缓存类的字段元数据；不再枚举数百个继承方法。比例校正复用此缓存，但每次仍读取当前 page_width／height 和节点 scale，原计算、sc[0]/sc[7]、弱引用校正记录及 ActiveIcon 重绑判断保持。只缓存 Class／Method／Field，不持有 Activity／View，不缓存最终比例、位置或一次场景结果。优化后同类诊断样本684次调用共3.916 ms，最大单次0.087 ms；诊断数据与正式性能数据分开。
+
+| 20秒正式 Perfetto 样本（同设备、蓝色普通主题、12宫格、相同双指动作） | 完整 GL 帧 | GL CPU 最大值 ms | CPU >33.33ms 帧数 | 误截图请求 |
+|---|---:|---:|---:|---:|
+| 已保存基线，2组进入／退出 | 1239 | 52.999 | 4 | 4 |
+| 正式优化包，第1轮2组 | 1218 | 28.011 | 0 | 0 |
+| 正式优化包，第2轮2组 | 1198 | 15.161 | 0 | 0 |
+| 正式优化包，第3轮2组 | 1198 | 13.751 | 0 | 0 |
+| 正式优化包，第4轮2组 | 1198 | 13.963 | 0 | 0 |
+| 正式优化包，第5轮2组 | 1198 | 14.897 | 0 | 0 |
+
+- **性能解释**：正式包5轮共10组／20次切换、6010个完整 GL 帧；切换尖峰下降且所测 >33.33ms CPU 长帧消失。统计按 sched 与 onDrawFrame 的重叠计算实际 GL CPU，不是呈现 FPS／GPU 时间。普通帧 p95 为5.311–5.971 ms，基线5.552 ms；p99 为6.803–7.439 ms，基线6.470 ms，不宣称全局 p95／p99 改善。采样无 data_loss／overrun；最后输入及其后帧均落在完整 trace 窗口。基线只有一轮正式对照，不将5轮优化复测包装为5轮基线配对。
+- **平台／构建检查**：production Controller 在真实 Android MotionEvent／VelocityTracker 下、受控 Host／Capture 的16项触发／释放／HOME／关闭检查通过；production Capture 的9项世代领取、读回期间取消与新请求保护检查通过。直接运行构建生成的 production Bridge dex，71项十二／二十引擎模式、继承字段、精确 overload、重复不累积、ActiveIcon 重绑及尺寸变化检查通过；fixture 不替代实际20宫格迁移验收。新增回归入口在 `tools/tests/quickdesktop/run_capture_gate_probe.py` 和 `tools/tests/geometry/run_overview_probe.py`。
+- **最终验证**：build.bat、apksigner verify、zipalign -c -P16、aapt2 badging、保留数据安装、安装 hash 校验及 git diff --check 通过。正式进程29432的 crash buffer 无记录，所测日志无 FATAL／ANR／native fatal／VerifyError／OVERVIEW_ICON_ASPECT_FAILED／STATIC_ICON_PIXEL_GRID_FAILED。实际截图与记录保留在本地 `build/fluency-s1-20261004/`，采错场景的 earlier samples 不计入结果。
+- **文件及边界**：生产改动为 RootView.smali、vc.smali、QuickDesktopController.java、QuickDesktopBackgroundCapture.java、LauncherSettingBridge.java，另补回归脚本／fixture及本计划文档。F01–F15、光影参数／向量、主题资源、图标来源和原版动画不变。S1b缓冲复用、S2设置／搜索资源与转场、S4候选／预览、S5启动／Loading尚未实施；S1a/S3完整矩阵也未全部验收。实际20宫格、透明／毛玻璃、不同倍率、拖动归类／垃圾桶、冷启动多轮、50次内存往返及跨ROM仍待验。本轮收益限定已测路径，不宣称整个项目已优化完成。项目及全局 MEMORY.md 未更新。
+
+**流畅度优化完整方案（方案阶段，未实施）**
+
+- 用户要求制定完整方案并保持正常功能。本轮复核当前代码、原版RootView／clean_launcher、maintained主题设置参考及既有审计证据，将完整S0–S6顺序、Owner／文件范围、功能保护、性能目标、回归矩阵和回退流程写入 `LAUNCHER_FIX_AND_OPTIMIZATION_PLAN.md` 顶部2026-10-04章节；与旧启动阶段／F01–F15编号分开，不重复已完成修复。
+- 新确认的施工限制：现有RootView.onProgress兼容回调位于原版单指／J.Ta()允许门之前，不能直接将DOWN截图搬到onProgress就算解决。第一项必须同时做到非快捷桌面零读回、原版手势归属保持、真实揭露前背景连续；不能用固定延迟、模糊／光影降级、缩短动画或移除稳定性门换帧率。
+- 只更新计划、开发记录及索引说明；无生产代码／资源／Manifest修改，无构建／安装或手机操作。本地正式APK hash复核仍为0598DD…；既有dirty改动保留。方案尚未实施，冷启动／Loading／搜索／20宫格／跨ROM的未验范围不转为PASS，项目及全局MEMORY未更新。
+
+**全项目流畅度复审（仅审计，未修改生产代码）**
+
+- **基线与范围**：在 HEAD `912fd89a38d185444935bc146d6c52032b309d58` 的现有 staged／unstaged 工作区上复审，保留全部已有改动。当前本地正式 APK 与 vivo V2458A / Android 16 已安装 APK 的 SHA256 均为 `0598DD95FDD8DF48EE52AF497AE47A38E597E176E7F0DA688DED0AB2022CBF2E`。全量风险检索覆盖 131 个 Java、3712 个 Smali，另清点 233 个原版资源 XML（`launcher/unknown/res`）及 435 个设置资源 XML；检索命中数量不是 BUG 数量，也不代表每个文件完成语义／真机验收。
+- **深读范围**：启动／HOME／解锁、12/20 与多页模式、PageWithRenderTarget／SMEngine、Folder／Dock、设置共用转场、主题／壁纸、应用图标／候选／缓存、搜索／IME／索引／历史、快捷桌面／媒体／背景、天气／日历／感应投影、安装／分身／角标、备份／恢复／Loading。对照 original APK 对应 clean_launcher 及 maintained 的设置／主题加载参考；原版动画、图标资源、主题参数、投影向量和 F01–F15 保护保持。
+- **真机采样**：得到完整 20 秒的两次双指收拢／展开（单页↔四页）Perfetto 样本，1195 个完整 `onDrawFrame`；四个切换窗口分别出现约 48.7／49.1／47.6／52.8 ms 的 GL 长帧。相应 GL 实际 CPU 运行约 48.2／48.6／47.6／52.3 ms，单个长帧内 dequeueBuffer 只有约 0.2 ms，故这些尖峰不能用常规 VSync 等待解释；尚缺 Java／native 方法栈，不能直接指定唯一 Owner。普通稳定帧的 GL CPU 多为约 3–5 ms，`onDrawFrame` wall time 包含 buffer 等待，不是 GPU 工作时间或最终显示 FPS。
+- **设置采样**：真实 `MAIN→THEME_LIST→MAIN→ICON_LIST→MAIN→PAGE_FLIP→MAIN`，对应 ThemeChooserActivity 的 84 个 FrameTimeline surface frame 中，9 个 `App Deadline Missed`、12 个 `Buffer Stuffing`、4 个 `Display HAL`、59 个 None；各类含义分别保留，不合并为应用 CPU 卡顿率。主线程最重 `Choreographer#doFrame` 32.65 ms、布局 23.42 ms、单次 inflate 28.55 ms；一次 1919×1919 位图解码 45.54 ms 在 `pool-9-thread-1`，48.07 ms GC 在 HeapTaskDaemon，均非主线程暂停时长。此样本验证设置 Activity 路径，不宣称 overlay／所有子页均已实测。
+- **Folder／翻页采样**：打开／关闭文件夹、左右翻页及普通桌面空白点击，观察到约 28–36 ms 的 GL wall time 尖峰；只统计 Launcher foreground 对应的 GL 区间。末尾搜索动作没有进入搜索 Activity，剔除该段，搜索入口／IME仍未完成本轮动态验收。
+
+| 优先级 | 证据与问题 | 最小优化方向及保护边界 |
+|---|---|---|
+| P1 | `QuickDesktopController.onTouch` 在符合桌面区域的 ACTION_DOWN 即执行 `schedule(root,host,0)`；普通点击、Folder 开关、翻页乃至双指刚按下都有 `QD_BACKGROUND_GL_CAPTURE_REQUEST`。普通点击已得到 `QD_BACKGROUND_APPLIED sharp=1260x2800 blur=240x533`，即快捷桌面没揭露也完成整屏截图与模糊。 | 优先收口已有手势 Owner 与截图触发条件，排除普通点击／反向翻页／Folder／多指；保留快捷桌面揭露前画面、坐标、generation／取消门及原版手势归属。不能简单延迟截图造成揭露时背景跳帧。 |
+| P1 | `vc.b` 每次 GL 截图均新建全屏 DirectByteBuffer 和 ARGB_8888 Bitmap；1260×2800 下仅两者约 26.9 MiB，另外有 worker 缩小／模糊工作。多指取消发生在 MAIN，GL 已开始读回时仍会支付分配和 readPixels 成本。 | 先消除误触发，再审计现有 capture Owner 的缓冲复用和生命周期；不创建第二截图 Manager，不任意改成低清锐利背景。四个多页长帧与该链时间相关，但唯一方法根因仍待短时方法栈／分段标记验证。 |
+| P1 | 设置往返仍重复 inflate／构造／首次 measure/layout。共用 `setSettingsContentView` 对新旧整页启用硬件层，下一帧启动 180 ms 动画；布局／图标回调可能落在同一动画帧。已有主页面缓存只覆盖 Launcher overlay 新会话，不能覆盖本次 Activity 往返。 | 先缩减首帧绑定与重复布局；评估单会话复用已有页面或快照，重绑设置值并保持 owner／session／back／scroll／attach 门。评估整页硬件层建立成本，保留原版转场外观／时序，禁止直接缩短动画掩盖卡顿。 |
+| P2 | `alignStaticIconPixelGrid` 在 Cell.draw 中逐帧运行，仍读取反射字段、遍历父链、做 native corner 投影及分配 float[12]／varargs；`preserveOverviewIconAspect` 在模式绑定中重复枚举方法／读取相同模式几何。 | 在已有 helper 内缓存 Method／Field 与线程内 scratch，按主题／模式／尺寸／Surface／动画变化正确失效；保持静止 1:1 像素对齐、动态几何与多页圆形比例。未证明它独占四个长帧。 |
+| P2 | `OriginalQuickSearchResources.create` 每次建立 AssetManager／Resources／Theme，并查询自身包更新时间；升级后首次提取还在调用线程 copy／fsync。应用图标页搜索栏与搜索 Activity 共用该入口。 | 复用现有资源 Owner，按 APK 更新时间／Configuration／density 缓存和预热；只包装当前 Context，不能静态缓存 Activity。设置资源已有 `scheduleSettingsResourcesWarm`，不得重复新增预热 Manager；也不能声称每次打开都复制 APK。 |
+| P2 | 主题两个 adapter 构造分别 `themeEntriesFor` 查询安装状态，紧随的 polling 又查询状态并对两个 adapter notify；有下载记录时 getView 仍可能查 DownloadManager。现有 getView 资源 ID／安装缓存和后台预览解码已经保留。 | 同次页面会话共用安装／下载状态快照，安装广播／下载变化按相关条目失效，保持回调身份和实际数据新鲜度；不恢复旧的逐格 PM 查询。 |
+| P2 | 图标候选和可见预览共用现有两线程优先级池；候选任务一次扫描图标包并产生所有预览后才发布。后台仍可能加载远大于目标的源图（本次观测1919²）。缓存／取消门已存在。 | 测量候选队列等待和源图内存预算，优先可见条目并复用已有元数据与预览缓存；不把已有后台解码误报为 MAIN 解码，不替换图标来源／Alpha／尺寸契约。 |
+| 安全门，先测量 | 启动前 `RestoreRecoveryGuard` 仍同步等待恢复 writer 文件锁／读取 durable journal，异常恢复可含 rollback／清理。Loading 依赖 UI 调度和实际首帧交接；weather geocoder join 在搜索 worker 内，搜索历史 commit 在 diskExecutor，不能据关键字认定阻塞 MAIN。 | 单独测量 IDLE 冷启动、恢复竞争与真实恢复路径。必须保持数据库初始化前事务安全、首帧 token、GU 向量原子交接、UNKNOWN保留；禁止统一把 commit 换 apply、移除锁、缩短 Loading 超时或删原版 mipmap。 |
+
+- **证据文件**：`build/performance-audit-20261004/source-inventory.json`、`overview-complete.pftrace`／动作时间表、`settings-complete.pftrace`／动作时间表、`folder-search-complete.pftrace`／动作时间表、`trace-analysis.json`。早期动作误入其他 Activity／长按单图标及 buffer 太小导致动作前半段丢失的样本不计入结论。当前 APK 非 debuggable／profileable，shell 方法采样被 Android 拒绝；没有为审计改 Manifest 或安装诊断包。
+- **验证／风险**：采样后 Launcher PID 保持20189，按该 PID 过滤 crash buffer 未见 AndroidRuntime／native crash。本轮仅新增审计产物和本记录，未修改生产代码／资源、未构建或覆盖安装、未改变主题／宫格／快捷桌面偏好；无性能改善或全项目验收声明。冷启动／Loading／解锁、真实搜索和完整快捷桌面进入、20宫格、更多主题、低内存、后台竞争及跨 ROM 仍待性能验收。项目 `MEMORY.md` 与全局 memory 未更新。
+
+**关于我们 Power by 赞助卡片**
+
+- **原因与范围**：用户要求将“使用小技巧”替换为赞助名单，并删除其后所有技巧分组。页面由 MaintainedLauncherSettingsHost.showAboutPage 加载 setting_about_us → setting_tips_view；原 APK 对应 clean_launcher 没有该新增技巧布局，maintained 的关于页只有 logo／关注我们。沿用当前页面和现有单卡片背景，不新增 Java owner 或改桌面逻辑。
+- **修改文件与效果**：launcher/tools/maintained_settings_res/res/layout/setting_tips_view.xml，以及 values/strings.xml、values-zh-rCN/strings.xml；新增 launcher/tools/java/com/smartisanos/home/settings/SponsorNoteTextView.java。当前没有随TextView自然换行绘制记事本横线的控件，因此仅新增局部TextView子类，以实际Layout基线和字体高度绘制浅灰横线及空白行，不新增页面／Manager。标题严格使用“Power by”；名单为“@夏尔美、@星辰、@幸福的街角、@287266982”，便签卡片下方独立灰字为“感谢以上锤友赞助支持，排名不分先后”。名单连续排列并自动换行，复用上方蓝色文字的 more_item_right_color_bg／setting_item_text_copyright_size（13.5dp），与外部分组标题16dp区分；记事本横线随实际文字行绘制，仅在名单后保留两行空白；取消固定最小高度与弹性留白，后续增加姓名仍可扩高；原技巧的所有 include 和后续分组标题从此页面移除。上方 logo／关注我们保留。
+- **验证**：标准 build.bat 成功，v1.5.8／33；v1／v2／v3签名、16KiB zipalign检查通过。保留数据覆盖安装 vivo V2458A／Android16 成功，最终真实关于页截图及UI树确认蓝色小字号的连续四位姓名、一条文字横线加两条空白横线、卡片外下方的新感谢文案及完整圆角，未显示旧技巧分组；本轮读取的AndroidRuntime日志为空。证据为 build/power-by-build.log、power-by-about.png、power-by-nav.xml。未提交／推送，保留既有暂存和工作区改动。
+- **风险与文档**：当前屏幕与中文字号已实测；更多姓名自动换行、超大系统字体和其他ROM尚未真机验证。仅更新本日志，MEMORY.md未更新。
+
+**应用图标搜索与单应用多图标包候选**
+
+- **修改文件**：MaintainedLauncherSettingsHost.java、IconPackManager.java、IconPreviewRepository.java、RedirectIconDB.java、SmartisanInstallManager.java、OriginalQuickSearchActivity.java、OriginalSearchBarCompat.java；新增 AppIconCandidate.java、AppIconSearchIndex.java、OriginalQuickSearchResources.java、tools/tests/app_icon_candidates/AppIconProbe.java 与 run_tests.py。所有 Java 均在 launcher/tools/java 现有包下；本记录更新于 DEVELOPMENT_LOG.md。没有修改桌面 Smali／渲染资源。
+- **真实入口与原因**：审计 main 的 ThemeChooserActivity.smali → MaintainedLauncherSettingsHost.show → item_id_icons → showIconPage → AppIconAdapter，以及原 APK／clean_launcher 设置行、现有 QuickSearch 资源和 maintained 参考后修改。原替换候选只包含当前全局图标包且加载／轮询混在 Adapter；搜索没有页面内索引。现有 DEFAULT／IMPROVED／PACK／CUSTOM／RESOURCE owner、动态图标及最终桌面几何不变。
+- **搜索**：复用 OriginalSearchBarCompat／OriginalSearchEditTextCompat／qs_original_search_bar.xml，将已有资源 APK 加载代码抽为 OriginalQuickSearchResources 共用，不复制 drawable、颜色或尺寸。页面可管理应用来自现有 IconManager／RedirectIconInfo 集合，后台分组时一次构建 AppIconSearchIndex；按 displayName／packageName／componentName trim＋Locale.ROOT 不区分大小写过滤，输入不触发 PackageManager 扫描。空查询恢复分组；非空只显示搜索结果与原列表 Item，点击仍进入原替换页，无结果灰字提示。未新增拼音算法。
+- **最终视觉**：以本日“应用图标页搜索固定顶部与锤子圆角资源复用”为准：搜索固定在标题下方，复用 `sub_item_back_ground_single.9.png`，不叠加系统投影；有效关键词收起设置 header，清空后可滚回设置。原先随列表滚动的胶囊背景与淡投影方案已被取代，不作为当前实现。第三方包名10sp灰字，单行 END 省略，不撑大格子。
+- **候选链**：新增不可变 AppIconCandidate 元数据，来源包括既有 component／system alias／本地图标／variants／在线镜像和所有 getIconPackPackages 检出的包。IconPreviewRepository 既有 worker／session 执行 collect → stableKey去重 → 当前候选优先／包名稳定排序 → 一次提交；IconPackManager 既有 appfilter XML／assets解析和显式 getPackedIcon 验证有真实对应 Drawable 才加入。Adapter 只绑定候选／预览与既有点击操作。Pack 写入仍为 RedirectIconDB.updatePackIcon → forceUpdateIcon → applyIconChanges／Launcher AppIconUpdate／分身刷新，不改 IconSourceManager 全局选项。
+- **线程与缓存**：新增 getRedirectIconMetadata 避免获取模式时解码自定义图；大图预览在原仓库执行器栅格化并复用字节限额缓存。候选元数据最多8页且总权重256；图标包映射继续保留全局当前包＋最多2个额外包。解析移出全局锁，主线程缓存访问不会等待后台 appfilter；generation／session／请求票据丢弃旧结果，取消页面移除刷新闭包。安装／卸载仅淘汰对应包映射，后台刷新有效页面和引用该包的覆盖，普通应用安装不会清空全局已加载映射。
+- **回退**：保存的 pack:<package> 已卸载时，单应用来源、桌面 source type／identity、设置预览均回到当前全局来源；全局包本身失效时继续走既有原图回退，不写新全局值。CUSTOM／RESOURCE／动态天气日历／系统 alias／分身／在线缓存／阴影材质／感应光影／倍率与12／20宫格的所有权未迁移。原全局样式切换主动重置非 CUSTOM 覆盖的规则保持原样，测试组合是在选定全局后再设置单应用 Pack。
+- **构建与自动检查**：标准 build.bat 成功，v1.5.8／33；签名 v1／v2／v3 与16KiB zipalign 检查通过。tools/tests/app_icon_candidates 的受控 Android 边界执行实际生产解析／候选／搜索／回退／数据库逻辑：344项生产检查、10项静态 UI 接线通过，覆盖0／1／3＋／20包、重复 action、assets／XML、失效映射、持久化重开、缓存容量、解析竞争及 session取消；这些不等于 Android UI／帧率验收。audit_icon_contract.py 通过，既有 settings_session 33项及生命周期检查通过。
+- **真机证据与边界**：vivo V2458A Android16／1260×2800安装成功。Edge搜索仅Edge并进入正确页、QQ搜索显示QQ／QQ音乐、包名搜索／无结果／清空回分组已检查；真实 Smartisan OS＋两个临时测试包同时出现，重复THEME action无重复候选，长包名省略。全局DEFAULT／IMPROVED／Pack A后设置Edge Pack B均显示对应预览；冷进程／覆盖安装后Pack B仍置顶勾选。全局Pack A＋QQ Pack C桌面立即变为测试图标，卸载C后同一桌面恢复A图标且无空白，未重启Launcher；测试包B/C已卸载，全局恢复IMPROVED。性能日志候选收集为pool线程。长时间滚动帧率／堆增长、完整50／100／150％和12／20宫格、天气日历／小程序全矩阵未做真机量化，不能标为全部通过。本轮不更新 MEMORY.md，保留任务开始前已有暂存／工作区改动，未提交或推送。
+
+**Dock 感应投影透明矩形深度遮挡（2026-10-03—04）**
+
+- **根因与原版对照**：原版 CellOnDock.draw 调用 db(false) 为 sc[27] 恢复含深度测试的投影状态；MutiTexMaterial 的全透明片元也未 discard。相邻投影矩形在当前 Dock 中重叠，同深度 GL_LESS 会使前一矩形的透明区域挡住后一阴影。10 月 3 日在独立 Mali GLES／24bit depth 探针复现，透明前矩形使后投影 Alpha 总量减少约67%；仅关闭投影深度测试后与单独绘制参照逐像素一致。这是隔离证据，正式路径由本轮同机前后截图继续验证。当前 Dock 绘制／投影初始化方法已对照 clean_launcher、clean_launcher_raw 和 maintained；前两者原方法一致，maintained 仅作状态 API 参考。原版天气预设定义、选择与 opacity getter 保持相同，21组 blur Alpha 完全一致、九姿态 GPU Alpha 最大差异1/255；没有把偏淡未经测量归因为移植时调低参数。
+- **最小修复**：生产文件仅 launcher/smali/com/smartisanos/launcher/view/a/ca.smali，在既有 db(false) 之后、d(Camera) 之前为非空 sc[27] 调用 setIsEnableDepthTest(false)。每帧继续先走原版状态初始化；其他 Scene 重绑定仍走原 f/db 初始化，不新增 Manager、shader、缓存或尺寸逻辑。静态 Dark／Light／Transparent 阴影、mask Alpha、天气／光照／握持算法、图标大小、层级和动画资源均不改，尚未额外增加投影透明度。
+- **构建与设备**：标准 build.bat、ICON_CONTRACT_STATIC_AUDIT、v1/v2/v3 签名、16KiB 对齐通过，版本仍 v1.5.8/33。保留数据安装 Android16／vivo V2458A 成功，最终 APK SHA256 5BF81C96433D1B485D6FBA62D11BB0EE1DE9B9D325CD54B5231474AEE7F1D8BF 与手机 base.apk 相同。相对已安装基线，APK zip条目仅 classes.dex 与签名文件改变；classes2.dex、资源、native、Manifest 相同。用户已有暂存／工作区改动均保留，未暂存、提交或推送。
+- **真机效果与基本回归**：蓝色主题1260×2800前后截图确认企业微信左下竖直截断消失，原 x372/373 切边在 y2660 RGB 跳变量由(-9,-14,-24)降至(0,0,-1)，y2670／2680同样消除明显台阶。企业微信和便签正文、空白背景的所列 ROI RGB 零差异；其他含透明边缘的 ROI 仍有感应投影差异，不宣称全屏零差异。桌面设置 Activity 进入／返回通过；真实保持 Dock 电话长按期间截图看到原垃圾桶与 Dock 收拢，松手取消／BACK 后位置恢复，PID13662持续存活。最新 exit-info 为本次 PACKAGE UPDATED，没有新增 crash 退出；crash buffer 保留历史异常，安装后时间范围未见新 AndroidRuntime／FATAL，旧记录不算本轮新异常。
+- **证据与风险**：build/dock-illumination-fix-20261004/ 保存构建／签名／对齐、前后／长按截图、APK条目差异及像素结果；前期原版／GPU审计在 build/dock-illumination-audit-20261003/。本轮验收限定当前蓝色主题、当前布局和姿态；橙色／透明／毛玻璃主题、12/20 切换、Dock与桌面拖动迁移、手持多姿态、其他倍率与ROM仍待实际回归，不能把本次完整显示称为与原版全场景强度一致。更新本日志，未更新 MEMORY.md。
+
+### 2026-10-03
+
+**专项编号与进度纠正／F05跨进程补充验收（未修改生产代码）**
+
+- **施工进度**：本次专项以 FULL_REGRESSION_STABILITY_AUDIT 的 F01–F15 为准。F09–F15 已在前面的集中处理轮实现／审计；F10 是快捷桌面 draw 快照消费，不能与旧启动计划“阶段10：安装、卸载、角标和分身”混用。后续F05两项清理及writer补验应记为补充验收，不作为倒退阶段或重新编号的下一阶段。专项文档增加当前状态表，已实现、已验证范围和待统一回归项分别列明；不重复修改F10，不将全部实现处理完成当作完整设备矩阵完成。
+- **本轮已完成证据**：新增 RestoreLeaseProbe.java、run_lease_probe.py，run_device_tests.py增加隔离编译入口。Android16使用真实OS锁／AtomicFile／JSON／MAIN，导入和偏好为受控边界。11种情形、111项宿主和69项原生检查通过：writer正常完成后守卫重读终态不重复导入；7种未完成状态下隔离writer退出后回滚一次；COMMITTED／CLEANING退出不重复导入。持锁期间不推进守卫、日志及归档保持，释放后MAIN继续且锁可再获取。仅终止已校验身份的隔离夹具进程；Launcher PID16638前后相同，未触碰真实桌面数据。
+- **保护与风险**：本轮生产代码未改、未重新构建／安装／截图，设备与本地APK仍为0DB246…，五个视觉保护文件哈希不变。人工持锁约一秒的时间不代表真实恢复／最坏HOME预算；完整SAF恢复／撤销、生产故障点、OEM／跨ROM和持续帧预算仍待统一验收。证据在 build/f05-restore-lease-20261003/。更新本日志和专项审计；MEMORY.md未更新，未暂存／提交／推送。
+
+**F05 后续：启动旧备份清理移出 MAIN（实现、Android 16 隔离与正式包基本路径通过）**
+
+- **根因与原链**：`ja.1.onCreate` 在原 DatabaseProvider 初始化前调用 RestoreRecoveryGuard；Guard 先同步执行 DesktopBackupController.cleanupInterruptedBackup，再进入必要的恢复 writer／日志安全门。旧备份清理包含 staging 递归删除、SAF 提供器删除 partial document、偏好 commit 与备份日志 reset。用保存的实际旧方法摘录和真实 Android MAIN／AtomicFile 复现提供器删除发生在 MAIN；提供器边界为受控替身，不冒称真实云端卡顿或实测帧耗时。原版 APK 对应 clean_launcher_raw、clean_launcher 和 maintained 中无等价移植备份事务清理入口；继续复用当前 Controller／OperationLock，不新增 Manager／Service，不改原版初始化顺序。
+- **唯一生产文件与行为**：仅 `launcher/tools/java/com/smartisanos/launcher/backup/DesktopBackupController.java`。现有公开清理入口预留原 BackupOperationLock，后台 `DesktopBackupCleanup` 执行原清理主体，完成／异常后释放；其他操作已有 Owner 时不清理其正在生成的备份，重复入口不会派发第二个在途任务。使用 application Context，未置入 running／prepared 状态或改变取消／预览 UI。IDLE／COMPLETE 保留、PREVIEW_READY 不提示失败、其余未完成状态写 last_backup_incomplete、SAF 失去权限时的原静默删除策略及 reset 顺序全部保留；源码对照确认原清理主体及其余 Controller 方法完全相同，仅入口派发变化。
+- **安全与验收**：RestoreRecoveryGuard、恢复 journal、OS writer、原 DatabaseProvider 接点完全未改；真实恢复／回滚仍在原数据库初始化之前串行完成，不能为了响应速度绕过它。旧备份清理仅操作自身 staging／partial document／备份日志与提示偏好，不导入桌面数据库／主题／图标。新增 `tools/tests/restore_worker/BackupStartupCleanupProbe.java` 和 `run_backup_cleanup_probe.py`，实际摘录当前及任务前方法，生产 BackupOperationJournal／BackupOperationLock／BackupFileUtils 配合真实 Android 16 Looper、JSON、AtomicFile 和文件执行；提供器和偏好为受控边界。新版112项检查覆盖全部备份状态、受控提供器阻塞期间 MAIN heartbeat、新操作互斥、重复入口、活动备份不被删除、权限撤回、原提示规则和完成释放；Launcher PID12784在隔离检查前后不变。既有122项恢复线程／进程锁、144项恢复日志故障检查继续通过，但这些检查中旧备份 Controller 为替身，不将其称为完整真实备份→恢复证明。本轮只有 Android 16 连接，未补报 Android 9 新清理路径实测。
+- **构建、安装与保护**：标准 build.bat、v1／v2／v3签名、16KiB对齐、v1.5.8／33及diff检查通过。保留数据安装 V2458A／API36，设备 APK与本地产物SHA256一致：`0DB246F07097C3B9E46B05235C76CE2394AD090E4DF0007DCE7C7AB43F4F8DD2`。启动、桌面设置进入／返回原首页完成；PID16638错误日志未见 FATAL／VerifyError／ANR／SecurityException／native Fatal signal／新增清理失败日志，但有限日志不等于全生命周期验收。相对上一阶段998968…包，仅classes2.dex与签名条目变化；资源、Manifest、classes.dex、native未变，今天五个视觉保护文件哈希不变，电话／系统设置／桌面设置三个静态采样区域RGB最大及平均差异均0。未重新完整切主题／宫格矩阵，未改变其代码与参数。
+- **风险与证据**：启动前恢复守卫仍可能等待正在写库的另一进程，最坏 HOME／启动耗时、真实完整SAF恢复／撤销、断电、存储满和跨ROM仍未闭环。提供器长期不响应时，桌面 MAIN 不等这次清理，但备份／恢复操作门仍等待其结束，未添加任意超时／强行并发删除；last_backup_incomplete在后台完成后持久化。原备份日志失败处理及 reset-before／after-delete规则没有在本项重新设计，不将后台迁移称为故障原子性修复。证据保留 `build/f05-startup-backup-cleanup-20261003/`：任务前源码／APK、baseline／native、构建／签名／保留验证、安装包／运行日志与 static-pixels.json。已更新本日志和专项审计，MEMORY.md未更新；未暂存、提交、推送或清理用户文件，原暂存／工作区保持。
+
+**F05 后续：恢复首帧收尾移出 MAIN（实现、Android 9／16 隔离验证及 Android 16 基本路径通过）**
+
+- **根因与范围**：冷重载 Coordinator 在 Choreographer 的 MAIN 首帧回调中调用 `DesktopRestoreController.onLauncherFirstFrame`；旧方法同步执行 journal 读取、CLEANING／IDLE 的 fsync＋回读、staging／apply／撤销包递归删除，然后显示成功。保存任务前实际 Controller，并用生产方法夹具复现：方法返回前日志已重置、staging 已删除。这证明主线程同步收尾，不是实际帧耗时测量。检索原版 APK 对应 clean_launcher_raw、clean_launcher 和 maintained，未发现等价移植恢复事务入口；沿用现有 Controller／OperationLock／首帧通知，不替换原版初始化、Loading、数据库或主题链。
+- **最小修改**：本阶段唯一生产文件 `launcher/tools/java/com/smartisanos/launcher/backup/DesktopRestoreController.java`。首帧只提交一个 `DesktopRestoreCleanup` 后台任务；同 token 重复首帧不重复派发。任务预留现有 BackupOperationLock 操作门，避免收尾期间新撤销重用 `rollback_latest`，并持已有 OS writer lease 后重读 token／终态。仍先持久化 CLEANING 和 IDLE，再删除临时文件；普通恢复保留撤销包，撤销完成才删除它。成功／具体日志失败／写锁失败经原 MAIN Handler 显示原 toast，仅成功普通恢复启动既有图标补源。使用 application Context，不持有设置 Activity；其他恢复、数据库、线程 Owner 与非恢复重载路径不改。
+- **故障与并发验证**：扩展现有 restore_worker／restore_journal 测试，共五份测试源码／脚本；新增占用 writer 时 MAIN heartbeat、新撤销被挡、重复首帧、CLEANING／IDLE 失败不删源／撤销包、不提前成功、stale token、等待锁期间 journal 被替换、非终态与另一操作 Owner、回滚结果和 MAIN toast 检查。122 项生产线程／进程锁检查、144 项事务故障检查、13,131 项设置读取／恢复监听器回归通过。真实 Android 9 X21A 与 Android 16 V2458A 各通过 57 项平台 IO／权限、7 项导入 worker、13 项新首帧收尾、6＋6 项 checkpoint SIGKILL 重进及4 项未完成 AtomicFile 写入重进，共各93项；真实 Looper 响应、writer 等待、重复结果、权限错误保留和 MAIN 回调通过。archive／布局转换／UI／偏好仍为受控边界，这些检查不等于完整真实桌面恢复；SIGKILL 仅作用于独立探针。
+- **正式包与真机**：标准 build.bat、签名 v1／v2／v3、16KiB 对齐、v1.5.8／33 和 diff 检查通过；SHA256 `998968DC94CD05C51863AEAD4412420BFC79FA72ADB97E9972875F31D19A1C35`。X21A 在 install-r 期间断开，停止其等待中的安装命令，未将该尝试记为安装通过；新连接 V2458A 经核对为 API36、已装本项目 v1.5.8，保存旧包后保留数据安装成功，设备 APK 与本地产物 SHA 一致。Android 16 启动、设置进入／返回、快捷桌面揭露／关闭并返回原首页已完成；最终经典蓝／12 宫格，原已开启的快捷桌面开关保持。PID12784 错误日志未见 FATAL／VerifyError／ANR／SecurityException／native Fatal signal，但不能据有限日志声称全生命周期无问题；本轮未重新完整切主题矩阵，也不把连续横滑命令记成已逐页验证的完整翻页性能。
+- **视觉保护与证据**：今天 Bridge／Raster／Cell／Eb／光照材质五个保护文件哈希与 F09 开始快照相同；本轮 APK 对比上一轮 F5F329… 包，仅 classes2.dex 与签名条目变化，资源、Manifest、classes.dex、native 不变。Android 16 安装前／设置与快捷桌面返回后的系统设置、电话、桌面设置三个静态采样区域 RGB 最大／平均差异均0；未改图标大小、Alpha、纹理过滤、主题参数、垃圾桶／Dock 或 GL。证据保留于 `build/f05-first-frame-cleanup-20261003/`，含任务前 Controller／APK、native／native-16、签名、设备安装包、关键终态与 static-pixels.json。
+- **未关闭项与文档**：启动前恢复守卫仍同步等待 writer／执行必要回滚，最坏 HOME／启动阻塞和 ANR 风险尚未量化，不能异步绕过数据库安全门；主线程旧备份清理也未在本阶段迁移。真实完整 SAF 备份→恢复→撤销、生产故障点断电、存储满、用户 UID 与 OEM 分身、持续帧预算仍未验收。保留原 reset 后删除的顺序，删除中进程退出可能遗留临时文件，未新增清理事务或宣称所有磁盘故障原子完成。已更新本日志和专项审计后续状态；MEMORY.md 未更新，未暂存、提交或推送，用户已有改动／暂存保持。
+
+**F09–F15：剩余审计项集中处理与统一回归（已测范围通过，不等于全 ROM／完整恢复／帧性能验收）**
+
+- **F09 根因与最小修复**：原 Sensor 经 H→Ra.k 写 GU 的三个分量，GL 的 Qa.run 经原 a/c.b→a/j.x 逐分量复制方向；事件队列的发布锁不保护随后发生的 GU 改写。Android 隔离屏障以原生产方法复现混合姿态 `(1,-5,6)`，既不是旧输入也不是新输入。Ra.k 写 GU 和 Qa 复制 GU 共用该向量 monitor，异常释放锁；入队、球面投影、Scene 更新、材质和原 Y 取反均留在原路径，锁外执行。原版 APK 对应 clean_launcher_raw 的 Ra.k 与修改前一致，Qa 与干净参考一致；clean_launcher 不含对应 Ra 文件，不能声称已比较不存在的文件。maintained 没有等价原版渲染链。新增实际摘录／组装 Smali 探针在 Android 9／10 通过 23,011 项，含确定性交接、20,000 次并发压力和异常释放。这里只确认并修复共享向量问题；注册／Scene 世代、真实队列积压、手持倾斜和完整动画性能仍未验收，不给 pooled n 贸然加任务名或改原队列。
+- **F10／F11**：QuickDesktopHostView 延后创建现有 ContentView，关闭／从未揭露时不再解码固定图片；第一次原横滑揭露前同步创建完整内容，原资源、比例、RootView 手势和背景交接不变。ContentView 的 onDraw 消费卡片开关、天气／日期／签名、支付图标和媒体快照，不再查询媒体服务／偏好／PackageManager。音乐查询由可见期间的单一 HandlerThread 执行，至多一个查询在途，MAIN 按 generation 接收；关闭／detach 停止定时刷新、退出线程，旧结果不写回。80／180ms 控制后刷新和 1s 可见刷新保留，media-key 临时状态增加 volatile 可见性。平台媒体查询 RuntimeException 明确日志并使用无歌曲信息的快照。首次揭露解码和低频配置读取仍在 MAIN，没有宣称第一帧／Binder 耗时达标。探针曾发现首次打开重复启停导致两次查询，已修正后重跑；12 项实际 Android View／Looper／Bitmap 检查通过，80 次绘制不触发媒体／偏好读取，关闭停止轮询、旧结果拒绝及禁用音乐卡不查询通过。受控媒体／天气／动作边界不算真实 MediaSession 全矩阵；相同受控内容的原／新版 RGBA 所有像素 0 差异。
+- **F12／F13／F14**：恢复 READY 回调增加 `prepared == ready` 身份门；Host 的恢复监听器只弱持有 Activity，复用 attach／detach，销毁时脱离，旧监听器、新选择和非备份／恢复页面均不能更新全局进度或打开预览，页面归属消费已有 SettingsBackEntry。模型 snapshot 异常／null／非 Map 返回 UNKNOWN，首次安装门保留已有项，包级删除停止；正常空 Map、主用户／分身／特殊项保持原语义。Host 相同四来源 boolean 读取委托既有 LauncherSettingBridge.readBool，未改 Bridge 或 int／string 规则。新增／扩展生产方法测试：布尔来源冲突／非法类型／异常与恢复回调 13,131 项、Model 188 项、恢复线程／旧 READY 替换 74 项通过。恢复验证中离开页面、销毁和重新选择有隔离检查；未将真实完整恢复 UI／SAF／桌面重建补报为 PASS。
+- **F15 判定**：源码／Smali、Manifest／资源、构建入口检索未发现 openFromDesktop 的正式调用，旧覆盖层仍有 Launcher／Host 的生命周期、返回和窗口辅助引用，全部 Java 继续参与构建。动态外部反射不能由文本检索排除。保留 DEAD_CODE_SUSPECTED，本轮安全删除 0 行；未恢复废弃覆盖层，也未为“全部优化”强删兼容代码。
+- **集中回归与设备范围**：`build/final-regression-20261003/` 保存 19 组本地脚本与 10 组 Android 隔离批次结果，均通过；最后增加页面归属门后只重跑受影响的 13,131 项监听器／boolean 与 74 项恢复线程检查。覆盖卸载身份／取消原动画、查询未知保留、下载失败、备份偏好、搜索缓存、设置会话／底部手势、解锁状态机、主题阴影／透明交接、恢复日志失败、SQLite 页面槽／分身／pending 重试、安装调度、Sensor 交接与投影缓存。Android 隔离重跑分别含 83 项 Profile、120 项页面、17 项 pending＋3 项重进、39 项安装 worker、43 项 Intent、477 项缓存、788 项生命周期和 23,011 项感应交接；夹具 SIGKILL 不作用于用户 Launcher。原版 Smartisan 仅用于隔离比较，未替换原版桌面。
+- **正式包与真机结果**：标准 build.bat、签名 v1／v2／v3、16KiB 对齐、badging v1.5.8／33 和 diff 检查通过。保留数据安装 vivo，最终设备 APK SHA256 与本地一致：`F5F3295077335F446A6A01A4179966E026D913B3A8E5DA18035177E2FB6EA298`。16EE6B… 的集中真机路径包括经典蓝→经典黑→毛玻璃→经典蓝、快捷桌面首揭露／关闭／音乐控制视图、快捷桌面进入搜索并以 `dian` 匹配电话等应用、设置返回；F09 正式包另已完成透明开关、12→20→12、感应开启下主题切换并恢复关闭。最终 F5F329… 包只补 Host 的恢复页面归属门，重新安装后启动与设置返回通过，最终经典蓝／12 宫格／感应关闭，临时开启的快捷桌面恢复初始关闭。未将中断前尚在确认框的最终宫格重切当作额外完成。按正式 PID 的错误日志未见 FATAL／VerifyError／ANR／SecurityException；信息级日志有限，不能据此证明无所有生命周期问题。测试探针的早期断言不算 Launcher 崩溃。
+- **视觉、文件与边界**：相对 F09 开始快照仅变更 Ra.smali、Qa.smali、DesktopRestoreController.java、LauncherModelRepository.java、QuickDesktopContentView.java、QuickDesktopHostView.java、QuickDesktopMediaBridge.java、MaintainedLauncherSettingsHost.java。今天图标清晰度／完整 Alpha／编辑等比／垃圾桶时间步长的五个保护文件 SHA 全部不变；最终 APK 相对 F09 已安装包只有 classes2.dex 和签名条目改变，资源、native、Manifest、classes.dex 相同。所测静态电话／设置区域未再次软化，缓存八层仍遵守前期零差异证据。还未覆盖：完整真实恢复／撤销与断电、OEM 分身卸载补恢复、授权 MediaSession／微信支付来源、持续四指／手持光影／完整性能与其他 ROM／倍率。F05 启动守卫和首帧清理预算也仍有验收边界；本轮处理完成不代表所有审计风险永久关闭。新增相应隔离探针，更新本日志与专项审计；未更新 MEMORY.md，未暂存、提交或推送。
+
+**F08：投影缓存失效、版本校验与内存容量收口（实现／隔离 Android 检查与 vivo 基本回归通过）**
+
+- **根因与范围**：F07只补了提前命中的八文件存在／非空门；原 Aa.b(ItemInfo)／E(String) 删除PNG时不清 MASKS，非零损坏文件仍可命中，VERSION未验证磁盘结果，进程Map也无上限。另以当前及原版APK对应 clean_launcher_raw／clean_launcher 确认：Aa.F(String) 从文件取绝对路径后 startsWith(packageName)，普通包名实际匹配不到；Android旧生产方法负例已复现。maintained的 HolographicOutlineHelper 没有可直接复用的原版八层缓存适配器。本轮复用 IconIlluminationCompat 与 Aa 四个现有清理入口，不改数据库、Package/Profile路由、Composer、材质、传感器或GL。
+- **生产文件与清理 Owner**：仅 `launcher/tools/java/com/smartisanos/launcher/theme/IconIlluminationCompat.java`、`launcher/smali/com/smartisanos/launcher/Aa.smali`。原 C（下载占位）、E（精确key）、F（包级）、b(ItemInfo) 的重复文件循环委托给现有投影 Owner；b继续使用原Pe，主用户／分身／组件身份不重写，C由统一入口添加layer分隔符，最终文件名与原版一致。生成和清理共用既有类monitor，关闭功能时也清理缓存。精确key只删该key；包级使用 packageName＋下划线边界，仅处理八层PNG／临时PNG和新增索引／临时索引，保护相似包名与其他文件。包级清理包括同包派生缓存，不删除应用、数据库或源图。任务前四个原清理方法与raw原版完全一致；其余Aa方法文本在任务前后完全一致，包括原生成／模型业务链。
+- **容量与磁盘复用**：同一个 MASKS 改为最多256条的访问序LinkedHashMap，仍用弱Bitmap引用；淘汰只移除内存记录，不删原GL可能仍在使用的PNG。原shadow目录每key保存一个约200字节 `.projection` 索引，记录格式magic、现有VERSION、源图尺寸／density／hasAlpha／premultiplied、完整Alpha SHA-256及八层长度／CRC32。新进程或内存淘汰后只有源签名、版本、元数据与八层CRC全部一致才复用；无索引、旧版本、截断／尾随数据、缺层和损坏都重建。PNG名称、256px、140px正文、全Alpha、SIGMA及读取路径不变，没有第二个缓存目录或Manager。
+- **提交与故障边界**：重建前移除旧内存条目及旧索引，索引失效失败就停止后续重写；八层PNG全部写完且源revision稳定后才用临时索引rename提交，部分PNG失败不留成功索引。不支持读取Alpha或源在生成期间变化时不记录可复用索引。八层已完成而可选索引写入失败时保留PNG、明确日志、不记录内存命中，下次保守重建；Linux文件名上限夹具已验证此路径。索引不是用户数据事务日志，没有新增fsync承诺：进程中断／不完整数据由下次校验再生成处理。热命中检查长度／mtime；mtime变化只触发CRC复核，不据mtime证明同图。新进程／淘汰重入必验CRC；相同长度且mtime也被保留的进程内外部改写不在热门的完整覆盖范围，不能声称持续逐帧校验PNG。
+- **Android隔离检查与旧版负例**：新增 `tools/tests/icon_illumination/ProjectionLifecycleProbe.java`、`run_lifecycle_probe.py`。使用完整生产缓存／Blur、实际摘录组装的四个Aa方法及原ItemInfo.Pe，Android Bitmap／Canvas／PNG／File／CRC／monitor真实执行，Application／偏好为独立夹具。旧F07生产Owner＋旧Aa复现清理后留内存条目、包级路径不匹配、非零坏PNG误命中与Map超过256条。新版788项通过：主／分身／组件、禁用状态清理、下载占位key、相似包名与无关文件保护、冷源Alpha变化、同尺寸同时间戳损坏文件的冷CRC拒绝、热损坏／非零截断PNG、截断／未知版本／尾随索引、临时提交、权限式失效阻断及修复、索引可选失败、300个真实write入缓存、访问提升／淘汰不删PNG、淘汰后复用、实际Aa清理与写入monitor串行。新进程复用、只改VERSION的独立dex拒绝旧索引、夹具删除索引／制造未完成PNG后SIGKILL及重进修复通过；该SIGKILL是中断派生缓存夹具，不是声称在生产compress指令某一点断电。Launcher PID20181在隔离检查前后不变，没有操作用户桌面缓存。
+- **像素／相关回归／性能边界**：F07既有477项真实Android缓存／像素检查仍通过；当前Owner实测192px来源的八层PNG与旧F07完整生产Owner输出逐字节相同、RGBA0差异。58项生产主题／缓存、24项Smali三态切换与ICON_CONTRACT_STATIC_AUDIT通过。F07探针本轮热write中位同revision0.206ms、新Bitmap同Alpha0.871ms，含新增文件有效性门；不是Launcher帧耗时、分配量或冷启动收益。本轮没有重跑／补报原版手持倾角验收；原21组native／九GPU姿态证据仍属于F07记录。冷CRC／大量包清理IO预算、整桌面compose频率与最大等待未测。
+- **今天修复与正式包**：五个视觉生产文件（Bridge／Raster／Cell／Eb／光照材质）前后SHA256全部不变；APK相对任务前仅classes.dex和classes2.dex变化，资源、Manifest及native库不变，正式dex无IconPixelAudit／EditGeometryAudit／两个缓存探针。标准build.bat、v1/v2/v3签名、16KiB对齐、v1.5.8／33及git diff --check通过。保存旧安装APK后保留数据install -r成功，新设备base.apk与产物SHA256均为 `8C8AD016E9C45B75D9C93B64BC8A3EE3F8DCC187FA7A266E83B199E638E2A90C`。启动、12宫格编辑／退出、进入设置／Back、左右翻页并回原页已截图验证；原页面／主题／12宫格／默认桌面保留。电话仍192px正文：安装前RAW采样MSE0.000463／Y半像素模型33.9573（top1959），安装后及返回RAW0.000532／Y半像素模型33.9697（top1958）；只有当天已记录的1px整数相位边界，未发现重新插值软化。编辑圆形仍90×90px，系统设置返回与安装后逐像素一致。PID21749持续存活，按该PID日志未见FATAL／VerifyError／ANR／SecurityException／投影失败；设备仅保留有限错误级平台JDWP／BackgroundFallback／memtrack记录，不能据此称全生命周期无问题。
+- **风险与后续**：实现及所列隔离／基本路径完成；真实系统卸载重装后原模型／GL纹理重绑、手持投影、跨ROM／Android16、20宫格重切与其他倍率、完整垃圾桶／拖动动画、磁盘满和生产故障点断电尚未闭环。内存容量已有硬上限，PNG／索引磁盘仍沿正式key／包清理保留，不新增盲目清理正在使用文件的磁盘配额。失效后首次重建仍有原同步生成成本；CRC为派生文件完整性校验，不是恶意修改防护。下一阶段F09 Sensor／GL线程与生命周期专项，原传感器链保持不动；原15项审计统计继续作为第一轮快照。证据在 `build/f08-projection-lifecycle-20261003/`，新增两份探针、更新本日志和专项审计；未更新MEMORY.md。本轮未操作暂存、提交或推送；工作期间观察到前序改动已有暂存，保持原样，F08新增／增量仍留工作区。
+
+**F07：投影缓存命中前移（实现、隔离像素检查及 vivo 基本回归通过）**
+
+- **根因与最小范围**：旧 IconIlluminationCompat.write 在查询缓存前已经 extractAlpha、绘制 256×256 mask 并分配 int[65536]＋byte[65536]，数组本身至少320KiB；命中只省掉八次模糊和PNG。本阶段仅修改该现有 Owner，原版 APK 对应 clean_launcher／clean_launcher_raw 的 Aa 全 Alpha、140px正文投影到256px、八层SIGMA契约保持。maintained没有可直接复用的同链适配器；没有新增第二个阴影缓存、Composer、线程或Manager。
+- **修改行为**：同一个 MASKS 条目记录弱 Bitmap 引用、generation及尺寸／density／hasAlpha／premultiplied／输出目录；修订和元数据相同时在 raster 前命中。不同 Bitmap 先逐行读取完整源Alpha做SHA-256，用 width 级数组替代命中前的256² mask与数组，签名／元数据一致才复用；RGB变化不改投影，Alpha变化仍重建。getPixels不受支持时保守进入原有raster路径，不据包名／文件mtime猜同图。force始终重建，重建前移除旧成功条目，来源修订变化时不记录成功缓存。命中前检查八个文件存在且非空，避免缺层、零长文件和部分重写失败后误报完成；这只处理本次提前命中必需的有效性门，F08的版本、正式失效通知、条目上限／跨进程索引仍待下一阶段。
+- **今天修复的保留证据**：用户明确不得影响 STATIC_ICON_PIXEL_GRID_AND_ORIGINAL_ALPHA／OVERVIEW_ICON_ASPECT_AND_TRASH_ENTRY。记录并复核 LauncherSettingBridge.java、IconRasterDiagnostics.java、Cell view/a/g.1.smali、Eb.smali、光照材质 g.1.smali 的任务内前后SHA256，五个文件均完全一致。以安装前F06正式APK对照新包，签名之外仅 classes2.dex 变化；classes.dex、图标／主题资源、Manifest、原SMEngine和native库全部逐条目不变。IconPixelAudit／EditGeometryAudit／ProjectionCacheProbe 未进入正式dex。静态正文无缩放过滤、1:1叶节点相位、电话192→192→246→屏幕192px、完整静态Alpha、编辑比例补偿和 held 时间步长限制都保留。
+- **隔离 Android 检查**：新增 tools/tests/icon_illumination/ProjectionCacheProbe.java 和 run_cache_probe.py，完整生产缓存 Owner／Blur，真实 Android Bitmap／Canvas／PNG／文件，Context与偏好为隔离夹具；vivo X21A／API28通过477项检查，涵盖140／192／256源图、任意Alpha／透明边缘、新Bitmap同Alpha、RGB变化、Alpha变化、force、缺层／空文件、density／hasAlpha元数据、回收、弱引用、换输出根及部分IO失败后修复；与强制生成的八层输出逐像素一致。原版锤子 DT1902A 与vivo的既有native／GPU探针重跑：21组原版模糊Alpha零差异；九姿态GPU Alpha最大差异≤1级、平均<0.03。58项生产主题／缓存、24项Smali主题三态切换、ICON_CONTRACT_STATIC_AUDIT通过。
+- **性能证据边界**：同机隔离write循环预热60次，五组各40次取耗时中位数；旧版同Bitmap修订命中10.266ms、新版0.131ms，新Bitmap同Alpha旧版10.204ms、新版0.792ms。后者交替使用两个已预先创建的Bitmap，排除Composer／源图构建成本。只证明本探针热命中减少raster工作，不代表桌面帧耗时或冷启动改善；一次完整冷生成旧219ms／新251ms不能作性能结论。早期ART全局bytes-allocated读数不能反映本例大数组的可靠逐调用分配量，已从最终探针移除，不引用为“实测减少多少字节”；320KiB来自实际旧数组尺寸和新版提前返回分支。未测真实compose频次／各调用线程预算。
+- **正式包与真机路径**：标准 build.bat（自动选择SDK37工具）、v1/v2/v3签名、16KiB对齐、v1.5.8／33和git diff --check通过。保存已安装APK后 adb install -r 成功；设备与产物SHA256均为 F5AB925054AD8253C155084866EBB50D893A0F0F9A769C10A190A49B3D4DCAED。启动、十二宫格编辑／退出、设置进入／返回、左右翻页并回原页完成；PID20181持续存活；当前截图的电话完整192×192正文区域、系统设置和桌面设置192×192区域相对安装前RGB差异0，十二宫格编辑圆形正文仍90×90px。编辑退出／返回后电话与当天已有记录相同出现1px整数Y位移，不能继续按固定裁切坐标写成RGB零差异；按实际位移对齐后中心120×120区域相对安装前MSE0.000255，全192px区域MSE0.1723（最大RGB差4级），与未插值源图的中心MSE0.000463，纵向半像素平均模型MSE33.9573，未支持再次软化；已另存返回路径证据，未据此改节点／过滤。保留数据／默认桌面／宫格与主题，没有执行恢复或卸载；按新PID20181采集日志未见FATAL／VerifyError／ANR／SecurityException，但仅有错误级平台JDWP／BackgroundFallback／memtrack日志，不能据此证明全生命周期安全。
+- **文件与剩余风险**：生产代码仅 IconIlluminationCompat.java；新增两份上述隔离探针，更新本日志与全项目专项审计的后续状态。证据在 build/f07-projection-hit-20261003/。弱引用不持有Bitmap像素，但条目较旧Integer增大，key累积上限仍属F08；非零损坏PNG、版本变更、缓存清理正式通知／磁盘空间和并发来源改图仍需继续审计。F09 Sensor／GL交接未改；本轮未做手持倾斜可见光影验收、20宫格重切／其他倍率与ROM、完整垃圾桶／拖动动画性能，不能用隔离像素PASS补报。今天已有20宫格与动画证据仍保留原边界。未更新 MEMORY.md，未暂存、提交或推送。
+
+**F06：待安装补恢复复用串行安装线程与失败重试去重（实现／隔离运行及桌面基本回归通过）**
+
+- **根因与复现**：SmartisanInstallManager 已有 HandlerThread，但 attemptOriginalPackageAdd 将 pending JSON／PM／DB／AtomicFile 操作放进 MAIN Runnable。完整旧生产 InstallManager 在 Android 9 独立 app_process 中复现 MAIN 补恢复。PendingItemRestoreHandler 在 DB 提交后再更新 JSON，后者 EACCES 时保留旧 pending；基线生产代码重试得到两份同身份数据库行，负例 `BASELINE_PENDING_DUPLICATE_REPRODUCED rows=2`。另一个中断窗口是派发标记被持久化，重启继续当作已派发，从而跳过后台处理中断的事件。
+- **最小修改与文件**：本阶段生产改动仅 `launcher/tools/java/com/smartisanos/launcher/install/SmartisanInstallManager.java`、`backup/PendingItemRestoreHandler.java`、`backup/RestoreMergePlanner.java`（后两者位于同一 Java 包根）。两个 attempt 调用者仍为已有 worker 任务，firstInstall 判断与 Package／Profile／Model 门不改，补恢复在发 MAIN 通知前同步完成于 worker；原 Aa.c 通知、非首次安装／替换保留行为、下载图标清理仍在 MAIN。重载已持久化安装事件时仅重置上一进程的 dispatched，再走原判断，不盲目重发 ADD。Pending 在同一 DB 事务内读取该包现有行，以既有 RestoreMergePlanner.stableKey 按 user／组件／类型／shortcut id 判断，已经提交和批内重复身份计为已解决，不重新插入／占格；DB 成功后才消费 JSON。仅将现有 cursorRow 开放包内复用，没有新增身份转换器、Manager、状态 enum、数据库 schema 或线程。
+- **原版与参考边界**：对照原始 APK 对应 clean_launcher 的 Aa.c → DatabaseUpdater Action.aaa 及当前相同入口；通知仍沿原数据库／模型派发，不复制原私有系统逻辑。maintained 未提供当前 pending helper 或可直接替换的原版安装兼容链，因此直接复用当前 InstallManager 的串行调度；保留最近静态图标／编辑态比例／垃圾桶时间步长等工作区改动，没有触碰图标、动画、主题或 Smali。
+- **隔离设备验证**：新增 `tools/tests/pending_worker/`，完整生产 InstallManager 配合受控包／Profile／Model／补恢复边界，真实 Android HandlerThread／MAIN 上39 项通过：阻塞 worker 时 MAIN 心跳、补恢复完成前不通知、交替用户的10 个 burst 事件、重复回调、替换／changed／已有模型不重加、旧派发重判与已表示条目重放不 ADD。扩展现有 RestorePageProbe／restore_profiles runner，实际生产 Pending／Exporter／Importer／Planner、Android SQLite／AtomicFile／JSON 上17 项通过，覆盖 JSON EACCES 后 DB 已提交、持续失败不重复、修复后消费、位置保留、批内重复、同包不同用户／组件／类型、shortcut id 与 bridge 迁移、quiet Profile、DB trigger 故障及修复；probe SIGKILL 后新进程重试另3 项通过。120 项页面槽测试中两处原样重写相同身份的“新批次”改为不同组件，仍检查原容量和连续批次边界；120 项页面、83 项恢复身份、141 项事务、70 项恢复 worker、95 项卸载目标回归通过。设备为 vivo X21A／API 28；隔离阶段 Launcher PID 17281，安装后重跑 Pending 的 PID 19088，均前后保持。
+- **正式包与基本真机回归**：用户本轮明确授权必要真机测试；保存已安装 APK 到 `build/f06-pending-worker-20261003/before-install.apk` 后 adb install -r 成功，未清数据／改默认桌面／安装测试 App／强杀用户桌面。标准 build.bat、v1/v2/v3、16KiB 对齐、badging v1.5.8／33 和 git diff --check 通过；最终设备 base.apk 与本地 APK SHA256 均为 `A1DF0802CD953D38059956AF5C250B91D2A620135A15ABCE302F0697C17435EF`。启动成功，进入桌面设置 ThemeChooser、Back 返回、左右翻页并回原页的截图可见完成，所见页面位置与安装前一致，运行 PID 19088 未变化。UI dump 在设置第一次返回 null，截图与 Activity 栈作该路径证据；不把这次 dump 当成功。按新 PID 采集的日志未见 FATAL／VerifyError／ANR／SecurityException，只有平台 BackgroundFallback／memtrack 等错误，日志信息级别有限，不能据此证明全部生命周期／性能安全。旧 crash 缓冲中 RestorePageProbe 的断言是前期测试夹具原样批次触发，已按真实不同身份修正并重跑通过；非正式 Launcher 崩溃。
+- **风险与未验证项**：真实补恢复＋原 Aa／数据库任务的联动、实际 OEM 分身、PackageManager 广播风暴、磁盘满、快捷方式可启动性、Android 16 和其他 ROM 未做完整验收；隔离测试的 Package/Profile/Model 状态为替身。DB 与 JSON 仍不是单一事务，本项证明正向身份重试可幂等处理，没有增加自动重试策略；已被原模型表示、未经过 firstInstall 门的残余 pending 清理仍不扩展。F05 启动守卫及首帧清理预算、整份恢复数据一致性也未在本轮关闭。证据在 `build/f06-pending-worker-20261003/`。未更新 MEMORY.md，未暂存、提交或推送。
+
+**OVERVIEW_ICON_ASPECT_AND_TRASH_ENTRY：多页面编辑图标压扁与长按垃圾桶进入跳帧修复，vivo 真机通过所列路径**
+
+- **范围与原版依据**：用户明确“压扁，不是感应光影”。本轮对照原版APK对应的 `clean_launcher_raw/`、`clean_launcher/` 和 maintained，复用既有 Cell 模式切换、PageWithRenderTarget、长按共享时间线。当前 `animations/lb.smali`（TrashAnimation）／`animations/U.smali`（DockViewAnimation）与两份原版参考逐字节一致，普通页面 `view/v.1.smali::Sg()` 和Dock `view/l.1.smali::Sg()` 长按方法与原版一致；页面文件另有既存文件夹回位兼容hook，不能称整个文件完全相同。maintained `CellStatusForPage.handleLongPress()` 也将 TRASH_APPEAR、RELAYOUT_BY_LONG_PRESSED、CELL_NARROWED 加入同一条时间线后start。垃圾桶原版沿Y轴移动 `trash_display_height`，时长0.2f、曲线编号14，没有新增或重绘动画资源。
+- **压扁根因与修改**：vivo十二宫格普通页面1080×1768，编辑页519.875×808，实际最终父节点scaleX=0.48136574、scaleY=0.45701358，Y/X=0.9494099；离屏texture中的正方形正文被最终页面纵向压缩约5.06%。叶节点JNI角点属于离屏页面，必须再乘最终PageWithRenderTarget比例，不能只据离屏246×246判断没有压扁。原版与maintained按页面宽高分别缩放，现有Cell.Mm()/resetCellScale只处理悬浮页且相应格子比例抵消成1，未补偿当前实际视口。仅在 `Cell.Ya(I)` 模式切换后调用既有Bridge新增的 `preserveOverviewIconAspect()`：页面内静态sc[0]／ActiveIcon根sc[7]按scaleX/scaleY补偿Y，X/Z和页面、格子、位置不动；退出恢复自己的基准，弱引用记录防止反复进入累积，并识别ActiveIcon重新绑定覆盖scale。排除Dock和文件夹内容；20宫格设置值20对应引擎普通mode9、编辑mode10，12宫格为12→13，不能用mode20读20宫格几何。没有修改图标Bitmap、阴影、1.20、IconVisualMetrics、LayoutPropertyAdapter或感应光照算法。
+- **进入动画根因与修改**：原版 `MainView.update()` 每次向Ra.T传固定fx，移植版为兼容既有动画速度／解锁使用真实帧间隔并归一化。Ra.T先处理InputManager与EventManager，长按在其中创建并start时间线，随后同帧AnimationManager使用已计算delta；vivo旧日志第一帧delta=120ms，垃圾桶Y从-380.84375直接到-244.12926，约94%位移，下一次即到-234.78125。缓存图标热路径反射后仍复现，不能把反射优化单独当成修复。仅在Launcher `Eb.update()` 中用原InputManager.hk()指针保持标志，实际delta超过2×fx时改为单次fx；较小间隔保留，松手／CANCEL后仍走原计时。没有重写TrashAnimation、DockViewAnimation、SMEngine或取消／成功链，没有随机延时或修改0.2f／曲线。临时节点诊断版本看到十次中间位置，正式无诊断包录像仍看到底部→部分露出→完全升起。
+- **热路径开销收口**：此前清晰度修复的alignStaticIconPixelGrid每帧反复getMethods；本轮仅缓存该方法所用反射元数据，仍按原方法名／参数数选择首个匹配，像素对齐条件和结果保持不变。其他Bridge反射用户不改；缓存不是本次垃圾桶跳帧的独立解决方案。
+- **正式包真机证据**：保留数据覆盖安装vivo X21A／Android9成功，真实设置十二→二十→十二切换；原像素白色圆形正文统一RGB>200探针，12宫格90×85→90×90，20宫格67×63→67×67，原宽度不变。12宫格五次进出和长按轻拖CANCEL后再次进出未见累积，最终90×90；松手／CANCEL后Dock回位、图标布局未改变。切回12后的电话120×120内部RGB与此前清晰度正式截图逐像素一致、MSE0；后续编辑退出一次产生1个整数屏幕像素的Y位置变化，按该实际位置对齐后MSE0.000255，未见再次插值软化，不能写成所有固定裁切坐标始终RGBA0变化。未实际卸载应用，本轮取消／成功系统卸载仍以此前记录为准，不能借本次进入录像补报通过。
+- **文件、产物与验证**：本轮生产代码仅 `launcher/tools/java/com/smartisanos/launcher/theme/LauncherSettingBridge.java`、`launcher/smali/com/smartisanos/launcher/view/a/g.1.smali`、`launcher/smali/com/smartisanos/launcher/view/Eb.smali`。标准build.bat、v1/v2/v3签名、16KiB对齐、ICON_CONTRACT_STATIC_AUDIT、git diff --check通过。正式APK仍为v1.5.8／33，SHA256 `74B59F866ACD253C52D17503F2A8A8ED2AE7B5AF39B552C8F51546358E04F783`，已安装APK哈希相同，PID17281未见AndroidRuntime／LauncherIconShadow错误。临时EditGeometryAudit与Host诊断hook已移除，Host内容与任务开始备份相同，classes2.dex无诊断类。锤子系统Launcher只读对照／录像，未替换APK，未安装maintained。
+- **证据、风险和边界**：`build/edit-trash-20261003/` 保存任务前备份、task-only.patch、original-animation-comparison.json、诊断节点日志、final-visual-evidence.json、正式截图和三个垃圾桶原像素裁切录像／GIF；只裁切物理像素，没有空间放大或锐化，VFR按时间戳重采样，不能以平均录制FPS当原始帧间隔。held指针异常delta限制也会作用于长帧中的拖动／捏合，vivo本次长按松手、轻拖CANCEL和进出模式已验，其他ROM／高刷新率／快速拖动和完整解锁动画矩阵仍待验；动态节点所有绑定时机、文件夹整体预览、全主题和50／150%编辑几何未完成专项验收。正式手机恢复12宫格；没有清数据、删应用、改在线图标／缓存版本或改主题阴影。既有其他工作区改动保留；未更新MEMORY.md，未暂存、提交或推送。
+
+**STATIC_ICON_PIXEL_GRID_AND_ORIGINAL_ALPHA：普通静态图标两次插值及阴影 Alpha 损失修复，vivo 当前12宫格通过**
+
+- **FIRST_BLUR_OWNER**：`LauncherSettingBridge.composeStaticIconTextureWithOriginalShadow()` 将192px正文放入246px texture，位置仍为 `(27,13.5)`；原来正文与阴影共用过滤 Paint，无尺寸变化也发生线性插值。对照原版 `data/L.a(Bitmap,IZ)` 与 maintained `HolographicOutlineHelper`，正文使用独立、明确关闭过滤的 Paint。三个受控192px输入的 source→artwork 0变化；无阴影正文探针在texture `(27,14)` 提取也0变化，真实GPU上传电话的不透明正文0变化。CPU单点修复后用户仍看出偏虚，后续诊断证实第二 Owner，不能恢复旧的“只修CPU即可”结论。
+- **SECOND_BLUR_OWNER（直接测量）**：vivo X21A 的Dock实际高度409px，父节点 `view.V` 坐标 `(0,-935.5,0)`，使1:1 texture落在屏幕半像素位置。诊断包在GL线程读取实际上传texture和JNI投影角点：电话Cell坐标 `(270,0,0)`，正文叶节点原 `nodeX=0,nodeY=8,nodeWidth=nodeHeight=246.00002`，`textureWidth=textureHeight=246`；viewport为1080×2280。屏幕坐标（左上原点）`left=687,top=1944.5,right=933,bottom=2190.5`，不是GPU再次放大，而是GL_LINEAR在半像素位置再次插值。主相机为原版透视Camera（parallel=false），该叶节点实测比例1:1；不是仅按逻辑尺寸推算。
+- **第二处最小修复**：`view/a/g.1.smali` 的Cell.draw在实际绘制前调用Bridge现有兼容层新增的 `alignStaticIconPixelGrid()`。只放行普通应用、无ActiveIcon、非mode8、无RenderTarget、父链静止且无XY缩放、投影尺寸与真实texture尺寸相同的叶节点；动画、文件夹、动态和非1:1路径不对齐。仅补偿不足一像素的位置相位，未改节点大小、Dock高度、LayoutProperty、Camera、TextureManager、SMEngine或GL过滤。修复后 `nodeY=8.499977`，屏幕矩形约为 `(687,1944,933,2190)`，正文边界 `(714,1958,906,2150)`，电话仍为 **192源图→192artwork→246texture→最终192px正文**。不属于源图不足，也没有电话192→256→230的生产链。
+- **真机正文证据**：单独修Node相位后同源电话内部120×120区域相对未插值源图MSE从34.017917降到0.000532；修复前相对“纵向半像素平均”模型仅0.060498，修复后该模型误差33.969687。原版同区域相对未插值源图MSE为0.001088。恢复阴影、移除诊断后的正式包仍为0.000532，证明正文已接近原版采样。最终真实桌面的96×96内部区域同样不支持半像素平均模型：系统设置MSE0.004593、桌面设置0.001447、短信0.003617，均相对各自实际artwork。短信和系统设置的实际源图为256px、正常缩至192px；这些素材与原版／maintained不保证同源，不能用不同素材要求全图RGB一致。
+- **阴影偏淡根因与修复**：静态compositor原来调用 `createStaticShadowSilhouette()` 删除Alpha1～127，电话／短信／桌面设置受控素材分别删除328／371／1127个非零像素；该处理来自2026-08-01的6818fce3，为避免素材自带阴影二次生成，但不等同原版。原版及maintained使用完整Alpha，阴影拷贝Paint不启用Bitmap过滤、横向居中使用整数除法。现仅静态compositor恢复上述行为，原阴影生成器和模糊不变。共享silhouette helper及动态LiveShadow调用保持原样；静态texture缓存增加专属版本后缀 `full-alpha-unfiltered-v1`，动态缓存键不变。
+- **主题职责保留**：普通主题仍按 `icon_light_shadow` 选择Dark／Light，aero／trans／glime使用Transparent，半径／颜色／透明主题额外偏移和特殊覆盖均不变。原版xxhdpi Dark两层Alpha33／41、Light18／18、Transparent11／15；maintained Dark为47／63，不能照搬其更深参数。此前记录的感应投影晴天0.5／非晴天0.7和设备倾角是另一条材质链，本轮不修改，也不把它混成静态贴地阴影。
+- **原版与阴影像素验证**：归档原版APK与连接锤子系统Launcher APK SHA256完全相同。隔离app_process加载原版、maintained及当前真实APK，统一输入／参数后底层生成器九组Alpha0差异；原版vendor HIGH_QUALITY与Android NORMAL测试蒙版也0差异，排除模糊算法替代为本次根因。实际新生产compositor在电话／短信／桌面设置 × Dark／Light／Transparent九组最终texture Alpha全部与原版0差异，九组不透明正文0差异；在同一Android 9上全部RGBA0差异。跨Android 9／原版Android 10仅4～20个半透明边缘RGB像素相差1级，Alpha不变，是舍入边界，不声称跨系统全部RGBA完全相同。
+- **文件、构建与安装**：生产修改仅 `LauncherSettingBridge.java`、`IconRasterDiagnostics.java`、`view/a/g.1.smali`。临时 `IconPixelAudit.java` 及Host首帧hook已删除；Host内容与任务开始备份完全一致，最终classes2.dex中无诊断类。标准build.bat、v1/v2/v3签名、16KiB对齐、git diff --check通过；58项主题／缓存、24项生产smali三态切换及ICON_CONTRACT_STATIC_AUDIT通过。正式 `build/launcher-signed.apk` 仍为v1.5.8／33，SHA256 `35DE408751F721579496CE42F2348D6D857017E62727E2776BF0FF3E60C67CEC`；保留数据覆盖安装vivo成功，启动和第1／2页往返截图正常，PID11468未出现AndroidRuntime或LauncherIconShadow警告。未替换锤子系统APK、未安装maintained桌面。
+- **证据与未验证边界**：证据保存在 `build/icon-clarity-20261003/`，包括实际APK隔离阴影探针、`shadow-pixel-audit.json`，以及 `node-audit/` 的上传纹理／实际节点、最终截图、`phone-final-before-original-native.png`、`final-icon-screen-fit.json`。截图只按原始物理像素裁切，没有放大／锐化；三列阴影背景和设备感应条件不同，不能仅靠截图灰度认定阴影强度。当前12宫格静态同源电话正文和受控静态阴影问题已验证；20宫格、50／150%及跨ROM、全主题实际切换、完整动画与新增反射调用帧耗时未完成验收。1.20、IconVisualMetrics、LayoutPropertyAdapter、天气／日历、文件夹及光照材质均未修改。MEMORY.md未更新，未暂存、提交或推送，其他工作区修改保持原样。
+
+**F05：恢复／撤销主体离开主线程（实现与隔离检查完成，性能／完整恢复待验）**
+
+- **根因与范围**：设置页 MAIN 同步 beginUndo 解包；:reload 的 MAIN 在旧 PID 退出后同步执行 archive／SQLite／偏好／图标导入和验证，会阻塞 Loading。沿用现有 DesktopRestoreController、BackupOperationLock、冷重载 Coordinator 和 Activity，不替换原版数据库、动画或任务链，不改变 F02／F03 导入算法、F04 状态枚举与持久化阶段。原版初始化接点仍为 ja.onCreate 在 DatabaseProvider 前调用恢复守卫，不能把这个前置安全门直接异步放行。
+- **修改文件与行为**：本阶段生产文件为 `backup/BackupOperationLock.java`、`backup/DesktopRestoreController.java`、`backup/RestoreRecoveryGuard.java`、`reload/LauncherColdReloadCoordinator.java`、`reload/ReloadTransitionActivity.java`（均位于 `launcher/tools/java/com/smartisanos/launcher/`）。撤销接受请求后后台解包／准备，既有 Listener 返回准备结果，MAIN 交接重载；beginUndo 的 true 表示已接受，非恢复成功。重载旧 PID 确认退出后才提交单个后台导入，完成结果返回 MAIN；首次与重试共用退出门，generation／弱引用／销毁检查阻止旧回调启动桌面。普通宫格、主题和图标尺寸重载仍走既有启动路径。执行导入时暂停首帧超时，完成后重新开始原首帧等待，不把导入用时算成首帧失败，不新增 UI、状态 enum 或 Manager。
+- **事务与并发保护**：现有 BackupOperationLock 增加进程内互斥和 `files/backup_restore/restore_writer.lock` 的 OS 文件锁，重载写库和启动守卫串行；锁文件不删除，避免不同进程锁住不同 inode。守卫获取锁后重新读 journal；内部恢复调用复用已持锁入口，避免重复获取 OS 锁。写锁失败停止导入、保留源／回滚文件并提示；存储修复后成功重试会替换旧失败提示。F04 检查点仍决定能否进入下一写入阶段；页面关闭仅废弃启动回调，已经开始的事务继续安全完成。没有给正在写入的任务开放并行重试。
+- **验证与产物**：新增 `tools/tests/restore_worker/`，生产 Controller／Guard／Lock／Coordinator 配合受控 archive／DB／Activity／queued MAIN：旧生产 Coordinator 复现 MAIN 导入；新版 70 项检查涵盖阻塞导入时 MAIN 响应、首次／重试 PID 门、重复提交、撤销解包、失败重试选回滚、销毁／结束／取消后的旧回调、启动失败、非恢复重载和启动守卫竞争；Windows 子进程真实 OS 锁正常退出／强杀后释放通过。141 项事务故障检查、95 项卸载目标检查再次通过。扩展 F04 Android 探针，vivo X21A／API 28 通过 46 项平台 IO／权限、7 项真实 Handler／Looper 后台回调、6+6 项 checkpoint SIGKILL 重进及4 项未完成 AtomicFile 写入重进，共69 项；锁文件创建 EACCES 与 journal 写入 EACCES 分开验证。Archive／SQLite 转换／UI／偏好仍为替身，非整份桌面恢复验收。Launcher PID 前后13985，未安装 APK、未强停桌面、未读取用户桌面。标准 build.bat、v1/v2/v3 签名、16KiB 对齐及 git diff --check 通过；v1.5.8／33，APK SHA256 `BD538D359528EA17217F084A1711CA584FD0C72DD95B6CC5A73950CEEECF12B8`，证据位于 `build/f05-restore-worker-20261003/`。
+- **未关闭项**：启动恢复守卫仍同步执行，HOME 在后台恢复期间启动主进程会等待文件锁，真实最坏启动耗时／ANR 风险未量化；首帧后的既有 journal 清理和文件删除仍同步，尚未证明其帧预算。异常恢复、首帧交接／清理、进程中途退出、完整备份一致性、Loading 录像和 Android 16／跨 ROM／应用 UID 权限仍需隔离设备验收；不能将本项或全项目标记性能／生命周期闭环。未更新 MEMORY.md，未暂存、提交或推送。
+
+**F01：系统卸载入口保留用户身份与阻止跨用户误卸载（安全门实现，实际 UI 待验）**
+
+- **根因与范围**：普通应用经 na／ia → requestUninstallItem 保留了条目，但 UninstallCompat 发出的 ACTION_UNINSTALL_PACKAGE 与 ACTION_DELETE 仅含包名，既有返回确认／模型删除门不能阻止系统先对错误用户执行卸载。另一个 data/A.p 条目入口先按旧 user10 规则扫描同包分身，再请求包名卸载，可能丢失原选择身份或对 user999 抛错。本轮只修请求目标与此普通应用旁路，保留 F02–F04 工作区修改、快捷方式／特殊条目旧路径和现有模型冻结架构，不进入 Component Phase 3。
+- **最小修改与取舍**：生产文件仅 `launcher/tools/java/com/smartisanos/launcher/compat/UninstallCompat.java`、`launcher/smali/com/smartisanos/launcher/data/A.smali`。使用现有 ProfileRepository 映射 userId／serial；目标句柄非空、serial 已知且与 Repository 的当前用户句柄相同才放行，两份 Intent 均携带 EXTRA_USER。没有以相同 serial、固定 user10／999 或仅包名推断跨用户目标；无法安全确认时不发 Intent、不设置 pending、不查询／删除模型，明确提示“无法安全卸载此用户的应用，请到系统设置中操作”，主线程显示提示，复用既有 cancelSystemUninstall → 原 Y(1)／W／V，异常仍用原 GL 清理。已等待确认时的后续顺序请求直接返回，避免覆盖 pending 或清理正在等待的场景。包名式主题等入口仍仅表示当前用户；普通 Item 在 A.p 读取 user／扫描关联包前转交原 requestUninstallItem，特殊 Item 保留原分支。
+- **原版／参考依据**：对照原始 APK 的 clean_launcher_raw、clean_launcher ia／A 卸载链及 maintained UninstallApp 单项确认链，原版使用私有 ApplicationManager 和原数据库／动画派发，不能直接照搬到普通 Android 或恢复其提前删除。继续使用当前已验证的取消／成功动画、PackageStateRepository → ProfileRepository → RemovalGateway → LauncherModelRepository → item-level 执行器，没有新增 Manager、Service、状态 enum 或第二套用户转换器。原版 APK 归档保留；本地 decompiled_theme_check 对应缓存只有部分目录，未假称其中存在本次所需的 Launcher 类。
+- **平台证据边界**：[Android EXTRA_USER 文档](https://developer.android.com/reference/android/content/Intent#EXTRA_USER)确认用户字段公开可用，[AOSP UninstallerActivity](https://android.googlesource.com/platform/frameworks/base/+/ad6383d7f91d332d63d8453ac59ab982fe16478d/packages/PackageInstaller/src/com/android/packageinstaller/UninstallerActivity.java)读取该字段并检查目标 profile，但这不能证明 OEM 卸载器会按该字段卸载分身。项目尚无已验证的跨用户卸载通道，所以当前方案保守拦截所有非当前用户请求，属于明确的兼容功能限制；不得将“已添 extra”称为跨 ROM 精确卸载通过。以后开放必须先验证真实系统目标和包安装状态，失败不能退回当前用户包名卸载。
+- **隔离负例与检查**：扩展现有 `tools/tests/stability/test_uninstall_bridge.py` 的 Intent／Profile 边界，新增 `test_uninstall_target.py`；执行 HEAD 的真实旧桥接代码，确认 user999 发出了无 EXTRA_USER 的卸载请求。新版 95 项检查覆盖 0／10／999／128／负数、用户字段缺失／非 Number、句柄或 serial 未知、进程用户非 0、当前用户正常／备用入口、等待中第二请求、取消一次性回位、确认删除、非应用排除与当前用户包名式入口。原模型 169 项继续验证同包用户／component／条目、快捷方式、查询不确定与重复广播；108 组合移除策略、8 组取消、4 组系统等待、原两阶段队列及 Smali 行删除检查通过。A.p 新入口只做静态接线检查，没有将其称为真实 DatabaseUpdater 事件运行通过。
+- **Android 与恢复回归**：新增 `UninstallTargetProbe.java`、`run_device_uninstall_target.py`，vivo X21A／API 28 app_process 执行真实生产 UninstallCompat，真实 Android Intent／Parcel／UserHandle；启动被 Capture Context 截获，Package/Profile／Model、GL 派发为受控替身，提示队列未渲染。旧代码同样复现跨用户目标丢失，新版 43 项检查通过，含真实 Intent 序列化后 EXTRA_USER、两动作目标一致、跨用户拦截、非 0 当前用户与等待保护。未打开系统卸载界面，未卸载应用／安装 APK／访问用户桌面数据，Launcher PID 前后 13985。F02 120 项实际 Android SQLite 页面、F03 83 项恢复身份及 F04 141 项事务故障／重载静态门检查再次通过。
+- **产物与剩余风险**：标准 build.bat、v1/v2/v3 签名、16KiB 对齐与 git diff --check 通过；APK v1.5.8／versionCode 33，SHA256 `F0C31E9ECB3399A08547A5CAF305A6AC7E748B2F076F8E03781E5263F5643326`，证据在 `build/f01-uninstall-target-20261003/`。当前产物包含 F01–F04 既有修复，不能据上述检查宣称全项目无回归。新的拦截提示／回位、正常主用户实际卸载、系统取消与成功动画需安装后验证；F01 本轮未重新做真实 PackageManager 卸载事实检查，10 月 2 日用户已确认的动画仅是此前版本证据。分身必须到系统设置卸载，Android 16／其他 ROM、完整真实恢复与进程／跨文件故障窗口仍待验证。未更新 MEMORY.md，未暂存、提交或推送。
+
+**F02：待安装恢复复用页面槽与事务容量保护（2026-10-02—03，隔离 SQLite 通过）**
+
+- **范围与回归要求**：用户要求继续下一阶段并强调不要修复后再破坏其他功能。本轮仅处理 F02 页面分配旁路，保留 F03/F04 的既有修改并运行对应回归。没有以代码行数减少或构建成功代替数据安全／运行验收，也没有把隔离检查称为全项目无回归。
+- **根因与负例**：PendingItemRestoreHandler 直接以页表 `MAX(_id)+1` 新建页面，不消费预置 `pageIndex=-1` 空槽且无 1000 行保护；它还以页表最大索引作为桌面末页，可能受空的正索引预分配页影响。执行基线生产 Pending 方法、受控安装事实与真实 Android SQLite：末页 12 格已满、页表 1000 行时，补入一条后得到 `pageRows=1001 unused=999`，复现旁路破坏既有不变量。此证据来自独立 fixture，未对用户桌面做丢失／恢复实验。
+- **修改文件与复用**：仅本阶段修改 `launcher/tools/java/com/smartisanos/launcher/backup/PendingItemRestoreHandler.java`、`LayoutSnapshotImporter.java`、`LayoutSnapshotExporter.java`。从 Importer 的既有实现提取包内 `nextRestorePageId`，主恢复两处分配与 Pending 共用；既有 defaultPage／persistPage 开放包内复用。Exporter 的同一页表读取封装为 readPageRows，字段／排序与导出保持一致，isUnusedPageSlot 规则未变。没有新页面 Manager、状态 enum、数据库 schema 或第二套可复用槽定义。
+- **行为与事务**：优先取最小可复用槽 `_id`，仅真正没有槽且页表不足 1000 行时允许增加记录，新桌面索引限定 0–999；有状态、标题、containment 或扩展数据的特殊行保持原样。已有目标页直接使用，避免重复页行，Pending 新页继续原默认值，主恢复继续原模板克隆。Pending 的 ID、末页、末格、页表快照均放入既有数据库事务；根级 FolderInfo 也占用格子，不被排除。Importer 对保留条目采用相同根级 FolderInfo 边界，防止满格文件夹后的追加覆盖原格。容量不足或后半批分配失败时，整个数据库批次回滚，pending 不消费，不新增重试调度。
+- **对照与测试**：原版 clean_launcher 的 data/a/m、页表字段及 maintained PageInfo 只作原结构对照；此移植 pending/helper 无可直接搬用的原版或 maintained 恢复链。新增 `tools/tests/restore_pages/RestorePageProbe.java`，扩展现有 `tools/tests/restore_profiles/run_device_tests.py --pages`，复用原 app_process 构建／隔离方式。vivo X21A／API 28 实际执行生产 Pending、Importer、Exporter、FolderTopologyValidator 与文件工具，使用真实 SQLite 事务、JSON、Intent、AtomicFile；Package/Profile／图标边界为受控替身。120 项检查通过，涵盖 12/20、末页满／余一格／空桌面／零页表、1000 预置槽、无预置槽追加、特殊页保护、无可用槽、批次中途容量耗尽后的全回滚、全分配页、索引上限、最后允许的新记录、连续批次、成功消费后重复事件、已有目标页、根级文件夹末格，以及真实 Exporter 导出后由生产 Importer 再恢复。
+- **验证与产物**：F03 的 83 项恢复身份检查、F04 的 141 项事务故障检查及两处重载接线检查仍通过；标准 build.bat、v1/v2/v3 签名、16KiB 对齐、git diff --check 通过。最终 APK v1.5.8 / versionCode 33，SHA256 `5E28AC32D4B1D481E8FB310BEF169C6B1653957ED5F08C67EB5B8B52988661C1`。基线负例、新版 120 项、83 项回归、事务检查与构建证据在 `build/f02-restore-pages-20261003/`。Launcher PID 前后均为 13985，未安装 APK，探针仅访问唯一 `/data/local/tmp/smartisan-restore-pages-f02-*` 和独立 profile 回归目录，不操作用户桌面数据。
+- **风险与未验范围**：真实安装事件／模型通知／渲染、Launcher 应用 UID、完整备份恢复／撤销、Android 16 与其他 ROM 仍待验；既有安装主 Handler 同步调用 Pending，本轮未迁移线程，未测新页表读取的实际帧耗时，不宣称流畅度改善。数据库事务与 pending 文件消费仍是两步，跨两步的强杀／文件写入失败、并发回调幂等性不在本次页面槽证明范围；“成功消费后重复事件”不等于上述故障窗口闭环。历史已超 1000 行的数据库未在本轮直接清理，快照继续沿用现有 normalizeReservedPages。空间耗尽保留 pending，但不会凭空承诺释放空间后自动再补入，仍受原安装事件入口约束。
+- **文档与仓库**：已更新本日志和专项审计后续状态；项目及全局 MEMORY.md 未更新，未暂存、提交、推送，保留此前 F03/F04、构建产物及其他工作区改动。
+
 ### 2026-10-02
+
+**F03：恢复保留条目接入 Package/Profile 事实源（隔离 SQLite 验证通过，真实分身待验）**
+
+- **阶段判断**：用户确认继续进入下一阶段，按恢复数据安全顺序处理 F03；F04 已有实现、失败注入和 Android 9 隔离平台验证，可继续处理独立根因，但完整恢复／撤销与断电验收没有被标记完成。本轮不做代码精简，不扩展 component lifecycle Phase 3，不处理 F01/F02/F05 等其他审计项。
+- **根因与负例**：旧 RestoreMergePlanner 对所有条目使用当前主用户 PackageManager，未消费条目的目标 user／serial，异常最终 false；Importer 只有该布尔值为 true 才保留备份外条目，随后整表重建。主用户无包、分身当前行存在、旧备份无该行的受控 fixture，执行基线生产 Planner／Importer 的真实 Android SQLite 流程，得到 `preview=0 preserved=0 finalRows=0`。这是隔离条件复现，不是用户桌面曾丢数据的证据。原去重键还直接使用源备份身份，源 user 与目标 user 不同时可能漏保留或重复插入。
+- **修改**：仅修改 `launcher/tools/java/com/smartisanos/launcher/backup/RestoreMergePlanner.java` 和 `LayoutSnapshotImporter.java`。条目安装事实改为复用现有 `ProfileRepository → LauncherItemKey → PackageStateRepository`，现有 PackageState enum 不变；只按目标 user 转换运行时 serial，不使用备份源 serial 查询当前设备。当前条目和已 remap 的备份条目，仅 `REMOVED_CONFIRMED` 进入丢弃／pending 分支；UNKNOWN、REPLACING、锁定／静默／暂不可用等状态保留行，不能因查询不确定清表丢失。pending 消费者继续调用原 isInstalled，但仅 PRESENT／DISABLED 为正向安装事实；UNKNOWN 不主动补入，主用户安装事实不代替分身事实。
+- **身份与边界**：预览复用已有 remapIdentity，Importer 在清表前执行同一映射，并复用这份目标条目集合做去重和插入，不二次猜测源／目标身份。当前 DB 行不做备份源 profile remap；原源 JSON 保持不变。pending JSON 额外保留已有目标 serial 字段，serial 不匹配时返回 UNKNOWN，避免按复用的数字 user id 激活旧 pending。FolderInfo 仍为结构行，快捷方式保持 package／shortcutId／目标 serial 身份；不改数据库 schema、原版页面／宫格、图标来源、动画或 Launcher 生命周期，不新增 Manager／Profile 解析方案。图标包可用性继续作为资源判断，未冒充桌面删除许可。原版／clean_launcher 无该移植恢复辅助链；maintained 的 ProfileAppsSettingsActivity 按 UserHandle／serial 枚举仅作对照，正式修改仍使用本项目冻结的事实源。
+- **测试**：新增 `tools/tests/restore_profiles/run_device_tests.py`、`RestoreProfileProbe.java`，复用已有 app_process 隔离方法。实际生产 Planner、Importer、PendingItemRestoreHandler、FolderTopologyValidator 和文件工具运行于 vivo X21A／API 28，使用真实 SQLite 清表／重建、事务、JSON、Intent 和 AtomicFile。83 项检查通过：九种 PackageState、目标 user／serial、不同源 serial 映射、源 user id 碰撞、同包不同组件、当前 pinned shortcut、目标快捷方式去重、未知 serial、源 profile 未解析、FolderInfo 父子结构、未知备份条目保留、明确缺失 pending、主用户存在／分身 quiet、UNKNOWN 不补入、正向事实补入及旧 serial 拒绝。Package/Profile 事实、目标 profile 映射和图标编解码是受控替身，未以此声称真实跨 ROM Binder／分身权限通过。
+- **构建与证据**：F04 生产事务控制流 141 项及两处重载接线检查仍通过；标准 build.bat、v1/v2/v3 签名、16KiB 对齐、git diff --check 通过。最终 APK v1.5.8 / versionCode 33，SHA256 `40979907932ED2CDBB4D980B02522B3F840C5E36D5256FBF155ACBC337D1EE91`。基线负例、新版设备输出、摘要和构建证据在 `build/f03-restore-profiles-20261002/`；未安装 APK，Launcher PID 前后均为 13985，探针只访问唯一 `/data/local/tmp/smartisan-restore-profiles-f03-*` 目录，不操作用户桌面。
+- **剩余风险与文档**：真实分身用户可见性、Binder 异常、锁定／quiet 切换、安装替换并发、快捷方式实际图标与点击、真实完整恢复／撤销及 Android 16 仍待设备验收。保留 UNKNOWN 行意味着暂不可解析的旧条目也可能留下，这是防止不确定查询造成数据丢失的明确取舍。F02 待安装补入仍存在页面槽旁路，将作为下一项独立处理；不得将本轮 pending 用户身份检查称为页面分配已修复。已更新本日志和原始专项审计的后续状态；项目／全局 MEMORY.md 未更新，未暂存、提交或推送，保留此前 F04 和构建产物改动。
+
+**F04：恢复事务日志失败门与证据保留（故障注入及 Android 9 隔离运行通过，完整恢复待验）**
+
+- **范围与根因**：按用户要求优先处理全项目审计 F04，未做代码精简或其他审计项修复。原 `RestoreOperationJournal.read()` 将读取／解析异常当成 IDLE，`write()` 返回失败却被调用方忽略，导致日志未可靠保存时仍可继续数据库、偏好和图标写入；重载也忽略恢复返回值，清理可能先删恢复来源再尝试重置日志。备份偏好测试通过不能证明这条事务链安全。
+- **实现**：复用既有 Journal、DesktopRestoreController、RestoreRecoveryGuard 和冷重载 Owner，无新 Manager、Service 或事务状态。日志读取区分真正不存在、读取失败和损坏，检查必需身份／路径字段；写入改为必须处理的 checked exception，先同步文件描述符，再提交 AtomicFile 并回读比对，仅确认成功后推进内存状态。日志不可读／损坏时禁止覆盖或重置，不伪造 IDLE。每阶段检查点失败停止下一阶段；普通恢复错误继续使用已有回滚链，但回滚也必须先保存检查点。已完成状态重试不重复导入，部分导入后的重试使用已有回滚来源。
+- **收尾与用户反馈**：准备失败、启动恢复和首帧清理均先确认日志重置成功，再删除临时来源；失败保留最后检查点及回滚文件，不提示恢复成功。首次重载与“重试”都检查恢复结果，失败复用原失败／重试界面；设置页复用明确的日志错误提示。损坏日志阻止新的恢复与自动恢复写入，Launcher 普通启动仍可继续；本轮没有自动重建或删除损坏日志。成功恢复后替换先前的日志失败通知，避免恢复成功仍显示旧错误。
+- **修改文件**：`launcher/tools/java/com/smartisanos/launcher/backup/{RestoreOperationJournal,DesktopRestoreController,RestoreRecoveryGuard}.java`、`launcher/tools/java/com/smartisanos/launcher/reload/{LauncherColdReloadCoordinator,ReloadTransitionActivity}.java`、`launcher/tools/java/com/smartisanos/launcher/theme/MaintainedLauncherSettingsHost.java`；新增隔离测试 `tools/tests/restore_journal/{run_tests.py,run_device_tests.py,DeviceCheckpointProbe.java}`。原版／clean_launcher／maintained 无同名移植事务 helper，继续修复当前实现，不替换原版桌面核心。新增 JournalException 仅用于强制调用方处理持久化失败；设备探针复用已有 app_process 方式，不加入正式 APK，不新增生产故障注入开关。
+- **验证**：编译并执行实际生产 Journal、Controller、RecoveryGuard 的 141 项检查通过，覆盖不存在／损坏／读失败、写入／同步／静默提交失败、各导入阶段与回滚检查点、重试、清理失败和证据保留；初次／重试重载门做静态接线检查。既有备份偏好 21 项、设置会话 33 项及生命周期／外部结果／备份锁／轮询接线检查通过。最终标准 `build.bat`、v1/v2/v3 签名、16KiB 对齐、`git diff --check` 通过，badging 仍为 v1.5.8 / versionCode 33（minSdk 23、targetSdk 28）；最终 APK SHA256 `D504D48F01F2E8FB367F34DF47333005DC0A501AF93608A25BE46848D78C9D43`。测试／构建证据保留在 `build/f04-restore-journal-20261002/`。
+- **Android 9 隔离运行**：vivo X21A（API 28）执行未改写的生产 Journal、Controller、RecoveryGuard、锁和文件工具；使用真实 Android AtomicFile、JSONObject、文件描述符同步与 EACCES，归档／数据库／设置通知使用隔离替身。41 项平台检查、保存检查点后 SIGKILL 重进 6 项、SIGKILL 后启动守卫恢复 6 项、真实 AtomicFile 未完成写入后 SIGKILL 重进 4 项，共 57 项通过。覆盖读权限失败、写权限失败不推进状态、不执行后续 importer、不误报成功、保留恢复来源、权限恢复后重试、损坏日志保留、旧 `.bak` 恢复及中途写入读回上一检查点。三次 SIGKILL 只杀探针自身；AtomicFile 中途写入场景由探针直接打开平台写入，未在生产 `write()` 中植入暂停／强杀钩子。探针仅访问唯一 `/data/local/tmp/smartisan-restore-journal-f04-*` 目录，Launcher PID 前后均为 13985，未安装 APK、未访问用户桌面数据；摘要、编译／运行输出见 `build/f04-restore-journal-20261002/device-android9/`。
+- **边界与风险**：本机故障注入与 Android 9 探针证明事务控制流、真实平台日志 IO 和失败门，不证明实际 SQLite、图标、主题转换或整份备份一致性；探针为 shell UID，未覆盖 Launcher 应用 UID／SELinux 的全部行为。同步和回读、SIGKILL 重进均不等于真实断电验证；Android 16 当前无在线设备，磁盘满、生产进程中途强杀、真实恢复／撤销和重试界面仍需隔离设备验收，未替换用户设备 Launcher、未操作用户桌面数据。无法读取的日志仍可能需要先保存文件和日志证据再人工处理，不能自动假定安全清空。F04 本身未覆盖 F02/F03；后续 F03 修复见本日独立事项，F02 仍未修复。
+- **文档与仓库**：本节记录最终方案和验证边界；专项审计保留原始基线统计并增加 F04 后续处理说明。未更新项目或全局 MEMORY.md，未暂存、提交或推送；构建产物继续保存在本地，保留此前工作区改动。
 
 **卸载取消、成功动画与桌面下载稳定性**
 

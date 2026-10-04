@@ -3,9 +3,14 @@ package com.smartisanos.launcher.compat;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.UserHandle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
+
+import com.smartisanos.launcher.model.ProfileRepository;
 
 /**
  * Cross-ROM uninstall bridge.
@@ -25,11 +30,16 @@ public final class UninstallCompat {
     }
 
     public static void requestUninstall(String packageName) {
+        // Package-only callers (for example theme removal) address the current user.
         requestUninstall(packageName, null);
     }
 
     private static void requestUninstall(String packageName, Object item) {
         if (TextUtils.isEmpty(packageName)) {
+            return;
+        }
+        if (sPendingSystemUninstall) {
+            Log.w(TAG, "Uninstall ignored: another system confirmation is pending");
             return;
         }
         Context context = null;
@@ -60,17 +70,30 @@ public final class UninstallCompat {
             Log.w(TAG, "requestUninstall ignored: no context for " + packageName);
             return;
         }
+        UserHandle target = currentUserTarget(context, item);
+        if (target == null) {
+            cancelSystemUninstallScene();
+            final Context toastContext = context;
+            new Handler(Looper.getMainLooper()).post(new Runnable() {
+                @Override public void run() {
+                    Toast.makeText(toastContext, "无法安全卸载此用户的应用，请到系统设置中操作", Toast.LENGTH_LONG).show();
+                }
+            });
+            return;
+        }
         sPendingItem = item;
         sRemovalCommitted = false;
         sPendingSystemUninstall = true;
         try {
             Intent intent = new Intent(Intent.ACTION_UNINSTALL_PACKAGE, Uri.parse("package:" + packageName));
             intent.putExtra(Intent.EXTRA_RETURN_RESULT, false);
+            intent.putExtra(Intent.EXTRA_USER, target);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             context.startActivity(intent);
         } catch (Throwable t) {
             try {
                 Intent fallback = new Intent(Intent.ACTION_DELETE, Uri.parse("package:" + packageName));
+                fallback.putExtra(Intent.EXTRA_USER, target);
                 fallback.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 context.startActivity(fallback);
             } catch (Throwable fallbackError) {
@@ -84,6 +107,30 @@ public final class UninstallCompat {
                 }
             }
         }
+    }
+
+    private static UserHandle currentUserTarget(Context context, Object item) {
+        int legacyUser = 0;
+        try {
+            if (item != null) {
+                Object value = item.getClass().getField("userId").get(item);
+                if (!(value instanceof Number)) return null;
+                legacyUser = ((Number) value).intValue();
+            }
+        } catch (ReflectiveOperationException | ClassCastException error) {
+            Log.w(TAG, "Uninstall blocked: item user identity unavailable", error);
+            return null;
+        }
+        ProfileRepository profiles = new ProfileRepository(context);
+        UserHandle target = legacyUser < 0 ? null : profiles.userForLegacyId(legacyUser);
+        UserHandle current = profiles.userForLegacyId(0);
+        if (target == null || profiles.serialFor(target) < 0L || !target.equals(current)) {
+            // An OEM installer may ignore EXTRA_USER. No verified cross-user route exists here.
+            // Never fall back to a package-only uninstall of a different user's application.
+            Log.w(TAG, "Uninstall blocked: unsupported or unknown target user=" + legacyUser);
+            return null;
+        }
+        return target;
     }
 
     /** Preserve the trash scene under system confirmation; restore it on return. */
@@ -103,6 +150,10 @@ public final class UninstallCompat {
             // Keep Sc.SO: the confirmed item-level removal owns the original trash animation.
             return;
         }
+        cancelSystemUninstallScene();
+    }
+
+    private static void cancelSystemUninstallScene() {
         try {
             Class.forName("com.smartisanos.launcher.a.oa")
                     .getMethod("cancelSystemUninstall").invoke(null);

@@ -6,6 +6,7 @@ import android.os.Process;
 import android.util.Log;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 
 public final class RestoreRecoveryGuard {
@@ -18,19 +19,20 @@ public final class RestoreRecoveryGuard {
         if (context == null || isReloadProcess(context)) return;
         DesktopBackupController.cleanupInterruptedBackup(context);
         RestoreOperationJournal journal = new RestoreOperationJournal(context);
-        RestoreOperationJournal.Entry entry = journal.read();
-        if (entry.state == RestoreOperationJournal.State.IDLE) return;
-        Log.i(TAG, "RECOVERY_JOURNAL_FOUND state=" + entry.state);
-        try {
+        RestoreOperationJournal.Entry entry = null;
+        try (BackupOperationLock.RestoreWriter writer = BackupOperationLock.acquireRestoreWriter(context)) {
+            entry = journal.read();
+            if (entry.state == RestoreOperationJournal.State.IDLE) return;
+            Log.i(TAG, "RECOVERY_JOURNAL_FOUND state=" + entry.state);
             if (entry.state.ordinal() < RestoreOperationJournal.State.ROLLBACK_READY.ordinal()) {
-                BackupFileUtils.deleteRecursively(new File(entry.stagingPath));
                 journal.reset();
+                BackupFileUtils.deleteRecursively(new File(entry.stagingPath));
                 return;
             }
             if (entry.state == RestoreOperationJournal.State.COMMITTED
                     || entry.state == RestoreOperationJournal.State.CLEANING) {
-                BackupFileUtils.deleteRecursively(new File(entry.stagingPath));
                 journal.reset();
+                BackupFileUtils.deleteRecursively(new File(entry.stagingPath));
                 return;
             }
             if (entry.state == RestoreOperationJournal.State.ROLLED_BACK) {
@@ -39,7 +41,7 @@ public final class RestoreRecoveryGuard {
             }
             journal.write(entry, RestoreOperationJournal.State.ROLLING_BACK, null);
             Log.i(TAG, "RECOVERY_ROLLBACK_BEGIN");
-            if (!DesktopRestoreController.applyPreparedAfterOldProcessExit(
+            if (!DesktopRestoreController.applyPreparedWithinRestoreLock(
                     context, entry.operationToken, "BACKUP_RESTORE_RECOVERY")) {
                 throw new IllegalStateException("Rollback did not complete");
             }
@@ -47,11 +49,13 @@ public final class RestoreRecoveryGuard {
             context.getSharedPreferences(DesktopBackupController.PREFS, 0).edit()
                     .putString("pending_restore_toast", "RESTORE_RECOVERY_ROLLED_BACK").commit();
             Log.i(TAG, "RECOVERY_ROLLBACK_COMPLETE");
+        } catch (RestoreOperationJournal.JournalException error) {
+            DesktopRestoreController.deferFailure(context, error.errorCode, error);
+        } catch (IOException error) {
+            DesktopRestoreController.deferFailure(context, "RESTORE_WRITER_LOCK_FAILED", error);
         } catch (Throwable error) {
-            journal.write(entry, RestoreOperationJournal.State.ROLLING_BACK,
-                    "RESTORE_ROLLBACK_FAILED");
-            context.getSharedPreferences(DesktopBackupController.PREFS, 0).edit()
-                    .putString("pending_restore_toast", "RESTORE_ROLLBACK_FAILED").commit();
+            // applyPrepared already retained the last checkpoint and specific error.
+            // Do not replace a journal failure notice or reset a partial operation here.
             Log.e(TAG, "RECOVERY_FAILED", error);
         }
     }

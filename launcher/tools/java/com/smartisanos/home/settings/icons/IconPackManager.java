@@ -33,6 +33,7 @@ public final class IconPackManager {
     private static final HashMap<String, PackMap> sPackMapCache = new HashMap<String, PackMap>();
     private static final HashSet<String> sLoadingPacks = new HashSet<String>();
     private static boolean sSelectedPackPreloadPending;
+    private static volatile long sPackGeneration;
 
     private IconPackManager() {
     }
@@ -65,31 +66,38 @@ public final class IconPackManager {
         return getPackedIcon(context, packageName, null);
     }
 
-    public static synchronized Drawable getPackedIcon(Context context, String packageName, String className) {
+    public static Drawable getPackedIcon(Context context, String packageName, String className) {
         if (context == null || TextUtils.isEmpty(packageName)) {
             return null;
         }
+        if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) {
+            return getPackedIconNonBlocking(context, packageName, className);
+        }
         ensureLoaded(context);
         String drawable = null;
-        if (!TextUtils.isEmpty(className)) {
-            drawable = sComponentToDrawable.get(flatten(packageName, className));
-        }
-        // A package-level contacts mapping must not replace its separate
-        // DialtactsActivity. Only an explicit component mapping may do that.
-        if (TextUtils.isEmpty(drawable) && isDialerComponent(packageName, className)) {
-            return null;
+        String loadedPackage;
+        synchronized (IconPackManager.class) {
+            loadedPackage = sLoadedPackage;
+            if (!TextUtils.isEmpty(className)) {
+                drawable = sComponentToDrawable.get(flatten(packageName, className));
+            }
+            // A package-level contacts mapping must not replace its separate
+            // DialtactsActivity. Only an explicit component mapping may do that.
+            if (TextUtils.isEmpty(drawable) && isDialerComponent(packageName, className)) {
+                return null;
         }
         if (TextUtils.isEmpty(drawable)) {
             drawable = sPackageToDrawable.get(packageName);
         }
-        if (TextUtils.isEmpty(drawable) || TextUtils.isEmpty(sLoadedPackage)) {
+        }
+        if (TextUtils.isEmpty(drawable) || TextUtils.isEmpty(loadedPackage)) {
             return null;
         }
         try {
-            Resources res = context.getPackageManager().getResourcesForApplication(sLoadedPackage);
-            int id = res.getIdentifier(drawable, "drawable", sLoadedPackage);
+            Resources res = context.getPackageManager().getResourcesForApplication(loadedPackage);
+            int id = res.getIdentifier(drawable, "drawable", loadedPackage);
             if (id == 0) {
-                id = res.getIdentifier(drawable, "mipmap", sLoadedPackage);
+                id = res.getIdentifier(drawable, "mipmap", loadedPackage);
             }
             return id == 0 ? null : res.getDrawable(id);
         } catch (Throwable ignored) {
@@ -122,6 +130,9 @@ public final class IconPackManager {
     public static Drawable getPackedIcon(Context context, String iconPackPackage,
                                          String packageName, String className) {
         if (context == null || TextUtils.isEmpty(iconPackPackage) || TextUtils.isEmpty(packageName)) return null;
+        if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) {
+            return getPackedIconNonBlocking(context, iconPackPackage, packageName, className);
+        }
         String selected = getSelectedIconPackPackage(context);
         if (iconPackPackage.equals(selected)) return getPackedIcon(context, packageName, className);
         PackMap map;
@@ -129,10 +140,12 @@ public final class IconPackManager {
             map = sPackMapCache.get(iconPackPackage);
         }
         if (map == null) {
+            long generation = sPackGeneration;
             logPackPerf("ICON_PACK_CACHE_MISS", iconPackPackage, sPackMapCache.size(), "sync_fetch");
             PackMap loaded = new PackMap();
             loadPackMap(context, iconPackPackage, loaded.packageToDrawable, loaded.componentToDrawable);
             synchronized (sPackMapCache) {
+                if (generation != sPackGeneration) return null;
                 putPackMapLocked(context, iconPackPackage, loaded);
                 map = loaded;
             }
@@ -181,8 +194,9 @@ public final class IconPackManager {
     }
 
     public static ArrayList<String> getIconPackPackages(Context context) {
-        if (sIconPackList != null) {
-            return sIconPackList;
+        long generation = sPackGeneration;
+        synchronized (IconPackManager.class) {
+            if (sIconPackList != null) return new ArrayList<String>(sIconPackList);
         }
         ArrayList<String> packs = new ArrayList<String>();
         if (context == null) {
@@ -218,8 +232,10 @@ public final class IconPackManager {
             }
         } catch (Throwable ignored) {
         }
-        sIconPackList = packs;
-        return packs;
+        synchronized (IconPackManager.class) {
+            if (generation == sPackGeneration) sIconPackList = packs;
+        }
+        return new ArrayList<String>(packs);
     }
 
     public static String getSelectedIconPackPackage(Context context) {
@@ -260,9 +276,7 @@ public final class IconPackManager {
     }
 
     public static void preloadSelectedIconPack(Context context) {
-        synchronized (IconPackManager.class) {
-            ensureLoaded(context);
-        }
+        ensureLoaded(context);
     }
 
     public static void preloadSelectedIconPackAsync(Context context) {
@@ -303,6 +317,7 @@ public final class IconPackManager {
             sLoadingPacks.add(iconPackPackage);
         }
         logPackPerf("ICON_PACK_LOAD_BEGIN", iconPackPackage, sPackMapCache.size(), "async_start");
+        final long generation = sPackGeneration;
         new Thread(new Runnable() {
             public void run() {
                 long start = android.os.SystemClock.elapsedRealtime();
@@ -311,16 +326,29 @@ public final class IconPackManager {
                 long duration = android.os.SystemClock.elapsedRealtime() - start;
                 synchronized (sPackMapCache) {
                     sLoadingPacks.remove(iconPackPackage);
+                    if (generation != sPackGeneration) return;
                     putPackMapLocked(app, iconPackPackage, loaded);
                 }
                 logPackPerf("ICON_PACK_LOAD_END", iconPackPackage, sPackMapCache.size(), "durationMs=" + duration);
+                com.smartisanos.launcher.theme.MaintainedLauncherSettingsHost
+                        .onIconPackOverridesChanged(app, iconPackPackage);
             }
         }, "icon-pack-preload").start();
     }
 
     public static void invalidateIconPackList() {
         synchronized (IconPackManager.class) {
+            ++sPackGeneration;
             sIconPackList = null;
+        }
+    }
+
+    /** Package events evict only that pack; ordinary app installs keep the active artwork map. */
+    public static void invalidateIconPackPackage(String packageName) {
+        synchronized (IconPackManager.class) {
+            ++sPackGeneration;
+            if (packageName != null && packageName.equals(sLoadedPackage)) clearLoaded();
+            synchronized (sPackMapCache) { sPackMapCache.remove(packageName); }
         }
     }
 
@@ -389,7 +417,8 @@ public final class IconPackManager {
                 || sPackageToDrawable.containsKey(packageName);
     }
 
-    public static void resetCache() {
+    public static synchronized void resetCache() {
+        ++sPackGeneration;
         sLoadedPackage = null;
         sIconPackList = null;
         sPackageToDrawable.clear();
@@ -398,25 +427,32 @@ public final class IconPackManager {
     }
 
     private static void ensureLoaded(Context context) {
+        final long generation = sPackGeneration;
         String selected = getSelectedIconPackPackage(context);
         if (DISABLED.equals(selected)) {
-            clearLoaded();
+            synchronized (IconPackManager.class) { clearLoaded(); }
             return;
         }
         if (TextUtils.isEmpty(selected)) {
             ArrayList<String> packs = getIconPackPackages(context);
             if (packs.isEmpty()) {
-                clearLoaded();
+                synchronized (IconPackManager.class) { clearLoaded(); }
                 return;
             }
             selected = packs.get(0);
         }
-        if (selected.equals(sLoadedPackage)) {
-            return;
+        synchronized (IconPackManager.class) {
+            if (selected.equals(sLoadedPackage)) return;
         }
-        clearLoaded();
-        sLoadedPackage = selected;
-        loadPackMap(context, selected, sPackageToDrawable, sComponentToDrawable);
+        PackMap loaded = new PackMap();
+        loadPackMap(context, selected, loaded.packageToDrawable, loaded.componentToDrawable);
+        synchronized (IconPackManager.class) {
+            if (generation != sPackGeneration) return;
+            clearLoaded();
+            sLoadedPackage = selected;
+            sPackageToDrawable.putAll(loaded.packageToDrawable);
+            sComponentToDrawable.putAll(loaded.componentToDrawable);
+        }
     }
 
     private static void clearLoaded() {
@@ -517,7 +553,8 @@ public final class IconPackManager {
     }
 
     private static String flatten(String packageName, String className) {
-        return packageName + "/" + className;
+        return packageName + "/" + (className != null && className.startsWith(".")
+                ? packageName + className : className);
     }
 
     private static SharedPreferences prefs(Context context) {

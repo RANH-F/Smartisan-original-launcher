@@ -20,6 +20,7 @@ public final class QuickDesktopBackgroundCapture {
     private static final int BLUR_PASSES = 2;
     private static final Handler MAIN = new Handler(Looper.getMainLooper());
     private static final ExecutorService WORKER = Executors.newSingleThreadExecutor();
+    private static final Object REQUEST_LOCK = new Object();
 
     private static volatile boolean glCaptureRequested;
     private static volatile int generation;
@@ -33,16 +34,21 @@ public final class QuickDesktopBackgroundCapture {
         if (root == null || host == null) {
             return;
         }
-        final int requestGeneration = ++generation;
+        final int requestGeneration;
+        synchronized (REQUEST_LOCK) {
+            requestGeneration = ++generation;
+        }
         root.postDelayed(new Runnable() {
             @Override
             public void run() {
-                if (requestGeneration != generation || !root.isAttachedToWindow()) {
-                    return;
+                synchronized (REQUEST_LOCK) {
+                    if (requestGeneration != generation || !root.isAttachedToWindow()) {
+                        return;
+                    }
+                    pendingHost = host;
+                    pendingGeneration = requestGeneration;
+                    glCaptureRequested = true;
                 }
-                pendingHost = host;
-                pendingGeneration = requestGeneration;
-                glCaptureRequested = true;
                 SurfaceView surfaceView = findSurfaceView(root);
                 if (surfaceView instanceof GLSurfaceView) {
                     ((GLSurfaceView) surfaceView).requestRender();
@@ -53,27 +59,32 @@ public final class QuickDesktopBackgroundCapture {
     }
 
     static void cancel(String reason) {
-        generation++;
-        glCaptureRequested = false;
-        pendingGeneration = 0;
-        pendingHost = null;
+        synchronized (REQUEST_LOCK) {
+            generation++;
+            glCaptureRequested = false;
+            pendingGeneration = 0;
+            pendingHost = null;
+        }
         Log.i(TAG, "QD_BACKGROUND_CANCEL reason=" + reason);
     }
 
-    public static boolean isGlCaptureRequested() {
-        return glCaptureRequested;
+    /** Claim the request before readPixels, so cancellation cannot relabel an in-flight frame. */
+    public static int takeGlCaptureGeneration() {
+        synchronized (REQUEST_LOCK) {
+            if (!glCaptureRequested || pendingGeneration != generation) return 0;
+            glCaptureRequested = false;
+            return pendingGeneration;
+        }
     }
 
     /** Takes ownership of rawBitmap. Called from the launcher renderer thread. */
-    public static void onGlFrame(final Bitmap rawBitmap) {
-        if (!glCaptureRequested) {
-            if (rawBitmap != null) rawBitmap.recycle();
-            return;
+    public static void onGlFrame(final Bitmap rawBitmap, final int requestGeneration) {
+        final QuickDesktopHostView host;
+        synchronized (REQUEST_LOCK) {
+            host = requestGeneration == generation && requestGeneration == pendingGeneration
+                    ? pendingHost : null;
+            if (host != null) pendingHost = null;
         }
-        glCaptureRequested = false;
-        final int requestGeneration = pendingGeneration;
-        final QuickDesktopHostView host = pendingHost;
-        pendingHost = null;
         if (rawBitmap == null || host == null || requestGeneration != generation) {
             if (rawBitmap != null) rawBitmap.recycle();
             Log.w(TAG, "QD_BACKGROUND_GL_CAPTURE_EMPTY");
@@ -114,6 +125,7 @@ public final class QuickDesktopBackgroundCapture {
                     public void run() {
                         if (requestGeneration == generation) {
                             host.setBackgroundSnapshots(sharpBitmap, blurBitmap);
+                            QuickDesktopController.onBackgroundReady(host);
                         } else {
                             sharpBitmap.recycle();
                             blurBitmap.recycle();

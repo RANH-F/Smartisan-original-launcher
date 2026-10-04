@@ -29,6 +29,8 @@ public final class LauncherSettingsOverlayHost {
     private static WeakReference<Activity> ownerRef = new WeakReference<Activity>(null);
     private static WeakReference<Activity> cachedMainOwner = new WeakReference<Activity>(null);
     private static View cachedMainRoot;
+    private static android.content.res.Configuration cachedMainConfiguration;
+    private static android.util.DisplayMetrics cachedMainMetrics;
     private static FrameLayout overlay;
     private static FrameLayout pages;
     private static int previousSystemUi;
@@ -71,10 +73,19 @@ public final class LauncherSettingsOverlayHost {
     }
 
     static View takeMainRootForNewSession(Activity activity) {
-        // Reuse only at the start of a new overlay session. Back navigation keeps its own
-        // page transition ownership, and the current setting values are rebound by show().
-        if (!isShowing(activity) || pages == null || pages.getChildCount() != 0
-                || cachedMainOwner.get() != activity || cachedMainRoot == null) return null;
+        // Keep overlay reuse at session entry. A settings Activity can also reuse its
+        // detached MAIN after a completed transition; rapid returns rebuild safely.
+        if (activity == null || cachedMainOwner.get() != activity || cachedMainRoot == null) return null;
+        if (isLauncherActivity(activity)) {
+            if (!isShowing(activity) || pages == null || pages.getChildCount() != 0) return null;
+        } else if (!SETTINGS_CLASS.equals(activity.getClass().getName())
+                || cachedMainRoot.getParent() != null) return null;
+        if (cachedMainConfiguration == null || cachedMainMetrics == null
+                || !cachedMainConfiguration.equals(activity.getResources().getConfiguration())
+                || !cachedMainMetrics.equals(activity.getResources().getDisplayMetrics())) {
+            clearMainRoot(activity);
+            return null;
+        }
         View root = cachedMainRoot;
         cachedMainRoot = null;
         if (root.getParent() instanceof ViewGroup) {
@@ -85,13 +96,26 @@ public final class LauncherSettingsOverlayHost {
         root.setTranslationX(0f);
         root.setTranslationY(0f);
         root.setAlpha(1f);
+        root.setLayerType(View.LAYER_TYPE_NONE, null);
         return root;
     }
 
     static void rememberMainRoot(Activity activity, View root) {
-        if (!isShowing(activity) || root == null) return;
+        if (activity == null || root == null || (!isShowing(activity)
+                && !SETTINGS_CLASS.equals(activity.getClass().getName()))) return;
         cachedMainOwner = new WeakReference<Activity>(activity);
         cachedMainRoot = root;
+        cachedMainConfiguration = new android.content.res.Configuration(activity.getResources().getConfiguration());
+        cachedMainMetrics = new android.util.DisplayMetrics();
+        cachedMainMetrics.setTo(activity.getResources().getDisplayMetrics());
+    }
+
+    static void clearMainRoot(Activity activity) {
+        if (cachedMainOwner.get() != activity) return;
+        cachedMainRoot = null;
+        cachedMainOwner.clear();
+        cachedMainConfiguration = null;
+        cachedMainMetrics = null;
     }
 
     private static boolean open(Activity activity) {
@@ -222,6 +246,7 @@ public final class LauncherSettingsOverlayHost {
     }
 
     public static void onDestroyed(Activity activity) {
+        clearMainRoot(activity);
         if (ownerRef.get() == activity) {
             MaintainedLauncherSettingsHost.cancelPendingBackupPreview(activity);
             if (Build.VERSION.SDK_INT >= 34) Api34Back.unregister(activity);
@@ -234,8 +259,6 @@ public final class LauncherSettingsOverlayHost {
             opening = false;
             edgeBackInProgress = false;
             clickShadowReturnQueued = false;
-            cachedMainRoot = null;
-            cachedMainOwner.clear();
         }
     }
 

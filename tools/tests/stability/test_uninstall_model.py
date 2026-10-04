@@ -12,7 +12,7 @@ STUBS = {
     'android/text/TextUtils.java': 'package android.text;public class TextUtils{public static boolean isEmpty(CharSequence s){return s==null||s.length()==0;}}',
     'com/smartisanos/launcher/ja.java': 'package com.smartisanos.launcher;import android.content.Context;public class ja{public static ja getInstance(){return new ja();}public Context getApplication(){return new Context();}}',
     'com/smartisanos/launcher/data/ItemInfo.java': '''package com.smartisanos.launcher.data;public class ItemInfo{public long id;public int userId;public byte itemType;public String packageName="same.app",componentName="Main";public ItemInfo(long i,int u,int t){id=i;userId=u;itemType=(byte)t;}}''',
-    'com/smartisanos/launcher/Aa.java': '''package com.smartisanos.launcher;import java.util.*;import com.smartisanos.launcher.data.ItemInfo;public class Aa{public static Map<Long,ItemInfo> items=new HashMap<>();public static List<Long> removed=new ArrayList<>();public static Map nc(){return items;}public static void a(ItemInfo i){removed.add(i.id);items.remove(i.id);}}''',
+    'com/smartisanos/launcher/Aa.java': '''package com.smartisanos.launcher;import java.util.*;import com.smartisanos.launcher.data.ItemInfo;public class Aa{public static int mode;public static Map<Long,ItemInfo> items=new HashMap<>();public static List<Long> removed=new ArrayList<>();public static Object nc(){if(mode==1)throw new IllegalStateException("snapshot fixture");if(mode==2)return null;if(mode==3)return "not a map";return items;}public static void a(ItemInfo i){removed.add(i.id);items.remove(i.id);}}''',
     'com/smartisanos/launcher/quicksearch/SearchIndexRepository.java': 'package com.smartisanos.launcher.quicksearch;public class SearchIndexRepository{public static void noteModelPackageDispatch(String p,int u,String a){}}',
     'com/smartisanos/launcher/theme/MaintainedLauncherSettingsHost.java': 'package com.smartisanos.launcher.theme;import android.content.Context;public class MaintainedLauncherSettingsHost{public static void clearCachedImprovedIcon(Context c,String p){}}',
     'com/smartisanos/launcher/compat/UninstallCompat.java': 'package com.smartisanos.launcher.compat;public class UninstallCompat{public static void onRemovalCommitted(Object i){}}',
@@ -35,6 +35,19 @@ public class CheckModel{
   ItemInfo impostor=new ItemInfo(1,999,0);check(!LauncherModelRepository.finishSystemUninstall(impostor));check(Aa.items.containsKey(1L));
   ItemInfo changed=new ItemInfo(1,0,0);changed.componentName="Changed";check(!LauncherModelRepository.finishSystemUninstall(changed));
   Aa.items.remove(1L);check(LauncherModelRepository.finishSystemUninstall(main));check(Aa.removed.isEmpty());
+  for(int mode=1;mode<=3;mode++){
+   Aa.mode=mode;prepare();
+   check(LauncherModelRepository.hasFormalApplicationItem("same.app",0));
+   check(LauncherModelRepository.hasFormalApplicationItem("missing.app",0));
+   check(new LauncherModelRepository(new android.content.Context()).commitPackageRemovals("same.app",0,0,"fixture",PackageState.REMOVED_CONFIRMED,ProfileState.AVAILABLE,new RemovalGateway())==0);
+   check(Aa.items.size()==4&&Aa.removed.isEmpty());
+  }
+  Aa.mode=0;Aa.items.clear();check(!LauncherModelRepository.hasFormalApplicationItem("same.app",0));
+  Aa.items.put(2L,new ItemInfo(2,999,0));check(!LauncherModelRepository.hasFormalApplicationItem("same.app",0));
+  check(LauncherModelRepository.hasFormalApplicationItem("same.app",999));
+  Aa.items.put(3L,new ItemInfo(3,0,1));check(!LauncherModelRepository.hasFormalApplicationItem("same.app",0));
+  Aa.items.put(1L,new ItemInfo(1,-1,0));check(LauncherModelRepository.hasFormalApplicationItem("same.app",0));
+  check(LauncherModelRepository.hasFormalApplicationItem(null,0));check(LauncherModelRepository.hasFormalApplicationItem("",0));
   System.out.println("PASS production uninstall model checks="+count+": absence gate, profile states, clone/component/item isolation, shortcuts, duplicate broadcast");
  }
 }''',

@@ -396,6 +396,37 @@
 
     invoke-virtual {v0, v1}, Lcom/smartisanos/launcher/view/a/g;->db(Z)V
 
+    # The original folder background occludes the entire Dock through depth testing.
+    # Keep that state until the existing folder owner finishes closing.
+    invoke-static {}, Lcom/smartisanos/launcher/view/Eb;->getInstance()Lcom/smartisanos/launcher/view/Eb;
+
+    move-result-object v0
+
+    invoke-virtual {v0}, Lcom/smartisanos/launcher/view/Eb;->Ch()Lcom/smartisanos/launcher/view/b/t;
+
+    move-result-object v0
+
+    if-nez v0, :dock_projection_depth_ready
+
+    # Visible Dock projections overlap; transparent texels must not occlude the next shadow.
+    # db(false) restores the original state before this Dock-only override each frame.
+    iget-object v0, p0, Lcom/smartisanos/launcher/view/a/ca;->Qj:Lcom/smartisanos/launcher/view/a/g;
+
+    iget-object v0, v0, Lcom/smartisanos/launcher/view/a/g;->sc:[Lcom/smartisanos/smengine/SceneNode;
+
+    const/16 v3, 0x1b
+
+    aget-object v0, v0, v3
+
+    if-eqz v0, :dock_projection_depth_ready
+
+    invoke-virtual {v0}, Lcom/smartisanos/smengine/SceneNode;->getRenderState()Lcom/smartisanos/smengine/L;
+
+    move-result-object v0
+
+    invoke-virtual {v0, v1}, Lcom/smartisanos/smengine/L;->setIsEnableDepthTest(Z)V
+
+    :dock_projection_depth_ready
     .line 5
     iget-object v0, p0, Lcom/smartisanos/launcher/view/a/ca;->Qj:Lcom/smartisanos/launcher/view/a/g;
 

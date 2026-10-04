@@ -70,6 +70,17 @@ def execute_removal(item, rows):
 
 
 def check():
+    # Check the selected-item call site before any legacy package/user expansion.
+    request = body('data/A.smali', 'private static p(Ljava/util/List;Ljava/util/List;)V')
+    prefix = request.split(':uninstall_legacy_item', 2)
+    assert len(prefix) == 3
+    assert 'requestUninstallItem' in prefix[1] and 'return-void' in prefix[1]
+    assert '->userId:I' not in prefix[0] + prefix[1]
+    assert 'data/a/l;' not in prefix[0] + prefix[1]
+    assert 'check-cast p1, Lcom/smartisanos/launcher/data/ItemInfo;' in prefix[0]
+    assert 'iget-byte v2, p1, Lcom/smartisanos/launcher/data/ItemInfo;->itemType:B' in prefix[0]
+    assert prefix[0].rstrip().endswith('if-nez v2,')
+    print('PASS static selected-item dispatch before legacy user/package expansion; special-item branch retained')
     template = [
         dict(id=101, packageName='test.app', itemType=0, userId=0, componentName='A'),
         dict(id=102, packageName='test.app', itemType=0, userId=0, componentName='B'),

@@ -13,13 +13,21 @@ import com.smartisanos.launcher.theme.MaintainedLauncherSettingsHost;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.io.IOException;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 
 public final class DesktopRestoreController {
     private static final String TAG = "DesktopRestore";
     private static final Handler MAIN = new Handler(Looper.getMainLooper());
     private static volatile PreparedRestore prepared;
     private static volatile DesktopBackupController.CancellationToken cancellation;
+    private static final AtomicReference<String> APPLY_OWNER = new AtomicReference<String>();
+    private static final AtomicReference<String> CLEANUP_OWNER = new AtomicReference<String>();
+
+    public interface ApplyListener {
+        void onApplied(boolean success);
+    }
 
     public interface Listener {
         void onState(String state, boolean cancellable);
@@ -66,13 +74,18 @@ public final class DesktopRestoreController {
         PreparedRestore current = prepared;
         if (current == null) return;
         RestoreOperationJournal journal = new RestoreOperationJournal(context);
-        RestoreOperationJournal.Entry entry = journal.read();
-        if (!current.token.equals(entry.operationToken)
-                || entry.state.ordinal() > RestoreOperationJournal.State.READY.ordinal()) return;
-        BackupFileUtils.deleteRecursively(current.directory);
-        journal.reset();
-        BackupOperationLock.release(current.token);
-        prepared = null;
+        try {
+            RestoreOperationJournal.Entry entry = journal.read();
+            if (!current.token.equals(entry.operationToken)
+                    || entry.state.ordinal() > RestoreOperationJournal.State.READY.ordinal()) return;
+            journal.reset();
+            BackupFileUtils.deleteRecursively(current.directory);
+            BackupOperationLock.release(current.token);
+            prepared = null;
+        } catch (RestoreOperationJournal.JournalException error) {
+            complete(current.listener, BackupRestoreResult.error(error.errorCode,
+                    restoreMessage(error.errorCode)));
+        }
     }
 
     public static void validateSelectedFile(Context context, Uri uri, Listener listener) {
@@ -84,6 +97,16 @@ public final class DesktopRestoreController {
         if (BackupOperationLock.isBusy()) {
             complete(listener, BackupRestoreResult.error("RESTORE_OPERATION_BUSY",
                     "桌面正在执行其他设置，请稍后再试。"));
+            return;
+        }
+        try {
+            if (new RestoreOperationJournal(context).read().state != RestoreOperationJournal.State.IDLE) {
+                complete(listener, BackupRestoreResult.error("RESTORE_INTERRUPTED",
+                        "上次恢复尚未完成，请先重新打开桌面。"));
+                return;
+            }
+        } catch (RestoreOperationJournal.JournalException error) {
+            complete(listener, BackupRestoreResult.error(error.errorCode, restoreMessage(error.errorCode)));
             return;
         }
         final Context app = context.getApplicationContext() == null ? context : context.getApplicationContext();
@@ -134,20 +157,14 @@ public final class DesktopRestoreController {
                     .putString(DesktopBackupController.KEY_LAST_RESTORE_DOCUMENT_URI, uri.toString()).commit();
             final PreparedRestore ready = prepared;
             MAIN.post(new Runnable() {
-                public void run() { if (ready.listener != null) ready.listener.onPreview(ready.backup, ready.plan); }
+                public void run() {
+                    Listener callback = ready.listener;
+                    if (prepared == ready && callback != null)
+                        callback.onPreview(ready.backup, ready.plan);
+                }
             });
-        } catch (DesktopBackupController.BackupCancelledException cancelled) {
-            BackupFileUtils.deleteRecursively(directory);
-            journal.reset();
-            complete(listener, BackupRestoreResult.error("BACKUP_CANCELLED", "已取消恢复准备"));
-            BackupOperationLock.release(token);
         } catch (Throwable error) {
-            BackupFileUtils.deleteRecursively(directory);
-            String code = code(error, "RESTORE_INVALID_ARCHIVE");
-            journal.write(entry, RestoreOperationJournal.State.IDLE, code);
-            Log.w(TAG, "RESTORE_VALIDATION_FAILED token=" + shortToken(token) + " errorCode=" + code, error);
-            complete(listener, BackupRestoreResult.error(code, restoreMessage(code)));
-            BackupOperationLock.release(token);
+            abortPreparation(journal, token, listener, error, "RESTORE_INVALID_ARCHIVE", null, directory);
         } finally { cancellation = null; }
     }
 
@@ -170,9 +187,12 @@ public final class DesktopRestoreController {
     private static void createRollbackAndTransition(Context context, PreparedRestore restore,
             DesktopBackupController.CancellationToken cancel) {
         RestoreOperationJournal journal = new RestoreOperationJournal(context);
-        RestoreOperationJournal.Entry entry = journal.read();
+        RestoreOperationJournal.Entry entry;
         File rollbackDirectory = new File(new File(context.getFilesDir(), "backup_restore"), "rollback_latest");
         try {
+            entry = journal.read();
+            if (!restore.token.equals(entry.operationToken) || entry.state != RestoreOperationJournal.State.READY)
+                throw new RestoreException("RESTORE_INTERRUPTED");
             state(restore.listener, "CREATING_ROLLBACK", true);
             journal.write(entry, RestoreOperationJournal.State.CREATING_ROLLBACK, null);
             BackupFileUtils.deleteRecursively(rollbackDirectory);
@@ -202,30 +222,37 @@ public final class DesktopRestoreController {
                     context, restore.token, false, restore.backup.manifest.gridMode)) {
                 throw new RestoreException("RESTORE_INTERRUPTED");
             }
-        } catch (DesktopBackupController.BackupCancelledException cancelled) {
-            BackupFileUtils.deleteRecursively(rollbackDirectory);
-            BackupFileUtils.deleteRecursively(restore.directory);
-            journal.reset();
-            BackupOperationLock.release(restore.token);
-            complete(restore.listener, BackupRestoreResult.error("BACKUP_CANCELLED", "已取消恢复"));
         } catch (Throwable error) {
-            BackupFileUtils.deleteRecursively(rollbackDirectory);
-            String code = code(error, "RESTORE_ROLLBACK_CREATE_FAILED");
-            journal.write(entry, RestoreOperationJournal.State.IDLE, code);
-            BackupOperationLock.release(restore.token);
-            complete(restore.listener, BackupRestoreResult.error(code,
-                    "无法创建恢复前状态，桌面未作修改。"));
+            abortPreparation(journal, restore.token, restore.listener, error,
+                    "RESTORE_ROLLBACK_CREATE_FAILED", "无法创建恢复前状态，桌面未作修改。",
+                    rollbackDirectory, restore.directory);
         } finally { cancellation = null; }
     }
 
     public static boolean beginUndo(Context context, Listener listener) {
+        if (context == null) return false;
         File rollback = rollbackArchive(context);
         if (!rollback.isFile() || BackupOperationLock.isBusy()) return false;
         String token = UUID.randomUUID().toString();
         if (!BackupOperationLock.acquire(token)) return false;
+        final Context app = context.getApplicationContext() == null ? context : context.getApplicationContext();
+        final String operationToken = token;
+        final Listener callback = listener;
+        new Thread(new Runnable() {
+            @Override public void run() { prepareUndo(app, operationToken, callback); }
+        }, "DesktopRestoreUndo").start();
+        // Accepted work; preparation failures arrive through the existing listener.
+        return true;
+    }
+
+    private static void prepareUndo(final Context context, final String token, final Listener listener) {
+        File rollback = rollbackArchive(context);
+        RestoreOperationJournal journal = new RestoreOperationJournal(context);
         try {
+            if (journal.read().state != RestoreOperationJournal.State.IDLE)
+                throw new RestoreException("RESTORE_INTERRUPTED");
             File directory = new File(new File(context.getCacheDir(), "restore_staging"), token);
-            BackupArchiveReader.ValidatedBackup backup = BackupArchiveReader.read(rollback,
+            final BackupArchiveReader.ValidatedBackup backup = BackupArchiveReader.read(rollback,
                     new File(directory, "extracted"));
             RestoreOperationJournal.Entry entry = new RestoreOperationJournal.Entry();
             entry.operationToken = token;
@@ -234,54 +261,125 @@ public final class DesktopRestoreController {
             entry.sourceFormatVersion = backup.manifest.formatVersion;
             entry.sourceLauncherVersion = backup.manifest.launcherVersionName;
             entry.undo = true;
-            RestoreOperationJournal journal = new RestoreOperationJournal(context);
             journal.write(entry, RestoreOperationJournal.State.ROLLBACK_READY, null);
             journal.write(entry, RestoreOperationJournal.State.WAITING_TRANSITION, null);
             state(listener, "WAITING_TRANSITION", false);
-            if (!LauncherColdReloadCoordinator.beginBackupRestoreReload(
-                    context, token, true, backup.manifest.gridMode)) throw new Exception("transition");
-            return true;
+            MAIN.post(new Runnable() {
+                @Override public void run() {
+                    if (!LauncherColdReloadCoordinator.beginBackupRestoreReload(
+                            context, token, true, backup.manifest.gridMode)) {
+                        new Thread(new Runnable() {
+                            @Override public void run() {
+                                abortPreparation(journal, token, listener, new RestoreException("RESTORE_INTERRUPTED"),
+                                        "RESTORE_ROLLBACK_FAILED", "无法撤销上次恢复。");
+                            }
+                        }, "DesktopRestoreUndoAbort").start();
+                    }
+                }
+            });
         } catch (Throwable error) {
-            new RestoreOperationJournal(context).reset();
-            BackupOperationLock.release(token);
-            complete(listener, BackupRestoreResult.error("RESTORE_ROLLBACK_FAILED", "无法撤销上次恢复。"));
-            return false;
+            abortPreparation(journal, token, listener, error,
+                    "RESTORE_ROLLBACK_FAILED", "无法撤销上次恢复。");
         }
+    }
+
+    /** The coordinator must confirm old-process exit before submitting this work. */
+    public static boolean applyPreparedAfterOldProcessExitAsync(Context context, final String token,
+            final String reason, final ApplyListener listener) {
+        if (context == null || token == null || !APPLY_OWNER.compareAndSet(null, token)) return false;
+        final Context app = context.getApplicationContext() == null ? context : context.getApplicationContext();
+        new Thread(new Runnable() {
+            @Override public void run() {
+                boolean applied = false;
+                try { applied = applyPreparedAfterOldProcessExit(app, token, reason); }
+                catch (Throwable error) { deferFailure(app, "RESTORE_INTERRUPTED", error); }
+                finally { APPLY_OWNER.compareAndSet(token, null); }
+                final boolean success = applied;
+                MAIN.post(new Runnable() {
+                    @Override public void run() { if (listener != null) listener.onApplied(success); }
+                });
+            }
+        }, "DesktopRestoreApply").start();
+        return true;
     }
 
     /** Called in :reload only after ActivityManager no longer reports the old main PID. */
     public static boolean applyPreparedAfterOldProcessExit(Context context, String token, String reason) {
+        try (BackupOperationLock.RestoreWriter writer = BackupOperationLock.acquireRestoreWriter(context)) {
+            return applyPreparedWithinRestoreLock(context, token, reason);
+        } catch (IOException error) {
+            deferFailure(context, "RESTORE_WRITER_LOCK_FAILED", error);
+            return false;
+        }
+    }
+
+    static boolean applyPreparedWithinRestoreLock(Context context, String token, String reason) {
         RestoreOperationJournal journal = new RestoreOperationJournal(context);
-        RestoreOperationJournal.Entry entry = journal.read();
-        if (!token.equals(entry.operationToken)) return false;
-        journal.write(entry, RestoreOperationJournal.State.WAITING_OLD_PROCESS_EXIT, null);
-        boolean undo = "BACKUP_RESTORE_ROLLBACK".equals(reason)
-                || "BACKUP_RESTORE_RECOVERY".equals(reason) || entry.undo;
+        RestoreOperationJournal.Entry entry;
+        boolean undo;
+        boolean interrupted;
+        try {
+            entry = journal.read();
+            if (!token.equals(entry.operationToken)) return false;
+            if (entry.state == RestoreOperationJournal.State.COMMITTED
+                    || entry.state == RestoreOperationJournal.State.ROLLED_BACK
+                    || entry.state == RestoreOperationJournal.State.CLEANING) return true;
+            interrupted = entry.state.ordinal() >= RestoreOperationJournal.State.APPLYING_DATABASE.ordinal();
+            if (!interrupted && entry.state != RestoreOperationJournal.State.WAITING_TRANSITION
+                    && entry.state != RestoreOperationJournal.State.WAITING_OLD_PROCESS_EXIT) return false;
+            undo = "BACKUP_RESTORE_ROLLBACK".equals(reason)
+                    || "BACKUP_RESTORE_RECOVERY".equals(reason) || entry.undo || interrupted;
+            journal.write(entry, undo ? RestoreOperationJournal.State.ROLLING_BACK
+                    : RestoreOperationJournal.State.WAITING_OLD_PROCESS_EXIT, null);
+        } catch (RestoreOperationJournal.JournalException error) {
+            deferFailure(context, error.errorCode, error);
+            return false;
+        }
         File source = undo ? new File(entry.rollbackPath) : new File(entry.stagingPath, "source.slauncherbackup");
         try {
             applyArchive(context, source, entry, journal, undo);
-            journal.write(entry, RestoreOperationJournal.State.COMMITTED, null);
+            journal.write(entry, interrupted && !entry.undo
+                    ? RestoreOperationJournal.State.ROLLED_BACK : RestoreOperationJournal.State.COMMITTED, null);
+            SharedPreferences notices = context.getSharedPreferences(DesktopBackupController.PREFS, 0);
+            String previousNotice = notices.getString("pending_restore_toast", "");
+            if (previousNotice.startsWith("RESTORE_JOURNAL_")
+                    || "RESTORE_WRITER_LOCK_FAILED".equals(previousNotice)) {
+                String recovered = interrupted && !entry.undo ? "RESTORE_ROLLED_BACK"
+                        : (entry.undo ? "UNDO_COMPLETE" : "RESTORE_COMPLETE");
+                if (!notices.edit().putString("pending_restore_toast", recovered).commit())
+                    Log.e(TAG, "RESTORE_RECOVERY_NOTICE_NOT_PERSISTED");
+            }
             return true;
+        } catch (RestoreOperationJournal.JournalException error) {
+            // Keep the last durable phase and all recovery files. A rollback without
+            // its own durable checkpoint would repeat the same unsafe write pattern.
+            deferFailure(context, error.errorCode, error);
+            return false;
         } catch (Throwable error) {
             Log.e(TAG, "RESTORE_FAILED token=" + shortToken(token), error);
-            journal.write(entry, RestoreOperationJournal.State.FAILED_ROLLBACK_PENDING,
-                    code(error, "RESTORE_VERIFY_FAILED"));
-            if (!undo) {
-                try {
+            try {
+                journal.write(entry, RestoreOperationJournal.State.FAILED_ROLLBACK_PENDING,
+                        code(error, "RESTORE_VERIFY_FAILED"));
+                if (!undo) {
                     journal.write(entry, RestoreOperationJournal.State.ROLLING_BACK, null);
                     applyArchive(context, new File(entry.rollbackPath), entry, journal, true);
                     journal.write(entry, RestoreOperationJournal.State.ROLLED_BACK, null);
                     return true;
-                } catch (Throwable rollbackError) {
+                }
+            } catch (RestoreOperationJournal.JournalException journalError) {
+                deferFailure(context, journalError.errorCode, journalError);
+                return false;
+            } catch (Throwable rollbackError) {
+                try {
                     journal.write(entry, RestoreOperationJournal.State.ROLLING_BACK,
                             "RESTORE_ROLLBACK_FAILED");
-                    Log.e(TAG, "RECOVERY_FAILED token=" + shortToken(token), rollbackError);
+                } catch (RestoreOperationJournal.JournalException journalError) {
+                    deferFailure(context, journalError.errorCode, journalError);
+                    return false;
                 }
+                Log.e(TAG, "RECOVERY_FAILED token=" + shortToken(token), rollbackError);
             }
-            // The reload process has no Settings window to own a dialog. Persist a
-            // one-shot bottom-toast result for the next rendered desktop frame.
-            context.getSharedPreferences(DesktopBackupController.PREFS, 0).edit()
-                    .putString("pending_restore_toast", "RESTORE_ROLLBACK_FAILED").commit();
+            deferFailure(context, "RESTORE_ROLLBACK_FAILED", error);
             return false;
         }
     }
@@ -324,33 +422,71 @@ public final class DesktopRestoreController {
                 + " shortcutUnresolved=" + result.shortcutUnresolved);
     }
 
-    public static void onLauncherFirstFrame(Context context, String token, String reason) {
-        RestoreOperationJournal journal = new RestoreOperationJournal(context);
-        RestoreOperationJournal.Entry entry = journal.read();
-        if (!token.equals(entry.operationToken)) return;
-        if (entry.state != RestoreOperationJournal.State.COMMITTED
-                && entry.state != RestoreOperationJournal.State.ROLLED_BACK) return;
-        String resultCode = entry.state == RestoreOperationJournal.State.ROLLED_BACK
-                ? "RESTORE_ROLLED_BACK"
-                : (entry.undo ? "UNDO_COMPLETE" : "RESTORE_COMPLETE");
-        // This is the first actual desktop frame after the restore. Use the original
-        // launcher toast here rather than deferring a dialog until Backup & Restore
-        // is opened again. The online icon cache is disposable, so start its existing
-        // background hydration only after this frame is visible.
-        MaintainedLauncherSettingsHost.showRestoreStatusToast(context, resultCode);
-        if ("RESTORE_COMPLETE".equals(resultCode)) {
-            com.smartisanos.launcher.backup.RestoreIconSourceReconciler.primeIconSourceAfterRestore(context);
+    public static void onLauncherFirstFrame(Context context, final String token, final String reason) {
+        if (context == null || token == null || !CLEANUP_OWNER.compareAndSet(null, token)) return;
+        // The new main process has no preparation owner. Reserve the existing operation
+        // gate until cleanup finishes so a new undo cannot reuse rollback_latest meanwhile.
+        if (!BackupOperationLock.acquire(token) && !BackupOperationLock.owns(token)) {
+            CLEANUP_OWNER.compareAndSet(token, null);
+            return;
         }
-        journal.write(entry, RestoreOperationJournal.State.CLEANING, null);
-        BackupFileUtils.deleteRecursively(new File(entry.stagingPath));
-        BackupFileUtils.deleteRecursively(new File(new File(context.getCacheDir(), "restore_apply"), token));
-        if (entry.undo && entry.rollbackPath.length() != 0) {
-            BackupFileUtils.deleteRecursively(new File(entry.rollbackPath).getParentFile());
+        final Context app = context.getApplicationContext() == null ? context : context.getApplicationContext();
+        new Thread(new Runnable() {
+            @Override public void run() {
+                String result = null;
+                try { result = finishRestoreAfterFirstFrame(app, token, reason); }
+                catch (RestoreOperationJournal.JournalException error) {
+                    result = error.errorCode;
+                    deferFailure(app, result, error);
+                } catch (IOException error) {
+                    result = "RESTORE_WRITER_LOCK_FAILED";
+                    deferFailure(app, result, error);
+                } finally {
+                    BackupOperationLock.release(token);
+                    CLEANUP_OWNER.compareAndSet(token, null);
+                }
+                if (result == null) return;
+                final String resultCode = result;
+                MAIN.post(new Runnable() {
+                    @Override public void run() {
+                        MaintainedLauncherSettingsHost.showRestoreStatusToast(app, resultCode);
+                        if ("RESTORE_COMPLETE".equals(resultCode)) {
+                            RestoreIconSourceReconciler.primeIconSourceAfterRestore(app);
+                        }
+                    }
+                });
+            }
+        }, "DesktopRestoreCleanup").start();
+    }
+
+    private static String finishRestoreAfterFirstFrame(Context context, String token, String reason)
+            throws IOException {
+        // Re-read only after taking the same cross-process writer lease as import/recovery.
+        try (BackupOperationLock.RestoreWriter writer = BackupOperationLock.acquireRestoreWriter(context)) {
+            RestoreOperationJournal journal = new RestoreOperationJournal(context);
+            RestoreOperationJournal.Entry entry = journal.read();
+            if (!token.equals(entry.operationToken)) return null;
+            if (entry.state != RestoreOperationJournal.State.COMMITTED
+                    && entry.state != RestoreOperationJournal.State.ROLLED_BACK) return null;
+            String resultCode = entry.state == RestoreOperationJournal.State.ROLLED_BACK
+                    ? "RESTORE_ROLLED_BACK"
+                    : (entry.undo ? "UNDO_COMPLETE" : "RESTORE_COMPLETE");
+            // This is the first actual desktop frame after the restore. Use the original
+            // launcher toast here rather than deferring a dialog until Backup & Restore
+            // is opened again. The online icon cache is disposable, so start its existing
+            // background hydration only after this frame is visible.
+            journal.write(entry, RestoreOperationJournal.State.CLEANING, null);
+            // Reset must be durable before deleting the last undo archive or reporting success.
+            journal.reset();
+            BackupFileUtils.deleteRecursively(new File(entry.stagingPath));
+            BackupFileUtils.deleteRecursively(new File(new File(context.getCacheDir(), "restore_apply"), token));
+            if (entry.undo && entry.rollbackPath.length() != 0) {
+                BackupFileUtils.deleteRecursively(new File(entry.rollbackPath).getParentFile());
+            }
+            if (prepared != null && token.equals(prepared.token)) prepared = null;
+            Log.i(TAG, "RESTORE_COMPLETE token=" + shortToken(token) + " reason=" + reason);
+            return resultCode;
         }
-        journal.reset();
-        BackupOperationLock.release(token);
-        if (prepared != null && token.equals(prepared.token)) prepared = null;
-        Log.i(TAG, "RESTORE_COMPLETE token=" + shortToken(token) + " reason=" + reason);
     }
 
     static void ensureDatabaseProvider(Context context) throws Exception {
@@ -384,14 +520,59 @@ public final class DesktopRestoreController {
         MAIN.post(new Runnable() { public void run() { listener.onComplete(result); } });
     }
 
+    /** Preparation has not touched the desktop. Only discard files after a durable abort. */
+    private static void abortPreparation(RestoreOperationJournal journal, String token,
+            Listener listener, Throwable error, String fallbackCode, String fallbackMessage,
+            File... temporaryFiles) {
+        Throwable failure = error;
+        if (!(error instanceof RestoreOperationJournal.JournalException)) {
+            try {
+                RestoreOperationJournal.Entry current = journal.read();
+                if (current.state == RestoreOperationJournal.State.IDLE
+                        || token.equals(current.operationToken)) {
+                    journal.reset();
+                    for (File temporary : temporaryFiles) BackupFileUtils.deleteRecursively(temporary);
+                }
+            } catch (RestoreOperationJournal.JournalException journalError) {
+                failure = journalError;
+            }
+        }
+        BackupOperationLock.release(token);
+        if (prepared != null && token.equals(prepared.token)) prepared = null;
+        String code = code(failure, fallbackCode);
+        String message = failure instanceof RestoreOperationJournal.JournalException || fallbackMessage == null
+                ? restoreMessage(code) : fallbackMessage;
+        if (failure instanceof DesktopBackupController.BackupCancelledException) message = "已取消恢复";
+        Log.e(TAG, "RESTORE_PREPARATION_STOPPED errorCode=" + code, failure);
+        complete(listener, BackupRestoreResult.error(code, message));
+    }
+
+    static void deferFailure(Context context, String code, Throwable error) {
+        Log.e(TAG, "RESTORE_STOPPED errorCode=" + code, error);
+        boolean saved = context.getSharedPreferences(DesktopBackupController.PREFS, 0).edit()
+                .putString("pending_restore_toast", code).commit();
+        if (!saved) Log.e(TAG, "RESTORE_ERROR_NOTICE_NOT_PERSISTED errorCode=" + code);
+    }
+
     private static String code(Throwable error, String fallback) {
+        if (error instanceof RestoreOperationJournal.JournalException)
+            return ((RestoreOperationJournal.JournalException) error).errorCode;
+        if (error instanceof DesktopBackupController.BackupCancelledException) return "BACKUP_CANCELLED";
         if (error instanceof RestoreException) return ((RestoreException) error).code;
         if (error instanceof BackupValidator.BackupValidationException)
             return ((BackupValidator.BackupValidationException) error).errorCode;
         return fallback;
     }
 
-    private static String restoreMessage(String code) {
+    public static String restoreMessage(String code) {
+        if ("RESTORE_WRITER_LOCK_FAILED".equals(code)) return "无法锁定恢复数据，已停止恢复并保留原文件。";
+        if ("RESTORE_INTERRUPTED".equals(code)) return "上次恢复尚未完成，请先重新打开桌面。";
+        if ("RESTORE_JOURNAL_CORRUPT".equals(code))
+            return "恢复记录已损坏，已停止恢复并保留原文件。";
+        if ("RESTORE_JOURNAL_READ_FAILED".equals(code))
+            return "无法读取恢复记录，已停止恢复并保留原文件。";
+        if ("RESTORE_JOURNAL_WRITE_FAILED".equals(code))
+            return "无法保存恢复记录，已停止恢复，请检查存储空间后重试。";
         if ("RESTORE_OPERATION_BUSY".equals(code)) return "桌面正在执行其他设置，请稍后再试。";
         if ("RESTORE_FORMAT_TOO_NEW".equals(code)) return "该备份由更高版本创建，请升级桌面后恢复。";
         if ("RESTORE_CHECKSUM_FAILED".equals(code)) return "备份文件校验失败，无法恢复。";

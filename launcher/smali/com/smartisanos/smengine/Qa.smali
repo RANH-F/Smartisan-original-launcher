@@ -34,7 +34,7 @@
 
 # virtual methods
 .method public run()V
-    .locals 3
+    .locals 4
 
     .line 1
     invoke-static {}, Lcom/smartisanos/launcher/view/Eb;->getInstance()Lcom/smartisanos/launcher/view/Eb;
@@ -137,7 +137,13 @@
 
     move-result-object v2
 
+    # Ra.b is the shared GU direction. Copy it before releasing the writer monitor.
+    monitor-enter v2
+    :sensor_copy_start
     invoke-virtual {v0, v1, v2}, Lcom/smartisanos/smengine/a/c;->b(Lcom/smartisanos/smengine/a/j;Lcom/smartisanos/smengine/a/j;)V
+    monitor-exit v2
+    :sensor_copy_end
+    .catchall {:sensor_copy_start .. :sensor_copy_end} :sensor_copy_failed
 
     .line 9
     iget-object v0, p0, Lcom/smartisanos/smengine/Qa;->this$0:Lcom/smartisanos/smengine/Ra;
@@ -187,4 +193,12 @@
     invoke-virtual {p0}, Lcom/smartisanos/smengine/Ra;->wt()V
 
     return-void
+
+    :sensor_copy_failed
+    move-exception v3
+    :sensor_copy_unlock_start
+    monitor-exit v2
+    :sensor_copy_unlock_end
+    .catchall {:sensor_copy_unlock_start .. :sensor_copy_unlock_end} :sensor_copy_failed
+    throw v3
 .end method

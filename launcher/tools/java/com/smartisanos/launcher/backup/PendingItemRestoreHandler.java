@@ -14,6 +14,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.util.HashSet;
+import java.util.TreeSet;
 
 /** Materializes restore entries whose packages were absent when the archive was applied. */
 public final class PendingItemRestoreHandler {
@@ -38,11 +40,11 @@ public final class PendingItemRestoreHandler {
                 else remaining.put(item);
             }
             if (matching.length() == 0) return;
-            int restored = insertAtDesktopEnd(context, matching);
-            if (restored != matching.length()) return;
+            int resolved = insertAtDesktopEnd(context, matching);
+            if (resolved != matching.length()) return;
             root.put("items", remaining);
             write(file, root);
-            Log.i(TAG, "PENDING_ITEMS_RESTORED pkg=" + packageName + " count=" + restored
+            Log.i(TAG, "PENDING_ITEMS_RESTORED pkg=" + packageName + " resolved=" + resolved
                     + " remaining=" + remaining.length());
         } catch (Throwable error) {
             Log.w(TAG, "PENDING_ITEMS_RESTORE_FAILED pkg=" + packageName, error);
@@ -55,33 +57,58 @@ public final class PendingItemRestoreHandler {
         int gridMode = context.getSharedPreferences("com.smartisanos.launcher_prefs", 0)
                 .getInt("prefs_key_launcher_mode", 12) == 20 ? 20 : 12;
         int capacity = gridMode == 20 ? 20 : 12;
-        long nextId = queryLong(database, "SELECT COALESCE(MAX(_id),0) FROM table_iteminfos") + 1L;
-        int page = (int) queryLong(database, "SELECT COALESCE(MAX(pageIndex),0) FROM table_pageinfos");
-        int cell = (int) queryLong(database, "SELECT COALESCE(MAX(cellIndex),-1) FROM table_iteminfos"
-                + " WHERE pageIndex=" + page + " AND folderIndex<0");
         int restored = 0;
         database.beginTransaction();
         try {
+            // A crash or AtomicFile failure can leave pending rows after the DB commit.
+            // Reuse the restore identity contract, including profile/type/shortcut id.
+            HashSet<String> existingKeys = new HashSet<String>();
+            Cursor existing = database.query("table_iteminfos", null, "packageName=?",
+                    new String[]{items.getJSONObject(0).optString("packageName", "")}, null, null, null);
+            try {
+                while (existing.moveToNext())
+                    existingKeys.add(RestoreMergePlanner.stableKey(RestoreMergePlanner.cursorRow(existing)));
+            } finally { existing.close(); }
+            long nextId = queryLong(database, "SELECT COALESCE(MAX(_id),0) FROM table_iteminfos") + 1L;
+            int page = (int) queryLong(database, "SELECT COALESCE(MAX(pageIndex),0) FROM table_iteminfos"
+                    + " WHERE pageIndex>=0 AND cellIndex>=0 AND (folderIndex<0 OR itemType=2)");
+            int cell = (int) queryLong(database, "SELECT COALESCE(MAX(cellIndex),-1) FROM table_iteminfos"
+                    + " WHERE pageIndex=" + page + " AND cellIndex>=0 AND (folderIndex<0 OR itemType=2)");
+            JSONArray pages = LayoutSnapshotExporter.readPageRows(database);
+            TreeSet<Long> unusedSlots = new TreeSet<Long>();
+            HashSet<Integer> existingPages = new HashSet<Integer>();
+            long maxPageId = 0L;
+            int pageRows = pages.length();
+            for (int i = 0; i < pages.length(); i++) {
+                JSONObject row = pages.getJSONObject(i);
+                maxPageId = Math.max(maxPageId, row.getLong("_id"));
+                if (LayoutSnapshotExporter.isUnusedPageSlot(row)) unusedSlots.add(row.getLong("_id"));
+                else existingPages.add(row.getInt("pageIndex"));
+            }
             for (int i = 0; i < items.length(); i++) {
                 JSONObject item = items.getJSONObject(i);
+                String key = RestoreMergePlanner.stableKey(item);
+                if (existingKeys.contains(key)) {
+                    restored++;
+                    continue;
+                }
                 cell++;
                 if (cell >= capacity) {
                     page++;
                     cell = 0;
-                    ContentValues pageValues = new ContentValues();
-                    pageValues.put("_id", queryLong(database,
-                            "SELECT COALESCE(MAX(_id),0) FROM table_pageinfos") + 1L);
-                    pageValues.put("pageIndex", page);
-                    pageValues.put("status", 0);
-                    pageValues.put("containment", 0);
-                    pageValues.put("pageTitle", "");
-                    database.insertOrThrow("table_pageinfos", null, pageValues);
+                }
+                if (!existingPages.contains(page)) {
+                    boolean reuseSlot = !unusedSlots.isEmpty();
+                    long pageId = LayoutSnapshotImporter.nextRestorePageId(unusedSlots, maxPageId, pageRows, page);
+                    LayoutSnapshotImporter.persistPage(database, LayoutSnapshotImporter.defaultPage(pageId, page), reuseSlot);
+                    maxPageId = Math.max(maxPageId, pageId);
+                    if (!reuseSlot) pageRows++;
+                    existingPages.add(page);
                 }
                 ContentValues values = new ContentValues();
                 values.put("_id", nextId++);
                 values.put("intent", item.optString("intent", ""));
                 values.put("itemType", item.optInt("itemType", 0));
-                values.put("area", 0);
                 values.put("pageIndex", page);
                 values.put("cellIndex", cell);
                 values.put("folderIndex", -1);
@@ -90,6 +117,7 @@ public final class PendingItemRestoreHandler {
                 values.put("componentName", item.optString("componentName", ""));
                 values.put("user", item.optInt("user", 0));
                 database.insertOrThrow("table_iteminfos", null, values);
+                existingKeys.add(key);
                 restored++;
             }
             database.setTransactionSuccessful();

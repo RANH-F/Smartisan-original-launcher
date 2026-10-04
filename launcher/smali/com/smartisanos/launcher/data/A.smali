@@ -16979,6 +16979,13 @@
     :cond_2
     check-cast p1, Lcom/smartisanos/launcher/data/ItemInfo;
 
+    # Keep the selected application identity before the legacy package/user expansion.
+    iget-byte v2, p1, Lcom/smartisanos/launcher/data/ItemInfo;->itemType:B
+    if-nez v2, :uninstall_legacy_item
+    invoke-static {p1}, Lcom/smartisanos/launcher/compat/UninstallCompat;->requestUninstallItem(Ljava/lang/Object;)V
+    return-void
+
+    :uninstall_legacy_item
     .line 8
     iget-object v0, p1, Lcom/smartisanos/launcher/data/ItemInfo;->packageName:Ljava/lang/String;
 

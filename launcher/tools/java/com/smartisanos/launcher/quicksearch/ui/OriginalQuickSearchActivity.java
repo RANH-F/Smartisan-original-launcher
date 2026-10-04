@@ -1465,71 +1465,7 @@ public final class OriginalQuickSearchActivity extends Activity
     }
 
     private Context createResourceContext() {
-        try {
-            File apk = copyResourceAsset();
-            AssetManager assets = AssetManager.class.newInstance();
-            Method addAssetPath = AssetManager.class.getMethod("addAssetPath", String.class);
-            int cookie = ((Integer) addAssetPath.invoke(assets, apk.getAbsolutePath())).intValue();
-            if (cookie == 0) throw new IllegalStateException("Q6 resource path rejected");
-            Resources base = getResources();
-            Resources resources = new Resources(assets, base.getDisplayMetrics(),
-                    base.getConfiguration());
-            return new ResourceContext(this, assets, resources);
-        } catch (Throwable error) {
-            throw new IllegalStateException("Q6 resource load failed", error);
-        }
-    }
-
-    private File copyResourceAsset() throws Exception {
-        File directory = new File(getCacheDir(), "quicksearch_original_res");
-        if (!directory.exists() && !directory.mkdirs()) {
-            throw new IllegalStateException("Q6 resource cache unavailable");
-        }
-        File out = new File(directory, "original-quicksearch-res.apk");
-        long updateTime = getPackageManager().getPackageInfo(getPackageName(), 0).lastUpdateTime;
-        SharedPreferences prefs = getSharedPreferences("quicksearch_original_res",
-                Context.MODE_PRIVATE);
-        if (out.isFile() && out.length() > 0L
-                && prefs.getLong("copied_last_update_time", -1L) == updateTime) return out;
-        InputStream input = getAssets().open(RESOURCE_ASSET);
-        FileOutputStream output = new FileOutputStream(out, false);
-        try {
-            byte[] buffer = new byte[16384];
-            int read;
-            while ((read = input.read(buffer)) != -1) output.write(buffer, 0, read);
-            output.getFD().sync();
-        } finally {
-            try { input.close(); } catch (Throwable ignored) { }
-            try { output.close(); } catch (Throwable ignored) { }
-        }
-        prefs.edit().putLong("copied_last_update_time", updateTime).apply();
-        return out;
-    }
-
-    private static final class ResourceContext extends ContextWrapper {
-        private final AssetManager assets;
-        private final Resources resources;
-        private final Resources.Theme theme;
-
-        ResourceContext(Context base, AssetManager assets, Resources resources) {
-            super(base);
-            this.assets = assets;
-            this.resources = resources;
-            this.theme = resources.newTheme();
-            this.theme.applyStyle(android.R.style.Theme_DeviceDefault_Light_NoActionBar, true);
-        }
-
-        @Override public AssetManager getAssets() {
-            return assets;
-        }
-
-        @Override public Resources getResources() {
-            return resources;
-        }
-
-        @Override public Resources.Theme getTheme() {
-            return theme;
-        }
+        return OriginalQuickSearchResources.create(this);
     }
 
     private static String bounds(View view) {

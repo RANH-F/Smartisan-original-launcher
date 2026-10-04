@@ -816,4 +816,7 @@
     <string name="backup_excluded_badge_clean">滑动清除角标</string>
     <string name="backup_excluded_contacts">联系人搜索</string>
     <string name="backup_excluded_system_panels">下滑打开系统面板</string>
+    <string name="sponsor_title">Power by</string>
+    <string name="sponsor_names">@夏尔美、@星辰、@幸福的街角、@287266982</string>
+    <string name="sponsor_thanks">感谢以上锤友赞助支持，排名不分先后</string>
 </resources>

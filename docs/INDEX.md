@@ -13,7 +13,7 @@
 - [ISSUE_11_LAYOUT_ACCEPTANCE.md](development/ISSUE_11_LAYOUT_ACCEPTANCE.md)：Issue #11 原版字段 Owner、真实资源 profile 与独立验收包；远程视觉待验收。
 
 - [DEVELOPMENT_LOG.md](development/DEVELOPMENT_LOG.md)：BUG 根因、修复方式、验证过程、回归注意和倒序每日记录。
-- [LAUNCHER_FIX_AND_OPTIMIZATION_PLAN.md](development/LAUNCHER_FIX_AND_OPTIMIZATION_PLAN.md)：Launcher 启动、重载、宫格和主题专项的阶段计划与验收条件。
+- [LAUNCHER_FIX_AND_OPTIMIZATION_PLAN.md](development/LAUNCHER_FIX_AND_OPTIMIZATION_PLAN.md)：Launcher 启动、重载、宫格和主题专项计划；顶部2026-10-04章节为全项目流畅度S0–S6方案、功能保护、性能验收及回退条件。
 - [ICON_RENDERING_CONTRACT.md](development/ICON_RENDERING_CONTRACT.md)：普通、改进版、图标包、自定义及 Weather/Calendar 图标唯一 Owner、栅格、缓存与验收冻结合同。
 - [ICON_ILLUMINATION_HANDOFF.md](development/ICON_ILLUMINATION_HANDOFF.md)：图标感应光影合并记录入口与原版数值探针用法。
 - [QUICK_SEARCH_AUDIT.md](development/QUICK_SEARCH_AUDIT.md)：原版 QuickSearch 主基线、调用链、数据与兼容边界审计。

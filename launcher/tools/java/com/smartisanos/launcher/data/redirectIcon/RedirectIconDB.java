@@ -36,6 +36,12 @@ public final class RedirectIconDB {
     }
 
     /** Checks override metadata without decoding a custom icon from disk. */
+    public static RedirectIconInfo getRedirectIconMetadata(Context context, String pkg, String cmp) {
+        if (context == null || TextUtils.isEmpty(pkg) || TextUtils.isEmpty(cmp)) return null;
+        return read(context, key(pkg, cmp), false);
+    }
+
+    /** Checks override metadata without decoding a custom icon from disk. */
     public static boolean hasManagedIconOverride(Context context, String pkg, String cmp) {
         if (context == null || TextUtils.isEmpty(pkg) || TextUtils.isEmpty(cmp)
                 || !hasAnyManagedIconOverride(context)) {

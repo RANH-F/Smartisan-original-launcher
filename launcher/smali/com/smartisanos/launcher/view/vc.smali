@@ -188,7 +188,7 @@
 .end method
 
 .method public onDrawFrame(Ljavax/microedition/khronos/opengles/GL10;)V
-    .locals 2
+    .locals 3
 
     invoke-static {}, Lcom/smartisanos/launcher/theme/LauncherBelowKeyguardCompat;->onRendererFrame()V
 
@@ -197,11 +197,11 @@
 
     invoke-virtual {p1}, Lcom/smartisanos/launcher/view/Eb;->update()V
 
-    invoke-static {}, Lcom/smartisanos/launcher/quickdesktop/QuickDesktopBackgroundCapture;->isGlCaptureRequested()Z
+    invoke-static {}, Lcom/smartisanos/launcher/quickdesktop/QuickDesktopBackgroundCapture;->takeGlCaptureGeneration()I
 
-    move-result p1
+    move-result v2
 
-    if-eqz p1, :quick_desktop_capture_done
+    if-eqz v2, :quick_desktop_capture_done
 
     const/4 p1, 0x0
 
@@ -213,7 +213,7 @@
 
     move-result-object p1
 
-    invoke-static {p1}, Lcom/smartisanos/launcher/quickdesktop/QuickDesktopBackgroundCapture;->onGlFrame(Landroid/graphics/Bitmap;)V
+    invoke-static {p1, v2}, Lcom/smartisanos/launcher/quickdesktop/QuickDesktopBackgroundCapture;->onGlFrame(Landroid/graphics/Bitmap;I)V
 
     :quick_desktop_capture_done
 

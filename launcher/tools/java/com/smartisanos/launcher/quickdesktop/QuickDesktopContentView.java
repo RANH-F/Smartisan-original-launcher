@@ -11,6 +11,10 @@ import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.Looper;
+import android.util.Log;
 import android.view.View;
 
 import com.smartisanos.launcher.theme.WeatherBridge;
@@ -51,6 +55,21 @@ final class QuickDesktopContentView extends View {
     private boolean musicControlsMode;
     private String paymentIconProvider;
     private Bitmap paymentProviderIcon;
+    private boolean musicEnabled, shortcutsEnabled, lifeEnabled, weChatPayment;
+    private String temperature = "--", weatherText = "天气数据不可用", city = "当前位置";
+    private String headerDate = "", headerText = "";
+    private final Handler refreshHandler = new Handler(Looper.getMainLooper());
+    private HandlerThread mediaThread;
+    private Handler mediaHandler;
+    private boolean refreshActive, mediaInFlight;
+    private int refreshGeneration;
+    private final Runnable refresh = new Runnable() {
+        @Override public void run() {
+            if (!refreshActive) return;
+            refreshContent();
+            refreshHandler.postDelayed(this, 1000L);
+        }
+    };
 
     QuickDesktopContentView(Context context) {
         super(context);
@@ -72,6 +91,79 @@ final class QuickDesktopContentView extends View {
                 load("calculator.png"), load("city_service.png"), load("clock.png")
         };
         setContentDescription("快捷桌面");
+        refreshContent();
+    }
+
+    void setRefreshActive(boolean active) {
+        if (refreshActive == active) return;
+        refreshActive = active;
+        refreshGeneration++;
+        refreshHandler.removeCallbacks(refresh);
+        mediaInFlight = false;
+        if (!active) {
+            if (mediaThread != null) mediaThread.quitSafely();
+            mediaThread = null;
+            mediaHandler = null;
+            return;
+        }
+        mediaThread = new HandlerThread("QuickDesktopMedia");
+        mediaThread.start();
+        mediaHandler = new Handler(mediaThread.getLooper());
+        refresh.run();
+    }
+
+    void refreshContent() {
+        musicEnabled = QuickDesktopController.isCardEnabled(getContext(),
+                QuickDesktopController.CARD_MUSIC_PAYMENT);
+        shortcutsEnabled = QuickDesktopController.isCardEnabled(getContext(),
+                QuickDesktopController.CARD_SHORTCUTS);
+        lifeEnabled = QuickDesktopController.isCardEnabled(getContext(), QuickDesktopController.CARD_LIFE);
+        weChatPayment = QuickDesktopController.PAYMENT_WECHAT.equals(
+                QuickDesktopController.getPaymentProvider(getContext()));
+        if (weChatPayment) paymentProviderIcon("com.tencent.mm");
+        Bundle weather = WeatherBridge.getWeatherBundle(getContext());
+        temperature = weather == null ? "--" : weather.getString("temp", "--");
+        weatherText = weather == null ? "天气数据不可用" : weatherDescription(weather.getString("weatherCode", "99"));
+        city = weather == null ? "当前位置" : weather.getString("city", "当前位置");
+        headerDate = new SimpleDateFormat("M 月 d 日", Locale.CHINA).format(new Date());
+        headerText = QuickDesktopController.getCustomHeaderText(getContext());
+        if (refreshActive && musicEnabled && !mediaInFlight) {
+            mediaInFlight = true;
+            final int generation = refreshGeneration;
+            final Context app = getContext().getApplicationContext();
+            mediaHandler.post(new Runnable() {
+                @Override public void run() {
+                    QuickDesktopMediaBridge.Snapshot value;
+                    try {
+                        value = QuickDesktopMediaBridge.read(app);
+                    } catch (RuntimeException error) {
+                        Log.w("QuickDesktopMedia", "Media snapshot unavailable", error);
+                        value = new QuickDesktopMediaBridge.Snapshot("Smartisan 音乐",
+                                "暂时无法读取音乐信息", null, false, false, false);
+                    }
+                    final QuickDesktopMediaBridge.Snapshot snapshot = value;
+                    refreshHandler.post(new Runnable() {
+                        @Override public void run() {
+                            if (!refreshActive || generation != refreshGeneration) return;
+                            mediaInFlight = false;
+                            mediaSnapshot = snapshot;
+                            invalidate();
+                        }
+                    });
+                }
+            });
+        }
+        invalidate();
+    }
+
+    private void refreshAfterAction(long delay) {
+        refreshHandler.removeCallbacks(refresh);
+        if (refreshActive) refreshHandler.postDelayed(refresh, delay);
+    }
+
+    @Override protected void onDetachedFromWindow() {
+        setRefreshActive(false);
+        super.onDetachedFromWindow();
     }
 
     @Override
@@ -90,29 +182,23 @@ final class QuickDesktopContentView extends View {
         musicTop = -1.0f;
         shortcutsTop = -1.0f;
         lifeTop = -1.0f;
-        if (QuickDesktopController.isCardEnabled(getContext(),
-                QuickDesktopController.CARD_MUSIC_PAYMENT)) {
-            mediaSnapshot = QuickDesktopMediaBridge.read(getContext());
+        if (musicEnabled) {
             musicTop = top;
             drawMusicAndPayment(canvas, top);
             top += 273.0f;
         }
-        if (QuickDesktopController.isCardEnabled(getContext(),
-                QuickDesktopController.CARD_SHORTCUTS)) {
+        if (shortcutsEnabled) {
             shortcutsTop = top;
             drawShortcutCard(canvas, top);
             top += 102.0f;
         }
         // The pristine Calendar card is data-driven and remains GONE when there are no events.
         // Its preference is retained now; event rendering is connected with calendar access later.
-        if (QuickDesktopController.isCardEnabled(getContext(), QuickDesktopController.CARD_LIFE)) {
+        if (lifeEnabled) {
             lifeTop = top;
             drawExpressCard(canvas, top);
         }
         canvas.restore();
-        if (musicTop >= 0.0f && getVisibility() == VISIBLE) {
-            postInvalidateDelayed(1000L);
-        }
     }
 
     boolean performActionAt(float x, float y) {
@@ -138,17 +224,17 @@ final class QuickDesktopContentView extends View {
                     float controlY = musicTop + 211.0f;
                     if (inCircle(designX, designY, 82.0f, controlY, 27.0f)) {
                         boolean handled = QuickDesktopMediaBridge.skipPrevious(getContext());
-                        if (handled) postInvalidateDelayed(180L);
+                        if (handled) refreshAfterAction(180L);
                         return handled;
                     }
                     if (inCircle(designX, designY, 147.5f, controlY, 31.0f)) {
                         boolean handled = QuickDesktopMediaBridge.togglePlayback(getContext());
-                        if (handled) postInvalidateDelayed(80L);
+                        if (handled) refreshAfterAction(80L);
                         return handled;
                     }
                     if (inCircle(designX, designY, 213.0f, controlY, 27.0f)) {
                         boolean handled = QuickDesktopMediaBridge.skipNext(getContext());
-                        if (handled) postInvalidateDelayed(180L);
+                        if (handled) refreshAfterAction(180L);
                         return handled;
                     }
                     musicControlsMode = false;
@@ -157,7 +243,7 @@ final class QuickDesktopContentView extends View {
                 }
                 if (inCircle(designX, designY, 228.0f, musicTop + 218.0f, 34.0f)) {
                     boolean handled = QuickDesktopMediaBridge.togglePlayback(getContext());
-                    if (handled) postInvalidateDelayed(80L);
+                    if (handled) refreshAfterAction(80L);
                     return handled;
                 }
                 musicControlsMode = true;
@@ -186,20 +272,14 @@ final class QuickDesktopContentView extends View {
     }
 
     private void drawHeader(Canvas canvas) {
-        Bundle weather = WeatherBridge.getWeatherBundle(getContext());
-        String temperature = weather == null ? "--" : weather.getString("temp", "--");
-        String weatherText = weather == null ? "天气数据不可用" : weatherDescription(
-                weather.getString("weatherCode", "99"));
         paint.setTypeface(Typeface.create("sans", Typeface.NORMAL));
         paint.setTextSize(58.0f);
         float degreeX = 20.0f + paint.measureText(temperature) + 7.0f;
         text(canvas, temperature, 20.0f, 91.0f, 58.0f, Color.WHITE, false, 1.0f);
         text(canvas, "°C", degreeX, 65.0f, 17.0f, Color.WHITE, false, 1.0f);
-        String city = weather == null ? "当前位置" : weather.getString("city", "当前位置");
         text(canvas, weatherText + "  |  " + city, 20.0f, 116.0f, 14.0f,
                 Color.WHITE, false, 1.0f);
-        String date = new SimpleDateFormat("M 月 d 日", Locale.CHINA).format(new Date());
-        text(canvas, date + "  |  " + QuickDesktopController.getCustomHeaderText(getContext()),
+        text(canvas, headerDate + "  |  " + headerText,
                 20.0f, 135.0f, 10.0f,
                 0x99ffffff, false, 1.0f);
 
@@ -275,8 +355,7 @@ final class QuickDesktopContentView extends View {
             drawPlayButton(canvas, 228.0f, top + 218.0f, 25.0f, playing);
         }
 
-        boolean weChat = QuickDesktopController.PAYMENT_WECHAT.equals(
-                QuickDesktopController.getPaymentProvider(getContext()));
+        boolean weChat = weChatPayment;
         drawBitmap(canvas, weChat ? paymentScanNeutral : alipayScan,
                 291.0f, top, 121.8f, 120.0f);
         drawBitmap(canvas, weChat ? paymentQrNeutral : alipayQr,
@@ -451,7 +530,7 @@ final class QuickDesktopContentView extends View {
     }
 
     private void drawPaymentProviderBadge(Canvas canvas, float centerY, String packageName) {
-        Bitmap icon = paymentProviderIcon(packageName);
+        Bitmap icon = paymentProviderIcon;
         if (icon == null) return;
         // Match the original Alipay badge's visible disc (about 20 design px).
         // The project WeChat artwork contains transparent padding, which is cropped

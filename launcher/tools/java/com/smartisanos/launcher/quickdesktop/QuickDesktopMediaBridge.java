@@ -18,8 +18,8 @@ import java.util.List;
 final class QuickDesktopMediaBridge {
     private static final String LISTENER_CLASS =
             "com.smartisanos.launcher.badge.SmartisanBadgeListenerService";
-    private static Boolean fallbackPlayingOverride;
-    private static long fallbackPlayingOverrideUntil;
+    private static volatile Boolean fallbackPlayingOverride;
+    private static volatile long fallbackPlayingOverrideUntil;
 
     static final class Snapshot {
         final String title;

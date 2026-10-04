@@ -234,6 +234,178 @@ public final class IconPreviewRepository implements ComponentCallbacks2 {
         }
     }
 
+    public interface CandidateLibrary {
+        java.util.List<String> sourceIds();
+        Drawable load(String sourceId, boolean cachedOnly);
+        String selectedKey();
+    }
+    public interface CandidateCallback {
+        void onCandidates(java.util.List<AppIconCandidate> candidates);
+    }
+    private final LruCache<String, java.util.List<AppIconCandidate>> candidateLists =
+            new LruCache<String, java.util.List<AppIconCandidate>>(256) {
+                protected int sizeOf(String key, java.util.List<AppIconCandidate> value) {
+                    return Math.max(32, value.size());
+                }
+            };
+    private volatile long candidateGeneration;
+    private final Map<RequestSession, Runnable> candidateRefresh = new HashMap<RequestSession, Runnable>();
+    private final Map<RequestSession, Long> candidateRequests = new HashMap<RequestSession, Long>();
+
+    public synchronized void invalidateCandidates() {
+        candidateGeneration++;
+        candidateLists.evictAll();
+        synchronized (candidateRefresh) {
+            for (final Map.Entry<RequestSession, Runnable> entry : candidateRefresh.entrySet()) {
+                final RequestSession session = entry.getKey();
+                final Runnable refresh = entry.getValue();
+                main.post(new Runnable() { public void run() {
+                    if (isSessionActive(session)) refresh.run();
+                }});
+            }
+        }
+    }
+
+    public void invalidateAppCandidates(String packageName) {
+        invalidateCandidates();
+        for (IconRenderKey key : cache.snapshot().keySet()) {
+            if (key.packageName.equals(packageName)) cache.remove(key);
+        }
+    }
+
+    /** Called while the application page snapshot is built off MAIN. */
+    public void seedCachedCandidate(String pkg, String component, long user, String sourceId,
+            Drawable drawable, boolean selected) {
+        if (drawable == null || TextUtils.isEmpty(sourceId)) return;
+        String pageKey = candidatePageKey(pkg, component, user);
+        if (candidateLists.get(pageKey) != null) return;
+        AppIconCandidate item = new AppIconCandidate(AppIconCandidate.TYPE_LIBRARY, sourceId, "", selected);
+        IconRenderKey key = candidateRenderKey(pkg, component, user, item);
+        Bitmap preview = drawableToBitmap(drawable, key.targetPixelSize);
+        if (preview == null) return;
+        cache.put(key, preview);
+        ArrayList<AppIconCandidate> items = new ArrayList<AppIconCandidate>();
+        items.add(item);
+        items.add(new AppIconCandidate(AppIconCandidate.TYPE_CUSTOM, "", "+", false));
+        candidateLists.put(pageKey, Collections.unmodifiableList(items));
+    }
+
+    private String candidatePageKey(String pkg, String component, long user) {
+        return user + "|" + pkg + "|" + component;
+    }
+
+    /** Metadata only on MAIN. Cached bitmaps use the existing byte-bounded preview cache. */
+    public java.util.List<AppIconCandidate> cachedCandidates(String pkg, String component, long user) {
+        java.util.List<AppIconCandidate> found = candidateLists.get(candidatePageKey(pkg, component, user));
+        return found == null ? Collections.<AppIconCandidate>emptyList() : found;
+    }
+
+    public void discoverCandidates(final RequestSession session, final String pkg,
+            final String component, final long user,
+            final CandidateLibrary library, final CandidateCallback callback) {
+        if (!isSessionActive(session)) return;
+        final long request = sequence.incrementAndGet();
+        synchronized (candidateRefresh) {
+            candidateRequests.put(session, request);
+            candidateRefresh.put(session, new Runnable() { public void run() {
+                discoverCandidates(session, pkg, component, user, library, callback);
+            }});
+        }
+        schedule(session, Priority.P0_VISIBLE, new Runnable() {
+            public void run() {
+                if (!isCurrentCandidateRequest(session, request)) return;
+                final long generation = candidateGeneration;
+                long started = android.os.SystemClock.elapsedRealtime();
+                logPerf("ICON_CANDIDATES_COLLECT_BEGIN", pkg, component, user, "CHOICE", 0, 0);
+                final java.util.LinkedHashMap<String, AppIconCandidate> found =
+                        new java.util.LinkedHashMap<String, AppIconCandidate>();
+                for (String id : library.sourceIds()) {
+                    if (!isCurrentCandidateRequest(session, request)) return;
+                    if (TextUtils.isEmpty(id) || found.containsKey("IMPROVED:" + id)) continue;
+                    Drawable drawable = library.load(id, false);
+                    if (!isCurrentCandidateRequest(session, request)) return;
+                    if (drawable != null) {
+                        AppIconCandidate item = new AppIconCandidate(AppIconCandidate.TYPE_LIBRARY,
+                                id, "", false);
+                        IconRenderKey key = candidateRenderKey(pkg, component, user, item);
+                        Bitmap preview = drawableToBitmap(drawable, key.targetPixelSize);
+                        if (preview == null) continue;
+                        cache.put(key, preview);
+                        found.put(item.stableKey, item);
+                    }
+                }
+                ArrayList<String> packs = IconPackManager.getIconPackPackages(app);
+                Collections.sort(packs);
+                for (String pack : packs) {
+                    if (!isCurrentCandidateRequest(session, request)) return;
+                    // Explicit package API parses on this executor and never changes global selection.
+                    Drawable drawable = IconPackManager.getPackedIcon(app, pack, pkg, component);
+                    if (drawable == null) continue;
+                    AppIconCandidate item = new AppIconCandidate(AppIconCandidate.TYPE_PACKED,
+                            pack, IconPackManager.getIconPackLabel(app, pack),
+                            false);
+                    IconRenderKey key = candidateRenderKey(pkg, component, user, item);
+                    Bitmap preview = drawableToBitmap(drawable, key.targetPixelSize);
+                    if (!isCurrentCandidateRequest(session, request)) return;
+                    if (preview == null) continue;
+                    cache.put(key, preview);
+                    found.put(item.stableKey, item);
+                }
+                final String selectedKey = library.selectedKey();
+                final ArrayList<AppIconCandidate> result = new ArrayList<AppIconCandidate>();
+                if ("DEFAULT".equals(selectedKey)) result.add(new AppIconCandidate(
+                        AppIconCandidate.TYPE_ORIGINAL, "", "", true));
+                for (AppIconCandidate item : found.values()) result.add(new AppIconCandidate(
+                        item.type, item.sourceId, item.packLabel, item.stableKey.equals(selectedKey)));
+                // Stable sort moves only the selected entry; library/variant/pack order stays stable.
+                Collections.sort(result, new java.util.Comparator<AppIconCandidate>() {
+                    public int compare(AppIconCandidate a, AppIconCandidate b) {
+                        return a.selected == b.selected ? 0 : a.selected ? -1 : 1;
+                    }
+                });
+                result.add(new AppIconCandidate(AppIconCandidate.TYPE_CUSTOM, "", "+", "CUSTOM".equals(selectedKey)));
+                if (!isCurrentCandidateRequest(session, request)) return;
+                if (generation != candidateGeneration) {
+                    discoverCandidates(session, pkg, component, user, library, callback);
+                    return;
+                }
+                candidateLists.put(candidatePageKey(pkg, component, user),
+                        Collections.unmodifiableList(result));
+                logPerf("ICON_CANDIDATES_COLLECT_END", pkg, component, user, "CHOICE", result.size(),
+                        android.os.SystemClock.elapsedRealtime() - started);
+                main.post(new Runnable() { public void run() {
+                    if (!isCurrentCandidateRequest(session, request)) return;
+                    if (generation != candidateGeneration) {
+                        discoverCandidates(session, pkg, component, user, library, callback);
+                        return;
+                    }
+                    callback.onCandidates(Collections.unmodifiableList(result));
+                }});
+            }
+        });
+    }
+
+    private boolean isCurrentCandidateRequest(RequestSession session, long request) {
+        synchronized (candidateRefresh) {
+            Long current = candidateRequests.get(session);
+            return isSessionActive(session) && current != null && current.longValue() == request;
+        }
+    }
+
+    public IconRenderKey candidateRenderKey(String pkg, String component, long user, AppIconCandidate item) {
+        long version = 0;
+        try {
+            String versionPackage = item.type == AppIconCandidate.TYPE_PACKED ? item.packPackage : pkg;
+            version = app.getPackageManager().getPackageInfo(versionPackage, 0).lastUpdateTime;
+        } catch (Exception ignored) { }
+        return new IconRenderKey(pkg, component, user,
+                item.type == AppIconCandidate.TYPE_PACKED ? "PACK"
+                        : item.type == AppIconCandidate.TYPE_LIBRARY ? "RESOURCE"
+                        : item.type == AppIconCandidate.TYPE_CUSTOM ? "CUSTOM" : "DEFAULT",
+                item.sourceId, version, Math.round(72 * app.getResources().getDisplayMetrics().density),
+                app.getResources().getDisplayMetrics().densityDpi, 1);
+    }
+
     public RequestSession openSession(String owner) {
         RequestSession session = new RequestSession(sessionSequence.incrementAndGet(), owner);
         activeSessions.add(session);
@@ -245,6 +417,10 @@ public final class IconPreviewRepository implements ComponentCallbacks2 {
         if (session == null || session.isCancelled()) return;
         session.cancel();
         activeSessions.remove(session);
+        synchronized (candidateRefresh) {
+            candidateRefresh.remove(session);
+            candidateRequests.remove(session);
+        }
         purgeCancelledSessionWork(session);
     }
 

@@ -40,6 +40,37 @@ public final class OriginalSearchBarCompat extends RelativeLayout {
         return editText;
     }
 
+    /** Align the field with Settings cards; retain only the in-field clear button. */
+    public void setSettingsPresentation(android.graphics.drawable.Drawable background) {
+        View field = findViewById(resource("id", "qs_original_search_edit_layout"));
+        if (field == null) return;
+        RelativeLayout.LayoutParams fieldParams = (RelativeLayout.LayoutParams) field.getLayoutParams();
+        fieldParams.height = Math.round(48f * getResources().getDisplayMetrics().density);
+        fieldParams.leftMargin = Math.round(12f * getResources().getDisplayMetrics().density);
+        fieldParams.rightMargin = fieldParams.leftMargin;
+        fieldParams.addRule(RelativeLayout.LEFT_OF, 0);
+        fieldParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT, RelativeLayout.TRUE);
+        field.setLayoutParams(fieldParams);
+        // Settings already supplies a rounded NinePatch with its own edge/shadow.
+        // Do not stretch the QuickSearch pill or add a second system shadow.
+        setBackground(background);
+        field.setBackgroundColor(android.graphics.Color.TRANSPARENT);
+        cancelButton.setVisibility(GONE);
+        View searchIcon = findViewById(resource("id", "qs_original_search_left_icon"));
+        RelativeLayout.LayoutParams iconParams = (RelativeLayout.LayoutParams) searchIcon.getLayoutParams();
+        // The original 72px asset has 12px transparent left padding at xxhdpi.
+        // 12dp card inset + 14dp margin + 4dp artwork inset = 30dp label edge.
+        iconParams.leftMargin = Math.round(14f * getResources().getDisplayMetrics().density);
+        searchIcon.setLayoutParams(iconParams);
+        if (android.os.Build.VERSION.SDK_INT >= 21) {
+            field.setOutlineProvider(android.view.ViewOutlineProvider.BOUNDS);
+            field.setClipToOutline(true);
+            field.setElevation(0f);
+            setClipChildren(false);
+            setClipToPadding(false);
+        }
+    }
+
     public void setCancelListener(OnClickListener listener) {
         cancelListener = listener;
     }

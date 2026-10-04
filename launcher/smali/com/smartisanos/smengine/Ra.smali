@@ -1972,10 +1972,14 @@
 .end method
 
 .method public k(Lcom/smartisanos/smengine/a/j;)V
-    .locals 3
+    .locals 4
 
     .line 1
     iget-object v0, p0, Lcom/smartisanos/smengine/Ra;->GU:Lcom/smartisanos/smengine/a/j;
+
+    # Publish all three components together; never hold this monitor while queuing.
+    monitor-enter v0
+    :sensor_write_start
 
     iget v1, p1, Lcom/smartisanos/smengine/a/j;->x:F
 
@@ -1986,6 +1990,10 @@
     iget p1, p1, Lcom/smartisanos/smengine/a/j;->z:F
 
     invoke-virtual {v0, v1, v2, p1}, Lcom/smartisanos/smengine/a/j;->i(FFF)Lcom/smartisanos/smengine/a/j;
+
+    monitor-exit v0
+    :sensor_write_end
+    .catchall {:sensor_write_start .. :sensor_write_end} :sensor_write_failed
 
     .line 2
     invoke-static {}, Lcom/smartisanos/smengine/n;->obtain()Lcom/smartisanos/smengine/n;
@@ -2003,6 +2011,14 @@
     invoke-virtual {p1, p0}, Lcom/smartisanos/smengine/n;->q(F)V
 
     return-void
+
+    :sensor_write_failed
+    move-exception v3
+    :sensor_unlock_start
+    monitor-exit v0
+    :sensor_unlock_end
+    .catchall {:sensor_unlock_start .. :sensor_unlock_end} :sensor_write_failed
+    throw v3
 .end method
 
 .method public kt()Lcom/smartisanos/smengine/ta;

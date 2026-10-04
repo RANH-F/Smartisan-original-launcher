@@ -1026,6 +1026,8 @@ public final class IconRasterDiagnostics {
                 + ":alphaGeometryUsed=false"
                 + ":badgeVersion=" + BADGE_VERSION
                 + ":shadowVersion=" + SHADOW_VERSION
+                + ("STATIC_APPLICATION_COMPOSER".equals(pipeline)
+                ? ":full-alpha-unfiltered-v1" : "")
                 + ":shadowSpec=" + LauncherSettingBridge.iconShadowCacheToken()
                 + ":projection=" + (IconIlluminationCompat.enabled()
                 ? IconIlluminationCompat.VERSION : "off");

@@ -34,8 +34,7 @@ public final class LayoutSnapshotExporter {
         try {
             JSONObject root = new JSONObject();
             root.put("schemaVersion", BackupManifest.DATABASE_SCHEMA_VERSION);
-            root.put("pages", normalizeReservedPages(readTable(database, "table_pageinfos",
-                    PAGE_COLUMNS, "pageIndex ASC, _id ASC")));
+            root.put("pages", normalizeReservedPages(readPageRows(database)));
             JSONArray items = readTable(database, "table_iteminfos", ITEM_COLUMNS,
                     "pageIndex ASC, cellIndex ASC, folderIndex ASC, _id ASC");
             annotateIdentity(context, items);
@@ -82,6 +81,10 @@ public final class LayoutSnapshotExporter {
         if (provider == null) throw new IllegalStateException("DatabaseProvider is not initialized");
         Method method = providerClass.getMethod(writable ? "getWritableDatabase" : "getReadableDatabase");
         return (SQLiteDatabase) method.invoke(provider);
+    }
+
+    static JSONArray readPageRows(SQLiteDatabase database) throws Exception {
+        return readTable(database, "table_pageinfos", PAGE_COLUMNS, "pageIndex ASC, _id ASC");
     }
 
     private static JSONArray readTable(SQLiteDatabase database, String table, String[] requested,

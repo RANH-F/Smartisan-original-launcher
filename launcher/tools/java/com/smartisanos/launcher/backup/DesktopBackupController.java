@@ -595,6 +595,28 @@ public final class DesktopBackupController {
 
 
     public static void cleanupInterruptedBackup(Context context) {
+        if (context == null) return;
+        final String token = UUID.randomUUID().toString();
+        // Startup cleanup only owns disposable backup output, never the desktop database.
+        // Keep the existing operation gate until the old journal is handled so a new
+        // backup/restore cannot reuse its staging or be mistaken for interrupted work.
+        if (!BackupOperationLock.acquire(token)) return;
+        final Context app = context.getApplicationContext() == null ? context : context.getApplicationContext();
+        try {
+            new Thread(new Runnable() {
+                public void run() {
+                    try { cleanupInterruptedBackupNow(app); }
+                    catch (RuntimeException error) { Log.e(TAG, "BACKUP_STARTUP_CLEANUP_FAILED", error); }
+                    finally { BackupOperationLock.release(token); }
+                }
+            }, "DesktopBackupCleanup").start();
+        } catch (RuntimeException error) {
+            BackupOperationLock.release(token);
+            Log.e(TAG, "BACKUP_STARTUP_CLEANUP_START_FAILED", error);
+        }
+    }
+
+    private static void cleanupInterruptedBackupNow(Context context) {
         BackupOperationJournal journal = new BackupOperationJournal(context);
         BackupOperationJournal.Entry entry = journal.read();
         if (entry.state == BackupOperationJournal.State.IDLE

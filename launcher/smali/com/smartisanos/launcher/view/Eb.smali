@@ -12100,6 +12100,30 @@
 
     move-result-object v0
 
+    # Preserve original per-frame progression while a pointer is held. Long-press
+    # callbacks create the Dock/trash timeline during Ra.T(), so stale idle time
+    # must not consume its opening frames. Faster refresh-rate deltas remain intact.
+    invoke-virtual {v0}, Lcom/smartisanos/smengine/Ra;->dt()Lcom/smartisanos/smengine/v;
+
+    move-result-object v1
+
+    invoke-virtual {v1}, Lcom/smartisanos/smengine/v;->hk()Z
+
+    move-result v1
+
+    if-eqz v1, :cond_held_pointer_delta_done
+
+    iget v3, p0, Lcom/smartisanos/launcher/view/Eb;->fx:F
+
+    add-float v1, v3, v3
+
+    cmpg-float v4, v2, v1
+
+    if-lez v4, :cond_held_pointer_delta_done
+
+    move v2, v3
+
+    :cond_held_pointer_delta_done
     invoke-virtual {v0, v2}, Lcom/smartisanos/smengine/Ra;->T(F)V
 
     goto :goto_0

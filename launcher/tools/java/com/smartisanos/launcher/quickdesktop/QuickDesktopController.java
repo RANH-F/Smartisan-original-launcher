@@ -51,6 +51,8 @@ public final class QuickDesktopController {
     private static boolean searchLaunchPending;
     private static boolean openingGesture;
     private static boolean captureStartedForGesture;
+    private static boolean backgroundReadyForGesture;
+    private static boolean revealWindowTouchable;
     private static boolean cleanupInProgress;
     private static boolean expectedHostWindowDetach;
     private static VelocityTracker openingVelocityTracker;
@@ -188,6 +190,7 @@ public final class QuickDesktopController {
             openingGesture = false;
             openingStartAllowed = false;
             captureStartedForGesture = false;
+            backgroundReadyForGesture = false;
             recycleOpeningVelocityTracker();
             QuickDesktopBackgroundCapture.cancel("multi-touch-owner");
             QuickDesktopHostView activeHost = host();
@@ -209,16 +212,8 @@ public final class QuickDesktopController {
             openingTouchSlop = ViewConfiguration.get(host.getContext()).getScaledTouchSlop();
             captureStartedForGesture = false;
             if (openingGesture) {
-                host.cancelSettling();
-                host.refreshContent();
-                // Capture before RootView applies the first horizontal delta. Replacing the
-                // background after motion has begun produces a visible one-frame jump.
-                host.clearBackgroundSnapshots();
-                ViewGroup root = rootRef.get();
-                if (root != null) {
-                    captureStartedForGesture = true;
-                    QuickDesktopBackgroundCapture.schedule(root, host, 0L);
-                }
+                backgroundReadyForGesture = false;
+                QuickDesktopBackgroundCapture.cancel("new-opening-candidate");
                 recycleOpeningVelocityTracker();
                 openingVelocityTracker = VelocityTracker.obtain();
                 openingVelocityTracker.addMovement(event);
@@ -260,12 +255,15 @@ public final class QuickDesktopController {
                         || (velocityX >= -900.0f && open > (1.0f / 3.0f)));
                 host.settleTo(shouldOpen ? 1.0f : 0.0f, velocityX,
                         action == MotionEvent.ACTION_CANCEL ? "open-cancel" : "open-release");
-                cancelRootGesture = !shouldOpen && openingRevealOccurred;
+                // Once the host has claimed this drag, the GL scene must receive CANCEL,
+                // not the same UP that can also finish a desktop page scroll/pressed cell.
+                // Closing/cancellation already used this RootView cleanup path.
+                cancelRootGesture = openingRevealOccurred;
             }
             recycleOpeningVelocityTracker();
             openingGesture = false;
             if (cancelRootGesture) {
-                Log.i(TAG, "QD_ROOT_GESTURE_CANCEL reason=open-release-close");
+                Log.i(TAG, "QD_ROOT_GESTURE_CANCEL reason=release-owned-by-host");
                 return 1;
             }
         }
@@ -274,19 +272,9 @@ public final class QuickDesktopController {
 
     public static void onProgress(float closedProgress, MotionEvent event) {
         QuickDesktopHostView host = host();
-        if (host == null || event == null || !openingGesture || !isEnabled(host.getContext())) {
+        if (host == null || event == null || !openingGesture || !captureStartedForGesture
+                || !isEnabled(host.getContext())) {
             return;
-        }
-        if (!captureStartedForGesture) {
-            captureStartedForGesture = true;
-            // A cached normal-home screenshot is invalid after any desktop or edit-mode change.
-            // Refresh only after RootView has confirmed a real left-screen reveal, so ordinary
-            // taps and vertical gestures do not trigger framebuffer reads.
-            host.clearBackgroundSnapshots();
-            ViewGroup root = rootRef.get();
-            if (root != null) {
-                QuickDesktopBackgroundCapture.schedule(root, host, 0L);
-            }
         }
         showHostWindow(false);
         // RootView's original Ad divisor is a Smartisan logical width. On modern ROMs it can
@@ -300,10 +288,34 @@ public final class QuickDesktopController {
 
     public static void requestShow() {
         QuickDesktopHostView host = host();
-        if (openingStartAllowed && host != null && isEnabled(host.getContext())) {
+        ViewGroup root = rootRef.get();
+        // Only the original RootView single-pointer / direction / J.Ta() / enabled branch
+        // calls this entry. DOWN and the progress callback do not grant capture ownership.
+        if (openingGesture && openingStartAllowed && host != null && root != null
+                && isEnabled(host.getContext()) && isNormalWorkspace()) {
+            if (!captureStartedForGesture) {
+                captureStartedForGesture = true;
+                backgroundReadyForGesture = false;
+                host.cancelSettling();
+                host.refreshContent();
+                host.clearBackgroundSnapshots();
+                QuickDesktopBackgroundCapture.schedule(root, host, 0L);
+            }
             showHostWindow(false);
             host.ensureVisibleForOriginalRequest();
         }
+    }
+
+    static void onBackgroundReady(QuickDesktopHostView capturedHost) {
+        if (capturedHost != host() || !captureStartedForGesture) return;
+        if (!isNormalWorkspace()) {
+            capturedHost.closeImmediately("workspace-mode-changed");
+            return;
+        }
+        backgroundReadyForGesture = true;
+        // Do not reveal an empty backing layer and replace it during an active drag. Progress
+        // and settling retain their original timing while the fixed layers are prepared.
+        if (capturedHost.getOpenProgress() > 0.0f) showHostWindow(revealWindowTouchable);
     }
 
     public static boolean onKeyEvent(KeyEvent event) {
@@ -332,6 +344,7 @@ public final class QuickDesktopController {
         }
         openingGesture = false;
         captureStartedForGesture = false;
+        backgroundReadyForGesture = false;
         recycleOpeningVelocityTracker();
         actionLaunchPending = false;
         searchLaunchPending = false;
@@ -354,12 +367,13 @@ public final class QuickDesktopController {
         try {
             Class<?> constants = Class.forName("com.smartisanos.launcher.data.Constants");
             float top = constants.getField("status_bar_height").getInt(null);
-            Class<?> workspaceClass = Class.forName("com.smartisanos.launcher.view.Eb");
-            Object workspace = workspaceClass.getMethod("getInstance").invoke(null);
-            java.lang.reflect.Field pageField = workspaceClass.getDeclaredField("px");
-            pageField.setAccessible(true);
-            Object page = pageField.get(workspace);
-            int mode = (Integer) page.getClass().getMethod("Dl").invoke(page);
+            int mode = workspaceMode();
+            // Dl is the displayed mode (hH), not the source grid. Overview uses 13/10,
+            // while isEditMode only describes the icon editor and can still be false.
+            if (mode != 12 && mode != 9) {
+                Log.i(TAG, "QD_START_REGION allowed=false mode=" + mode);
+                return false;
+            }
             Object layout = constants.getMethod("mode", int.class).invoke(null, mode);
             Class<?> layoutClass = Class.forName("com.smartisanos.launcher.data.LayoutProperty");
             float bottom = (Float) Class.forName("com.smartisanos.launcher.view.x")
@@ -370,6 +384,31 @@ public final class QuickDesktopController {
             return allowed;
         } catch (ReflectiveOperationException | NullPointerException error) {
             Log.w(TAG, "QD_START_REGION_UNAVAILABLE", error);
+            return false;
+        }
+    }
+
+    /** Keep the original page dispatcher in charge of overview/editor swipes. */
+    public static boolean canRevealFromRoot() {
+        return openingGesture && openingStartAllowed && isNormalWorkspace();
+    }
+
+    private static int workspaceMode() throws ReflectiveOperationException {
+        Class<?> type = Class.forName("com.smartisanos.launcher.view.Eb");
+        Object workspace = type.getMethod("getInstance").invoke(null);
+        if ((Boolean) type.getMethod("isEditMode").invoke(workspace)) return 0;
+        java.lang.reflect.Field field = type.getDeclaredField("px");
+        field.setAccessible(true);
+        Object page = field.get(workspace);
+        return (Integer) page.getClass().getMethod("Dl").invoke(page);
+    }
+
+    private static boolean isNormalWorkspace() {
+        try {
+            int mode = workspaceMode();
+            return mode == 12 || mode == 9;
+        } catch (ReflectiveOperationException | NullPointerException error) {
+            Log.w(TAG, "QD_WORKSPACE_MODE_UNAVAILABLE", error);
             return false;
         }
     }
@@ -430,9 +469,15 @@ public final class QuickDesktopController {
     }
 
     private static void showHostWindow(boolean touchable) {
+        revealWindowTouchable = touchable;
+        if (!backgroundReadyForGesture) return;
         QuickDesktopHostView host = host();
         ViewGroup root = rootRef.get();
         if (host == null || root == null || root.getWindowToken() == null) {
+            return;
+        }
+        if (!isNormalWorkspace()) {
+            host.closeImmediately("workspace-mode-changed");
             return;
         }
         int systemUi = root.getSystemUiVisibility();
@@ -503,6 +548,8 @@ public final class QuickDesktopController {
             dismissHostWindow();
             openingGesture = false;
             captureStartedForGesture = false;
+            backgroundReadyForGesture = false;
+            revealWindowTouchable = false;
             recycleOpeningVelocityTracker();
             actionLaunchPending = false;
             searchLaunchPending = false;

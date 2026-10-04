@@ -11,50 +11,40 @@
         android:layout_marginBottom="@dimen/follow_title_bottom"
         android:gravity="left|center"
         android:paddingLeft="@dimen/setting_item_text_left"
-        android:text="@string/usage_tips_title"
+        android:text="@string/sponsor_title"
         android:textColor="@color/follow_title_text_color"
         android:textSize="@dimen/follow_title_text_size" />
 
-    <include layout="@layout/setting_tips_desktop_gestures" />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/selector_setting_sub_item_bg_single"
+        android:orientation="vertical"
+        android:paddingLeft="@dimen/setting_item_text_left"
+        android:paddingTop="16dp"
+        android:paddingRight="@dimen/setting_item_text_right"
+        android:paddingBottom="16dp">
+
+        <com.smartisanos.home.settings.SponsorNoteTextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/sponsor_names"
+            android:textColor="@drawable/more_item_right_color_bg"
+            android:textSize="@dimen/setting_item_text_copyright_size"
+            android:lineSpacingExtra="10dp" />
+
+    </LinearLayout>
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/follow_title_top"
-        android:layout_marginBottom="@dimen/follow_title_bottom"
-        android:gravity="left|center"
+        android:layout_marginTop="8dp"
         android:paddingLeft="@dimen/setting_item_text_left"
-        android:text="@string/usage_tips_dynamic_weather_calendar_group"
-        android:textColor="@color/follow_title_text_color"
-        android:textSize="@dimen/follow_title_text_size" />
-
-    <include layout="@layout/setting_tips_dynamic_weather_calendar" />
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/follow_title_top"
-        android:layout_marginBottom="@dimen/follow_title_bottom"
-        android:gravity="left|center"
-        android:paddingLeft="@dimen/setting_item_text_left"
-        android:text="@string/usage_tips_ocd_group"
-        android:textColor="@color/follow_title_text_color"
-        android:textSize="@dimen/follow_title_text_size" />
-
-    <include layout="@layout/setting_tips_ocd" />
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/follow_title_top"
-        android:layout_marginBottom="@dimen/follow_title_bottom"
-        android:gravity="left|center"
-        android:paddingLeft="@dimen/setting_item_text_left"
-        android:text="@string/usage_tips_shortcuts_group"
-        android:textColor="@color/follow_title_text_color"
-        android:textSize="@dimen/follow_title_text_size" />
-
-    <include layout="@layout/setting_tips_shortcuts" />
+        android:paddingRight="@dimen/setting_item_text_right"
+        android:text="@string/sponsor_thanks"
+        android:textColor="@color/setting_item_tips_color"
+        android:textSize="@dimen/setting_item_text_copyright_size"
+        android:lineSpacingExtra="2dp" />
 
     <Space
         android:layout_width="match_parent"

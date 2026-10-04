@@ -49,6 +49,14 @@ public final class LauncherSettingBridge {
     public static final String KEY_DYNAMIC_WEATHER_CALENDAR =
             "launcher_dynamic_weather_calendar_enabled";
 
+    private static final Map<Class<?>, Map<String, Method>> PIXEL_GRID_METHODS = new HashMap<>();
+    private static final Map<Class<?>, Map<String, Field>> GEOMETRY_FIELDS = new HashMap<>();
+    private static final Class<?>[] NO_GEOMETRY_ARGS = new Class<?>[0];
+    private static final Class<?>[] INT_GEOMETRY_ARG = {Integer.TYPE};
+    private static final Class<?>[] STRING_GEOMETRY_ARG = {String.class};
+    private static final Class<?>[] FLOAT_GEOMETRY_ARGS = {Float.TYPE, Float.TYPE, Float.TYPE};
+    private static final Map<Object, float[]> OVERVIEW_ICON_FACTORS = new java.util.WeakHashMap<>();
+
     private LauncherSettingBridge() {
     }
 
@@ -485,12 +493,13 @@ public final class LauncherSettingBridge {
         Bitmap result = Bitmap.createBitmap(
                 textureSize, textureSize, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(result);
-        Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG
-                | Paint.FILTER_BITMAP_FLAG | Paint.DITHER_FLAG);
+        Paint paint = new Paint();
+        paint.setAntiAlias(true);
         float artworkLeft = (textureSize - artwork.getWidth()) * 0.5f;
         float artworkTop = (textureSize - artwork.getHeight()) * 0.25f;
         float safeScale = physicalScale > 0.0f ? physicalScale : 1.0f;
-        Bitmap silhouette = createStaticShadowSilhouette(artwork);
+        // The original static helper consumes the complete artwork alpha.
+        Bitmap silhouette = artwork;
         int generated = 0;
         if (spec != null && silhouette != null) {
             for (int i = 0; i < spec.radii.length && i < spec.colors.length; i++) {
@@ -503,7 +512,7 @@ public final class LauncherSettingBridge {
                 if (shadow == null) {
                     continue;
                 }
-                float shadowLeft = (textureSize - shadow.getWidth()) * 0.5f;
+                float shadowLeft = (textureSize - shadow.getWidth()) / 2;
                 float shadowTop = artworkTop + Math.round(Math.sqrt(radius));
                 if (spec.mode == SHADOW_TRANSPARENT) {
                     shadowTop += 2.0f * safeScale;
@@ -516,7 +525,10 @@ public final class LauncherSettingBridge {
         if (silhouette != null && silhouette != artwork && !silhouette.isRecycled()) {
             silhouette.recycle();
         }
-        canvas.drawBitmap(artwork, artworkLeft, artworkTop, paint);
+        // Match the original independent, unfiltered body copy.
+        Paint artworkPaint = new Paint();
+        artworkPaint.setFilterBitmap(false);
+        canvas.drawBitmap(artwork, artworkLeft, artworkTop, artworkPaint);
         Log.i(TAG, "STATIC_ICON_ORIGINAL_SHADOW_COMPOSED mode="
                 + (spec == null ? -1 : spec.mode)
                 + " generatedLayers=" + generated
@@ -1142,6 +1154,163 @@ public final class LauncherSettingBridge {
         float secondY = floatField(second, "y");
         return new Rect(Math.min(firstX, secondX), Math.min(firstY, secondY),
                 Math.max(firstX, secondX), Math.max(firstY, secondY));
+    }
+
+    /** Keeps a stationary, directly drawn static texture on physical texel boundaries. */
+    public static void alignStaticIconPixelGrid(Object cell) {
+        try {
+            Object item = readPrivateField(cell, "Rj");
+            if (item == null || ((Number) readPrivateField(item, "itemType")).intValue() != 0) return;
+            int mode = ((Number) readPrivateField(cell, "fH")).intValue();
+            if (mode == 8) return;
+            Object[] nodes = (Object[]) readPrivateField(cell, "sc");
+            if (nodes == null || nodes[0] == null || nodes[7] != null) return;
+            Object node = nodes[0];
+            if (invokePixelGrid(node, "getRenderTarget") != null) return;
+            // Animated and transformed scenes retain their original continuous coordinates.
+            for (Object parent = cell; parent != null; parent = invokePixelGrid(parent, "getParent")) {
+                if (((Number) invokePixelGrid(parent, "getAnimationState")).intValue() != 0) return;
+                Object scale = invokePixelGrid(parent, "getScale");
+                if (Math.abs(floatField(scale, "x") - 1f) > 0.0001f
+                        || Math.abs(floatField(scale, "y") - 1f) > 0.0001f) return;
+            }
+            Object renderer = Class.forName("com.smartisanos.smengine.Ra")
+                    .getMethod("getInstance").invoke(null);
+            Object camera = invokePixelGrid(invokePixelGrid(renderer, "at"), "Vj");
+            String textureName = (String) invokePixelGrid(node, "getTextureName", Integer.valueOf(0));
+            Object texture = invokePixelGrid(invokePixelGrid(renderer, "rt"), "bb", textureName);
+            if (texture == null) return;
+            float[] corners = new float[12];
+            node.getClass().getMethod("getCornerPointScreenCoord",
+                    Class.forName("com.smartisanos.smengine.Camera"), float[].class)
+                    .invoke(node, camera, corners);
+            float width = corners[3] - corners[0];
+            float height = corners[4] - corners[1];
+            float textureWidth = ((Number) invokePixelGrid(texture, "getWidth")).floatValue();
+            float textureHeight = ((Number) invokePixelGrid(texture, "getHeight")).floatValue();
+            if (width <= 0f || height <= 0f || Math.abs(width - textureWidth) > 0.01f
+                    || Math.abs(height - textureHeight) > 0.01f) return;
+            float dx = Math.round(corners[0]) - corners[0];
+            float dy = Math.round(corners[1]) - corners[1];
+            if (Math.abs(dx) < 0.001f && Math.abs(dy) < 0.001f) return;
+            Object position = invokePixelGrid(node, "getLocation");
+            float localWidth = ((Number) invokePixelGrid(node, "getWidth")).floatValue();
+            float localHeight = ((Number) invokePixelGrid(node, "getHeight")).floatValue();
+            invokePixelGrid(node, "setTranslate", Float.valueOf(floatField(position, "x") + dx * localWidth / width),
+                    Float.valueOf(floatField(position, "y") + dy * localHeight / height),
+                    Float.valueOf(floatField(position, "z")));
+            invokePixelGrid(node, "updateGeometricState");
+        } catch (Exception error) {
+            Log.w(TAG, "STATIC_ICON_PIXEL_GRID_FAILED", error);
+        }
+    }
+
+    private static Object invokePixelGrid(Object target, String name, Object... arguments)
+            throws Exception {
+        return pixelGridMethod(target.getClass(), name, arguments.length).invoke(target, arguments);
+    }
+
+    private static Method pixelGridMethod(Class<?> type, String name, int argumentCount)
+            throws Exception {
+        Method selected;
+        synchronized (PIXEL_GRID_METHODS) {
+            Map<String, Method> methods = PIXEL_GRID_METHODS.get(type);
+            if (methods == null) {
+                methods = new HashMap<>();
+                PIXEL_GRID_METHODS.put(type, methods);
+            }
+            String key = name + ":" + argumentCount;
+            selected = methods.get(key);
+            if (selected == null) {
+                // These hot paths have fixed engine signatures. Do not enumerate the hundreds
+                // of inherited SceneNode methods or select an overload by arity alone.
+                Class<?>[] types = NO_GEOMETRY_ARGS;
+                if ("getTextureName".equals(name) || "mode".equals(name)) types = INT_GEOMETRY_ARG;
+                else if ("bb".equals(name)) types = STRING_GEOMETRY_ARG;
+                else if ("setTranslate".equals(name) || "setScale".equals(name)) types = FLOAT_GEOMETRY_ARGS;
+                selected = type.getMethod(name, types);
+                methods.put(key, selected);
+            }
+        }
+        return selected;
+    }
+
+    private static Field geometryField(Object target, String name) throws Exception {
+        synchronized (GEOMETRY_FIELDS) {
+            Class<?> actualType = target.getClass();
+            Map<String, Field> fields = GEOMETRY_FIELDS.get(actualType);
+            if (fields == null) {
+                fields = new HashMap<>();
+                GEOMETRY_FIELDS.put(actualType, fields);
+            }
+            if (fields.containsKey(name)) return fields.get(name);
+            for (Class<?> type = actualType; type != null; type = type.getSuperclass()) {
+                try {
+                    Field field = type.getDeclaredField(name);
+                    field.setAccessible(true);
+                    fields.put(name, field);
+                    return field;
+                } catch (NoSuchFieldException ignored) { }
+            }
+            fields.put(name, null);
+            return null;
+        }
+    }
+
+    private static Object readGeometryField(Object target, String name) throws Exception {
+        if (target == null) return null;
+        Field field = geometryField(target, name);
+        return field == null ? null : field.get(target);
+    }
+
+    private static float geometryFloat(Object target, String name) throws Exception {
+        return target == null ? 0f : geometryField(target, name).getFloat(target);
+    }
+
+    /** Counteracts overview page stretching on icon content, leaving the grid in place. */
+    public static void preserveOverviewIconAspect(Object cell, int displayMode) {
+        try {
+            int sourceMode = ((Number) readGeometryField(cell, "fH")).intValue();
+            // Engine modes: 12 = 3x4, 9 = 4x5 (the settings value is 20).
+            if (sourceMode != 12 && sourceMode != 9) return;
+            Object parent = invokePixelGrid(cell, "getParent");
+            if (parent == null || !Class.forName("com.smartisanos.launcher.view.b.M")
+                    .isInstance(parent)) return;
+            float factor = 1f;
+            if (displayMode == 13 || displayMode == 10) {
+                Class<?> constants = Class.forName("com.smartisanos.launcher.data.Constants");
+                Method mode = pixelGridMethod(constants, "mode", 1);
+                Object source = mode.invoke(null, sourceMode);
+                Object target = mode.invoke(null, displayMode);
+                float sx = geometryFloat(target, "page_width") / geometryFloat(source, "page_width");
+                float sy = geometryFloat(target, "page_height") / geometryFloat(source, "page_height");
+                if (sx <= 0f || sy <= 0f) return;
+                factor = sx / sy;
+            }
+            Object[] nodes = (Object[]) readGeometryField(cell, "sc");
+            for (int slot : new int[] {0, 7}) {
+                if (nodes == null || nodes[slot] == null) continue;
+                Object node = nodes[slot];
+                Object scale = invokePixelGrid(node, "getScale");
+                float x = geometryFloat(scale, "x"), y = geometryFloat(scale, "y");
+                float[] previous = OVERVIEW_ICON_FACTORS.get(node);
+                // Rebinding an ActiveIcon can replace its scale between mode changes.
+                // Only undo our own correction when that corrected scale still exists.
+                float baseY = previous != null
+                        && Math.abs(x - previous[1]) < 0.001f
+                        && Math.abs(y - previous[2]) < 0.001f ? previous[0] : y;
+                float targetY = baseY * factor;
+                if (Math.abs(targetY - y) > 0.001f) {
+                    invokePixelGrid(node, "setScale", Float.valueOf(x), Float.valueOf(targetY),
+                            Float.valueOf(geometryFloat(scale, "z")));
+                    invokePixelGrid(node, "updateGeometricState");
+                }
+                if (factor == 1f) OVERVIEW_ICON_FACTORS.remove(node);
+                else OVERVIEW_ICON_FACTORS.put(node, new float[] {baseY, x, targetY});
+            }
+        } catch (Exception error) {
+            Log.w(TAG, "OVERVIEW_ICON_ASPECT_FAILED", error);
+        }
     }
 
     private static Object invoke(Object target, String name, Object... arguments) throws Exception {

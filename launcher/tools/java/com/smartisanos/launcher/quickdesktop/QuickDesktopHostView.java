@@ -31,7 +31,7 @@ public final class QuickDesktopHostView extends FrameLayout {
     private final ImageView sharpBackgroundView;
     private final View dimView;
     private final FrameLayout contentLayer;
-    private final QuickDesktopContentView contentView;
+    private QuickDesktopContentView contentView;
 
     private ValueAnimator settlingAnimator;
     private VelocityTracker velocityTracker;
@@ -72,9 +72,6 @@ public final class QuickDesktopHostView extends FrameLayout {
                 LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
         contentLayer = new FrameLayout(context);
         contentLayer.setBackgroundColor(Color.TRANSPARENT);
-        contentView = new QuickDesktopContentView(context);
-        contentLayer.addView(contentView, new FrameLayout.LayoutParams(
-                LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
         addView(contentLayer, new FrameLayout.LayoutParams(
                 LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
         setClickable(true);
@@ -93,7 +90,16 @@ public final class QuickDesktopHostView extends FrameLayout {
     }
 
     void refreshContent() {
-        contentView.invalidate();
+        if (contentView != null) contentView.refreshContent();
+    }
+
+    private void ensureContent() {
+        if (contentView == null) {
+            contentView = new QuickDesktopContentView(getContext());
+            contentLayer.addView(contentView, new FrameLayout.LayoutParams(
+                    LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+        }
+        contentView.setRefreshActive(true);
     }
 
     void setBackgroundSnapshots(Bitmap sharpBitmap, Bitmap blurBitmap) {
@@ -118,6 +124,7 @@ public final class QuickDesktopHostView extends FrameLayout {
     }
 
     void ensureVisibleForOriginalRequest() {
+        ensureContent();
         if (openProgress <= 0.0f) {
             setVisibility(VISIBLE);
         }
@@ -128,6 +135,7 @@ public final class QuickDesktopHostView extends FrameLayout {
         float clampedTranslation = Math.max(-width, Math.min(0.0f, translationX));
         openProgress = clamp01(1.0f + clampedTranslation / width);
         if (openProgress <= 0.0f) {
+            if (contentView != null) contentView.setRefreshActive(false);
             setAlpha(1.0f);
             updateBackground(0.0f);
             contentLayer.setTranslationX(-width);
@@ -139,6 +147,7 @@ public final class QuickDesktopHostView extends FrameLayout {
             }
             return;
         }
+        ensureContent();
         if (getVisibility() != VISIBLE) {
             setVisibility(VISIBLE);
             bringToFront();
@@ -232,6 +241,7 @@ public final class QuickDesktopHostView extends FrameLayout {
     }
 
     void closeImmediately(String reason) {
+        if (contentView != null) contentView.setRefreshActive(false);
         cancelSettling();
         touchSequenceActive = false;
         openProgress = 0.0f;
@@ -247,6 +257,7 @@ public final class QuickDesktopHostView extends FrameLayout {
 
     /** Releases view-owned state after the PopupWindow has been made non-touchable and removed. */
     void releaseForDetach() {
+        if (contentView != null) contentView.setRefreshActive(false);
         touchSequenceActive = false;
         cancelSettling();
         recycleVelocityTracker();
@@ -314,7 +325,7 @@ public final class QuickDesktopHostView extends FrameLayout {
                     && Math.abs(event.getX() - closeDownX) <= touchSlop
                     && Math.abs(event.getY() - closeDownY) <= touchSlop;
             if (tap && openProgress >= 0.999f
-                    && contentView.performActionAt(event.getX(), event.getY())) {
+                    && contentView != null && contentView.performActionAt(event.getX(), event.getY())) {
                 touchSequenceActive = false;
                 recycleVelocityTracker();
                 closingDrag = false;
@@ -335,6 +346,7 @@ public final class QuickDesktopHostView extends FrameLayout {
 
     @Override
     protected void onDetachedFromWindow() {
+        if (contentView != null) contentView.setRefreshActive(false);
         touchSequenceActive = false;
         cancelSettling();
         recycleVelocityTracker();

@@ -199,7 +199,9 @@ public final class LauncherModelRepository {
                                      PackageState packageState, ProfileState profileState, RemovalGateway gateway) {
         if (packageName == null || packageName.length() == 0 || userSerial < 0L || gateway == null) return 0;
         int committed = 0;
-        for (Object item : currentModelItems()) {
+        Collection items = currentModelItems();
+        if (items == null) return 0;
+        for (Object item : items) {
             if (!packageName.equals(stringField(item, "packageName")) || legacyUserId(item) != legacyUserId) continue;
             int itemType = (int) longField(item, "itemType", -1L);
             if (itemType != 0) {
@@ -220,7 +222,9 @@ public final class LauncherModelRepository {
     public static boolean hasFormalApplicationItem(String packageName, int legacyUserId) {
         if (packageName == null || packageName.length() == 0) return true;
         try {
-            for (Object item : currentModelItems()) {
+            Collection items = currentModelItems();
+            if (items == null) throw new IllegalStateException("Model snapshot unavailable");
+            for (Object item : items) {
                 if (packageName.equals(stringField(item, "packageName"))
                         && legacyUserId(item) == legacyUserId
                         && longField(item, "itemType", -1L) == 0L) {
@@ -252,7 +256,8 @@ public final class LauncherModelRepository {
         } catch (Throwable error) {
             Log.w(TAG, "[MODEL][REMOVE_NO_ITEM] reason=model_snapshot_failed", error);
         }
-        return new ArrayList();
+        // A failed/non-map snapshot is UNKNOWN, not a successfully read empty model.
+        return null;
     }
     private boolean matchesRemovalIdentity(Object item, RemovalGateway.RemovalRequest request) {
         if (longField(item, "id", -1L) != request.itemId) return false;

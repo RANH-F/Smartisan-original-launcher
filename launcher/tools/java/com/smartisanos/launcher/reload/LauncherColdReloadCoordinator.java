@@ -33,6 +33,7 @@ public final class LauncherColdReloadCoordinator {
     private static volatile boolean sInitialLoadingWindowPending;
     private static volatile boolean sInitialLoadingWindowApplied;
     private static volatile String sPendingLauncherStartToken;
+    private static long sLauncherStartGeneration;
     private static volatile String sIconSizeToken;
     private static volatile int sIconSizeOld = -1;
     private static volatile int sIconSizeNew = -1;
@@ -316,16 +317,16 @@ public final class LauncherColdReloadCoordinator {
 
     static void retryStartLauncher(Activity transition, String token, String reason, int gridMode,
             String themeMode) {
-        try {
-            startLauncher(transition, token, reason, gridMode, themeMode);
-        } catch (Throwable error) {
-            log("RELOAD_FAILED", token, "retry_start:" + shortError(error), gridMode, themeMode);
-        }
+        int oldMainPid = transition.getIntent().getIntExtra(ReloadProtocol.EXTRA_MAIN_PROCESS_PID, -1);
+        if (oldMainPid <= 0 || oldMainPid == Process.myPid()) return;
+        // Retry uses the same exit gate; a timeout while the old PID is alive is not permission to write.
+        waitForOldMainExitAndStartLauncher(transition, token, oldMainPid, reason, gridMode, themeMode);
     }
 
     static void cancelPendingLauncherStart(String token) {
         if (token != null && token.equals(sPendingLauncherStartToken)) {
             sPendingLauncherStartToken = null;
+            sLauncherStartGeneration++;
             log("NEW_LAUNCHER_START_CANCELLED", token, "transition_no_longer_waiting", -1, null);
         }
     }
@@ -341,16 +342,17 @@ public final class LauncherColdReloadCoordinator {
             final String token, final int oldMainPid, final String reason, final int gridMode,
             final String themeMode) {
         sPendingLauncherStartToken = token;
+        final long generation = ++sLauncherStartGeneration;
         final WeakReference<Activity> transitionRef = new WeakReference<Activity>(transition);
         final Runnable[] waitForExit = new Runnable[1];
         waitForExit[0] = new Runnable() {
             @Override
             public void run() {
-                if (!token.equals(sPendingLauncherStartToken)) {
+                if (!token.equals(sPendingLauncherStartToken) || generation != sLauncherStartGeneration) {
                     return;
                 }
                 Activity current = transitionRef.get();
-                if (current == null || current.isFinishing()) {
+                if (current == null || current.isFinishing() || current.isDestroyed()) {
                     cancelPendingLauncherStart(token);
                     return;
                 }
@@ -364,19 +366,13 @@ public final class LauncherColdReloadCoordinator {
                             });
                     return;
                 }
-                sPendingLauncherStartToken = null;
                 try {
                     log("OLD_MAIN_PROCESS_EXIT_CONFIRMED", token, "pid=" + oldMainPid,
                             gridMode, themeMode);
                     if ("ICON_SIZE_CHANGE".equals(reason)) {
                         log("OLD_LAUNCHER_PID_TERMINATED", token, reason, gridMode, themeMode);
                     }
-                    if ("BACKUP_RESTORE".equals(reason)
-                            || "BACKUP_RESTORE_ROLLBACK".equals(reason)) {
-                        com.smartisanos.launcher.backup.DesktopRestoreController
-                                .applyPreparedAfterOldProcessExit(current, token, reason);
-                    }
-                    startLauncher(current, token, reason, gridMode, themeMode);
+                    startLauncherAfterRestore(current, token, reason, gridMode, themeMode, generation);
                 } catch (Throwable error) {
                     log("RELOAD_FAILED", token, "start_after_exit:" + shortError(error),
                             gridMode, themeMode);
@@ -384,6 +380,45 @@ public final class LauncherColdReloadCoordinator {
             }
         };
         MAIN_HANDLER.post(waitForExit[0]);
+    }
+
+    private static void startLauncherAfterRestore(final Activity transition, final String token,
+            final String reason, final int gridMode, final String themeMode, final long generation) {
+        if (!"BACKUP_RESTORE".equals(reason) && !"BACKUP_RESTORE_ROLLBACK".equals(reason)) {
+            sPendingLauncherStartToken = null;
+            startLauncher(transition, token, reason, gridMode, themeMode);
+            return;
+        }
+        final WeakReference<Activity> transitionRef = new WeakReference<Activity>(transition);
+        if (transition instanceof ReloadTransitionActivity)
+            ((ReloadTransitionActivity) transition).onRestoreApplyStarted();
+        boolean accepted = com.smartisanos.launcher.backup.DesktopRestoreController
+                .applyPreparedAfterOldProcessExitAsync(transition, token, reason,
+                new com.smartisanos.launcher.backup.DesktopRestoreController.ApplyListener() {
+                    @Override public void onApplied(boolean success) {
+                        Activity current = transitionRef.get();
+                        if (generation != sLauncherStartGeneration
+                                || !token.equals(sPendingLauncherStartToken)
+                                || current == null || current.isFinishing() || current.isDestroyed()) return;
+                        if (!success) {
+                            log("RELOAD_FAILED", token, "restore_checkpoint_blocked", gridMode, themeMode);
+                            if (current instanceof ReloadTransitionActivity)
+                                ((ReloadTransitionActivity) current).showRestoreFailure();
+                            return;
+                        }
+                        sPendingLauncherStartToken = null;
+                        if (current instanceof ReloadTransitionActivity)
+                            ((ReloadTransitionActivity) current).onRestoreApplyFinished();
+                        try { startLauncher(current, token, reason, gridMode, themeMode); }
+                        catch (Throwable error) {
+                            log("RELOAD_FAILED", token, "start_after_restore:" + shortError(error), gridMode, themeMode);
+                            if (current instanceof ReloadTransitionActivity)
+                                ((ReloadTransitionActivity) current).showLauncherStartFailure();
+                        }
+                    }
+                });
+        if (!accepted && transition instanceof ReloadTransitionActivity)
+            ((ReloadTransitionActivity) transition).showRestoreBusy();
     }
 
     private static void startLauncher(Context context, String token, String reason, int gridMode,
