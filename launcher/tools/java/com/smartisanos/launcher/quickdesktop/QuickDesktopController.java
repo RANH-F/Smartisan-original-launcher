@@ -21,8 +21,8 @@ import java.lang.ref.WeakReference;
  * Narrow bridge between the original RootView left-edge progress and the in-activity host.
  *
  * <p>RootView remains the owner of the opening gesture, direction lock, page-zero gate, and
- * edit-mode behavior. This bridge only cancels RootView's current sequence after a revealed
- * left screen wins and then reverses closed, so the same UP cannot start desktop pagination.</p>
+ * edit-mode behavior. Once RootView accepts an opening, it cancels the original scene target
+ * before capture. The bridge keeps the terminal event from completing that target again.</p>
  */
 public final class QuickDesktopController {
     private static final String TAG = "QuickDesktopHost";
@@ -62,6 +62,7 @@ public final class QuickDesktopController {
     private static int openingTouchSlop;
     private static boolean openingRevealOccurred;
     private static boolean consumeRootGestureUntilEnd;
+    private static boolean rootGestureCancelled;
 
     private QuickDesktopController() {
     }
@@ -178,6 +179,7 @@ public final class QuickDesktopController {
         if (action == MotionEvent.ACTION_DOWN) {
             consumeRootGestureUntilEnd = false;
             openingRevealOccurred = false;
+            rootGestureCancelled = false;
         } else if (consumeRootGestureUntilEnd) {
             if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
                 consumeRootGestureUntilEnd = false;
@@ -191,6 +193,7 @@ public final class QuickDesktopController {
             openingStartAllowed = false;
             captureStartedForGesture = false;
             backgroundReadyForGesture = false;
+            rootGestureCancelled = false;
             recycleOpeningVelocityTracker();
             QuickDesktopBackgroundCapture.cancel("multi-touch-owner");
             QuickDesktopHostView activeHost = host();
@@ -205,6 +208,12 @@ public final class QuickDesktopController {
             return 0;
         }
         if (action == MotionEvent.ACTION_DOWN) {
+            // An opening whose snapshot/window never arrived must not remain a hidden
+            // open host and prevent the next desktop sequence from acquiring ownership.
+            if (host.getOpenProgress() > 0f
+                    && (hostWindow == null || !hostWindow.isShowing())) {
+                host.closeImmediately("opening-not-presented");
+            }
             openingStartAllowed = isGridGestureStart(event);
             openingGesture = openingStartAllowed && host.getOpenProgress() < 0.001f;
             openingDownX = event.getX();
@@ -240,6 +249,12 @@ public final class QuickDesktopController {
                 }
             }
         }
+        if (rootGestureCancelled && action == MotionEvent.ACTION_MOVE) {
+            // RootView has handed over the target. Feeding more MOVE events into
+            // the cancelled scene can restart page/Cell recognition.
+            if (openingGesture) onProgress(closedProgress, event);
+            return 2;
+        }
         if ((action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL)
                 && openingGesture) {
             float open = host.getOpenProgress();
@@ -258,8 +273,9 @@ public final class QuickDesktopController {
                 // Once the host has claimed this drag, the GL scene must receive CANCEL,
                 // not the same UP that can also finish a desktop page scroll/pressed cell.
                 // Closing/cancellation already used this RootView cleanup path.
-                cancelRootGesture = openingRevealOccurred;
+                cancelRootGesture = rootGestureCancelled || openingRevealOccurred;
             }
+            cancelRootGesture |= rootGestureCancelled;
             recycleOpeningVelocityTracker();
             openingGesture = false;
             if (cancelRootGesture) {
@@ -267,6 +283,8 @@ public final class QuickDesktopController {
                 return 1;
             }
         }
+        if (rootGestureCancelled
+                && (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL)) return 1;
         return 0;
     }
 
@@ -276,7 +294,13 @@ public final class QuickDesktopController {
                 || !isEnabled(host.getContext())) {
             return;
         }
+        if (!isEligibleWorkspace()) {
+            host.closeImmediately("workspace-mode-changed");
+            return;
+        }
         showHostWindow(false);
+        // Showing can synchronously close an invalid window/session. Do not revive it.
+        if (!openingGesture || !captureStartedForGesture) return;
         // RootView's original Ad divisor is a Smartisan logical width. On modern ROMs it can
         // remain around twice the physical display width, so using Ad directly reveals only half
         // a page after a full-screen drag. RootView still owns all gesture gating; once it calls
@@ -292,7 +316,7 @@ public final class QuickDesktopController {
         // Only the original RootView single-pointer / direction / J.Ta() / enabled branch
         // calls this entry. DOWN and the progress callback do not grant capture ownership.
         if (openingGesture && openingStartAllowed && host != null && root != null
-                && isEnabled(host.getContext()) && isNormalWorkspace()) {
+                && isEnabled(host.getContext()) && isEligibleWorkspace()) {
             if (!captureStartedForGesture) {
                 captureStartedForGesture = true;
                 backgroundReadyForGesture = false;
@@ -302,13 +326,13 @@ public final class QuickDesktopController {
                 QuickDesktopBackgroundCapture.schedule(root, host, 0L);
             }
             showHostWindow(false);
-            host.ensureVisibleForOriginalRequest();
+            if (openingGesture && captureStartedForGesture) host.ensureVisibleForOriginalRequest();
         }
     }
 
     static void onBackgroundReady(QuickDesktopHostView capturedHost) {
         if (capturedHost != host() || !captureStartedForGesture) return;
-        if (!isNormalWorkspace()) {
+        if (!isEligibleWorkspace()) {
             capturedHost.closeImmediately("workspace-mode-changed");
             return;
         }
@@ -368,9 +392,9 @@ public final class QuickDesktopController {
             Class<?> constants = Class.forName("com.smartisanos.launcher.data.Constants");
             float top = constants.getField("status_bar_height").getInt(null);
             int mode = workspaceMode();
-            // Dl is the displayed mode (hH), not the source grid. Overview uses 13/10,
-            // while isEditMode only describes the icon editor and can still be false.
-            if (mode != 12 && mode != 9) {
+            // Both single-page and multi-page home use the original RootView gate.
+            // Icon editing/folders remain excluded; an overview is not icon editing.
+            if (!isWorkspaceMode(mode)) {
                 Log.i(TAG, "QD_START_REGION allowed=false mode=" + mode);
                 return false;
             }
@@ -388,9 +412,18 @@ public final class QuickDesktopController {
         }
     }
 
-    /** Keep the original page dispatcher in charge of overview/editor swipes. */
+    /** RootView still owns direction, centered first-page and multi-pointer gates. */
     public static boolean canRevealFromRoot() {
-        return openingGesture && openingStartAllowed && isNormalWorkspace();
+        return openingGesture && openingStartAllowed && isEligibleWorkspace();
+    }
+
+    public static void onRootGestureCancelled() {
+        rootGestureCancelled = true;
+        Log.i(TAG, "QD_ROOT_TARGET_CANCELLED_BEFORE_CAPTURE");
+    }
+
+    public static boolean hasCancelledRootGesture() {
+        return rootGestureCancelled;
     }
 
     private static int workspaceMode() throws ReflectiveOperationException {
@@ -400,13 +433,18 @@ public final class QuickDesktopController {
         java.lang.reflect.Field field = type.getDeclaredField("px");
         field.setAccessible(true);
         Object page = field.get(workspace);
+        if ((Integer) page.getClass().getMethod("sr").invoke(page) != 0) return 0;
         return (Integer) page.getClass().getMethod("Dl").invoke(page);
     }
 
-    private static boolean isNormalWorkspace() {
+    private static boolean isWorkspaceMode(int mode) {
+        return mode == 12 || mode == 9 || mode == 13 || mode == 10;
+    }
+
+    private static boolean isEligibleWorkspace() {
         try {
             int mode = workspaceMode();
-            return mode == 12 || mode == 9;
+            return isWorkspaceMode(mode);
         } catch (ReflectiveOperationException | NullPointerException error) {
             Log.w(TAG, "QD_WORKSPACE_MODE_UNAVAILABLE", error);
             return false;
@@ -476,7 +514,7 @@ public final class QuickDesktopController {
         if (host == null || root == null || root.getWindowToken() == null) {
             return;
         }
-        if (!isNormalWorkspace()) {
+        if (!isEligibleWorkspace()) {
             host.closeImmediately("workspace-mode-changed");
             return;
         }
@@ -506,6 +544,7 @@ public final class QuickDesktopController {
                 Log.i(TAG, "QD_HOST_WINDOW_SHOW touchable=" + touchable);
             } catch (RuntimeException error) {
                 Log.e(TAG, "QD_HOST_WINDOW_SHOW_FAILED", error);
+                host.closeImmediately("host-window-show-failed");
             }
         } else if (hostWindowTouchable != touchable) {
             hostWindow.setTouchable(touchable);
@@ -556,6 +595,7 @@ public final class QuickDesktopController {
             if (releaseHost) {
                 openingRevealOccurred = false;
                 consumeRootGestureUntilEnd = false;
+                rootGestureCancelled = false;
                 QuickDesktopHostView current = hostView;
                 hostView = null;
                 rootRef.clear();

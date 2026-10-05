@@ -18,6 +18,18 @@ public final class QuickDesktopCaptureGateProbe {
     private static int checks;
     private static boolean enabled = true;
 
+    private static final class RootProbe extends FrameLayout {
+        static boolean closeDuringShow;
+        RootProbe(Context context) { super(context); }
+        @Override public android.os.IBinder getWindowToken() {
+            if (closeDuringShow) {
+                closeDuringShow = false;
+                QuickDesktopController.onHomeIntent();
+            }
+            return null;
+        }
+    }
+
     private static void check(boolean condition, String message) {
         if (!condition) throw new AssertionError(message);
         checks++;
@@ -73,7 +85,7 @@ public final class QuickDesktopCaptureGateProbe {
         Object unsafe = unsafeField.get(null);
         Method allocate = unsafeClass.getMethod("allocateInstance", Class.class);
         QuickDesktopHostView host = (QuickDesktopHostView) allocate.invoke(unsafe, QuickDesktopHostView.class);
-        FrameLayout root = (FrameLayout) allocate.invoke(unsafe, FrameLayout.class);
+        FrameLayout root = (FrameLayout) allocate.invoke(unsafe, RootProbe.class);
         Field viewContext = android.view.View.class.getDeclaredField("mContext");
         viewContext.setAccessible(true);
         viewContext.set(host, context);
@@ -93,18 +105,18 @@ public final class QuickDesktopCaptureGateProbe {
         check(host.refreshes == 0 && host.clears == 0, "DOWN changed content/background");
         check(host.getOpenProgress() == 0, "unaccepted progress revealed host");
 
-        for (int mode : new int[] {12, 9}) {
+        for (int mode : new int[] {12, 9, 13, 10}) {
             com.smartisanos.launcher.view.Eb.displayMode = mode;
             touch(MotionEvent.ACTION_DOWN, 100, 800);
             check(QuickDesktopController.canRevealFromRoot(), "normal grid lost eligibility");
             touch(MotionEvent.ACTION_UP, 100, 800);
         }
 
-        for (int mode : new int[] {13,10,8}) {
+        for (int mode : new int[] {8,11,0}) {
             com.smartisanos.launcher.view.Eb.displayMode = mode;
             for (int i=0;i<20;i++) {
                 touch(MotionEvent.ACTION_DOWN,100,800);
-                check(!QuickDesktopController.canRevealFromRoot(), "overview took RootView gesture");
+                check(!QuickDesktopController.canRevealFromRoot(), "unsupported mode took RootView gesture");
                 QuickDesktopController.requestShow(); progress(600);
                 touch(MotionEvent.ACTION_UP,600,800);
             }
@@ -117,15 +129,26 @@ public final class QuickDesktopCaptureGateProbe {
                 "overview/editor left an invisible touch owner");
         com.smartisanos.launcher.view.Eb.editing=false;
         touch(MotionEvent.ACTION_DOWN,100,800);
-        com.smartisanos.launcher.view.Eb.displayMode=13;
+        com.smartisanos.launcher.view.Eb.displayMode=8;
         check(!QuickDesktopController.canRevealFromRoot(), "mode change kept old eligibility");
         QuickDesktopController.requestShow(); touch(MotionEvent.ACTION_UP,600,800);
         check(QuickDesktopBackgroundCapture.requests==0, "mode change captured");
         com.smartisanos.launcher.view.Eb.displayMode=12;
 
+        for (int mode : new int[] {12,9,13,10}) {
+            com.smartisanos.launcher.view.Eb.displayMode=mode;
+            com.smartisanos.launcher.view.Eb.pageIndex=1;
+            touch(MotionEvent.ACTION_DOWN,100,800);
+            check(!QuickDesktopController.canRevealFromRoot(), "non-home page acquired host");
+            QuickDesktopController.requestShow(); touch(MotionEvent.ACTION_UP,600,800);
+        }
+        com.smartisanos.launcher.view.Eb.pageIndex=0;
+        com.smartisanos.launcher.view.Eb.displayMode=12;
+
         touch(MotionEvent.ACTION_DOWN, 100, 800);
+        QuickDesktopController.onRootGestureCancelled();
         QuickDesktopController.requestShow(); // Original recognizer has accepted this sequence.
-        progress(600);
+        check(touch(MotionEvent.ACTION_MOVE,600,800)==2, "accepted MOVE reached cancelled scene");
         QuickDesktopController.requestShow();
         check(QuickDesktopBackgroundCapture.requests == 1, "accepted sequence captured twice");
         check(host.refreshes == 1 && host.clears == 1, "accepted sequence not prepared once");
@@ -160,10 +183,35 @@ public final class QuickDesktopCaptureGateProbe {
         QuickDesktopController.onHomeIntent();
 
         touch(MotionEvent.ACTION_DOWN,100,800); QuickDesktopController.requestShow(); progress(600);
-        com.smartisanos.launcher.view.Eb.displayMode=13;
+        com.smartisanos.launcher.view.Eb.displayMode=8;
         QuickDesktopBackgroundCapture.ready();
         check(host.getOpenProgress()==0 && !ready(), "late background covered overview");
         com.smartisanos.launcher.view.Eb.displayMode=12;
+
+        touch(MotionEvent.ACTION_DOWN,100,800);
+        QuickDesktopController.onRootGestureCancelled(); QuickDesktopController.requestShow(); progress(600);
+        touch(MotionEvent.ACTION_UP,600,800); // Snapshot never completes: no actual window.
+        int failedRequestCount=QuickDesktopBackgroundCapture.requests;
+        touch(MotionEvent.ACTION_DOWN,100,800);
+        check(QuickDesktopController.canRevealFromRoot() && host.getOpenProgress()==0,
+                "unpresented opening blocked fresh DOWN");
+        check(!QuickDesktopController.hasCancelledRootGesture(), "cancel flag leaked across DOWN");
+        QuickDesktopBackgroundCapture.ready();
+        check(!ready(), "unpresented old completion revived host");
+        QuickDesktopController.requestShow();
+        check(QuickDesktopBackgroundCapture.requests==failedRequestCount+1, "fresh opening lost capture");
+        touch(MotionEvent.ACTION_CANCEL,100,800);
+
+        touch(MotionEvent.ACTION_DOWN,100,800);
+        QuickDesktopController.onRootGestureCancelled(); QuickDesktopController.requestShow();
+        QuickDesktopBackgroundCapture.ready();
+        RootProbe.closeDuringShow = true;
+        progress(600);
+        check(host.getOpenProgress()==0 && !ready(), "window-time cancellation revived hidden host");
+        check(touch(MotionEvent.ACTION_UP,600,800)==1, "closed window leaked UP into cancelled target");
+        touch(MotionEvent.ACTION_DOWN,100,800);
+        check(QuickDesktopController.canRevealFromRoot(), "window-time cancellation blocked next gesture");
+        touch(MotionEvent.ACTION_CANCEL,100,800);
 
         enabled = false;
         int requests = QuickDesktopBackgroundCapture.requests;

@@ -192,14 +192,16 @@
 
     invoke-static {}, Lcom/smartisanos/launcher/theme/LauncherBelowKeyguardCompat;->onRendererFrame()V
 
+    # Claim before update: a request arriving mid-frame waits for the next frame,
+    # which processes the already-enqueued scene CANCEL before rendering/capture.
+    invoke-static {}, Lcom/smartisanos/launcher/quickdesktop/QuickDesktopBackgroundCapture;->takeGlCaptureGeneration()I
+
+    move-result v2
+
     .line 1
     iget-object p1, p0, Lcom/smartisanos/launcher/view/vc;->ly:Lcom/smartisanos/launcher/view/Eb;
 
     invoke-virtual {p1}, Lcom/smartisanos/launcher/view/Eb;->update()V
-
-    invoke-static {}, Lcom/smartisanos/launcher/quickdesktop/QuickDesktopBackgroundCapture;->takeGlCaptureGeneration()I
-
-    move-result v2
 
     if-eqz v2, :quick_desktop_capture_done
 

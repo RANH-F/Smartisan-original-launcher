@@ -323,6 +323,22 @@
 
     if-eqz p1, :cond_7
 
+    # The original scene gets CANCEL before the Quick Desktop snapshot request.
+    # Keep RootView's own opening progress/velocity alive until its terminal cleanup.
+    invoke-static {p2}, Landroid/view/MotionEvent;->obtain(Landroid/view/MotionEvent;)Landroid/view/MotionEvent;
+
+    move-result-object p1
+
+    const/4 v2, 0x3
+
+    invoke-virtual {p1, v2}, Landroid/view/MotionEvent;->setAction(I)V
+
+    invoke-direct {p0, p1}, Lcom/smartisanos/launcher/view/RootView;->j(Landroid/view/MotionEvent;)V
+
+    invoke-virtual {p1}, Landroid/view/MotionEvent;->recycle()V
+
+    invoke-static {}, Lcom/smartisanos/launcher/quickdesktop/QuickDesktopController;->onRootGestureCancelled()V
+
     .line 16
     invoke-static {}, Lcom/smartisanos/launcher/e/e;->ng()V
 
@@ -1903,8 +1919,15 @@
     iput v0, p0, Lcom/smartisanos/launcher/view/RootView;->Ad:F
 
     .line 30
+    invoke-static {}, Lcom/smartisanos/launcher/quickdesktop/QuickDesktopController;->hasCancelledRootGesture()Z
+
+    move-result v0
+
+    if-nez v0, :quick_desktop_terminal_scene_done
+
     invoke-direct {p0, p1}, Lcom/smartisanos/launcher/view/RootView;->j(Landroid/view/MotionEvent;)V
 
+    :quick_desktop_terminal_scene_done
     .line 31
     iput-boolean v4, p0, Lcom/smartisanos/launcher/view/RootView;->Ed:Z
 

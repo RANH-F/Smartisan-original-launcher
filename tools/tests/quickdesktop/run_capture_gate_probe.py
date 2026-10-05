@@ -56,9 +56,9 @@ public static LayoutProperty mode(int i){return new LayoutProperty();}}''',
         'com/smartisanos/launcher/data/LayoutProperty.java': 'package com.smartisanos.launcher.data; public class LayoutProperty {}',
         'com/smartisanos/launcher/view/Eb.java': '''package com.smartisanos.launcher.view;
 public class Eb {private static final Eb instance=new Eb();private Page px=new Page();
-public static int displayMode=12;public static boolean editing;
+public static int displayMode=12,pageIndex;public static boolean editing;
 public static Eb getInstance(){return instance;} public boolean isEditMode(){return editing;}
-public static class Page {public int Dl(){return displayMode;}}}''',
+public static class Page {public int Dl(){return displayMode;}public int sr(){return pageIndex;}}}''',
         'com/smartisanos/launcher/view/x.java': '''package com.smartisanos.launcher.view;
 import com.smartisanos.launcher.data.LayoutProperty;public class x {public static float d(LayoutProperty p){return 2200;}}''',
     }
@@ -91,6 +91,14 @@ import com.smartisanos.launcher.data.LayoutProperty;public class x {public stati
                   'com.smartisanos.launcher.quickdesktop.' + probe], 'device.log')
     assert ('PASS CAPTURE_GENERATION' if args.generation else 'PASS CAPTURE_GATE') in output, output
     print(output)
+    root = (ROOT / 'launcher/smali/com/smartisanos/launcher/view/RootView.smali').read_text('utf-8')
+    reveal = root[root.index('.method private a(FLandroid/view/MotionEvent;)V'):root.index('.method private e(')]
+    assert reveal.index('->j(Landroid/view/MotionEvent;)V') < reveal.index('->onRootGestureCancelled()V') < reveal.index('->ng()V')
+    assert '->hasCancelledRootGesture()Z' in root and ':quick_desktop_terminal_scene_done' in root
+    renderer = (ROOT / 'launcher/smali/com/smartisanos/launcher/view/vc.smali').read_text('utf-8')
+    frame = renderer[renderer.index('.method public onDrawFrame'):]
+    assert frame.index('->takeGlCaptureGeneration()I') < frame.index('->update()V') < frame.index('->b(III)')
+    print('PASS ROOT_CAPTURE_ORDER_STATIC=3; actual scene/window must be verified on device')
 
 
 if __name__ == '__main__':
