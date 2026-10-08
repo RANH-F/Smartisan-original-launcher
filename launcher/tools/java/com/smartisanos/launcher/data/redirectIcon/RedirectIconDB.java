@@ -154,11 +154,15 @@ public final class RedirectIconDB {
     }
 
     public static void updatePackIcon(Context context, String pkg, String cmp, String iconPackPackage) {
+        updatePackIcon(context, pkg, cmp, iconPackPackage, "");
+    }
+
+    public static void updatePackIcon(Context context, String pkg, String cmp, String iconPackPackage, String drawable) {
         if (TextUtils.isEmpty(iconPackPackage)) return;
         RedirectIconInfo info = ensure(context, pkg, cmp);
         if (info == null) return;
         info.useImprovedAppIcon = true;
-        info.drawableName = MODE_PACK + ":" + iconPackPackage;
+        info.drawableName = MODE_PACK + ":" + iconPackPackage + (drawable == null || drawable.length() == 0 ? "" : "#" + drawable);
         info.iconData = null;
         write(context, info);
     }
@@ -233,9 +237,17 @@ public final class RedirectIconDB {
 
     public static String packNameOf(RedirectIconInfo info) {
         if (info != null && info.drawableName != null && info.drawableName.startsWith(MODE_PACK + ":")) {
-            return info.drawableName.substring((MODE_PACK + ":").length());
+            String value = info.drawableName.substring((MODE_PACK + ":").length());
+            int split = value.indexOf('#');
+            return split < 0 ? value : value.substring(0, split);
         }
         return null;
+    }
+
+    public static String packDrawableNameOf(RedirectIconInfo info) {
+        if (info == null || !MODE_PACK.equals(modeOf(info))) return "";
+        int split = info.drawableName.indexOf('#');
+        return split < 0 ? "" : info.drawableName.substring(split + 1);
     }
 
     private static RedirectIconInfo ensure(Context context, String pkg, String cmp) {

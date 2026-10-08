@@ -40,6 +40,17 @@ public final class OriginalSearchBarCompat extends RelativeLayout {
         return editText;
     }
 
+    /** One settings width/height contract. The NinePatch alone owns horizontal insets. */
+    public android.widget.FrameLayout createSettingsHost(Context context) {
+        float density = context.getResources().getDisplayMetrics().density;
+        android.widget.FrameLayout host = new android.widget.FrameLayout(context);
+        host.setLayoutParams(new android.view.ViewGroup.LayoutParams(-1, Math.round(64 * density)));
+        android.widget.FrameLayout.LayoutParams params = new android.widget.FrameLayout.LayoutParams(-1, Math.round(56 * density));
+        params.gravity = android.view.Gravity.CENTER_VERTICAL;
+        host.addView(this, params);
+        return host;
+    }
+
     /** Align the field with Settings cards; retain only the in-field clear button. */
     public void setSettingsPresentation(android.graphics.drawable.Drawable background) {
         View field = findViewById(resource("id", "qs_original_search_edit_layout"));
@@ -73,6 +84,12 @@ public final class OriginalSearchBarCompat extends RelativeLayout {
 
     public void setCancelListener(OnClickListener listener) {
         cancelListener = listener;
+    }
+
+    public void setInputEnabled(boolean enabled) {
+        editText.setEnabled(enabled);
+        clearButton.setEnabled(enabled);
+        cancelButton.setEnabled(enabled);
     }
 
     public void setBackListener(OriginalSearchEditTextCompat.BackListener listener) {

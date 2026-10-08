@@ -249,18 +249,24 @@ public final class LauncherSettingBridge {
     public static void applyDesktopTextSize(Context context) {
         int extra = Math.max(0, Math.min(10, readInt(context, KEY_DESKTOP_TEXT_SIZE, 0)));
         extra = ((extra + 1) / 2) * 2;
-        if (extra == 0) return;
         try {
             Class<?> constants = Class.forName("com.smartisanos.launcher.data.Constants");
             Class<?> metrics = Class.forName(
                     "com.smartisanos.launcher.data.DesktopLabelMetrics");
             metrics.getMethod("setDesktopTextSizeAdjustment", Integer.TYPE)
                     .invoke(null, Integer.valueOf(extra));
+            if (extra == 0) return;
             int applied = 0;
-            for (int mode : new int[] {12, 20}) {
+            java.util.Set<Object> adjusted = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<Object,Boolean>());
+            for (int mode : new int[] {com.smartisanos.launcher.data.DesktopLabelMetrics.GRID_12,
+                    com.smartisanos.launcher.data.DesktopLabelMetrics.LEGACY_ENGINE_KEY_GRID_20,
+                    com.smartisanos.launcher.data.DesktopLabelMetrics.GRID_20}) {
                 Object property = constants.getMethod("mode", Integer.TYPE)
                         .invoke(null, Integer.valueOf(mode));
-                if (property == null) continue;
+                if (property == null || !adjusted.add(property)) continue;
+                int columns = property.getClass().getField("page_cell_col_num").getInt(property);
+                int rows = property.getClass().getField("page_cell_row_num").getInt(property);
+                if (columns * rows != 12 && columns * rows != 20) continue;
                 Field field = property.getClass().getField("text_font_size");
                 field.setInt(property, Math.max(1, field.getInt(property) + extra));
                 applied++;
@@ -305,6 +311,19 @@ public final class LauncherSettingBridge {
     public static Bitmap composeActiveIconToBaseBounds(
             Object activeRoot, Bitmap base, Bitmap active) {
         if (active == null) return base;
+        // The ordinary icon and ActiveIcon share Pe(). Rebind its projection to
+        // the current live artwork before any contact shadow is composited.
+        if (IconIlluminationCompat.enabled()) {
+            try {
+                Object cell = readPrivateField(activeRoot, "qP");
+                Object item = readPrivateField(cell, "Rj");
+                if (!IconIlluminationCompat.prepare(item, active)) {
+                    Log.w(TAG, "ACTIVE_ICON_PROJECTION_PREPARE_FAILED");
+                }
+            } catch (Exception error) {
+                Log.w(TAG, "ACTIVE_ICON_PROJECTION_PREPARE_FAILED", error);
+            }
+        }
         ActiveIconRasterSpec raster = ActiveIconRasterSpec.resolve();
         if (raster == null || raster.physicalArtworkWidth <= 0
                 || raster.physicalTextureWidth <= 0) {
@@ -1271,7 +1290,7 @@ public final class LauncherSettingBridge {
     public static void preserveOverviewIconAspect(Object cell, int displayMode) {
         try {
             int sourceMode = ((Number) readGeometryField(cell, "fH")).intValue();
-            // Engine modes: 12 = 3x4, 9 = 4x5 (the settings value is 20).
+            // Desktop options are 12 (3x4) and 20 (4x5); legacy keys are compatibility-only.
             if (sourceMode != 12 && sourceMode != 9) return;
             Object parent = invokePixelGrid(cell, "getParent");
             if (parent == null || !Class.forName("com.smartisanos.launcher.view.b.M")

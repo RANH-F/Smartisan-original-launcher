@@ -1,14 +1,32 @@
 {
   "schema": 1,
-  "updated": "2026-10-02",
-  "path": "icons/drawable/{packageName}.png",
-  "count": 5263,
-  "note": "Multiple artwork files for the same application are declared in icons/variants.json.",
-  "mirrors": [
-    "https://gitee.com/RANH-F/Smartisan-original-launcher-download/raw/master/icons/drawable/",
-    "https://raw.githubusercontent.com/RANH-F/Smartisan-original-launcher/main/icons/drawable/"
-  ],
+  "path": "icons/drawable/{sourceId}.png",
+  "count": 5199,
   "icons": [
+    {
+      "package": "Han.GJZS",
+      "file": "Han.GJZS.png",
+      "bytes": 30632,
+      "sha256": "0980cc272a63ad5c3501a231b89404991091d89b2116305c423187d5b1df3f4b"
+    },
+    {
+      "package": "InternetRadio.all",
+      "file": "InternetRadio.all.png",
+      "bytes": 11074,
+      "sha256": "79b38e25398ca373802bbec53dd24635c4992f14218b2a1cc654d4d5a3bdeffa"
+    },
+    {
+      "package": "SplashActivity",
+      "file": "SplashActivity.png",
+      "bytes": 38457,
+      "sha256": "fbd224bc775238f4a72bbf561fb34147ed5abf20f8592af6787633e0ccb13ef2"
+    },
+    {
+      "package": "Uxpp.UC",
+      "file": "Uxpp.UC.png",
+      "bytes": 41673,
+      "sha256": "6e70e33814d3b822dcbf6c3c65d6d2f6e9912c3afce37b2f93260aaaadbe77ce"
+    },
     {
       "package": "ai.zuoye.app",
       "file": "ai.zuoye.app.png",
@@ -20,6 +38,12 @@
       "file": "aihuishou.aihuishouapp.png",
       "bytes": 24547,
       "sha256": "6acf53be8da1e562ee52a79f778382016439f7adb1fecf60923a0b74972bcd85"
+    },
+    {
+      "package": "air.GSMobile",
+      "file": "air.GSMobile.png",
+      "bytes": 33171,
+      "sha256": "19390457865a4e1eaa29c6af735614c878049e41544cc55c55eaa6d6e45c3a6e"
     },
     {
       "package": "air.au.com.metro.DumbWaysToDie",
@@ -92,12 +116,6 @@
       "file": "air.fyzb3.png",
       "bytes": 17478,
       "sha256": "8d927fb4328afe159961ed977fe5e2ae4e9d615f9b50c2effd7d3d1354fdcfb0"
-    },
-    {
-      "package": "air.GSMobile",
-      "file": "air.GSMobile.png",
-      "bytes": 33171,
-      "sha256": "19390457865a4e1eaa29c6af735614c878049e41544cc55c55eaa6d6e45c3a6e"
     },
     {
       "package": "air.pinpinteam.pyrojump",
@@ -316,12 +334,6 @@
       "sha256": "990f0f579e363df04b829aa3b6efa636f0b2466a8e37870f3b64924e304c8c1c"
     },
     {
-      "package": "cc.forestapp_2",
-      "file": "cc.forestapp_2.png",
-      "bytes": 24192,
-      "sha256": "01dfc11cd6dfcc0d0fb180d46348058cd99f4f0f442950e0884b64ea39f56877"
-    },
-    {
       "package": "cc.fotoplace.app",
       "file": "cc.fotoplace.app.png",
       "bytes": 62329,
@@ -400,12 +412,6 @@
       "sha256": "4beefc989be4c54891112d5caf84b842dbdbf534b1131d5704e74a837a0031cc"
     },
     {
-      "package": "chuxin.shimo.shimowendang_2",
-      "file": "chuxin.shimo.shimowendang_2.png",
-      "bytes": 17433,
-      "sha256": "2d1157f2a006deefcb1307bd4cecc1c44740fd23d250de3ef7a39ab2f5598ad9"
-    },
-    {
       "package": "cld.navi.mainframe",
       "file": "cld.navi.mainframe.png",
       "bytes": 42027,
@@ -440,6 +446,24 @@
       "file": "cmccwm.mobilemusic.png",
       "bytes": 164626,
       "sha256": "25cf4ce5868d0a6e6e83d759466385a577c49384e6922d5cd2bbc42d36c256f4"
+    },
+    {
+      "package": "cn.Longmaster.PhonePlus",
+      "file": "cn.Longmaster.PhonePlus.png",
+      "bytes": 30076,
+      "sha256": "2bb7630e9fffc55d08248fa3650aea44d9c5de650c468382852b05848d46b882"
+    },
+    {
+      "package": "cn.TuHu.android",
+      "file": "cn.TuHu.android.png",
+      "bytes": 158209,
+      "sha256": "574e14c38a5838b1f85c956c7253d6e71486e1daf9e64b025006264c99fece2b"
+    },
+    {
+      "package": "cn.TuHu.android_2",
+      "file": "cn.TuHu.android_2.png",
+      "bytes": 39296,
+      "sha256": "9ea1174a975215f9a36c2cb71d119d3260423c36f3a256752c32eec8024d6d40"
     },
     {
       "package": "cn.abcyun.clinic.app",
@@ -704,12 +728,6 @@
       "file": "cn.com.langeasy.LangEasyLexis.png",
       "bytes": 80011,
       "sha256": "0323a3deebc6244baabfa96d9c7a71c919af7769a10b5a793565155ecc144f79"
-    },
-    {
-      "package": "cn.com.langeasy.LangEasyLexis_2",
-      "file": "cn.com.langeasy.LangEasyLexis_2.png",
-      "bytes": 16440,
-      "sha256": "b70b0aec03b490ac48534efb5f087cd814cf7e22a4c93e6b404c9076c1c767af"
     },
     {
       "package": "cn.com.lawchat.android.forpublic",
@@ -1108,12 +1126,6 @@
       "sha256": "6a0c39f54d03b4331a9be4e4abb394e74a24bc665bbe52641aba1c770d42b0e0"
     },
     {
-      "package": "cn.gov.tax.its_2",
-      "file": "cn.gov.tax.its_2.png",
-      "bytes": 37837,
-      "sha256": "76885ad6fa4c0b5bcb40c52fe21aea6d148b74f1e3cfbc2a97c4d42caef0cb4d"
-    },
-    {
       "package": "cn.gpsonline",
       "file": "cn.gpsonline.png",
       "bytes": 12465,
@@ -1268,12 +1280,6 @@
       "file": "cn.longmaster.pengpeng.png",
       "bytes": 17625,
       "sha256": "b11e4aa4fa0da8feb46fa965561be6eb7297c3cbab32d983f9b036bd4f917d8a"
-    },
-    {
-      "package": "cn.Longmaster.PhonePlus",
-      "file": "cn.Longmaster.PhonePlus.png",
-      "bytes": 30076,
-      "sha256": "2bb7630e9fffc55d08248fa3650aea44d9c5de650c468382852b05848d46b882"
     },
     {
       "package": "cn.luomao.apkeditor",
@@ -1654,18 +1660,6 @@
       "sha256": "1ab302a2e969ef42fcc811e63d229437976ac2fec5b43ed6d9718f8ceffa659e"
     },
     {
-      "package": "cn.TuHu.android",
-      "file": "cn.TuHu.android.png",
-      "bytes": 158209,
-      "sha256": "574e14c38a5838b1f85c956c7253d6e71486e1daf9e64b025006264c99fece2b"
-    },
-    {
-      "package": "cn.TuHu.android_2",
-      "file": "cn.TuHu.android_2.png",
-      "bytes": 39296,
-      "sha256": "9ea1174a975215f9a36c2cb71d119d3260423c36f3a256752c32eec8024d6d40"
-    },
-    {
       "package": "cn.vmos.cloudphone",
       "file": "cn.vmos.cloudphone.png",
       "bytes": 70824,
@@ -1894,6 +1888,258 @@
       "sha256": "079351ca27be64a5e2b85c2999375d038fcf332438a57ad82e03b9b80bb6ebca"
     },
     {
+      "package": "com.AndPhone.game.Sperminator",
+      "file": "com.AndPhone.game.Sperminator.png",
+      "bytes": 46362,
+      "sha256": "74fafcb2e34cf666d2e82ff3437cc9a2fa4899dcbb71ff8e0a14824d4cdabb44"
+    },
+    {
+      "package": "com.Android56",
+      "file": "com.Android56.png",
+      "bytes": 19936,
+      "sha256": "f77ec96662219d957dca7de530554a1d55e05323e560320e8d2a03c5720a7784"
+    },
+    {
+      "package": "com.Blackcat.app",
+      "file": "com.Blackcat.app.png",
+      "bytes": 21769,
+      "sha256": "bb534061ea36e0610c3cb0b5c917e9b9262821db70388106fd0c02716fec5bc4"
+    },
+    {
+      "package": "com.ChillyRoom.DungeonShooter",
+      "file": "com.ChillyRoom.DungeonShooter.png",
+      "bytes": 18030,
+      "sha256": "21ae057842b759654df48a6ef479929fa8233966f2d79a5d6db4a659f086a937"
+    },
+    {
+      "package": "com.ChillyRoom.nearme.gamecenter_2",
+      "file": "com.ChillyRoom.nearme.gamecenter_2.png",
+      "bytes": 36151,
+      "sha256": "8dff7a654ee507d04c002f03fff66fb74fef516badc23379b853fd70acf05e26"
+    },
+    {
+      "package": "com.DFQS",
+      "file": "com.DFQS.png",
+      "bytes": 55255,
+      "sha256": "0d9c2315eb3c24ea94adafb37de1b368a7f4fc8dc0721e88154f513ed65df355"
+    },
+    {
+      "package": "com.DefiantDev.SkiSafari",
+      "file": "com.DefiantDev.SkiSafari.png",
+      "bytes": 49067,
+      "sha256": "65763fcf60a81f5040b4ddabc992879c72ef80f81978ea9640ee0ca697cda2f8"
+    },
+    {
+      "package": "com.ETCPOwner.yc",
+      "file": "com.ETCPOwner.yc.png",
+      "bytes": 35091,
+      "sha256": "569f6326f740bbdbb91ac99c9cc7bbbf75cb720c4057457040e41c7fa9602130"
+    },
+    {
+      "package": "com.GOGN.EFAndroid",
+      "file": "com.GOGN.EFAndroid.png",
+      "bytes": 57873,
+      "sha256": "304d7d3f735e08fc80d73b173be7a54b70bba030ffcb0a1e1413ff598288c81b"
+    },
+    {
+      "package": "com.GZT.identity",
+      "file": "com.GZT.identity.png",
+      "bytes": 17208,
+      "sha256": "68ab7afa5d1af839dae228f5bfa18dedeb735a5657718d734a91b0c3500596c3"
+    },
+    {
+      "package": "com.HoYoverse.hkrpgoversea",
+      "file": "com.HoYoverse.hkrpgoversea.png",
+      "bytes": 274042,
+      "sha256": "d853af9f8591699de50bc16bcc22a85049277e08a299006aeecee3f7d25e0dc8"
+    },
+    {
+      "package": "com.HuaXiaBank.HuaCard",
+      "file": "com.HuaXiaBank.HuaCard.png",
+      "bytes": 228256,
+      "sha256": "ec58661ec4e98afdceff87744b116625426d10791292d750629e6168b009e142"
+    },
+    {
+      "package": "com.JoyReading",
+      "file": "com.JoyReading.png",
+      "bytes": 45707,
+      "sha256": "730643bf6de6f00828f4ddf16702dbce30d5b2ab1ce27600e89ef6493ff39687"
+    },
+    {
+      "package": "com.KPVh.T.QfpfP7VNT",
+      "file": "com.KPVh.T.QfpfP7VNT.png",
+      "bytes": 35961,
+      "sha256": "a0839faa9e02b4f1d3cc62c00f4ed822fd833b709e1aa8b1a4e298df0dd4562b"
+    },
+    {
+      "package": "com.KelliNoda.Battleheart",
+      "file": "com.KelliNoda.Battleheart.png",
+      "bytes": 25782,
+      "sha256": "c7607fb020114382f7c57046877b0d23059b5fa487a5ec26b57c934cc83b3a9f"
+    },
+    {
+      "package": "com.Kingdee.Express",
+      "file": "com.Kingdee.Express.png",
+      "bytes": 115142,
+      "sha256": "2403c98f28327fe378e38e35d0e328d09c0721f9c442c264d1c03043c3fa9cc1"
+    },
+    {
+      "package": "com.Kingdee.Express_3",
+      "file": "com.Kingdee.Express_3.png",
+      "bytes": 20353,
+      "sha256": "ddfd5d6ec71568eb886f40f4054fdf6cf80058cd4a79f0f57c33390be3d6c7a9"
+    },
+    {
+      "package": "com.McDullpalm.bus",
+      "file": "com.McDullpalm.bus.png",
+      "bytes": 16839,
+      "sha256": "b31cca84e79ecd64793f93ccb3187d8acc881ad201d75d6869200e5a3798d3d0"
+    },
+    {
+      "package": "com.Miniflashlight",
+      "file": "com.Miniflashlight.png",
+      "bytes": 23109,
+      "sha256": "d88e7d8fef79ba107adba9fe96aca5d90d5314b874ec6853f8a91e96c9e5dab9"
+    },
+    {
+      "package": "com.MoScreen",
+      "file": "com.MoScreen.png",
+      "bytes": 24287,
+      "sha256": "dc8d5b881154caa69a15eb4228b4fb3dc9fae9665b6da9f313290cfedccbe94c"
+    },
+    {
+      "package": "com.MobileTicket",
+      "file": "com.MobileTicket.png",
+      "bytes": 200477,
+      "sha256": "309321f39cc4d14d00d2b78cbcecb32a9c8974d9512711e61de8022385dd020f"
+    },
+    {
+      "package": "com.MobileTicket_2",
+      "file": "com.MobileTicket_2.png",
+      "bytes": 120371,
+      "sha256": "be87e7858f1c548fa5e4f55077e3ec0257ea3c41fe0f4c0c53df24025b19ccef"
+    },
+    {
+      "package": "com.MyFusApp.OPPOchazhaoshouji",
+      "file": "com.MyFusApp.OPPOchazhaoshouji.png",
+      "bytes": 27037,
+      "sha256": "3efddb6c60a3db1c29d90b4f44c66352eee4057b48480ed08165bf6a95b37c33"
+    },
+    {
+      "package": "com.MyFusApp.Remove.Bg",
+      "file": "com.MyFusApp.Remove.Bg.png",
+      "bytes": 44413,
+      "sha256": "7cedc5af9d36d962e88cf0eef5493b8734c917e624aa6e9187d97b37a5fe76d1"
+    },
+    {
+      "package": "com.MyFusApp.VIVOchazhaoshouji",
+      "file": "com.MyFusApp.VIVOchazhaoshouji.png",
+      "bytes": 20578,
+      "sha256": "9de9ed261e8bda27b730fe832feed634d35dee3737a7d98c6a05c97575257ec0"
+    },
+    {
+      "package": "com.MyFusApp.apkcombo",
+      "file": "com.MyFusApp.apkcombo.png",
+      "bytes": 21243,
+      "sha256": "93e9842c4f2cb37d40507fc4a23ba597f7b992a41538a7409cc882c5f8bcf094"
+    },
+    {
+      "package": "com.MyFusApp.appleiCloud",
+      "file": "com.MyFusApp.appleiCloud.png",
+      "bytes": 16352,
+      "sha256": "6cf92ec49f18f7b346e2fb60cbb7c742618fa16c34fd5527eafdf3678a7dc856"
+    },
+    {
+      "package": "com.MyFusApp.findmyphone",
+      "file": "com.MyFusApp.findmyphone.png",
+      "bytes": 34082,
+      "sha256": "fc4c46225d62b1357db4b50cafbb9eec6039087650b7b1dfd5f1e9a9bfab9c14"
+    },
+    {
+      "package": "com.MyFusApp.miyunfuwu",
+      "file": "com.MyFusApp.miyunfuwu.png",
+      "bytes": 13759,
+      "sha256": "7327c3fa8f3460fc0ced5744a4b7d680d10b7327f3dc7664b20d5b67820b5bc9"
+    },
+    {
+      "package": "com.One.WoodenLetter",
+      "file": "com.One.WoodenLetter.png",
+      "bytes": 15979,
+      "sha256": "ff203094220b52ce96225f54bc3d5b6b3da96f8ba137890e1b83c7f4acedd6d3"
+    },
+    {
+      "package": "com.PEP.biaori",
+      "file": "com.PEP.biaori.png",
+      "bytes": 46932,
+      "sha256": "10258d9564a9efb95c7d9e872693f52282467951345e821375f7f704ce3d8d78"
+    },
+    {
+      "package": "com.PomegranateApps.MathStudioExpress",
+      "file": "com.PomegranateApps.MathStudioExpress.png",
+      "bytes": 34565,
+      "sha256": "a12fac0edaed8400c02dfb0b6d4144274560a02cc235f2f5c16a6af6e045fdf5"
+    },
+    {
+      "package": "com.Qunar",
+      "file": "com.Qunar.png",
+      "bytes": 172589,
+      "sha256": "884b2411f7e32717a6ebee1e4b8761038d42ee588b9b051f707d047c2e352890"
+    },
+    {
+      "package": "com.RoamingStar.BlueArchive",
+      "file": "com.RoamingStar.BlueArchive.png",
+      "bytes": 228875,
+      "sha256": "f1411e54c4697807acebda79735f39bd5efc53eda10b42f3d061aba4689f0e08"
+    },
+    {
+      "package": "com.RunnerGames.game.JewelsDeluxe",
+      "file": "com.RunnerGames.game.JewelsDeluxe.png",
+      "bytes": 38024,
+      "sha256": "13e19077ad07d8fbd1ad3d32d2c742614419cd378425c0d14ca294f28a862510"
+    },
+    {
+      "package": "com.RutonyStd.CubeTrickFull",
+      "file": "com.RutonyStd.CubeTrickFull.png",
+      "bytes": 8854,
+      "sha256": "d650da92123abc34696180788125b48fb567afe9bca5a98c519cce016283f417"
+    },
+    {
+      "package": "com.Soul.soulcompass",
+      "file": "com.Soul.soulcompass.png",
+      "bytes": 14580,
+      "sha256": "c71ae3007dc345c6206bd4dbc11c803d90626b432ac020da12fee42ceb4cb791"
+    },
+    {
+      "package": "com.UCMobile",
+      "file": "com.UCMobile.png",
+      "bytes": 57115,
+      "sha256": "76de7f871efb7291ee930ec9249ca0d7c9f604eb81769b116e55173630abf1fb"
+    },
+    {
+      "package": "com.UCMobile.intl",
+      "file": "com.UCMobile.intl.png",
+      "bytes": 34370,
+      "sha256": "9c86c6b006d9a8b1bf48de1ab9e89cb649d3d65d7e81f66a9ad45efe83ae728d"
+    },
+    {
+      "package": "com.UCMobile.x86",
+      "file": "com.UCMobile.x86.png",
+      "bytes": 34227,
+      "sha256": "21f5bfc4fcaa8d4e34776c3ff10f807278276efc389942ab0ce17c9c0493a472"
+    },
+    {
+      "package": "com.UCMobile_3",
+      "file": "com.UCMobile_3.png",
+      "bytes": 16320,
+      "sha256": "f7a1cbe499a5dc3b211f46e4f0ec097bbbb8380a265b536b504b450226b9e404"
+    },
+    {
+      "package": "com.XiGuaRen",
+      "file": "com.XiGuaRen.png",
+      "bytes": 28607,
+      "sha256": "2722e56d060d481a93f000d7dc7e52604ade9429a55b47e1e0e977848c57c3c7"
+    },
+    {
       "package": "com.abercrombie.hollister",
       "file": "com.abercrombie.hollister.png",
       "bytes": 36676,
@@ -1966,6 +2212,12 @@
       "sha256": "41cfc78306fc890248c136c516fd84cd6704f41f414d5801352d36e7aaaab753"
     },
     {
+      "package": "com.adguard.android",
+      "file": "com.adguard.android.png",
+      "bytes": 91556,
+      "sha256": "8a3157de5e63a0483af0f61814ef2eaf534e0a4ff9387ab9bd8cbe317d21646e"
+    },
+    {
       "package": "com.adguard.android.contentblocker",
       "file": "com.adguard.android.contentblocker.png",
       "bytes": 32648,
@@ -1976,12 +2228,6 @@
       "file": "com.adguard.android.contentblocker_2.png",
       "bytes": 34000,
       "sha256": "7594e297592730405bb9d3604a9e520d082dff96effcf27c24fa3cc7fb65345e"
-    },
-    {
-      "package": "com.adguard.android",
-      "file": "com.adguard.android.png",
-      "bytes": 91556,
-      "sha256": "8a3157de5e63a0483af0f61814ef2eaf534e0a4ff9387ab9bd8cbe317d21646e"
     },
     {
       "package": "com.adobe.air",
@@ -2446,16 +2692,28 @@
       "sha256": "65204e99d9df8303a9614f6b915898d86af3215376ebed4bbf7b787da4dc48db"
     },
     {
-      "package": "com.AndPhone.game.Sperminator",
-      "file": "com.AndPhone.game.Sperminator.png",
-      "bytes": 46362,
-      "sha256": "74fafcb2e34cf666d2e82ff3437cc9a2fa4899dcbb71ff8e0a14824d4cdabb44"
-    },
-    {
       "package": "com.andreader.prein",
       "file": "com.andreader.prein.png",
       "bytes": 14461,
       "sha256": "d58fdcacbb222002e828d09d79d291cb3dfb4e067707d255a6dc36fd341720ea"
+    },
+    {
+      "package": "com.android.BBKClock",
+      "file": "com.android.BBKClock.png",
+      "bytes": 187192,
+      "sha256": "b7d0e67fb214e915c28421b3c35ffb620f40308cb9c394e69faff82a105a128b"
+    },
+    {
+      "package": "com.android.MGC",
+      "file": "com.android.MGC.png",
+      "bytes": 21896,
+      "sha256": "f47c265df0003826466d4fe53d6a7744d68166233d05bf3418314f7c24fc1e51"
+    },
+    {
+      "package": "com.android.VideoPlayer",
+      "file": "com.android.VideoPlayer.png",
+      "bytes": 27699,
+      "sha256": "84184e86434112fca4f3e8629903f90e48d65e68ae58ce3174d4da9053830796"
     },
     {
       "package": "com.android.app.notificationbar",
@@ -2492,12 +2750,6 @@
       "file": "com.android.bbk.lockscreen3.png",
       "bytes": 29761,
       "sha256": "1ca2147b8ea758dc5f93ab6e96ffbcc5db9c0cfdafafad041d9dcf11dd04da14"
-    },
-    {
-      "package": "com.android.BBKClock",
-      "file": "com.android.BBKClock.png",
-      "bytes": 187192,
-      "sha256": "b7d0e67fb214e915c28421b3c35ffb620f40308cb9c394e69faff82a105a128b"
     },
     {
       "package": "com.android.benlailife.activity",
@@ -2698,12 +2950,6 @@
       "sha256": "554677618cc0e3d91e248f19c016cf6250e357fe9ea98d843faaccede3503d26"
     },
     {
-      "package": "com.android.MGC",
-      "file": "com.android.MGC.png",
-      "bytes": 21896,
-      "sha256": "f47c265df0003826466d4fe53d6a7744d68166233d05bf3418314f7c24fc1e51"
-    },
-    {
       "package": "com.android.midrive",
       "file": "com.android.midrive.png",
       "bytes": 6174,
@@ -2762,12 +3008,6 @@
       "file": "com.android.providers.contacts.png",
       "bytes": 24095,
       "sha256": "8bdaf3c7a4e8753116d816322d50ed785caac8a93fbedc130b960d10604cea78"
-    },
-    {
-      "package": "com.android.providers.contacts_2",
-      "file": "com.android.providers.contacts_2.png",
-      "bytes": 26907,
-      "sha256": "12d70b00f8fb391baec356d83648359fd8071b00fcdd968a91871d7f225e358c"
     },
     {
       "package": "com.android.providers.downloads",
@@ -2926,22 +3166,16 @@
       "sha256": "a3406451ed9d70a50465f4d6539b322cd27452a93b7b2085c510840663f8bc7c"
     },
     {
-      "package": "com.android.vending.billing",
-      "file": "com.android.vending.billing.png",
-      "bytes": 32311,
-      "sha256": "950ef8714b23ac0b668d5e407bdd1063ff1b2a0d4ac73adc6b484d78a348c14b"
-    },
-    {
       "package": "com.android.vending",
       "file": "com.android.vending.png",
       "bytes": 64634,
       "sha256": "c2884f29324ac560f79990925dad15425dec5788e5af695a96fd270b386bc75a"
     },
     {
-      "package": "com.android.VideoPlayer",
-      "file": "com.android.VideoPlayer.png",
-      "bytes": 27699,
-      "sha256": "84184e86434112fca4f3e8629903f90e48d65e68ae58ce3174d4da9053830796"
+      "package": "com.android.vending.billing",
+      "file": "com.android.vending.billing.png",
+      "bytes": 32311,
+      "sha256": "950ef8714b23ac0b668d5e407bdd1063ff1b2a0d4ac73adc6b484d78a348c14b"
     },
     {
       "package": "com.android.voicedialer",
@@ -2980,28 +3214,22 @@
       "sha256": "fab53aa1d69fc8d8f031416273a8cbe36cfe74a4aa4c7ef192773aa143017b22"
     },
     {
-      "package": "com.Android56",
-      "file": "com.Android56.png",
-      "bytes": 19936,
-      "sha256": "f77ec96662219d957dca7de530554a1d55e05323e560320e8d2a03c5720a7784"
-    },
-    {
       "package": "com.androidemu.nes",
       "file": "com.androidemu.nes.png",
       "bytes": 18903,
       "sha256": "2c4347367c227aa29fa4cc71c9796fc05feaa0c9496099d0587576ac447c7ff5"
     },
     {
-      "package": "com.androidesk.livewallpaper",
-      "file": "com.androidesk.livewallpaper.png",
-      "bytes": 23216,
-      "sha256": "a074b05165b79f402799b06ec9b38d878201d0a38098ced39861b7bbe83e53ac"
-    },
-    {
       "package": "com.androidesk",
       "file": "com.androidesk.png",
       "bytes": 142105,
       "sha256": "b5f826f2e2ab98c460318fb48bbbf350f90d2f50d7f7c7084d8c04ed4608495f"
+    },
+    {
+      "package": "com.androidesk.livewallpaper",
+      "file": "com.androidesk.livewallpaper.png",
+      "bytes": 23216,
+      "sha256": "a074b05165b79f402799b06ec9b38d878201d0a38098ced39861b7bbe83e53ac"
     },
     {
       "package": "com.anguanjia.safe",
@@ -3094,16 +3322,16 @@
       "sha256": "77074a823c833afb0e9ca103ca8b20c788cbdcd285ea6a9a1c6595803b585e9a"
     },
     {
-      "package": "com.anydo.cal",
-      "file": "com.anydo.cal.png",
-      "bytes": 5280,
-      "sha256": "4486da53964d1622391147ebe31e520a0674aba2474f49237ab7fba1e10fe73f"
-    },
-    {
       "package": "com.anydo",
       "file": "com.anydo.png",
       "bytes": 15889,
       "sha256": "3360a204fcca24932a4830824335d00101a32dd10f12127fb92f5097d6598d22"
+    },
+    {
+      "package": "com.anydo.cal",
+      "file": "com.anydo.cal.png",
+      "bytes": 5280,
+      "sha256": "4486da53964d1622391147ebe31e520a0674aba2474f49237ab7fba1e10fe73f"
     },
     {
       "package": "com.anyisheng.doctoran",
@@ -3538,6 +3766,24 @@
       "sha256": "60cfeb27ada8c26d7df71f2a628a1e755c2f27088969e26f993dd5df153c3052"
     },
     {
+      "package": "com.baidu.BaiduMap",
+      "file": "com.baidu.BaiduMap.png",
+      "bytes": 140073,
+      "sha256": "f9cade3977c12e169542601899c379e1634b60ad8346db129ed5c2da7e0d9984"
+    },
+    {
+      "package": "com.baidu.BaiduMap_2",
+      "file": "com.baidu.BaiduMap_2.png",
+      "bytes": 61278,
+      "sha256": "58f1662fa3a5ff1d9c2591549fc838ddf122fc4ed495063222192531137eb736"
+    },
+    {
+      "package": "com.baidu.BaiduMap_3",
+      "file": "com.baidu.BaiduMap_3.png",
+      "bytes": 19391,
+      "sha256": "83b247a77402cf11e8147da90f35f215c7092fda4ae122f7b3f08632d5127939"
+    },
+    {
       "package": "com.baidu.aiboard",
       "file": "com.baidu.aiboard.png",
       "bytes": 41835,
@@ -3560,24 +3806,6 @@
       "file": "com.baidu.baidulife.png",
       "bytes": 6030,
       "sha256": "d864bc33c587ac8da1720882122720cffc1ef49f76dfaf21d12986fedb7dea4a"
-    },
-    {
-      "package": "com.baidu.BaiduMap",
-      "file": "com.baidu.BaiduMap.png",
-      "bytes": 140073,
-      "sha256": "f9cade3977c12e169542601899c379e1634b60ad8346db129ed5c2da7e0d9984"
-    },
-    {
-      "package": "com.baidu.BaiduMap_2",
-      "file": "com.baidu.BaiduMap_2.png",
-      "bytes": 61278,
-      "sha256": "58f1662fa3a5ff1d9c2591549fc838ddf122fc4ed495063222192531137eb736"
-    },
-    {
-      "package": "com.baidu.BaiduMap_3",
-      "file": "com.baidu.BaiduMap_3.png",
-      "bytes": 19391,
-      "sha256": "83b247a77402cf11e8147da90f35f215c7092fda4ae122f7b3f08632d5127939"
     },
     {
       "package": "com.baidu.baidutranslate",
@@ -3808,16 +4036,16 @@
       "sha256": "9c1dd53bea1484a1884f859bc111313b8902a4f4a75a8c69b56d5b29080c22c0"
     },
     {
-      "package": "com.baidu.searchbox.lite",
-      "file": "com.baidu.searchbox.lite.png",
-      "bytes": 160812,
-      "sha256": "c0ee3029624eec3eaeeea900d08e3893930509b9021d656f9b671d750d7d62a8"
-    },
-    {
       "package": "com.baidu.searchbox",
       "file": "com.baidu.searchbox.png",
       "bytes": 159183,
       "sha256": "a292fd1bf1026b43ad41727a1b4dc5ab34d259818c3838731a5f7d70fd364499"
+    },
+    {
+      "package": "com.baidu.searchbox.lite",
+      "file": "com.baidu.searchbox.lite.png",
+      "bytes": 160812,
+      "sha256": "c0ee3029624eec3eaeeea900d08e3893930509b9021d656f9b671d750d7d62a8"
     },
     {
       "package": "com.baidu.searchbox_2",
@@ -3964,6 +4192,12 @@
       "sha256": "efae6f6cd7e11994c43d856d2cc9262af73af00a074f4fb5bb45ba2502189be5"
     },
     {
+      "package": "com.bankcomm",
+      "file": "com.bankcomm.png",
+      "bytes": 41022,
+      "sha256": "8e3a70c26378be7020a1614c4357b9184879804450d61af98037d0562e815f95"
+    },
+    {
       "package": "com.bankcomm.Bankcomm",
       "file": "com.bankcomm.Bankcomm.png",
       "bytes": 267510,
@@ -3986,12 +4220,6 @@
       "file": "com.bankcomm.maidanba_2.png",
       "bytes": 10503,
       "sha256": "672064bfbd7e3e674cb8678874320b0875945ef8e2238244eab1c06ed7ffa3db"
-    },
-    {
-      "package": "com.bankcomm",
-      "file": "com.bankcomm.png",
-      "bytes": 41022,
-      "sha256": "8e3a70c26378be7020a1614c4357b9184879804450d61af98037d0562e815f95"
     },
     {
       "package": "com.bankofbeijing.mobilebanking",
@@ -4234,12 +4462,6 @@
       "sha256": "c085aa7ed59485076cbc13303bb080e2b46f4cb412a244b1a2bbb4277d7a10e7"
     },
     {
-      "package": "com.bilibili.azurlane.gh",
-      "file": "com.bilibili.azurlane.gh.png",
-      "bytes": 65076,
-      "sha256": "51fa31faf29447f3128b148161da4537f82d804e7aeb345b9fb5c29f6b14d0e6"
-    },
-    {
       "package": "com.bilibili.azurlane",
       "file": "com.bilibili.azurlane.png",
       "bytes": 281702,
@@ -4348,12 +4570,6 @@
       "sha256": "4655b01f4b8b38cf8e29a8f13cf10f80a91f2ee1eff7ce44ffa7de3687d56478"
     },
     {
-      "package": "com.Blackcat.app",
-      "file": "com.Blackcat.app.png",
-      "bytes": 21769,
-      "sha256": "bb534061ea36e0610c3cb0b5c917e9b9262821db70388106fd0c02716fec5bc4"
-    },
-    {
       "package": "com.blackfish.app.ui",
       "file": "com.blackfish.app.ui.png",
       "bytes": 14527,
@@ -4366,28 +4582,22 @@
       "sha256": "04f65e20d70e148f9faca4ce080c30ec327e341d3d3282be3701c0929fc721b2"
     },
     {
-      "package": "com.blink.academy.nomo_2",
-      "file": "com.blink.academy.nomo_2.png",
-      "bytes": 34620,
-      "sha256": "18d6678157959778dbed532a96531708967d937ab41b96527831a0eace98197b"
-    },
-    {
       "package": "com.blink.academy.onetake",
       "file": "com.blink.academy.onetake.png",
       "bytes": 10951,
       "sha256": "3480f73bf6bffb7fa3afb6bf9aeb717185348bad99b6caf904ba293b9d4ef876"
     },
     {
-      "package": "com.blizzard.bma.cn",
-      "file": "com.blizzard.bma.cn.png",
-      "bytes": 71913,
-      "sha256": "38c4adf8b85ab2b4cdd849c7ad94a17bce06cd8d6430303fa75a20f365bdcf6c"
-    },
-    {
       "package": "com.blizzard.bma",
       "file": "com.blizzard.bma.png",
       "bytes": 45214,
       "sha256": "c36d1ea9e78f78b2c9c20c983acd26e6c6583f8a3ac948b5f90b5e0bec9e578d"
+    },
+    {
+      "package": "com.blizzard.bma.cn",
+      "file": "com.blizzard.bma.cn.png",
+      "bytes": 71913,
+      "sha256": "38c4adf8b85ab2b4cdd849c7ad94a17bce06cd8d6430303fa75a20f365bdcf6c"
     },
     {
       "package": "com.blizzard.bma_2",
@@ -5266,18 +5476,6 @@
       "sha256": "278991597325fb3f3eb666089aa2808f42d4bd4133ebbb645e0f781b9209555e"
     },
     {
-      "package": "com.ChillyRoom.DungeonShooter",
-      "file": "com.ChillyRoom.DungeonShooter.png",
-      "bytes": 18030,
-      "sha256": "21ae057842b759654df48a6ef479929fa8233966f2d79a5d6db4a659f086a937"
-    },
-    {
-      "package": "com.ChillyRoom.nearme.gamecenter_2",
-      "file": "com.ChillyRoom.nearme.gamecenter_2.png",
-      "bytes": 36151,
-      "sha256": "8dff7a654ee507d04c002f03fff66fb74fef516badc23379b853fd70acf05e26"
-    },
-    {
       "package": "com.chinaamc.mfbh",
       "file": "com.chinaamc.mfbh.png",
       "bytes": 65106,
@@ -5608,16 +5806,16 @@
       "sha256": "877721f319d6d3e0d884147bb584d1411e31e72405e4e641eeddca893d8ca232"
     },
     {
-      "package": "com.cmbchina.ccd.pluto.cmbActivity",
-      "file": "com.cmbchina.ccd.pluto.cmbActivity.png",
-      "bytes": 183598,
-      "sha256": "b904d0e0903b50fccfbd3ea452c9e97848f4e0f9f8fd3410e0331b0eb9ba2638"
-    },
-    {
       "package": "com.cmbchina.ccd.pluto",
       "file": "com.cmbchina.ccd.pluto.png",
       "bytes": 17551,
       "sha256": "63ac032b1fe076159bd6fd6bd057a8829162a680bd074efa0c804de751b27c94"
+    },
+    {
+      "package": "com.cmbchina.ccd.pluto.cmbActivity",
+      "file": "com.cmbchina.ccd.pluto.cmbActivity.png",
+      "bytes": 183598,
+      "sha256": "b904d0e0903b50fccfbd3ea452c9e97848f4e0f9f8fd3410e0331b0eb9ba2638"
     },
     {
       "package": "com.cmbchina.ccd.pluto_2",
@@ -5774,12 +5972,6 @@
       "file": "com.cnvcs.xiangqi.png",
       "bytes": 245868,
       "sha256": "24d7e967b9ba8ea1506b464b86b85844865dabf386734cbf64bdaad9732798b2"
-    },
-    {
-      "package": "com.cnvcs.xiangqi_2",
-      "file": "com.cnvcs.xiangqi_2.png",
-      "bytes": 50831,
-      "sha256": "fe789031467fdb35c121be94e9306483c8a1af610f58f805466ad1b80f40a4de"
     },
     {
       "package": "com.coderstory.flyme",
@@ -6508,12 +6700,6 @@
       "sha256": "d4bb57e69b9872509aae2d2ea9ac93e6672f058ecfb5a6e8a177fc74f9d95288"
     },
     {
-      "package": "com.DefiantDev.SkiSafari",
-      "file": "com.DefiantDev.SkiSafari.png",
-      "bytes": 49067,
-      "sha256": "65763fcf60a81f5040b4ddabc992879c72ef80f81978ea9640ee0ca697cda2f8"
-    },
-    {
       "package": "com.demacia.duoku",
       "file": "com.demacia.duoku.png",
       "bytes": 24985,
@@ -6550,12 +6736,6 @@
       "sha256": "1e0b5d989bfe89ef688f837693c2c00a5566a3345cff7bd8a873d5dda0bec9ab"
     },
     {
-      "package": "com.dewmobile.kuaiya_2",
-      "file": "com.dewmobile.kuaiya_2.png",
-      "bytes": 20431,
-      "sha256": "59676d38d7a523268d4358d741bca7f5cce1502dc83a746072c2df077faf25c9"
-    },
-    {
       "package": "com.deyi.client",
       "file": "com.deyi.client.png",
       "bytes": 21100,
@@ -6572,12 +6752,6 @@
       "file": "com.dfpzmasters.wdj.png",
       "bytes": 63101,
       "sha256": "93832cb2f1f5c9547cc83d0fcd5e941d9b3d0de92f3142f0dca96d1fa9dd9625"
-    },
-    {
-      "package": "com.DFQS",
-      "file": "com.DFQS.png",
-      "bytes": 55255,
-      "sha256": "0d9c2315eb3c24ea94adafb37de1b368a7f4fc8dc0721e88154f513ed65df355"
     },
     {
       "package": "com.dft.hb.app",
@@ -6826,6 +7000,12 @@
       "sha256": "7b78a4a8792c4b06d19dd6d300760fd27e990744a626f8dc348b8ea9719fca57"
     },
     {
+      "package": "com.disney.WMW.elm",
+      "file": "com.disney.WMW.elm.png",
+      "bytes": 43986,
+      "sha256": "fc6185bf96e8fe0b13434250c1b8905d66fa954581c891a9ee11b23a07dbed33"
+    },
+    {
       "package": "com.disney.chukong.WMW",
       "file": "com.disney.chukong.WMW.png",
       "bytes": 56622,
@@ -6848,12 +7028,6 @@
       "file": "com.disney.troz.png",
       "bytes": 50476,
       "sha256": "a1efed92fb7369473255596ffa28b1c006b299514ecb37651869bb6e4dc38fa5"
-    },
-    {
-      "package": "com.disney.WMW.elm",
-      "file": "com.disney.WMW.elm.png",
-      "bytes": 43986,
-      "sha256": "fc6185bf96e8fe0b13434250c1b8905d66fa954581c891a9ee11b23a07dbed33"
     },
     {
       "package": "com.diyidan",
@@ -7036,16 +7210,16 @@
       "sha256": "4687d6979160176470b7b76258541740df811263d1e664cc558b38c9b928e21f"
     },
     {
-      "package": "com.doubleiq.podcast",
-      "file": "com.doubleiq.podcast.png",
-      "bytes": 27618,
-      "sha256": "2eeaee3b31021748502ecb95d7ee5dc8b76650c1dc3e4ced7203c5fc25953802"
-    },
-    {
       "package": "com.doubleTwist.androidPlayer",
       "file": "com.doubleTwist.androidPlayer.png",
       "bytes": 28442,
       "sha256": "bfe206018a0ecd528080dad7d9b5a30b3d10c99ecbbaef6f6b000db6284ad1b7"
+    },
+    {
+      "package": "com.doubleiq.podcast",
+      "file": "com.doubleiq.podcast.png",
+      "bytes": 27618,
+      "sha256": "2eeaee3b31021748502ecb95d7ee5dc8b76650c1dc3e4ced7203c5fc25953802"
     },
     {
       "package": "com.douguo.recipe",
@@ -7444,12 +7618,6 @@
       "sha256": "3721988aad12b3762914f00ebbb612254f30506c743cd984b3824ee5bc641a6a"
     },
     {
-      "package": "com.ecitic.bank.mobile_2",
-      "file": "com.ecitic.bank.mobile_2.png",
-      "bytes": 47592,
-      "sha256": "52a13d8220ba7d0f567b39a9e0870c0b9968d2e8420d0a19d88312582bdb406a"
-    },
-    {
       "package": "com.ecitic.bank.mobile_3",
       "file": "com.ecitic.bank.mobile_3.png",
       "bytes": 32814,
@@ -7702,12 +7870,6 @@
       "sha256": "cf6f4c90b1c8d267ab860a8ec7578fe8c9dd6a23008ded300bb446529c1f5ea8"
     },
     {
-      "package": "com.ETCPOwner.yc",
-      "file": "com.ETCPOwner.yc.png",
-      "bytes": 35091,
-      "sha256": "569f6326f740bbdbb91ac99c9cc7bbbf75cb720c4057457040e41c7fa9602130"
-    },
-    {
       "package": "com.eusoft.dehelper",
       "file": "com.eusoft.dehelper.png",
       "bytes": 24746,
@@ -7768,6 +7930,12 @@
       "sha256": "248bdf9b2646e53af61f488fcb19e048b23e6ee27bea9b9ba87ca0008e627872"
     },
     {
+      "package": "com.evernote",
+      "file": "com.evernote.png",
+      "bytes": 39227,
+      "sha256": "e2805f78e46e5ea473e0ced56ffb653fe7e9c835b9950d0f6205da29aa788f5f"
+    },
+    {
       "package": "com.evernote.food",
       "file": "com.evernote.food.png",
       "bytes": 29884,
@@ -7778,12 +7946,6 @@
       "file": "com.evernote.hello.png",
       "bytes": 38680,
       "sha256": "1312e04cfcd0b189ee3d9b7a19c643bf7281954ce1b3d9c3a85c56d5475933ab"
-    },
-    {
-      "package": "com.evernote",
-      "file": "com.evernote.png",
-      "bytes": 39227,
-      "sha256": "e2805f78e46e5ea473e0ced56ffb653fe7e9c835b9950d0f6205da29aa788f5f"
     },
     {
       "package": "com.evernote.skitch",
@@ -7966,12 +8128,6 @@
       "sha256": "e7854cc1889121c121c301c23f2725ddf915eef1b27656bca12142d7bbcf3073"
     },
     {
-      "package": "com.facebook.orca_2",
-      "file": "com.facebook.orca_2.png",
-      "bytes": 38831,
-      "sha256": "cca39650c7ee52b0f8549a18152e9c5ba442e84ea47cc09200fbcd76f56c7651"
-    },
-    {
       "package": "com.facebook.slingshot",
       "file": "com.facebook.slingshot.png",
       "bytes": 15271,
@@ -8080,22 +8236,16 @@
       "sha256": "6f2624838693eea46e8f4676ed75013c39242c03afb4e4f6bb6e4f7685f6ea43"
     },
     {
-      "package": "com.fdgentertainment.bananakong_2",
-      "file": "com.fdgentertainment.bananakong_2.png",
-      "bytes": 57316,
-      "sha256": "d70528db329f5009589cb2860653b2decba3c381e937dc6c7ede4de430c9d7ba"
+      "package": "com.feelingtouch.NinjaRunDeluxe",
+      "file": "com.feelingtouch.NinjaRunDeluxe.png",
+      "bytes": 40241,
+      "sha256": "b8e0d44df5fcfe1c838f115b99a61a78d928d1682b60b396a64538e305e34e5c"
     },
     {
       "package": "com.feelingtouch.gnz",
       "file": "com.feelingtouch.gnz.png",
       "bytes": 73644,
       "sha256": "eb81517733e2951f799bbe4e1f8fb739df4522edfca1428e1cec215919df1a69"
-    },
-    {
-      "package": "com.feelingtouch.NinjaRunDeluxe",
-      "file": "com.feelingtouch.NinjaRunDeluxe.png",
-      "bytes": 40241,
-      "sha256": "b8e0d44df5fcfe1c838f115b99a61a78d928d1682b60b396a64538e305e34e5c"
     },
     {
       "package": "com.feeyo.vz.pro.cdm",
@@ -8344,16 +8494,16 @@
       "sha256": "d1d59a475e644a44d407f14184237b130fa3b8364fab7561c4433cd038cc19ab"
     },
     {
-      "package": "com.fivehundredpx.viewer.main",
-      "file": "com.fivehundredpx.viewer.main.png",
-      "bytes": 17605,
-      "sha256": "364d7c114b69b4785da7aa30d706f9db9a91fcc52457d8f8a53ca516f3fb181b"
-    },
-    {
       "package": "com.fivehundredpx.viewer",
       "file": "com.fivehundredpx.viewer.png",
       "bytes": 34020,
       "sha256": "56c69de9835319f63c9eaba167a868394d5881f7021cf823fc4a981ea2c7a9c9"
+    },
+    {
+      "package": "com.fivehundredpx.viewer.main",
+      "file": "com.fivehundredpx.viewer.main.png",
+      "bytes": 17605,
+      "sha256": "364d7c114b69b4785da7aa30d706f9db9a91fcc52457d8f8a53ca516f3fb181b"
     },
     {
       "package": "com.fivehundredpx.viewer_2",
@@ -8382,12 +8532,6 @@
     {
       "package": "com.flambestudios.picplaypost",
       "file": "com.flambestudios.picplaypost.png",
-      "bytes": 12234,
-      "sha256": "34a8d8d843cfe0889db430e7bdec901697175ffa3628bcbdc2d66e91e76ec449"
-    },
-    {
-      "package": "com.flambestudios.picplaypost_2",
-      "file": "com.flambestudios.picplaypost_2.png",
       "bytes": 12033,
       "sha256": "5da17bb10c0efb2dfd21d40a1bfb36bcb1415b0e67e1970fd75fba65f9ba9ce9"
     },
@@ -8674,12 +8818,6 @@
       "sha256": "d3f1535dc5d4faa360ba21afa49eebe29310b5a73568b46fa9be02323c801c45"
     },
     {
-      "package": "com.fungus.iconpack.sense2.nonshadow",
-      "file": "com.fungus.iconpack.sense2.nonshadow.png",
-      "bytes": 139369,
-      "sha256": "79e542a9cf115e23cf967a640fd99e60286ed92058702b90aabc7dccab48282e"
-    },
-    {
       "package": "com.funinhand.weibo",
       "file": "com.funinhand.weibo.png",
       "bytes": 37280,
@@ -8690,12 +8828,6 @@
       "file": "com.funinput.digit.png",
       "bytes": 185011,
       "sha256": "c1d859b94354e79741bba1ee36adaf8bf8753f667c915be4fb1fd5794c7f5740"
-    },
-    {
-      "package": "com.funinput.digit_3",
-      "file": "com.funinput.digit_3.png",
-      "bytes": 24544,
-      "sha256": "4effce2c142a6742dfa2f1d44477dbd79bd645fddb1c2bfb28eff5de602fb518"
     },
     {
       "package": "com.funshion.video.mobile",
@@ -8752,16 +8884,16 @@
       "sha256": "f99cf2fa4bd485558bc05dfc056efbc8d5b3e687621145e6ff45601ec86603aa"
     },
     {
-      "package": "com.game.dragon.uc",
-      "file": "com.game.dragon.uc.png",
-      "bytes": 23851,
-      "sha256": "563deeae1adb45b712e77b0cc3652df4033dd869c49cceec338bf3ada3dd91df"
-    },
-    {
       "package": "com.game.FarmGame2.uc",
       "file": "com.game.FarmGame2.uc.png",
       "bytes": 98194,
       "sha256": "6bf91f334dfc2a95ed3026c2e35743384ea8aeb29bfeabaa1c9f8126a42100b7"
+    },
+    {
+      "package": "com.game.dragon.uc",
+      "file": "com.game.dragon.uc.png",
+      "bytes": 23851,
+      "sha256": "563deeae1adb45b712e77b0cc3652df4033dd869c49cceec338bf3ada3dd91df"
     },
     {
       "package": "com.game.viewcolor",
@@ -9106,12 +9238,6 @@
       "sha256": "8b7817f82a3be2aac1535d227b8456260ef17351a1f0cab2eb237a5704b270c6"
     },
     {
-      "package": "com.GOGN.EFAndroid",
-      "file": "com.GOGN.EFAndroid.png",
-      "bytes": 57873,
-      "sha256": "304d7d3f735e08fc80d73b173be7a54b70bba030ffcb0a1e1413ff598288c81b"
-    },
-    {
       "package": "com.gogofood",
       "file": "com.gogofood.png",
       "bytes": 35045,
@@ -9140,6 +9266,18 @@
       "file": "com.goodyes.vpn.cn.png",
       "bytes": 22034,
       "sha256": "0bc46db29085710ad0f7904226f242a6d58a3a41adeaa100a8464336b9b94228"
+    },
+    {
+      "package": "com.google.android.GoogleCamera",
+      "file": "com.google.android.GoogleCamera.png",
+      "bytes": 189522,
+      "sha256": "6c2ebf2a5af8d7ed6e7cf1f0293cedb3314fffe1622f33f4fb7372b3b57f8048"
+    },
+    {
+      "package": "com.google.android.GoogleCameraGood",
+      "file": "com.google.android.GoogleCameraGood.png",
+      "bytes": 22123,
+      "sha256": "6e3640c60d885885e49677ac06df87ea275f174e1a7fa886d44c37870adfe5d0"
     },
     {
       "package": "com.google.android.apps.authenticator2",
@@ -9430,18 +9568,6 @@
       "sha256": "64627f6e7776c5cf2a7a7b75913675285e576a65fd716985362186d8b880657d"
     },
     {
-      "package": "com.google.android.GoogleCamera",
-      "file": "com.google.android.GoogleCamera.png",
-      "bytes": 189522,
-      "sha256": "6c2ebf2a5af8d7ed6e7cf1f0293cedb3314fffe1622f33f4fb7372b3b57f8048"
-    },
-    {
-      "package": "com.google.android.GoogleCameraGood",
-      "file": "com.google.android.GoogleCameraGood.png",
-      "bytes": 22123,
-      "sha256": "6e3640c60d885885e49677ac06df87ea275f174e1a7fa886d44c37870adfe5d0"
-    },
-    {
       "package": "com.google.android.googlequicksearchbox",
       "file": "com.google.android.googlequicksearchbox.png",
       "bytes": 44610,
@@ -9618,12 +9744,6 @@
     {
       "package": "com.google.android.youtube_5",
       "file": "com.google.android.youtube_5.png",
-      "bytes": 41350,
-      "sha256": "6e5463ca05df0a8fe65e97feb827561a91b3e0023dc7058e48316dc4fdade8c5"
-    },
-    {
-      "package": "com.google.android.youtube_6",
-      "file": "com.google.android.youtube_6.png",
       "bytes": 28300,
       "sha256": "e49d203f625464d2d892449cff4cc3ade39729d0c54ff6bd59ede6f29815dd58"
     },
@@ -9908,12 +10028,6 @@
       "file": "com.gzrcb.mobilebank.png",
       "bytes": 18815,
       "sha256": "9e3320ff99ac135fb8fc8e0d3fe2477088aa52003b6e7990373b8fcdcbd9d344"
-    },
-    {
-      "package": "com.GZT.identity",
-      "file": "com.GZT.identity.png",
-      "bytes": 17208,
-      "sha256": "68ab7afa5d1af839dae228f5bfa18dedeb735a5657718d734a91b0c3500596c3"
     },
     {
       "package": "com.habits.juxiao",
@@ -10270,12 +10384,6 @@
       "sha256": "73b3201d8bc0e7816c695211e93515ef183b70d9d3aac03d8fb0c83b6a44c503"
     },
     {
-      "package": "com.heytap.speechassist",
-      "file": "com.heytap.speechassist.png",
-      "bytes": 177326,
-      "sha256": "34445dbaf2aa427d30fffbad3368cfaeae2c45cf7c79bd72a4122df607371d0e"
-    },
-    {
       "package": "com.heytap.themestore_2",
       "file": "com.heytap.themestore_2.png",
       "bytes": 39988,
@@ -10468,16 +10576,16 @@
       "sha256": "1bf53e81a9bfb7fc086c2e38fedf60db0439639f6a83a946df44967200ebd84d"
     },
     {
-      "package": "com.hm.goe",
-      "file": "com.hm.goe.png",
-      "bytes": 22710,
-      "sha256": "d99b693022cec96656e385c1c3dc0b675b581284ae750e6d9edbe2724cb5b952"
-    },
-    {
       "package": "com.hm",
       "file": "com.hm.png",
       "bytes": 25867,
       "sha256": "b2220ca046d0793caa845e70a4f831a22422d1117ff28c76872897d72b49b925"
+    },
+    {
+      "package": "com.hm.goe",
+      "file": "com.hm.goe.png",
+      "bytes": 22710,
+      "sha256": "d99b693022cec96656e385c1c3dc0b675b581284ae750e6d9edbe2724cb5b952"
     },
     {
       "package": "com.hnnx.eBank.android",
@@ -10582,12 +10690,6 @@
       "sha256": "e2f2dfca0612a9a3993c00f6db057e11c514355df807541d1cc91887de233d5e"
     },
     {
-      "package": "com.HoYoverse.hkrpgoversea",
-      "file": "com.HoYoverse.hkrpgoversea.png",
-      "bytes": 274042,
-      "sha256": "d853af9f8591699de50bc16bcc22a85049277e08a299006aeecee3f7d25e0dc8"
-    },
-    {
       "package": "com.hp.mit.atmobile.kfc",
       "file": "com.hp.mit.atmobile.kfc.png",
       "bytes": 24834,
@@ -10654,6 +10756,18 @@
       "sha256": "9fd657a18df1b78b8cbe35d66c2893a3b4d16adfce1d348c80af70fc4c4d033b"
     },
     {
+      "package": "com.htc.AutoMotive",
+      "file": "com.htc.AutoMotive.png",
+      "bytes": 47154,
+      "sha256": "77dde130fcbddcac0c2ac80781b7332a331578f2930977840a6efb4c5e0a5c38"
+    },
+    {
+      "package": "com.htc.Weather",
+      "file": "com.htc.Weather.png",
+      "bytes": 21917,
+      "sha256": "27af83e3498fb53604b93982d373fa9187af821c73c9a955c0ee3142017ffa0f"
+    },
+    {
       "package": "com.htc.album",
       "file": "com.htc.album.png",
       "bytes": 5204,
@@ -10670,12 +10784,6 @@
       "file": "com.htc.android.worldclock.png",
       "bytes": 19075,
       "sha256": "d7a54e57f46b99bc1c355e7cba6285db22e752e9752d07763bdae1aa308c619b"
-    },
-    {
-      "package": "com.htc.AutoMotive",
-      "file": "com.htc.AutoMotive.png",
-      "bytes": 47154,
-      "sha256": "77dde130fcbddcac0c2ac80781b7332a331578f2930977840a6efb4c5e0a5c38"
     },
     {
       "package": "com.htc.calendar",
@@ -10736,12 +10844,6 @@
       "file": "com.htc.task.png",
       "bytes": 10083,
       "sha256": "d4b8cac02730df07b840485dd1bbeb1ce7279d7d9549c949a275ac354a2286cf"
-    },
-    {
-      "package": "com.htc.Weather",
-      "file": "com.htc.Weather.png",
-      "bytes": 21917,
-      "sha256": "27af83e3498fb53604b93982d373fa9187af821c73c9a955c0ee3142017ffa0f"
     },
     {
       "package": "com.htc.zero",
@@ -10834,22 +10936,28 @@
       "sha256": "9c7fb9bf0e2e8e3965627209628981580f55ee3cb2e3466835f1c0996e6af287"
     },
     {
+      "package": "com.huawei.KoBackup",
+      "file": "com.huawei.KoBackup.png",
+      "bytes": 33617,
+      "sha256": "af35229c6e0532a96ea304250d499ee141963b31349c29167a4228b9f487e32d"
+    },
+    {
       "package": "com.huawei.accountagent",
       "file": "com.huawei.accountagent.png",
       "bytes": 19829,
       "sha256": "69a93b5fe7584aed7ef0160482f640431363012c14fe4aa2ca2c02b69af0048c"
     },
     {
-      "package": "com.huawei.android.findmyphone",
-      "file": "com.huawei.android.findmyphone.png",
-      "bytes": 37785,
-      "sha256": "49851cd8ea695083074d5e67bdae134f2d39de8c9ccb4d4cb475a2a24ffd6c2d"
-    },
-    {
       "package": "com.huawei.android.FMRadio",
       "file": "com.huawei.android.FMRadio.png",
       "bytes": 30638,
       "sha256": "c9a9016e64c4c5e21df7ffe0da5321f20c4605939ecbfbd866d24a9d811dee8f"
+    },
+    {
+      "package": "com.huawei.android.findmyphone",
+      "file": "com.huawei.android.findmyphone.png",
+      "bytes": 37785,
+      "sha256": "49851cd8ea695083074d5e67bdae134f2d39de8c9ccb4d4cb475a2a24ffd6c2d"
     },
     {
       "package": "com.huawei.android.hwouc",
@@ -11062,12 +11170,6 @@
       "sha256": "aac4f8328e3a0814edc5f3f0f55a5d4b1207435ffe96d039b748b58ec963dc35"
     },
     {
-      "package": "com.huawei.KoBackup",
-      "file": "com.huawei.KoBackup.png",
-      "bytes": 33617,
-      "sha256": "af35229c6e0532a96ea304250d499ee141963b31349c29167a4228b9f487e32d"
-    },
-    {
       "package": "com.huawei.lives",
       "file": "com.huawei.lives.png",
       "bytes": 27423,
@@ -11180,12 +11282,6 @@
       "file": "com.huawei.welinknow.png",
       "bytes": 12134,
       "sha256": "157739de1fc7631c0a07b9c484bf158d8fb88da928b0251cc269f50ea49d0b1b"
-    },
-    {
-      "package": "com.HuaXiaBank.HuaCard",
-      "file": "com.HuaXiaBank.HuaCard.png",
-      "bytes": 228256,
-      "sha256": "ec58661ec4e98afdceff87744b116625426d10791292d750629e6168b009e142"
     },
     {
       "package": "com.huaxiaozhu.rider",
@@ -11434,6 +11530,12 @@
       "sha256": "b984add19d57ed7d2731f4187bda735537fc3bd720a8e473a5e0d5d29079f2eb"
     },
     {
+      "package": "com.iBookStar.activity",
+      "file": "com.iBookStar.activity.png",
+      "bytes": 32048,
+      "sha256": "ff5258c5f8a0b247519cb57c6b4b521280c356ff145f7347402acb7e45013cb9"
+    },
+    {
       "package": "com.iafun.Tipix",
       "file": "com.iafun.Tipix.png",
       "bytes": 26412,
@@ -11458,12 +11560,6 @@
       "sha256": "069e6ea913cf3a0500ae0032dc54318cdd358e57b90d5f3dc93bea33f7d017fa"
     },
     {
-      "package": "com.iBookStar.activity",
-      "file": "com.iBookStar.activity.png",
-      "bytes": 32048,
-      "sha256": "ff5258c5f8a0b247519cb57c6b4b521280c356ff145f7347402acb7e45013cb9"
-    },
-    {
       "package": "com.iboxpay.minicashbox",
       "file": "com.iboxpay.minicashbox.png",
       "bytes": 26911,
@@ -11476,6 +11572,12 @@
       "sha256": "a57b858a54e3da4f988c027a2571b4f48f99cbb1c0efe785a906c955ec78a3be"
     },
     {
+      "package": "com.icbc",
+      "file": "com.icbc.png",
+      "bytes": 236982,
+      "sha256": "b4c82fb36287b9f0e2e8df9211681a018a890066e64e3b7554f9ab68c7386cdb"
+    },
+    {
       "package": "com.icbc.emallmobile",
       "file": "com.icbc.emallmobile.png",
       "bytes": 15811,
@@ -11486,12 +11588,6 @@
       "file": "com.icbc.im.png",
       "bytes": 166889,
       "sha256": "73ce3daedc883c37bdc121b1324c3369f03829c441894c6b9c1a1cf6253caa5d"
-    },
-    {
-      "package": "com.icbc",
-      "file": "com.icbc.png",
-      "bytes": 236982,
-      "sha256": "b4c82fb36287b9f0e2e8df9211681a018a890066e64e3b7554f9ab68c7386cdb"
     },
     {
       "package": "com.icbc.wapc",
@@ -12490,16 +12586,16 @@
       "sha256": "b35bbf35972caee8607d622a7d9847846d6640b6c09fe7ddb62390d7e1c44013"
     },
     {
-      "package": "com.jingdong.app.reader.campus",
-      "file": "com.jingdong.app.reader.campus.png",
-      "bytes": 83773,
-      "sha256": "c6771ef7897e448f37ef4179ce476426160cec47d02fdd360f0c7feaa0ffcdb4"
-    },
-    {
       "package": "com.jingdong.app.reader",
       "file": "com.jingdong.app.reader.png",
       "bytes": 14648,
       "sha256": "4ebdc1ec77622eca3e962a09a8ee4fb028888577b501f52a2f239f12475654cb"
+    },
+    {
+      "package": "com.jingdong.app.reader.campus",
+      "file": "com.jingdong.app.reader.campus.png",
+      "bytes": 83773,
+      "sha256": "c6771ef7897e448f37ef4179ce476426160cec47d02fdd360f0c7feaa0ffcdb4"
     },
     {
       "package": "com.jingdong.app.reader_2",
@@ -12680,12 +12776,6 @@
       "file": "com.joym.xiongdakuaipao.png",
       "bytes": 72813,
       "sha256": "145aa565ff1bd4d6b62cf7100da346c9466b44f7a4dc2576a6ac322d9396debd"
-    },
-    {
-      "package": "com.JoyReading",
-      "file": "com.JoyReading.png",
-      "bytes": 45707,
-      "sha256": "730643bf6de6f00828f4ddf16702dbce30d5b2ab1ce27600e89ef6493ff39687"
     },
     {
       "package": "com.joyuan.douban.dongxi",
@@ -12880,16 +12970,16 @@
       "sha256": "5b3a6f7f8115cdc0af22d068dc858ca7aa5d88ec186480a00fde183446eac6b1"
     },
     {
-      "package": "com.jzt.app",
-      "file": "com.jzt.app.png",
-      "bytes": 38339,
-      "sha256": "d6f757ba493de9d6d55c3c0182da04b85ed62ebf939fdf242b1fa58d37aa0d94"
-    },
-    {
       "package": "com.jzt",
       "file": "com.jzt.png",
       "bytes": 22161,
       "sha256": "b84af6bef768b7a317f42b8e9317caec93207b254d0af422d9ba3808f38f4a8d"
+    },
+    {
+      "package": "com.jzt.app",
+      "file": "com.jzt.app.png",
+      "bytes": 38339,
+      "sha256": "d6f757ba493de9d6d55c3c0182da04b85ed62ebf939fdf242b1fa58d37aa0d94"
     },
     {
       "package": "com.jzyd.BanTang",
@@ -13060,12 +13150,6 @@
       "sha256": "328ae3cfb67313f51a9bed9bfb18e085cdd0ccd481d9aca3d1a35944d634f611"
     },
     {
-      "package": "com.KelliNoda.Battleheart",
-      "file": "com.KelliNoda.Battleheart.png",
-      "bytes": 25782,
-      "sha256": "c7607fb020114382f7c57046877b0d23059b5fa487a5ec26b57c934cc83b3a9f"
-    },
-    {
       "package": "com.kenai.melody",
       "file": "com.kenai.melody.png",
       "bytes": 23094,
@@ -13144,18 +13228,6 @@
       "sha256": "e5308df893e6d4c5f44cb0d8f5f8e739faa35d36f9c2d33a5c6c038134f2fade"
     },
     {
-      "package": "com.Kingdee.Express",
-      "file": "com.Kingdee.Express.png",
-      "bytes": 115142,
-      "sha256": "2403c98f28327fe378e38e35d0e328d09c0721f9c442c264d1c03043c3fa9cc1"
-    },
-    {
-      "package": "com.Kingdee.Express_3",
-      "file": "com.Kingdee.Express_3.png",
-      "bytes": 20353,
-      "sha256": "ddfd5d6ec71568eb886f40f4054fdf6cf80058cd4a79f0f57c33390be3d6c7a9"
-    },
-    {
       "package": "com.kingdon.mycz",
       "file": "com.kingdon.mycz.png",
       "bytes": 207122,
@@ -13204,6 +13276,12 @@
       "sha256": "d993bc01218a7d5e9ad4fc88c6e3d9b1e9a643d5d0813d05751b9250574f8506"
     },
     {
+      "package": "com.kingsoft",
+      "file": "com.kingsoft.png",
+      "bytes": 86403,
+      "sha256": "1adf5c0ef1a0e77935631c078abdd9342d615749ddacece60f5ad8ce04e3063d"
+    },
+    {
       "package": "com.kingsoft.android.cat",
       "file": "com.kingsoft.android.cat.png",
       "bytes": 221209,
@@ -13214,12 +13292,6 @@
       "file": "com.kingsoft.email.png",
       "bytes": 7579,
       "sha256": "62fbedd8c41a99d3eae987d4251ea7a55bcde3f9365e28c1c05e59101f1765ce"
-    },
-    {
-      "package": "com.kingsoft",
-      "file": "com.kingsoft.png",
-      "bytes": 86403,
-      "sha256": "1adf5c0ef1a0e77935631c078abdd9342d615749ddacece60f5ad8ce04e3063d"
     },
     {
       "package": "com.kingsofticon",
@@ -13336,12 +13408,6 @@
       "sha256": "c14973fbe949713595b2702e31d94856fdad71b7d900f9052c38ee0161838fcb"
     },
     {
-      "package": "com.KPVh.T.QfpfP7VNT",
-      "file": "com.KPVh.T.QfpfP7VNT.png",
-      "bytes": 35961,
-      "sha256": "a0839faa9e02b4f1d3cc62c00f4ed822fd833b709e1aa8b1a4e298df0dd4562b"
-    },
-    {
       "package": "com.kqstone.immersedstatusbar",
       "file": "com.kqstone.immersedstatusbar.png",
       "bytes": 17806,
@@ -13444,16 +13510,16 @@
       "sha256": "b0bdff99c26dd3d5d3f378a1da049a139e8b5c87fc23be3ef4984005f8f7c25d"
     },
     {
-      "package": "com.kugou.android.lite",
-      "file": "com.kugou.android.lite.png",
-      "bytes": 175130,
-      "sha256": "7029c47c21df93387d86d949efd5564cd133098fd55e371afe17e301aecfd826"
-    },
-    {
       "package": "com.kugou.android",
       "file": "com.kugou.android.png",
       "bytes": 213028,
       "sha256": "5623f7d68ddad8cf07d001bc9366ac627b667f5a1b554bca0aaaac581d85c5c6"
+    },
+    {
+      "package": "com.kugou.android.lite",
+      "file": "com.kugou.android.lite.png",
+      "bytes": 175130,
+      "sha256": "7029c47c21df93387d86d949efd5564cd133098fd55e371afe17e301aecfd826"
     },
     {
       "package": "com.kugou.android_2",
@@ -13804,12 +13870,6 @@
       "sha256": "34348a75d6e0b7ee257ab79d81f7acd63a798bbdce063a97ddc2df1e0e5c7252"
     },
     {
-      "package": "com.lemon.faceu_2",
-      "file": "com.lemon.faceu_2.png",
-      "bytes": 37940,
-      "sha256": "3a3726c9c776a7cfcc1eb5f82378a43dc6f853663de22cc94eb8b2caffb279c5"
-    },
-    {
       "package": "com.lemon.lv",
       "file": "com.lemon.lv.png",
       "bytes": 129458,
@@ -14012,12 +14072,6 @@
       "file": "com.lightricks.facetune.png",
       "bytes": 54497,
       "sha256": "727fd6660b18dcdd84e31e911662b28ebf0c7cd308a1d713242014322a4c8d8d"
-    },
-    {
-      "package": "com.lightricks.facetune_2",
-      "file": "com.lightricks.facetune_2.png",
-      "bytes": 33549,
-      "sha256": "7bfad45b6c268f8e671d91dd123d418b317bff525c0c9dbfb0155b76cd9c750c"
     },
     {
       "package": "com.lightricks.pixaloop",
@@ -14650,12 +14704,6 @@
       "sha256": "96235376fd88115b55426a939c0d1d5b0e871722092eead345a6aa166010b311"
     },
     {
-      "package": "com.McDullpalm.bus",
-      "file": "com.McDullpalm.bus.png",
-      "bytes": 16839,
-      "sha256": "b31cca84e79ecd64793f93ccb3187d8acc881ad201d75d6869200e5a3798d3d0"
-    },
-    {
       "package": "com.medialab.quizup",
       "file": "com.medialab.quizup.png",
       "bytes": 28366,
@@ -15220,6 +15268,48 @@
       "sha256": "7cbfbcc3ac7ce255cc29d902468ac7cd0b54ee25dd70d18a2a1a34ec6da07df8"
     },
     {
+      "package": "com.miHoYo.HSoDv22144.uc",
+      "file": "com.miHoYo.HSoDv22144.uc.png",
+      "bytes": 195310,
+      "sha256": "4d15bc47ab603973ada3dbc2fa98d58bba72487a02f384a690769ee09c501885"
+    },
+    {
+      "package": "com.miHoYo.Nap",
+      "file": "com.miHoYo.Nap.png",
+      "bytes": 415215,
+      "sha256": "aad22dd9b60a9e42e46b0be9220f2fa102a06b3baac0afd088974f01572b3c11"
+    },
+    {
+      "package": "com.miHoYo.Yuanshen",
+      "file": "com.miHoYo.Yuanshen.png",
+      "bytes": 349475,
+      "sha256": "68f9278f8a0f15634c7300ed5563dd8e7210e6d4b53183a79807aa13a1de39e1"
+    },
+    {
+      "package": "com.miHoYo.Yuanshen_2",
+      "file": "com.miHoYo.Yuanshen_2.png",
+      "bytes": 47503,
+      "sha256": "7aef0d5a554521f48a440da19fdba219ca2d3d4734bfb934ea5bf7cb2ff69088"
+    },
+    {
+      "package": "com.miHoYo.bh3.bilibili",
+      "file": "com.miHoYo.bh3.bilibili.png",
+      "bytes": 356885,
+      "sha256": "ff4af1dba2baae4ad2998fa593e7dd90a7431ca165baa19d7a7fb1ae567191ac"
+    },
+    {
+      "package": "com.miHoYo.bh3.bilibili_2",
+      "file": "com.miHoYo.bh3.bilibili_2.png",
+      "bytes": 28744,
+      "sha256": "a5348ec178a3c211a428d0671bd8fa25e7fb717678be5977d6fda78723f70fe0"
+    },
+    {
+      "package": "com.miHoYo.cloudgames.ys",
+      "file": "com.miHoYo.cloudgames.ys.png",
+      "bytes": 318305,
+      "sha256": "642f90129ae08914527b4a47136bf821591f0d5fc71a5f0c13a37ab04bdd7e6a"
+    },
+    {
       "package": "com.mia.miababy",
       "file": "com.mia.miababy.png",
       "bytes": 24629,
@@ -15388,52 +15478,10 @@
       "sha256": "1a619c67b4cd182ff7118b6de8cc0ef165af564713dbad8a59ef1139695f80fc"
     },
     {
-      "package": "com.miHoYo.bh3.bilibili",
-      "file": "com.miHoYo.bh3.bilibili.png",
-      "bytes": 356885,
-      "sha256": "ff4af1dba2baae4ad2998fa593e7dd90a7431ca165baa19d7a7fb1ae567191ac"
-    },
-    {
-      "package": "com.miHoYo.bh3.bilibili_2",
-      "file": "com.miHoYo.bh3.bilibili_2.png",
-      "bytes": 28744,
-      "sha256": "a5348ec178a3c211a428d0671bd8fa25e7fb717678be5977d6fda78723f70fe0"
-    },
-    {
-      "package": "com.miHoYo.cloudgames.ys",
-      "file": "com.miHoYo.cloudgames.ys.png",
-      "bytes": 318305,
-      "sha256": "642f90129ae08914527b4a47136bf821591f0d5fc71a5f0c13a37ab04bdd7e6a"
-    },
-    {
-      "package": "com.miHoYo.HSoDv22144.uc",
-      "file": "com.miHoYo.HSoDv22144.uc.png",
-      "bytes": 195310,
-      "sha256": "4d15bc47ab603973ada3dbc2fa98d58bba72487a02f384a690769ee09c501885"
-    },
-    {
       "package": "com.mihoyo.hyperion",
       "file": "com.mihoyo.hyperion.png",
       "bytes": 81714,
       "sha256": "9de184748896039f6bb04dea5419c019a2885d1a9787e57fd56f6be799d3947f"
-    },
-    {
-      "package": "com.miHoYo.Nap",
-      "file": "com.miHoYo.Nap.png",
-      "bytes": 415215,
-      "sha256": "aad22dd9b60a9e42e46b0be9220f2fa102a06b3baac0afd088974f01572b3c11"
-    },
-    {
-      "package": "com.miHoYo.Yuanshen",
-      "file": "com.miHoYo.Yuanshen.png",
-      "bytes": 349475,
-      "sha256": "68f9278f8a0f15634c7300ed5563dd8e7210e6d4b53183a79807aa13a1de39e1"
-    },
-    {
-      "package": "com.miHoYo.Yuanshen_2",
-      "file": "com.miHoYo.Yuanshen_2.png",
-      "bytes": 47503,
-      "sha256": "7aef0d5a554521f48a440da19fdba219ca2d3d4734bfb934ea5bf7cb2ff69088"
     },
     {
       "package": "com.mindoop.apps.brainpk",
@@ -15458,12 +15506,6 @@
       "file": "com.miniclip.plagueinc.png",
       "bytes": 56359,
       "sha256": "97bd53a4a4bd082827bee48752d8d6a5eba5bb279c9f76902a211881820c97a2"
-    },
-    {
-      "package": "com.Miniflashlight",
-      "file": "com.Miniflashlight.png",
-      "bytes": 23109,
-      "sha256": "d88e7d8fef79ba107adba9fe96aca5d90d5314b874ec6853f8a91e96c9e5dab9"
     },
     {
       "package": "com.minitech.miniworld.TMobile.mi",
@@ -15952,18 +15994,6 @@
       "sha256": "0729a7e612bd593934d234b6bcbb7214778bfcd052654e79e0c30a5d1f1939be"
     },
     {
-      "package": "com.MobileTicket",
-      "file": "com.MobileTicket.png",
-      "bytes": 200477,
-      "sha256": "309321f39cc4d14d00d2b78cbcecb32a9c8974d9512711e61de8022385dd020f"
-    },
-    {
-      "package": "com.MobileTicket_2",
-      "file": "com.MobileTicket_2.png",
-      "bytes": 120371,
-      "sha256": "be87e7858f1c548fa5e4f55077e3ec0257ea3c41fe0f4c0c53df24025b19ccef"
-    },
-    {
       "package": "com.mobileuncle.toolhero",
       "file": "com.mobileuncle.toolhero.png",
       "bytes": 23469,
@@ -16118,12 +16148,6 @@
       "file": "com.moretv.android.png",
       "bytes": 21809,
       "sha256": "a9f9b178d0d3f6a7c1fadec6db6a87650d90c4547ccf8f71c2fe7894e3fc3923"
-    },
-    {
-      "package": "com.MoScreen",
-      "file": "com.MoScreen.png",
-      "bytes": 24287,
-      "sha256": "dc8d5b881154caa69a15eb4228b4fb3dc9fae9665b6da9f313290cfedccbe94c"
     },
     {
       "package": "com.mosheng",
@@ -16324,18 +16348,6 @@
       "sha256": "eddb51d54fe85c87118506272e0235557863f7a01d90f0ca3fd1971e54c367f6"
     },
     {
-      "package": "com.mxtech.videoplayer.ad_3",
-      "file": "com.mxtech.videoplayer.ad_3.png",
-      "bytes": 37816,
-      "sha256": "8ed3f8795494680cd84e9aa67d8e0ef6acd87d895ed22369d4ffd0896d961e81"
-    },
-    {
-      "package": "com.mxtech.videoplayer.pro",
-      "file": "com.mxtech.videoplayer.pro.png",
-      "bytes": 28825,
-      "sha256": "6eba55f2bf7c8c5180dc08308191a99d8c872160fddf4d0002a286abc8950b25"
-    },
-    {
       "package": "com.mybank.android.phone",
       "file": "com.mybank.android.phone.png",
       "bytes": 219584,
@@ -16370,48 +16382,6 @@
       "file": "com.mydrivers.newsclient.png",
       "bytes": 13393,
       "sha256": "3c3836d1c855309b1fdae13eca5f6c0003c6705c7c1a7d6e1c84e011c6fc6a6e"
-    },
-    {
-      "package": "com.MyFusApp.apkcombo",
-      "file": "com.MyFusApp.apkcombo.png",
-      "bytes": 21243,
-      "sha256": "93e9842c4f2cb37d40507fc4a23ba597f7b992a41538a7409cc882c5f8bcf094"
-    },
-    {
-      "package": "com.MyFusApp.appleiCloud",
-      "file": "com.MyFusApp.appleiCloud.png",
-      "bytes": 16352,
-      "sha256": "6cf92ec49f18f7b346e2fb60cbb7c742618fa16c34fd5527eafdf3678a7dc856"
-    },
-    {
-      "package": "com.MyFusApp.findmyphone",
-      "file": "com.MyFusApp.findmyphone.png",
-      "bytes": 34082,
-      "sha256": "fc4c46225d62b1357db4b50cafbb9eec6039087650b7b1dfd5f1e9a9bfab9c14"
-    },
-    {
-      "package": "com.MyFusApp.miyunfuwu",
-      "file": "com.MyFusApp.miyunfuwu.png",
-      "bytes": 13759,
-      "sha256": "7327c3fa8f3460fc0ced5744a4b7d680d10b7327f3dc7664b20d5b67820b5bc9"
-    },
-    {
-      "package": "com.MyFusApp.OPPOchazhaoshouji",
-      "file": "com.MyFusApp.OPPOchazhaoshouji.png",
-      "bytes": 27037,
-      "sha256": "3efddb6c60a3db1c29d90b4f44c66352eee4057b48480ed08165bf6a95b37c33"
-    },
-    {
-      "package": "com.MyFusApp.Remove.Bg",
-      "file": "com.MyFusApp.Remove.Bg.png",
-      "bytes": 44413,
-      "sha256": "7cedc5af9d36d962e88cf0eef5493b8734c917e624aa6e9187d97b37a5fe76d1"
-    },
-    {
-      "package": "com.MyFusApp.VIVOchazhaoshouji",
-      "file": "com.MyFusApp.VIVOchazhaoshouji.png",
-      "bytes": 20578,
-      "sha256": "9de9ed261e8bda27b730fe832feed634d35dee3737a7d98c6a05c97575257ec0"
     },
     {
       "package": "com.mygolbs.mybus",
@@ -16456,12 +16426,6 @@
       "sha256": "5ad79163ceccffe80f367afcf491594acfcc3150fd4e9aaa219064d6400e7c9a"
     },
     {
-      "package": "com.myzaker.aplan",
-      "file": "com.myzaker.aplan.png",
-      "bytes": 29481,
-      "sha256": "de7227dd7ad588c5db2892bce8f703ea486dde56e05a6e140300899697199dd1"
-    },
-    {
       "package": "com.myzaker.ZAKER_HD",
       "file": "com.myzaker.ZAKER_HD.png",
       "bytes": 16034,
@@ -16472,6 +16436,12 @@
       "file": "com.myzaker.ZAKER_Phone.png",
       "bytes": 11192,
       "sha256": "ad4e3b8a685d1eda73f878565b8e2a71bbf70a302a9c48bdd8a0473708bbcb89"
+    },
+    {
+      "package": "com.myzaker.aplan",
+      "file": "com.myzaker.aplan.png",
+      "bytes": 29481,
+      "sha256": "de7227dd7ad588c5db2892bce8f703ea486dde56e05a6e140300899697199dd1"
     },
     {
       "package": "com.mz.li",
@@ -16702,16 +16672,16 @@
       "sha256": "b0986d352e3c05f657fd23b4f065c021fa909f7bda5351e0ea917586c65902f0"
     },
     {
-      "package": "com.netease.cloudmusic.lite",
-      "file": "com.netease.cloudmusic.lite.png",
-      "bytes": 106747,
-      "sha256": "9354f1b1d57550c499484a6318b4e80b10652d9f056079809d2d8ffccc6aa5a4"
-    },
-    {
       "package": "com.netease.cloudmusic",
       "file": "com.netease.cloudmusic.png",
       "bytes": 278301,
       "sha256": "5e01bb120a3c3bf9c401ec6e51510b647331c97295558f6481a2ead9ac9cbe5d"
+    },
+    {
+      "package": "com.netease.cloudmusic.lite",
+      "file": "com.netease.cloudmusic.lite.png",
+      "bytes": 106747,
+      "sha256": "9354f1b1d57550c499484a6318b4e80b10652d9f056079809d2d8ffccc6aa5a4"
     },
     {
       "package": "com.netease.cloudmusic_2",
@@ -16728,20 +16698,14 @@
     {
       "package": "com.netease.cloudmusic_4",
       "file": "com.netease.cloudmusic_4.png",
-      "bytes": 263206,
-      "sha256": "d4d4d8221adbeb7365de1ae29ddeb5a556a49ab18e60aa5e6a91291cf4ed1714"
+      "bytes": 253876,
+      "sha256": "9343487e09e1d02a80ddc4eae827486e569ddb4bca92ff5854c62d10103b33fc"
     },
     {
       "package": "com.netease.cloudmusic_5",
       "file": "com.netease.cloudmusic_5.png",
       "bytes": 216305,
       "sha256": "939b6f53947620e3f712de21910665e8a8d55f10b57b801bc56d78339daf0951"
-    },
-    {
-      "package": "com.netease.cloudmusic_6",
-      "file": "com.netease.cloudmusic_6.png",
-      "bytes": 253876,
-      "sha256": "9343487e09e1d02a80ddc4eae827486e569ddb4bca92ff5854c62d10103b33fc"
     },
     {
       "package": "com.netease.dhxy",
@@ -16918,12 +16882,6 @@
       "sha256": "e457ca1edc4dfc3c3e765f7f014309d27e9dfa5021e3af2c0586af94bc8192b0"
     },
     {
-      "package": "com.netease.my_2",
-      "file": "com.netease.my_2.png",
-      "bytes": 37733,
-      "sha256": "21ef4f39a3473f57af634d8aaecc3733346e923566c86742d577a6b093c11251"
-    },
-    {
       "package": "com.netease.newsreader.activity",
       "file": "com.netease.newsreader.activity.png",
       "bytes": 132840,
@@ -16978,6 +16936,12 @@
       "sha256": "efc5e766f6156d42698330584e848246f66130c0ca6c20da9d9a5aca53716c8d"
     },
     {
+      "package": "com.netease.sky",
+      "file": "com.netease.sky.png",
+      "bytes": 355403,
+      "sha256": "2cbad16e6efeb00e7056bad2dd99ddf4705e6bf766cb315d2db9f7dd9b44977f"
+    },
+    {
       "package": "com.netease.sky.aligames",
       "file": "com.netease.sky.aligames.png",
       "bytes": 63230,
@@ -16988,12 +16952,6 @@
       "file": "com.netease.sky.nearme.gamecenter_2.png",
       "bytes": 58253,
       "sha256": "492872641b056f4710be620472104de0050564ef6b3ccfd4a2e1a795e6fa000b"
-    },
-    {
-      "package": "com.netease.sky",
-      "file": "com.netease.sky.png",
-      "bytes": 355403,
-      "sha256": "2cbad16e6efeb00e7056bad2dd99ddf4705e6bf766cb315d2db9f7dd9b44977f"
     },
     {
       "package": "com.netease.snailread",
@@ -17470,16 +17428,16 @@
       "sha256": "ac4ab435462eba8b2c2bf8231156c1a1b2d404cb6b3c71ecec703dff5e12499c"
     },
     {
-      "package": "com.nuomi.merchant",
-      "file": "com.nuomi.merchant.png",
-      "bytes": 21341,
-      "sha256": "f5c764dfd2f2cfee4aabca712fb6c2844a8e1b0374e727877803434b650089c2"
-    },
-    {
       "package": "com.nuomi",
       "file": "com.nuomi.png",
       "bytes": 82110,
       "sha256": "02e5f9d6431ef981e7abb6b15f84bd1786b71f1f020c0e129df43fc3336248ce"
+    },
+    {
+      "package": "com.nuomi.merchant",
+      "file": "com.nuomi.merchant.png",
+      "bytes": 21341,
+      "sha256": "f5c764dfd2f2cfee4aabca712fb6c2844a8e1b0374e727877803434b650089c2"
     },
     {
       "package": "com.nut.blehunter",
@@ -17498,12 +17456,6 @@
       "file": "com.nxnresearch.png",
       "bytes": 33842,
       "sha256": "9c8e0da4414950ebf38ccef771e97723eeb1a7e4d9d4e5931531a2ae05de79a4"
-    },
-    {
-      "package": "com.nxy.hlj",
-      "file": "com.nxy.hlj.png",
-      "bytes": 26045,
-      "sha256": "34b7dd4717ed1e817dfef45017b16397276ff7b6c00cf79e3a7d9034b79feb3f"
     },
     {
       "package": "com.nxy.mobilebank.gx",
@@ -17620,28 +17572,10 @@
       "sha256": "7d41dcbaac29b1294831a72f6b8760da2ca1b686ec1f53a8f974ded6729f85dc"
     },
     {
-      "package": "com.One.WoodenLetter",
-      "file": "com.One.WoodenLetter.png",
-      "bytes": 14665,
-      "sha256": "ac4f4de08716471d1e46e52c50f0c98a3826e1024d030c29d0be15aa9da99319"
-    },
-    {
-      "package": "com.One.WoodenLetter_2",
-      "file": "com.One.WoodenLetter_2.png",
-      "bytes": 15979,
-      "sha256": "ff203094220b52ce96225f54bc3d5b6b3da96f8ba137890e1b83c7f4acedd6d3"
-    },
-    {
       "package": "com.onepassword.android",
       "file": "com.onepassword.android.png",
       "bytes": 176837,
       "sha256": "6b89db5d93aa1e481fd7cb0ced8de3ff307c0655a6278afbb4828a92ff00e798"
-    },
-    {
-      "package": "com.onepassword.passwordmanager",
-      "file": "com.onepassword.passwordmanager.png",
-      "bytes": 36624,
-      "sha256": "0285a08bf579d6942fe1be2be1be0c5546e945827e2524c6f08b49b8118ff9a7"
     },
     {
       "package": "com.onepice.pdfscantools",
@@ -17860,16 +17794,16 @@
       "sha256": "5d9c68668a4f940ff84f6bc21cec06aaeed1de59b31bdf71e834edc79c514717"
     },
     {
-      "package": "com.outlook.screens",
-      "file": "com.outlook.screens.png",
-      "bytes": 31512,
-      "sha256": "d1e068faebbd2fc8a35bc009d9ad737d0a1fa1c8dff714ddada92aba889d1967"
-    },
-    {
       "package": "com.outlook.Z7",
       "file": "com.outlook.Z7.png",
       "bytes": 19215,
       "sha256": "84e9255244ce25272c80c21604e11f81ce37628e90d3f296b49274ab984d672d"
+    },
+    {
+      "package": "com.outlook.screens",
+      "file": "com.outlook.screens.png",
+      "bytes": 31512,
+      "sha256": "d1e068faebbd2fc8a35bc009d9ad737d0a1fa1c8dff714ddada92aba889d1967"
     },
     {
       "package": "com.ovelin.guitartuna",
@@ -18022,16 +17956,16 @@
       "sha256": "50db6b6f98bd7d66d235364071bf8a52e58bf10007bcec3c75956b733afbbc1d"
     },
     {
-      "package": "com.path.paperboy",
-      "file": "com.path.paperboy.png",
-      "bytes": 37563,
-      "sha256": "f39f3a4e75bc2e84e973911026193a1663be19fcbeffbcb40cadc511d265de48"
-    },
-    {
       "package": "com.path",
       "file": "com.path.png",
       "bytes": 37479,
       "sha256": "6551ccf5b7d965109849958d82f3c8fdade25966bef330624fdb6b8f5642f07d"
+    },
+    {
+      "package": "com.path.paperboy",
+      "file": "com.path.paperboy.png",
+      "bytes": 37563,
+      "sha256": "f39f3a4e75bc2e84e973911026193a1663be19fcbeffbcb40cadc511d265de48"
     },
     {
       "package": "com.paypal.android.p2pmobile",
@@ -18080,12 +18014,6 @@
       "file": "com.peopledailychina.activity.png",
       "bytes": 93906,
       "sha256": "3d338029e223402afb2e50472bc4f4de7bafc9090f320a9cc6a14689ab9d618f"
-    },
-    {
-      "package": "com.PEP.biaori",
-      "file": "com.PEP.biaori.png",
-      "bytes": 46932,
-      "sha256": "10258d9564a9efb95c7d9e872693f52282467951345e821375f7f704ce3d8d78"
     },
     {
       "package": "com.per.notese",
@@ -18422,12 +18350,6 @@
       "file": "com.pokercity.yzddz.png",
       "bytes": 47093,
       "sha256": "5ae25478b72184b4b81b16a365db1ac211f8e2803c3643e9034a488280738cf1"
-    },
-    {
-      "package": "com.PomegranateApps.MathStudioExpress",
-      "file": "com.PomegranateApps.MathStudioExpress.png",
-      "bytes": 34565,
-      "sha256": "a12fac0edaed8400c02dfb0b6d4144274560a02cc235f2f5c16a6af6e045fdf5"
     },
     {
       "package": "com.pomotodo",
@@ -18922,16 +18844,16 @@
       "sha256": "d0b22f1a0f02df965bb31be84b9fc9de7b710364b76c6139dd3031d99d24d046"
     },
     {
-      "package": "com.qiyi.video.child",
-      "file": "com.qiyi.video.child.png",
-      "bytes": 236359,
-      "sha256": "057b78582bef6a52046082dafb22e5f0a9b2db9f4161a9e1192febebd851148e"
-    },
-    {
       "package": "com.qiyi.video",
       "file": "com.qiyi.video.png",
       "bytes": 236726,
       "sha256": "aa33a4d6bf776db8423e7b0735ad9450265241fd866f39fc6adc0fdc995eff3a"
+    },
+    {
+      "package": "com.qiyi.video.child",
+      "file": "com.qiyi.video.child.png",
+      "bytes": 236359,
+      "sha256": "057b78582bef6a52046082dafb22e5f0a9b2db9f4161a9e1192febebd851148e"
     },
     {
       "package": "com.qiyi.video_2",
@@ -19114,12 +19036,6 @@
       "sha256": "c58a10f793a7b7a1c100ccdc1a2ff0da04de45f166b6c95612f6b177114353ee"
     },
     {
-      "package": "com.Qunar",
-      "file": "com.Qunar.png",
-      "bytes": 172589,
-      "sha256": "884b2411f7e32717a6ebee1e4b8761038d42ee588b9b051f707d047c2e352890"
-    },
-    {
       "package": "com.qunar.travelplan",
       "file": "com.qunar.travelplan.png",
       "bytes": 48940,
@@ -19228,18 +19144,6 @@
       "sha256": "e61ef61dd306c422795d1f3476ec9f47319f167225227fbf3ecb08823f04d1f0"
     },
     {
-      "package": "com.qzone_3",
-      "file": "com.qzone_3.png",
-      "bytes": 29668,
-      "sha256": "8578e7ceb44ba968652f044756a0da45c8b41533062f471d5adc9d6a4aea325d"
-    },
-    {
-      "package": "com.qzone_4",
-      "file": "com.qzone_4.png",
-      "bytes": 27728,
-      "sha256": "31f51205428df60520871c15f4e30e9df2aa30411a39c8d5f6c0bc462f85a9e1"
-    },
-    {
       "package": "com.rainbow.bus",
       "file": "com.rainbow.bus.png",
       "bytes": 21153,
@@ -19250,12 +19154,6 @@
       "file": "com.rakutec.android.iweekly.png",
       "bytes": 104311,
       "sha256": "5a6bac416be62cb369c84dd8c1997c29ed037887b99973830efa4322e5540edd"
-    },
-    {
-      "package": "com.rakutec.android.iweekly_2",
-      "file": "com.rakutec.android.iweekly_2.png",
-      "bytes": 18704,
-      "sha256": "81e85d372cd2880ba82f8cc0bf9308125e9c0af24c72cf50aeac872ffe41547c"
     },
     {
       "package": "com.rakutec.android.iweekly_3",
@@ -19504,12 +19402,6 @@
       "sha256": "b3f46ba7931abdfcc150e19721a90e169545348e5ea126c4d7d6c7165e0d0fda"
     },
     {
-      "package": "com.RoamingStar.BlueArchive",
-      "file": "com.RoamingStar.BlueArchive.png",
-      "bytes": 228875,
-      "sha256": "f1411e54c4697807acebda79735f39bd5efc53eda10b42f3d061aba4689f0e08"
-    },
-    {
       "package": "com.robinbailey.sevenminuteworkout",
       "file": "com.robinbailey.sevenminuteworkout.png",
       "bytes": 22967,
@@ -19558,16 +19450,22 @@
       "sha256": "4e381ee59e0dfa61933723e5d50cdc8f99774c227f1c6ff711c9514dd19db44c"
     },
     {
-      "package": "com.rovio.angrybirds.chinatelecom",
-      "file": "com.rovio.angrybirds.chinatelecom.png",
-      "bytes": 220332,
-      "sha256": "4610b4942a0e0ca31bd4d3499258591d167e39540ab5e6543c064b00ea746cad"
+      "package": "com.rovio.BadPiggies.tw",
+      "file": "com.rovio.BadPiggies.tw.png",
+      "bytes": 46070,
+      "sha256": "d15290753078fc85bf59f0ac2b62de83ea66919686c9a9e6d49f34e2849265a9"
     },
     {
       "package": "com.rovio.angrybirds",
       "file": "com.rovio.angrybirds.png",
       "bytes": 41434,
       "sha256": "6a72a02c5c7338df3abadee4c85ccd888a42e46e90afc4040692b25a4ce12280"
+    },
+    {
+      "package": "com.rovio.angrybirds.chinatelecom",
+      "file": "com.rovio.angrybirds.chinatelecom.png",
+      "bytes": 220332,
+      "sha256": "4610b4942a0e0ca31bd4d3499258591d167e39540ab5e6543c064b00ea746cad"
     },
     {
       "package": "com.rovio.angrybirdsfriends",
@@ -19592,12 +19490,6 @@
       "file": "com.rovio.angrybirdsstarwarsii.ads.png",
       "bytes": 57307,
       "sha256": "61fab3b945c975428f6393860442b1b721b53920344fe7919045cc2a8f1e3d7f"
-    },
-    {
-      "package": "com.rovio.BadPiggies.tw",
-      "file": "com.rovio.BadPiggies.tw.png",
-      "bytes": 46070,
-      "sha256": "d15290753078fc85bf59f0ac2b62de83ea66919686c9a9e6d49f34e2849265a9"
     },
     {
       "package": "com.roviostars.tinythief.fhp",
@@ -19660,12 +19552,6 @@
       "sha256": "c3ff11f87479143ede4cce56589e3657f285f1e9f845621acff222a482ece079"
     },
     {
-      "package": "com.RunnerGames.game.JewelsDeluxe",
-      "file": "com.RunnerGames.game.JewelsDeluxe.png",
-      "bytes": 38024,
-      "sha256": "13e19077ad07d8fbd1ad3d32d2c742614419cd378425c0d14ca294f28a862510"
-    },
-    {
       "package": "com.runtastic.android.heartrate.pro",
       "file": "com.runtastic.android.heartrate.pro.png",
       "bytes": 27957,
@@ -19676,12 +19562,6 @@
       "file": "com.runtastic.android.pro2.png",
       "bytes": 22263,
       "sha256": "cf2aabcc33758463995e7b3295d463a313373535204c438c8de007ba0d632c2a"
-    },
-    {
-      "package": "com.RutonyStd.CubeTrickFull",
-      "file": "com.RutonyStd.CubeTrickFull.png",
-      "bytes": 8854,
-      "sha256": "d650da92123abc34696180788125b48fb567afe9bca5a98c519cce016283f417"
     },
     {
       "package": "com.rym.door",
@@ -19796,12 +19676,6 @@
       "file": "com.samsung.android.app.routines.png",
       "bytes": 38531,
       "sha256": "7584c68ffedb7c7fc6d74641cf139709baf0bc0f0433c47ca4f2ef48ee93b1b4"
-    },
-    {
-      "package": "com.samsung.android.app.searchwidget",
-      "file": "com.samsung.android.app.searchwidget.png",
-      "bytes": 27400,
-      "sha256": "34d1a2e693f6a25ce70873f36bcd553cfd4b000ce31c9d1fc6378eb87c0c3b6e"
     },
     {
       "package": "com.samsung.android.app.simplesharing",
@@ -19984,16 +19858,16 @@
       "sha256": "7c7310a33625d5fcb1d53d8149b5cf87ce4195e851d76d20b4de8d9ff0fafb85"
     },
     {
-      "package": "com.sand.airdroid_2",
-      "file": "com.sand.airdroid_2.png",
-      "bytes": 6161,
-      "sha256": "841af957e0826cb49e3b257e12675ba40061e124b990b1d3a5e6a0b9ccac29b6"
-    },
-    {
       "package": "com.sankuai.hotel",
       "file": "com.sankuai.hotel.png",
       "bytes": 11517,
       "sha256": "b1c56106f6c276c08c2f583aefa70f37cc8c8bce1be140799878a331a5252b5a"
+    },
+    {
+      "package": "com.sankuai.meituan",
+      "file": "com.sankuai.meituan.png",
+      "bytes": 138595,
+      "sha256": "5b0e47b06d7684ef6a3b0e70feaf2a43225ccc8679a15f05072beb2024abd342"
     },
     {
       "package": "com.sankuai.meituan.dispatch.crowdsource",
@@ -20006,12 +19880,6 @@
       "file": "com.sankuai.meituan.merchant.png",
       "bytes": 128108,
       "sha256": "ce446054f7b9abeabbeff4bcc9cf9211ce7431d054314c33c6a00f623848f448"
-    },
-    {
-      "package": "com.sankuai.meituan",
-      "file": "com.sankuai.meituan.png",
-      "bytes": 138595,
-      "sha256": "5b0e47b06d7684ef6a3b0e70feaf2a43225ccc8679a15f05072beb2024abd342"
     },
     {
       "package": "com.sankuai.meituan.takeoutnew",
@@ -20422,12 +20290,6 @@
       "sha256": "d6965d2e52f1d92249ea6d7034edce82b39220c32515408ed618074c9230a7c2"
     },
     {
-      "package": "com.sh.cm.busihall_2",
-      "file": "com.sh.cm.busihall_2.png",
-      "bytes": 28339,
-      "sha256": "c94d3da90627aaa1e782906f1a73b19172fa2eb46aaace9f917188ec895c6930"
-    },
-    {
       "package": "com.shadow.blackhole",
       "file": "com.shadow.blackhole.png",
       "bytes": 85010,
@@ -20692,6 +20554,12 @@
       "sha256": "222c71a9baa8bf85937678ca0d77c1b3483914ede29052b9711253edd66e6c50"
     },
     {
+      "package": "com.sina.VDisk",
+      "file": "com.sina.VDisk.png",
+      "bytes": 13577,
+      "sha256": "43b6ab5385a00577cf9e3990b83c00f8b9883dfe90542d9b897407face2bf97b"
+    },
+    {
       "package": "com.sina.free.sm.pro",
       "file": "com.sina.free.sm.pro.png",
       "bytes": 19032,
@@ -20732,12 +20600,6 @@
       "file": "com.sina.sinablog.png",
       "bytes": 17608,
       "sha256": "1eb46fd75f1d0cc1a3d07d40b7c93ac975d547c23f5eaacd379075883130d639"
-    },
-    {
-      "package": "com.sina.VDisk",
-      "file": "com.sina.VDisk.png",
-      "bytes": 13577,
-      "sha256": "43b6ab5385a00577cf9e3990b83c00f8b9883dfe90542d9b897407face2bf97b"
     },
     {
       "package": "com.sina.vdun",
@@ -21124,12 +20986,6 @@
       "sha256": "8c3077c7e03dc1ee991e008ab157a101781ed489863e5638c7a9ae75aed61f30"
     },
     {
-      "package": "com.smartisanos.smartfolder.aoa_2",
-      "file": "com.smartisanos.smartfolder.aoa_2.png",
-      "bytes": 35123,
-      "sha256": "7d13b6aaa924d286fd81fdcb004ce62e21e1c8900bea40ced87bafba72b2f86c"
-    },
-    {
       "package": "com.smartisanos.textboom",
       "file": "com.smartisanos.textboom.png",
       "bytes": 107964,
@@ -21224,12 +21080,6 @@
       "file": "com.snapchat.android.png",
       "bytes": 121155,
       "sha256": "48f88cba8415028186e06f1bb2b949b559f8e3d7201e84b40a0f0858f1661cb1"
-    },
-    {
-      "package": "com.snapchat.android_2",
-      "file": "com.snapchat.android_2.png",
-      "bytes": 22334,
-      "sha256": "384949614c8ce9b02d958862d3399fd3811baf45b185bda9e48afaf51b70a8f2"
     },
     {
       "package": "com.snda.cloudary",
@@ -21604,22 +21454,16 @@
       "sha256": "1a6bc647a3328721c60e36999a916ea90d8eb48737e74c026f9a521cd5246ad7"
     },
     {
-      "package": "com.soufun.app",
-      "file": "com.soufun.app.png",
-      "bytes": 48730,
-      "sha256": "118f7236b2166f69af898e280dc6aaf9421eb814fbff48bc11e4b61c5bb01fe2"
-    },
-    {
       "package": "com.soufun",
       "file": "com.soufun.png",
       "bytes": 43590,
       "sha256": "859458510a05ad3595009b50cea58949ff0d7aacf9a6c5844aef57c336893ff8"
     },
     {
-      "package": "com.Soul.soulcompass",
-      "file": "com.Soul.soulcompass.png",
-      "bytes": 14580,
-      "sha256": "c71ae3007dc345c6206bd4dbc11c803d90626b432ac020da12fee42ceb4cb791"
+      "package": "com.soufun.app",
+      "file": "com.soufun.app.png",
+      "bytes": 48730,
+      "sha256": "118f7236b2166f69af898e280dc6aaf9421eb814fbff48bc11e4b61c5bb01fe2"
     },
     {
       "package": "com.soulgamechst.majsoul",
@@ -21658,22 +21502,10 @@
       "sha256": "92b8a6f3582796609dbf5e070524c10116a94e2dbe94f835794bc7c99ff9fd4b"
     },
     {
-      "package": "com.speedsoftware.rootexplorer_2",
-      "file": "com.speedsoftware.rootexplorer_2.png",
-      "bytes": 27361,
-      "sha256": "abccb8ed1273f4fa3c893f9f95b6761333070b050f691b7f4464293af4e1f51b"
-    },
-    {
       "package": "com.splashtop.remote",
       "file": "com.splashtop.remote.png",
       "bytes": 10801,
       "sha256": "257b5b25a35351c28a3618ce7dc83ba3a9013b4c1c5b2b69189ffd6347f47ffd"
-    },
-    {
-      "package": "com.splashtop.remote_2",
-      "file": "com.splashtop.remote_2.png",
-      "bytes": 17631,
-      "sha256": "ba3aa2b0e0901b2391c94b3a3f2346a9c966f203d0731d4f9f029a1b0818e6b8"
     },
     {
       "package": "com.sponia.ycq",
@@ -21700,6 +21532,12 @@
       "sha256": "21dcc2a35333594f7f79a56d2e35b7c6a1ec983a53b3b6a6c224256064545014"
     },
     {
+      "package": "com.spotify.music_2",
+      "file": "com.spotify.music_2.png",
+      "bytes": 200233,
+      "sha256": "cd6c556241009d42b72fffc1107963e0ced5d1573f8f25b8aa443849548eb8a0"
+    },
+    {
       "package": "com.spotify.music_3",
       "file": "com.spotify.music_3.png",
       "bytes": 278796,
@@ -21710,12 +21548,6 @@
       "file": "com.spotify.music_4.png",
       "bytes": 233464,
       "sha256": "f99fc036dd437d8081ac736205a511eccf77d86d9548f87940d8c622e0a0e493"
-    },
-    {
-      "package": "com.spotify.music_6",
-      "file": "com.spotify.music_6.png",
-      "bytes": 200233,
-      "sha256": "cd6c556241009d42b72fffc1107963e0ced5d1573f8f25b8aa443849548eb8a0"
     },
     {
       "package": "com.spryfox.tripletown",
@@ -21946,16 +21778,16 @@
       "sha256": "2c3f6957c9cf6b8c1f34428abd615c1ee022614d68ffec6c8d8a86b874f6a5a3"
     },
     {
-      "package": "com.subatomicstudios.fieldrunners2",
-      "file": "com.subatomicstudios.fieldrunners2.png",
-      "bytes": 59005,
-      "sha256": "1e66b1fdff48508749b3cd5e7d54914618597d6875b024ea565202070087f7bc"
-    },
-    {
       "package": "com.subatomicstudios",
       "file": "com.subatomicstudios.png",
       "bytes": 46414,
       "sha256": "f5b27f126f2e95be7d10f921e788610b6c8dcfbc337776e6752c9f59b3f3c58e"
+    },
+    {
+      "package": "com.subatomicstudios.fieldrunners2",
+      "file": "com.subatomicstudios.fieldrunners2.png",
+      "bytes": 59005,
+      "sha256": "1e66b1fdff48508749b3cd5e7d54914618597d6875b024ea565202070087f7bc"
     },
     {
       "package": "com.subject.zhongchou",
@@ -22078,6 +21910,12 @@
       "sha256": "b5e7541e3ec5a5c5c4608b152727c14f0bd40a7487c71413e88db58fbcb8ecbd"
     },
     {
+      "package": "com.supercell.clashroyale",
+      "file": "com.supercell.clashroyale.png",
+      "bytes": 350147,
+      "sha256": "5ad135cfba454ab2620daa585dacb97e218e570e7ffb18c3b838c50783d2191b"
+    },
+    {
       "package": "com.supercell.clashroyale.mi",
       "file": "com.supercell.clashroyale.mi.png",
       "bytes": 61684,
@@ -22088,12 +21926,6 @@
       "file": "com.supercell.clashroyale.mi_2.png",
       "bytes": 68616,
       "sha256": "9107d182acd41e5ece249317379284ec5cf7ad20139f72684a09be050c5de44a"
-    },
-    {
-      "package": "com.supercell.clashroyale",
-      "file": "com.supercell.clashroyale.png",
-      "bytes": 350147,
-      "sha256": "5ad135cfba454ab2620daa585dacb97e218e570e7ffb18c3b838c50783d2191b"
     },
     {
       "package": "com.supercell.clashroyale.uc.mi",
@@ -22588,16 +22420,46 @@
       "sha256": "db538e312bfb6bf53e97a4dc1614abf3f8307120057f422adb9dae356fa22a60"
     },
     {
+      "package": "com.tencent.FileManager",
+      "file": "com.tencent.FileManager.png",
+      "bytes": 35319,
+      "sha256": "cdd9de5b911b0a559145443a2359028e06e5a95807208fc38e438fbabfe59dad"
+    },
+    {
+      "package": "com.tencent.KiHan",
+      "file": "com.tencent.KiHan.png",
+      "bytes": 31313,
+      "sha256": "69e2aaddfeb39b3647761c5e2f487ec8cc57b6212b87220afaba8a59ac263010"
+    },
+    {
+      "package": "com.tencent.QQLottery",
+      "file": "com.tencent.QQLottery.png",
+      "bytes": 23440,
+      "sha256": "383aed102b5ccc51c98327e129bf3cded691407cc6bca1f947fd27d56c691c1d"
+    },
+    {
+      "package": "com.tencent.Qfarm",
+      "file": "com.tencent.Qfarm.png",
+      "bytes": 25224,
+      "sha256": "d3caece729eb01fd3f9297f53b5e2cba137599b81767d74f4146b196d2da0163"
+    },
+    {
+      "package": "com.tencent.WBlog",
+      "file": "com.tencent.WBlog.png",
+      "bytes": 39644,
+      "sha256": "c9b44a37033318d502a677185041040b676b7b919c2dfffce90c5a0871ded5d3"
+    },
+    {
+      "package": "com.tencent.WeFire",
+      "file": "com.tencent.WeFire.png",
+      "bytes": 73458,
+      "sha256": "2b7338fec75c87bbc5f7cbe8a23a5246db66bb36253d1065bf3687f5d1a080c0"
+    },
+    {
       "package": "com.tencent.android.qqdownloader",
       "file": "com.tencent.android.qqdownloader.png",
       "bytes": 160815,
       "sha256": "69667d59cecfe91a13f14645382688477ef0193070e0cb2db73f710fb1864a24"
-    },
-    {
-      "package": "com.tencent.android.qqdownloader_2",
-      "file": "com.tencent.android.qqdownloader_2.png",
-      "bytes": 31530,
-      "sha256": "162242afd3cb35b36e9f918a05398227eee2d460581df01537d2c62b530f1049"
     },
     {
       "package": "com.tencent.android.qqdownloader_3",
@@ -22660,12 +22522,6 @@
       "sha256": "0c888b60d401036ce170a1b22136ef0a3a3da2dbf3e30bf5a25ee8d8e36ce814"
     },
     {
-      "package": "com.tencent.FileManager",
-      "file": "com.tencent.FileManager.png",
-      "bytes": 35319,
-      "sha256": "cdd9de5b911b0a559145443a2359028e06e5a95807208fc38e438fbabfe59dad"
-    },
-    {
       "package": "com.tencent.fit.ccm",
       "file": "com.tencent.fit.ccm.png",
       "bytes": 17279,
@@ -22684,6 +22540,12 @@
       "sha256": "b7eedc71640203f04e91a3bf886fdb4291ba0709551a7c75d1ab0215ef8c1c5f"
     },
     {
+      "package": "com.tencent.game.SSGame",
+      "file": "com.tencent.game.SSGame.png",
+      "bytes": 64713,
+      "sha256": "a664980c3ed4df77bb16456bad692dd6c172713ad6d8c3a6bccc6796baa249f7"
+    },
+    {
       "package": "com.tencent.game.rhythmmaster",
       "file": "com.tencent.game.rhythmmaster.png",
       "bytes": 86706,
@@ -22694,12 +22556,6 @@
       "file": "com.tencent.game.rhythmmaster_2.png",
       "bytes": 48254,
       "sha256": "2a68f03d2f0869dc720ab49f08e8175ad657e9763f0b3e40c168ed08c02d2b12"
-    },
-    {
-      "package": "com.tencent.game.SSGame",
-      "file": "com.tencent.game.SSGame.png",
-      "bytes": 64713,
-      "sha256": "a664980c3ed4df77bb16456bad692dd6c172713ad6d8c3a6bccc6796baa249f7"
     },
     {
       "package": "com.tencent.gamehelper",
@@ -22804,18 +22660,6 @@
       "sha256": "efef4934b59c67e9abfd373d5899f02aeea2868cccea152445a9e017a91e6949"
     },
     {
-      "package": "com.tencent.kg.android.lite",
-      "file": "com.tencent.kg.android.lite.png",
-      "bytes": 24851,
-      "sha256": "dfd55be276a11adea3bc335ae9d83107bf62bb475f9f2b88305450fe39493f09"
-    },
-    {
-      "package": "com.tencent.KiHan",
-      "file": "com.tencent.KiHan.png",
-      "bytes": 31313,
-      "sha256": "69e2aaddfeb39b3647761c5e2f487ec8cc57b6212b87220afaba8a59ac263010"
-    },
-    {
       "package": "com.tencent.king.candycrushsaga",
       "file": "com.tencent.king.candycrushsaga.png",
       "bytes": 61890,
@@ -22890,8 +22734,8 @@
     {
       "package": "com.tencent.mobileqq_2",
       "file": "com.tencent.mobileqq_2.png",
-      "bytes": 33655,
-      "sha256": "c017f1429cf616cea91bacef1f6c061bb8fdb987cf45c8f997253ebd915f76e7"
+      "bytes": 31560,
+      "sha256": "5502df3d300df2da94997aa6af1d1ccccd7f8a6e7d9012d179040670594c8354"
     },
     {
       "package": "com.tencent.mobileqq_3",
@@ -22902,38 +22746,20 @@
     {
       "package": "com.tencent.mobileqq_4",
       "file": "com.tencent.mobileqq_4.png",
-      "bytes": 37283,
-      "sha256": "e8deda11b3da00cd59ea1d694e686da6dcb0ed557216dbfcdf97ab28d0155a6a"
+      "bytes": 29165,
+      "sha256": "57584a95659c17f7035cf2cf48cd15d19f40e6427bd0885653b485e500e7fcc0"
     },
     {
       "package": "com.tencent.mobileqq_5",
       "file": "com.tencent.mobileqq_5.png",
-      "bytes": 20125,
-      "sha256": "be32664618a5d3595761cfcd71e1f102b36248ba1f7f1b9c198c8070b6c1a61e"
+      "bytes": 39727,
+      "sha256": "7a6f5053ee392ee5b395b8de490ef022240ad8af4c1516e752e9ea8f5160cffa"
     },
     {
       "package": "com.tencent.mobileqq_6",
       "file": "com.tencent.mobileqq_6.png",
       "bytes": 41397,
       "sha256": "eda18c53d0f665bbf4f69c94e5955b29bcb68167e6b00d754cded1b98761b39e"
-    },
-    {
-      "package": "com.tencent.mobileqq_7",
-      "file": "com.tencent.mobileqq_7.png",
-      "bytes": 39727,
-      "sha256": "7a6f5053ee392ee5b395b8de490ef022240ad8af4c1516e752e9ea8f5160cffa"
-    },
-    {
-      "package": "com.tencent.mobileqq_8",
-      "file": "com.tencent.mobileqq_8.png",
-      "bytes": 29165,
-      "sha256": "57584a95659c17f7035cf2cf48cd15d19f40e6427bd0885653b485e500e7fcc0"
-    },
-    {
-      "package": "com.tencent.mobileqq_9",
-      "file": "com.tencent.mobileqq_9.png",
-      "bytes": 31560,
-      "sha256": "5502df3d300df2da94997aa6af1d1ccccd7f8a6e7d9012d179040670594c8354"
     },
     {
       "package": "com.tencent.modoomarble",
@@ -22954,12 +22780,6 @@
       "sha256": "6777a02c8bc16de13cc5aaeadb3b2ff4a5ed5465b913132729e38ab71ab6dba1"
     },
     {
-      "package": "com.tencent.movieticket_3",
-      "file": "com.tencent.movieticket_3.png",
-      "bytes": 16361,
-      "sha256": "018c84ec598f6ddf63f1f95ec490d57ca3180c8298a7f768bde498cb37518c6a"
-    },
-    {
       "package": "com.tencent.mp",
       "file": "com.tencent.mp.png",
       "bytes": 112939,
@@ -22970,18 +22790,6 @@
       "file": "com.tencent.mtt.png",
       "bytes": 169361,
       "sha256": "74730f621dbdffa0a56b4506f5b5bbf2340a7772d6b63eb3a9dc31f7460ca50f"
-    },
-    {
-      "package": "com.tencent.mtt_2",
-      "file": "com.tencent.mtt_2.png",
-      "bytes": 27431,
-      "sha256": "a4d4ee2b70fef868ac41688d35cfb549a074180215366937610e60ead70521ac"
-    },
-    {
-      "package": "com.tencent.mtt_3",
-      "file": "com.tencent.mtt_3.png",
-      "bytes": 48673,
-      "sha256": "37aea80559398ff034e7c77ec8f507184f2f50796fa5914262cb06239131c8fd"
     },
     {
       "package": "com.tencent.navsns",
@@ -23038,12 +22846,6 @@
       "sha256": "0ab6677a7d8bbb06abe7cfcb546d13a8083fea7ce15127211785e68e51a51305"
     },
     {
-      "package": "com.tencent.pao_2",
-      "file": "com.tencent.pao_2.png",
-      "bytes": 58057,
-      "sha256": "8452995a2a328f28cfaa77a22b38f87cef576f357dfa951622c1870c872bd654"
-    },
-    {
       "package": "com.tencent.pb",
       "file": "com.tencent.pb.png",
       "bytes": 26093,
@@ -23054,12 +22856,6 @@
       "file": "com.tencent.peng.png",
       "bytes": 223471,
       "sha256": "cdf1b449afe7209a2a54ea547b1e180bd4dfcd9cec3fe668fe50c14b5ac7a350"
-    },
-    {
-      "package": "com.tencent.peng_2",
-      "file": "com.tencent.peng_2.png",
-      "bytes": 42443,
-      "sha256": "24cd6a30619a2648853f5f686bdf00b90d03f106a230dbe4c3c94c624040f07a"
     },
     {
       "package": "com.tencent.pengyou",
@@ -23080,22 +22876,10 @@
       "sha256": "2b46329aeb6dba6e451fe3fce37d2e36a9f3fdf9ff0e817eb0b964476a9c1478"
     },
     {
-      "package": "com.tencent.portfolio_2",
-      "file": "com.tencent.portfolio_2.png",
-      "bytes": 26829,
-      "sha256": "fb6968a1664e193a146aad6ec2aa1279d4b488023e857e587fc1ef1d9648d1b2"
-    },
-    {
       "package": "com.tencent.powermanager",
       "file": "com.tencent.powermanager.png",
       "bytes": 39482,
       "sha256": "0694a0b75bc22e056777235e490f4e0a2f576f90686614bb885cdbc81865d576"
-    },
-    {
-      "package": "com.tencent.Qfarm",
-      "file": "com.tencent.Qfarm.png",
-      "bytes": 25224,
-      "sha256": "d3caece729eb01fd3f9297f53b5e2cba137599b81767d74f4146b196d2da0163"
     },
     {
       "package": "com.tencent.qgame",
@@ -23134,12 +22918,6 @@
       "sha256": "4e6a4dad0476ca7f2722f4055b8499d50803beeeba60aee504d6fd50126e345a"
     },
     {
-      "package": "com.tencent.qqgame_2",
-      "file": "com.tencent.qqgame_2.png",
-      "bytes": 52888,
-      "sha256": "d96b49b72cae48dc626aaf1b92980f6b43d9221a643dd835c0670a20b08c0b05"
-    },
-    {
       "package": "com.tencent.qqgame_3",
       "file": "com.tencent.qqgame_3.png",
       "bytes": 42454,
@@ -23170,12 +22948,6 @@
       "sha256": "bbf402f0d542163ae7adf06f8bf219c4bf32e9cc75cb1b1d6afe5cb86a8f17be"
     },
     {
-      "package": "com.tencent.QQLottery",
-      "file": "com.tencent.QQLottery.png",
-      "bytes": 23440,
-      "sha256": "383aed102b5ccc51c98327e129bf3cded691407cc6bca1f947fd27d56c691c1d"
-    },
-    {
       "package": "com.tencent.qqmusic",
       "file": "com.tencent.qqmusic.png",
       "bytes": 202338,
@@ -23186,12 +22958,6 @@
       "file": "com.tencent.qqmusic_2.png",
       "bytes": 283635,
       "sha256": "c46f0928cc46761dbe4e50d34afd7a129c8dd63e32f946088bd5d6c0e89f2696"
-    },
-    {
-      "package": "com.tencent.qqmusic_3",
-      "file": "com.tencent.qqmusic_3.png",
-      "bytes": 47584,
-      "sha256": "67555248be508aa028267ba2aaa08bbdc619b245a85e32216035858c28442517"
     },
     {
       "package": "com.tencent.qqmusiclite",
@@ -23240,12 +23006,6 @@
       "file": "com.tencent.qqpinyin_2.png",
       "bytes": 25920,
       "sha256": "27fad7d52b68670dfde80e4e02af127cfff47445e84faeb67b6b98271994ac6f"
-    },
-    {
-      "package": "com.tencent.qqpinyin_3",
-      "file": "com.tencent.qqpinyin_3.png",
-      "bytes": 28131,
-      "sha256": "b6ee1656059ea13e462a705398219a2e955695225d40b8fe686854224efe9bf4"
     },
     {
       "package": "com.tencent.qqsports",
@@ -23336,6 +23096,18 @@
       "file": "com.tencent.tim.png",
       "bytes": 175395,
       "sha256": "214d3ba743bc23bed7be10eedc4c6b563e2b04ead5ba6fac804748fc030c3182"
+    },
+    {
+      "package": "com.tencent.tmgp.TCrossSGJQ",
+      "file": "com.tencent.tmgp.TCrossSGJQ.png",
+      "bytes": 164110,
+      "sha256": "84be2a1470d9acdd83fe0181d42e4af03113209d2d449c867cb46e98e367adb3"
+    },
+    {
+      "package": "com.tencent.tmgp.WePop",
+      "file": "com.tencent.tmgp.WePop.png",
+      "bytes": 53389,
+      "sha256": "6f8b0fc1bcbb438ac7566eb4b1b18058a099cbdd4c1c1064ef71d3edf721f559"
     },
     {
       "package": "com.tencent.tmgp.bh3",
@@ -23488,12 +23260,6 @@
       "sha256": "aaacc8e9b1fa90e3dc1cf9186fbec3a21c27b52fbf6131b534271a6edcd8f433"
     },
     {
-      "package": "com.tencent.tmgp.TCrossSGJQ",
-      "file": "com.tencent.tmgp.TCrossSGJQ.png",
-      "bytes": 164110,
-      "sha256": "84be2a1470d9acdd83fe0181d42e4af03113209d2d449c867cb46e98e367adb3"
-    },
-    {
       "package": "com.tencent.tmgp.tiles2",
       "file": "com.tencent.tmgp.tiles2.png",
       "bytes": 19274,
@@ -23516,12 +23282,6 @@
       "file": "com.tencent.tmgp.ttwq.png",
       "bytes": 39172,
       "sha256": "8246990fac14bf39a83a01010948440b3f2e52cd894eb3a48f5d47ff564ddab5"
-    },
-    {
-      "package": "com.tencent.tmgp.WePop",
-      "file": "com.tencent.tmgp.WePop.png",
-      "bytes": 53389,
-      "sha256": "6f8b0fc1bcbb438ac7566eb4b1b18058a099cbdd4c1c1064ef71d3edf721f559"
     },
     {
       "package": "com.tencent.tmgp.xdldlsjp",
@@ -23612,18 +23372,6 @@
       "file": "com.tencent.videolite.android.png",
       "bytes": 35450,
       "sha256": "fc8a5021969c62a98cac449df109a0c6815ca10177a5c1728e8fa0ae07dea996"
-    },
-    {
-      "package": "com.tencent.WBlog",
-      "file": "com.tencent.WBlog.png",
-      "bytes": 39644,
-      "sha256": "c9b44a37033318d502a677185041040b676b7b919c2dfffce90c5a0871ded5d3"
-    },
-    {
-      "package": "com.tencent.WeFire",
-      "file": "com.tencent.WeFire.png",
-      "bytes": 73458,
-      "sha256": "2b7338fec75c87bbc5f7cbe8a23a5246db66bb36253d1065bf3687f5d1a080c0"
     },
     {
       "package": "com.tencent.weishi",
@@ -24520,34 +24268,10 @@
       "sha256": "197ab8007878b267d021daef4308218ffb89bfad10c6197cabe20ef37ef82018"
     },
     {
-      "package": "com.UCMobile.intl",
-      "file": "com.UCMobile.intl.png",
-      "bytes": 34370,
-      "sha256": "9c86c6b006d9a8b1bf48de1ab9e89cb649d3d65d7e81f66a9ad45efe83ae728d"
-    },
-    {
       "package": "com.ucmobile.lite",
       "file": "com.ucmobile.lite.png",
       "bytes": 58041,
       "sha256": "967e2874aaf9cd86c630355be6fbba1749b0169e71c61cbf45977f7e3fc9597a"
-    },
-    {
-      "package": "com.UCMobile",
-      "file": "com.UCMobile.png",
-      "bytes": 57115,
-      "sha256": "76de7f871efb7291ee930ec9249ca0d7c9f604eb81769b116e55173630abf1fb"
-    },
-    {
-      "package": "com.UCMobile.x86",
-      "file": "com.UCMobile.x86.png",
-      "bytes": 34227,
-      "sha256": "21f5bfc4fcaa8d4e34776c3ff10f807278276efc389942ab0ce17c9c0493a472"
-    },
-    {
-      "package": "com.UCMobile_3",
-      "file": "com.UCMobile_3.png",
-      "bytes": 16320,
-      "sha256": "f7a1cbe499a5dc3b211f46e4f0ec097bbbb8380a265b536b504b450226b9e404"
     },
     {
       "package": "com.uh.rdsp",
@@ -24580,12 +24304,6 @@
       "sha256": "2fe60d0ab5b3a77c7419987846cfc33dfa52ecad98cf030b53f793b2918b56f3"
     },
     {
-      "package": "com.umetrip.android.msky.app_2",
-      "file": "com.umetrip.android.msky.app_2.png",
-      "bytes": 16776,
-      "sha256": "27d4e01adf2c56fdb6932d3c12be30cc0789f6d81972254dfb88dcdcb07979a1"
-    },
-    {
       "package": "com.umonistudio.tile",
       "file": "com.umonistudio.tile.png",
       "bytes": 2409,
@@ -24616,16 +24334,16 @@
       "sha256": "6d2a3087be252e95eef334bdcb2e1f79058a9642915d7e5defaa4dff058ed2f5"
     },
     {
-      "package": "com.unionpay.chsp",
-      "file": "com.unionpay.chsp.png",
-      "bytes": 57217,
-      "sha256": "4cb79a2c4784b86824b969d828448d5aba607a36b93f852f0126147092a05322"
-    },
-    {
       "package": "com.unionpay",
       "file": "com.unionpay.png",
       "bytes": 123411,
       "sha256": "3264c8d2bcd67a775c62028465295225bd4ccd3278ed083043e12366a11bb37a"
+    },
+    {
+      "package": "com.unionpay.chsp",
+      "file": "com.unionpay.chsp.png",
+      "bytes": 57217,
+      "sha256": "4cb79a2c4784b86824b969d828448d5aba607a36b93f852f0126147092a05322"
     },
     {
       "package": "com.unionpay.uppay",
@@ -25006,12 +24724,6 @@
       "sha256": "be53736b218707667ab9f0ef9150e3ab1997c5338404a1a8fee24a7d266adfcc"
     },
     {
-      "package": "com.vsco.cam_3",
-      "file": "com.vsco.cam_3.png",
-      "bytes": 20145,
-      "sha256": "94c92affcf43bfe5c131dc7da5134ccf2915af0c594f0f0d613fc3ae68f6efcc"
-    },
-    {
       "package": "com.vst.live",
       "file": "com.vst.live.png",
       "bytes": 27148,
@@ -25096,6 +24808,12 @@
       "sha256": "3663b6c34bf556b53a6dafd3f59a91cefaf88485426c2409ee986aebcb72915a"
     },
     {
+      "package": "com.wandoujia",
+      "file": "com.wandoujia.png",
+      "bytes": 25709,
+      "sha256": "d41990227a8600716892a947798a1d2dfe6102b2a38d4ceaabe82c061aad4247"
+    },
+    {
       "package": "com.wandoujia.eyepetizer",
       "file": "com.wandoujia.eyepetizer.png",
       "bytes": 133872,
@@ -25112,12 +24830,6 @@
       "file": "com.wandoujia.phoenix2.png",
       "bytes": 47891,
       "sha256": "9d7db38906555e35ae1aeb5d0bdad428d5f20662ccd4062dad0b9701f7999fbd"
-    },
-    {
-      "package": "com.wandoujia",
-      "file": "com.wandoujia.png",
-      "bytes": 25709,
-      "sha256": "d41990227a8600716892a947798a1d2dfe6102b2a38d4ceaabe82c061aad4247"
     },
     {
       "package": "com.wangai.petCrash.uc",
@@ -25304,12 +25016,6 @@
       "file": "com.weibo.freshcity.png",
       "bytes": 45875,
       "sha256": "916724b98cc7750ee4c93241952f799d00a6530b9b2a155e5d47b64397438ba6"
-    },
-    {
-      "package": "com.weibo.freshcity_2",
-      "file": "com.weibo.freshcity_2.png",
-      "bytes": 43230,
-      "sha256": "768b628be0e4a90e06871623b3216466a01b0f53d070a55d2661b87205dd389c"
     },
     {
       "package": "com.weicheche.android",
@@ -25528,16 +25234,16 @@
       "sha256": "8451d6ec37682a3716c7fd8968390ee3881c06ea2a0817716f45ba38563c89f5"
     },
     {
-      "package": "com.wochacha.android.enigmacode",
-      "file": "com.wochacha.android.enigmacode.png",
-      "bytes": 26561,
-      "sha256": "060baa9cdc60a27da206a4e7f01e40225e829a88787cbdc10375b251d6d4a889"
-    },
-    {
       "package": "com.wochacha",
       "file": "com.wochacha.png",
       "bytes": 26453,
       "sha256": "45d5f409f7160c2bccd6345c04cdea73414db361ff1c43ad8a76e197680d0241"
+    },
+    {
+      "package": "com.wochacha.android.enigmacode",
+      "file": "com.wochacha.android.enigmacode.png",
+      "bytes": 26561,
+      "sha256": "060baa9cdc60a27da206a4e7f01e40225e829a88787cbdc10375b251d6d4a889"
     },
     {
       "package": "com.wodi.who",
@@ -25574,12 +25280,6 @@
       "file": "com.wondertek.paper.png",
       "bytes": 111640,
       "sha256": "c508c4d07d3861d58bbed7bd448b00d35d0a871e535ca83d79e2c86581d2c8b2"
-    },
-    {
-      "package": "com.wondertek.paper_2",
-      "file": "com.wondertek.paper_2.png",
-      "bytes": 19196,
-      "sha256": "7d8468e027dc03afb855180ef292fae9f9eddb08d16ce6a995e10732d706cf8e"
     },
     {
       "package": "com.wondertek.wirelesscityahyd",
@@ -25678,6 +25378,12 @@
       "sha256": "89d8c1402e222b347c145e0b326c6c1da2dcde78c3b7978940523e1c83c5a7e8"
     },
     {
+      "package": "com.wuba",
+      "file": "com.wuba.png",
+      "bytes": 146703,
+      "sha256": "e08e2e7eaccc1fde6a414c98cfc4e7add9fa6ca0b1393b0b567937113e881233"
+    },
+    {
       "package": "com.wuba.bangjob",
       "file": "com.wuba.bangjob.png",
       "bytes": 35287,
@@ -25694,12 +25400,6 @@
       "file": "com.wuba.jiazheng.png",
       "bytes": 44897,
       "sha256": "4ffb3f679beda17be12f06c69b20ba69a72b789661e5de18134b9bbe4c634529"
-    },
-    {
-      "package": "com.wuba",
-      "file": "com.wuba.png",
-      "bytes": 146703,
-      "sha256": "e08e2e7eaccc1fde6a414c98cfc4e7add9fa6ca0b1393b0b567937113e881233"
     },
     {
       "package": "com.wuba.town.client",
@@ -25930,16 +25630,16 @@
       "sha256": "0061afd73079d0573d06515b73dd274e860df52c328c7478977e4477aa95702f"
     },
     {
-      "package": "com.xiachufang.lazycook",
-      "file": "com.xiachufang.lazycook.png",
-      "bytes": 196240,
-      "sha256": "7a9ab9181a717dd4380894bd2be880de62a87d77f7fdd0e01df3a075a8008579"
-    },
-    {
       "package": "com.xiachufang",
       "file": "com.xiachufang.png",
       "bytes": 117611,
       "sha256": "c71a1dd7ddf34385b45a7b89aa0740801d4890c8b21e2e0290039f44a6f74a7a"
+    },
+    {
+      "package": "com.xiachufang.lazycook",
+      "file": "com.xiachufang.lazycook.png",
+      "bytes": 196240,
+      "sha256": "7a9ab9181a717dd4380894bd2be880de62a87d77f7fdd0e01df3a075a8008579"
     },
     {
       "package": "com.xiandanjia.android",
@@ -25994,12 +25694,6 @@
       "file": "com.xiaoji.emulator.png",
       "bytes": 79098,
       "sha256": "0d419a1ed3fe3ec5d4cd7c97f21424b31fa9c4e0e7cde63482b39e2e4fc91a17"
-    },
-    {
-      "package": "com.xiaoji.emulator_2",
-      "file": "com.xiaoji.emulator_2.png",
-      "bytes": 20190,
-      "sha256": "cfd90653689ff8014b19579cbaf06198c0009d05c906eb6a03e491068f878f3e"
     },
     {
       "package": "com.xiaojukeji.finance",
@@ -26402,12 +26096,6 @@
       "file": "com.xiaozhu.xzdz.png",
       "bytes": 25105,
       "sha256": "44eb9f2bb96754ccdd207005b63447663818845abdfddc0dd95de12065303f3b"
-    },
-    {
-      "package": "com.XiGuaRen",
-      "file": "com.XiGuaRen.png",
-      "bytes": 28607,
-      "sha256": "2722e56d060d481a93f000d7dc7e52604ade9429a55b47e1e0e977848c57c3c7"
     },
     {
       "package": "com.ximalaya.qunfeng",
@@ -27166,16 +26854,16 @@
       "sha256": "1115f0329138f4d7511dd4456579288597b194a03e180e45e4b11f8bf2d09a0d"
     },
     {
-      "package": "com.yitong.mbank.psbc.creditcard",
-      "file": "com.yitong.mbank.psbc.creditcard.png",
-      "bytes": 158086,
-      "sha256": "130418ef59b6554dcc31b5ba075ccf35be190d1211afc1d5eb93aa4e662dafd5"
-    },
-    {
       "package": "com.yitong.mbank.psbc",
       "file": "com.yitong.mbank.psbc.png",
       "bytes": 233004,
       "sha256": "a1ed095168ca718dd0a9397a8661d93daa7f66f7bbe837c8c91fe180f8a9cb48"
+    },
+    {
+      "package": "com.yitong.mbank.psbc.creditcard",
+      "file": "com.yitong.mbank.psbc.creditcard.png",
+      "bytes": 158086,
+      "sha256": "130418ef59b6554dcc31b5ba075ccf35be190d1211afc1d5eb93aa4e662dafd5"
     },
     {
       "package": "com.yitong.mbank.pzh_ps",
@@ -27286,6 +26974,12 @@
       "sha256": "e879599ddb55bd732cbbdb1fa66c9dff33f6869c7f576e1c25ef39be7b85b8bb"
     },
     {
+      "package": "com.yodo1.SD009.megajump",
+      "file": "com.yodo1.SD009.megajump.png",
+      "bytes": 43537,
+      "sha256": "28f3ec3b34a222fe3c33a94f556f61195abb488897ae4cfd3a7a7f768b3792ab"
+    },
+    {
       "package": "com.yodo1.ctr2.YODO1_01",
       "file": "com.yodo1.ctr2.YODO1_01.png",
       "bytes": 43463,
@@ -27296,12 +26990,6 @@
       "file": "com.yodo1.ctr_original.YODO1_01.png",
       "bytes": 53199,
       "sha256": "4ab6915d5ee6606069ec9dba66db9c0117fa18606b05bb098b388da5e174cc3a"
-    },
-    {
-      "package": "com.yodo1.SD009.megajump",
-      "file": "com.yodo1.SD009.megajump.png",
-      "bytes": 43537,
-      "sha256": "28f3ec3b34a222fe3c33a94f556f61195abb488897ae4cfd3a7a7f768b3792ab"
     },
     {
       "package": "com.yogavpn",
@@ -27376,16 +27064,16 @@
       "sha256": "fd9f4d56ec02fb47755360ad616382f50bf9fccc4eaac62f7a4035fe8d0fdc52"
     },
     {
-      "package": "com.youba.barcode",
-      "file": "com.youba.barcode.png",
-      "bytes": 29364,
-      "sha256": "7bab38576fb13cbc5705331de2c77f77255cba5ef705a5b3ba11edabb824f71e"
-    },
-    {
       "package": "com.youba.FileExplorer",
       "file": "com.youba.FileExplorer.png",
       "bytes": 6981,
       "sha256": "5dafe9425991f81c783154f86db5da3d30b24b619a1df1db71e7ec1608168142"
+    },
+    {
+      "package": "com.youba.barcode",
+      "file": "com.youba.barcode.png",
+      "bytes": 29364,
+      "sha256": "7bab38576fb13cbc5705331de2c77f77255cba5ef705a5b3ba11edabb824f71e"
     },
     {
       "package": "com.youba.flashlight",
@@ -28222,16 +27910,16 @@
       "sha256": "1346f7682070e3677afc34d9dbb96c1eeaeb7c4d6e7dab6336f84ca913983863"
     },
     {
-      "package": "com.zhuofu.merchant",
-      "file": "com.zhuofu.merchant.png",
-      "bytes": 22010,
-      "sha256": "08c09f8febad800da602e35c39a4ce033c4fea4a94734bac93991f82d38a6e46"
-    },
-    {
       "package": "com.zhuofu",
       "file": "com.zhuofu.png",
       "bytes": 21860,
       "sha256": "788585e1fced5387cc19cf64291f0a1360edd583678572bbb2f3fb678faad604"
+    },
+    {
+      "package": "com.zhuofu.merchant",
+      "file": "com.zhuofu.merchant.png",
+      "bytes": 22010,
+      "sha256": "08c09f8febad800da602e35c39a4ce033c4fea4a94734bac93991f82d38a6e46"
     },
     {
       "package": "com.zhuoyouapp.reader",
@@ -28432,12 +28120,6 @@
       "sha256": "a7e3b281d42672d20d3e42fc8d6f508c71359f40f553fe25f872c40f7c0301a4"
     },
     {
-      "package": "com.zuzuche.crc",
-      "file": "com.zuzuche.crc.png",
-      "bytes": 25466,
-      "sha256": "e69d3a1e657a5efbbc3fab2f5f79772557ade09c6d6cdf0f0efecdcb972a8d53"
-    },
-    {
       "package": "com.zuzuChe",
       "file": "com.zuzuChe.png",
       "bytes": 23813,
@@ -28466,6 +28148,12 @@
       "file": "com.zuzuChe.wz.sh.png",
       "bytes": 52174,
       "sha256": "4efab6e57f508d4c2b0e081585369b9ea0ec89ebefa4d1703675ec9ec5499fcf"
+    },
+    {
+      "package": "com.zuzuche.crc",
+      "file": "com.zuzuche.crc.png",
+      "bytes": 25466,
+      "sha256": "e69d3a1e657a5efbbc3fab2f5f79772557ade09c6d6cdf0f0efecdcb972a8d53"
     },
     {
       "package": "com.zw.lebo",
@@ -28720,12 +28408,6 @@
       "sha256": "92997ef7e1f0fcbb4322504ab2172ebcfc8454bcbf75c621ff0d021211a1b5c7"
     },
     {
-      "package": "eu.kanade.tachiyomi.debug",
-      "file": "eu.kanade.tachiyomi.debug.png",
-      "bytes": 17950,
-      "sha256": "cf9a16eb7a0f9fba994422ce6e41f6d8fcac5482aace22b691306f2fcdb0d825"
-    },
-    {
       "package": "eu.kanade.tachiyomi",
       "file": "eu.kanade.tachiyomi.png",
       "bytes": 62345,
@@ -28840,12 +28522,6 @@
       "sha256": "58aebed31634901969b0bf5db528308963b7091c4668018cbd8455613e81c520"
     },
     {
-      "package": "fm.xiami.main_4",
-      "file": "fm.xiami.main_4.png",
-      "bytes": 36527,
-      "sha256": "0c120a2bf1ad9d6d7803a54adf259fba4c4a0972735010f8e5e5d1800e980743"
-    },
-    {
       "package": "fm.yue.android",
       "file": "fm.yue.android.png",
       "bytes": 9769,
@@ -28936,12 +28612,6 @@
       "sha256": "b3418242f73856c407088cd84b0ed6fc38bb01c3d4da5b13824976da1e29530f"
     },
     {
-      "package": "Han.GJZS",
-      "file": "Han.GJZS.png",
-      "bytes": 30632,
-      "sha256": "0980cc272a63ad5c3501a231b89404991091d89b2116305c423187d5b1df3f4b"
-    },
-    {
       "package": "hanjie.app.pureweather",
       "file": "hanjie.app.pureweather.png",
       "bytes": 100761,
@@ -28984,10 +28654,10 @@
       "sha256": "0c69f36756f3baeb81815a79f0b7d613b594577f73e567b1d409131ec6efa855"
     },
     {
-      "package": "ic_folder_bg",
-      "file": "ic_folder_bg.png",
-      "bytes": 89353,
-      "sha256": "c20b07a60b359346a1da620273554a368dd161811c3545415581756f771b8fa1"
+      "package": "iReader.main.ui",
+      "file": "iReader.main.ui.png",
+      "bytes": 22858,
+      "sha256": "93662992d81117ca02a4648ca71260011d8db94e23f0cca12fbc4369e8145af2"
     },
     {
       "package": "ic_launcher",
@@ -29200,12 +28870,6 @@
       "sha256": "f1cd87719faf573bfcab2c67576b1d18d6f4018306a2c644cf96ddfef5e2e22f"
     },
     {
-      "package": "in.zhaoj.shadowsocksr",
-      "file": "in.zhaoj.shadowsocksr.png",
-      "bytes": 21041,
-      "sha256": "1c4b44ab783ce5e2cadeeafb8d397c1cf621f16a6de58e5dad12dd4ba1c80aec"
-    },
-    {
       "package": "in.zhaoj.shadowsocksrr",
       "file": "in.zhaoj.shadowsocksrr.png",
       "bytes": 24980,
@@ -29284,12 +28948,6 @@
       "sha256": "62d965cc2e4ce9548a08b8743de0ab5b880d6ac68c4c90886c72306f174a788c"
     },
     {
-      "package": "InternetRadio.all",
-      "file": "InternetRadio.all.png",
-      "bytes": 11074,
-      "sha256": "79b38e25398ca373802bbec53dd24635c4992f14218b2a1cc654d4d5a3bdeffa"
-    },
-    {
       "package": "inwaves.qng",
       "file": "inwaves.qng.png",
       "bytes": 25673,
@@ -29348,12 +29006,6 @@
       "file": "io.moreless.tide.png",
       "bytes": 30573,
       "sha256": "b391e151754acf778503aee57beca22c5c5b88a75af30d7fb3da944e69f368af"
-    },
-    {
-      "package": "iReader.main.ui",
-      "file": "iReader.main.ui.png",
-      "bytes": 22858,
-      "sha256": "93662992d81117ca02a4648ca71260011d8db94e23f0cca12fbc4369e8145af2"
     },
     {
       "package": "it.android.demi.elettronica",
@@ -29422,6 +29074,18 @@
       "sha256": "6a6c903023386af4f23cfc14692762844a398cf07353f73156e573b01430122e"
     },
     {
+      "package": "jp.naver.SJLGBUBBLE",
+      "file": "jp.naver.SJLGBUBBLE.png",
+      "bytes": 47368,
+      "sha256": "6ffcf43486640c9f1a39a26dee4bde61c89e537179a8acaf54b08d2d8add28fc"
+    },
+    {
+      "package": "jp.naver.SJLINEPANG",
+      "file": "jp.naver.SJLINEPANG.png",
+      "bytes": 53311,
+      "sha256": "f58be6a31da8cfa0de05e64a0e97748109e13e4440221f958724234ed131c0cc"
+    },
+    {
       "package": "jp.naver.line.android",
       "file": "jp.naver.line.android.png",
       "bytes": 18630,
@@ -29464,12 +29128,6 @@
       "sha256": "6720eccc2ec790413d409f374b109695f62f7b483421056486b6c32d7dfcb0b9"
     },
     {
-      "package": "jp.naver.SJLGBUBBLE",
-      "file": "jp.naver.SJLGBUBBLE.png",
-      "bytes": 47368,
-      "sha256": "6ffcf43486640c9f1a39a26dee4bde61c89e537179a8acaf54b08d2d8add28fc"
-    },
-    {
       "package": "jp.naver.sjlgpp",
       "file": "jp.naver.sjlgpp.png",
       "bytes": 48049,
@@ -29480,12 +29138,6 @@
       "file": "jp.naver.sjlgwr.png",
       "bytes": 33491,
       "sha256": "7965137082a4eb97c2cc413a38e1c9ee2033812e8e3f7036f00017ce11c7e60d"
-    },
-    {
-      "package": "jp.naver.SJLINEPANG",
-      "file": "jp.naver.SJLINEPANG.png",
-      "bytes": 53311,
-      "sha256": "f58be6a31da8cfa0de05e64a0e97748109e13e4440221f958724234ed131c0cc"
     },
     {
       "package": "jp.ne.hardyinfinity.bluelightfilter.free",
@@ -29504,12 +29156,6 @@
       "file": "jp.pxv.android.png",
       "bytes": 50496,
       "sha256": "71389c4cc420c13e7bb56d809595414f481981fc0cf91e3b083c68727d1413ce"
-    },
-    {
-      "package": "jp.pxv.android_2",
-      "file": "jp.pxv.android_2.png",
-      "bytes": 12815,
-      "sha256": "610c6824d1b40125b3e4dced98cc303ff2ccfe416a5c750b6ea1bfbae245210c"
     },
     {
       "package": "jp.pxv.android_3",
@@ -29582,12 +29228,6 @@
       "file": "klb.android.lovelive.y.png",
       "bytes": 75187,
       "sha256": "d2a4e09c287f252c0b8cee3ebefb60b5e88ff906162b613212c1c7af72fa42fe"
-    },
-    {
-      "package": "klb.android.lovelive.z_klb.android.lovelive",
-      "file": "klb.android.lovelive.z_klb.android.lovelive.png",
-      "bytes": 80648,
-      "sha256": "71c0be562f9e9a4e6561deaae6c0c25182dba1d27d20fbdf20195072895f942d"
     },
     {
       "package": "klb.android.lovelivecn",
@@ -29734,28 +29374,22 @@
       "sha256": "1e2743084930f4d125dd2dfb1b4b592c784f610545057e5e43bae8dc6d64b0f4"
     },
     {
+      "package": "me.ele",
+      "file": "me.ele.png",
+      "bytes": 185500,
+      "sha256": "1c59f75db30cd17bc11adf6800f3973d564a42461c11881cc8eead21d92d28de"
+    },
+    {
       "package": "me.ele.crowdsource",
       "file": "me.ele.crowdsource.png",
       "bytes": 163305,
       "sha256": "668c425a168ed16cccd19eab984a191b134e0bfff9443712b011abfafec8daae"
     },
     {
-      "package": "me.ele.crowdsource_2",
-      "file": "me.ele.crowdsource_2.png",
-      "bytes": 33493,
-      "sha256": "44ab511a6b6b4bda3bfd316d3f2f231a998cb719a0ba28fa66464c712cd95a82"
-    },
-    {
       "package": "me.ele.napos",
       "file": "me.ele.napos.png",
       "bytes": 21694,
       "sha256": "296fede8931edb8908de2d5ab127bc3d40efd738943ef0c4cd9a859ea297d433"
-    },
-    {
-      "package": "me.ele",
-      "file": "me.ele.png",
-      "bytes": 185500,
-      "sha256": "1c59f75db30cd17bc11adf6800f3973d564a42461c11881cc8eead21d92d28de"
     },
     {
       "package": "me.ele_2",
@@ -30046,6 +29680,12 @@
       "sha256": "bfbe8192a270bcea9fb195b12cb7c803ad87d9a090e578212d5a1e1c1b2932f0"
     },
     {
+      "package": "my.PCamera",
+      "file": "my.PCamera.png",
+      "bytes": 50887,
+      "sha256": "62f5877ed1ac79657f510a74f33d64112b088d7a3ceaab328f92d6d5c16319ff"
+    },
+    {
       "package": "my.beautyCamera",
       "file": "my.beautyCamera.png",
       "bytes": 28263,
@@ -30062,12 +29702,6 @@
       "file": "my.maya.android.png",
       "bytes": 42672,
       "sha256": "676b46056bf41a50dc64c2818c7fb24f6219441d3f209b6f52f2ac8b3e051955"
-    },
-    {
-      "package": "my.PCamera",
-      "file": "my.PCamera.png",
-      "bytes": 50887,
-      "sha256": "62f5877ed1ac79657f510a74f33d64112b088d7a3ceaab328f92d6d5c16319ff"
     },
     {
       "package": "ne.hs.hsapp",
@@ -30826,12 +30460,6 @@
       "sha256": "df4b4588d35a6550c6738a496e2c51907517b1e9429306ead054f806bad0a823"
     },
     {
-      "package": "pl.idreams.skyforce.mi",
-      "file": "pl.idreams.skyforce.mi.png",
-      "bytes": 17362,
-      "sha256": "2f94336314930cd4ba73f44c54d8b45f54fcf24197e674eb0511acbd228b6bf6"
-    },
-    {
       "package": "pl.idreams.skyforce.uc",
       "file": "pl.idreams.skyforce.uc.png",
       "bytes": 17362,
@@ -31090,12 +30718,6 @@
       "sha256": "18cb4234b79f04d7c1829074edca589cd3aa2f41ed74d7b2e5434d02b0cc292b"
     },
     {
-      "package": "SplashActivity",
-      "file": "SplashActivity.png",
-      "bytes": 38457,
-      "sha256": "fbd224bc775238f4a72bbf561fb34147ed5abf20f8592af6787633e0ccb13ef2"
-    },
-    {
       "package": "sulisong.ShelledPro.Screenshots",
       "file": "sulisong.ShelledPro.Screenshots.png",
       "bytes": 19152,
@@ -31220,12 +30842,6 @@
       "file": "tv.danmaku.bili_5.png",
       "bytes": 46760,
       "sha256": "f285201a6cbbc5ceba3231ad6c90d445ba6f403a5a9f5955c5524a0fd5867b2c"
-    },
-    {
-      "package": "tv.danmaku.bili_6",
-      "file": "tv.danmaku.bili_6.png",
-      "bytes": 31418,
-      "sha256": "63f1791a43136c6d6842a5b504e317b8e6f96734fdfc40bed4cf269583e7e6ff"
     },
     {
       "package": "tv.danmaku.ijk.media.demo",
@@ -31360,10 +30976,10 @@
       "sha256": "1e489956ff38288b0db93d8a7f3edf78c26dccf91d5a7a5100411958dec9734c"
     },
     {
-      "package": "Uxpp.UC",
-      "file": "Uxpp.UC.png",
-      "bytes": 41673,
-      "sha256": "6e70e33814d3b822dcbf6c3c65d6d2f6e9912c3afce37b2f93260aaaadbe77ce"
+      "package": "vStudio.Android.Camera360",
+      "file": "vStudio.Android.Camera360.png",
+      "bytes": 28011,
+      "sha256": "a0ab218d4f61208271334576c5bcf15cd021c609bd7f7dea79376615cc94598b"
     },
     {
       "package": "video.vue.android",
@@ -31394,12 +31010,6 @@
       "file": "vo.threes.exclaim.png",
       "bytes": 10376,
       "sha256": "4138e545bbf1ced8c8b4410341857b31754ad27db4b0f05ecdd2dbda57409026"
-    },
-    {
-      "package": "vStudio.Android.Camera360",
-      "file": "vStudio.Android.Camera360.png",
-      "bytes": 28011,
-      "sha256": "a0ab218d4f61208271334576c5bcf15cd021c609bd7f7dea79376615cc94598b"
     },
     {
       "package": "vz.com",
@@ -31587,5 +31197,10 @@
       "bytes": 80221,
       "sha256": "284405f1a1e81d0bc7c388ee1671fc0cbf047525b34a940b08f3bc8aa194ba07"
     }
+  ],
+  "note": "Immutable sourceIds; catalog supplies metadata, variants supplies legacy candidates.",
+  "mirrors": [
+    "https://gitee.com/RANH-F/Smartisan-original-launcher-download/raw/master/icons/drawable/",
+    "https://raw.githubusercontent.com/RANH-F/Smartisan-original-launcher/main/icons/drawable/"
   ]
 }

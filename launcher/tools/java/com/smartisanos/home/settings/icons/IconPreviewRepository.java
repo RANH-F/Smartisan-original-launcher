@@ -195,6 +195,12 @@ public final class IconPreviewRepository implements ComponentCallbacks2 {
     private final Context app;
     private final LruCache<IconRenderKey, Bitmap> cache;
     private final ThreadPoolExecutor decodePool;
+    private final ThreadPoolExecutor onlinePool;
+    private final Map<String, OnlineFetch> online = new HashMap<String, OnlineFetch>();
+    private static final ThreadLocal<RenderTask> CURRENT_RENDER = new ThreadLocal<RenderTask>();
+    private static final ThreadLocal<Boolean> DECODE_THREAD = new ThreadLocal<Boolean>();
+    private final java.util.concurrent.atomic.AtomicBoolean diskTrimQueued = new java.util.concurrent.atomic.AtomicBoolean();
+    private volatile long lastDiskTrim;
     private final Handler main = new Handler(Looper.getMainLooper());
     private final Map<IconRenderKey, ArrayList<PendingCallback>> pending = new HashMap<IconRenderKey, ArrayList<PendingCallback>>();
     private final LruCache<String, IconRenderKey> knownKeys = new LruCache<String, IconRenderKey>(512) {
@@ -221,9 +227,31 @@ public final class IconPreviewRepository implements ComponentCallbacks2 {
             }
         };
         decodePool = new ThreadPoolExecutor(2, 2, 15L, TimeUnit.SECONDS,
-                new PriorityBlockingQueue<Runnable>());
+                new PriorityBlockingQueue<Runnable>(), backgroundFactory("icon-preview"));
+        onlinePool = new ThreadPoolExecutor(2, 2, 15L, TimeUnit.SECONDS,
+                new java.util.concurrent.ArrayBlockingQueue<Runnable>(24), backgroundFactory("icon-online"),
+                new ThreadPoolExecutor.AbortPolicy());
+        schedule(Priority.P2_IDLE, new Runnable() { public void run() {
+            try { IconLibraryCatalog.load(app); } catch (Exception e) {
+                android.util.Log.w("SmartisanPerf", "ICON_CATALOG_LOAD_FAILED", e);
+            }
+        }});
         app.registerComponentCallbacks(this);
     }
+
+    private static java.util.concurrent.ThreadFactory backgroundFactory(final String name) {
+        return new java.util.concurrent.ThreadFactory() {
+            public Thread newThread(final Runnable job) {
+                return new Thread(new Runnable() { public void run() {
+                    android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
+                    if ("icon-preview".equals(name)) DECODE_THREAD.set(Boolean.TRUE);
+                    job.run();
+                }}, name);
+            }
+        };
+    }
+
+    public static boolean isPreviewWorker() { return Boolean.TRUE.equals(DECODE_THREAD.get()); }
 
     public static IconPreviewRepository get(Context context) {
         IconPreviewRepository value = sInstance;
@@ -238,6 +266,8 @@ public final class IconPreviewRepository implements ComponentCallbacks2 {
         java.util.List<String> sourceIds();
         Drawable load(String sourceId, boolean cachedOnly);
         String selectedKey();
+        default boolean contains(String sourceId) { return false; }
+        default java.util.List<AppIconCandidate> extraCandidates() { return Collections.emptyList(); }
     }
     public interface CandidateCallback {
         void onCandidates(java.util.List<AppIconCandidate> candidates);
@@ -271,6 +301,21 @@ public final class IconPreviewRepository implements ComponentCallbacks2 {
         for (IconRenderKey key : cache.snapshot().keySet()) {
             if (key.packageName.equals(packageName)) cache.remove(key);
         }
+    }
+
+    /** Local warming must not occupy a visible request's pending slot on a cache miss. */
+    public void prefetchLocal(final RequestSession session, final IconRenderKey key,
+            final DrawableLoader loader) {
+        if (!isSessionActive(session) || cache.get(key) != null) return;
+        schedule(session, Priority.P1_ADJACENT, new Runnable() { public void run() {
+            if (!isSessionActive(session) || cache.get(key) != null) return;
+            Bitmap bitmap;
+            try { bitmap = drawableToBitmap(loader.load(), key.targetPixelSize); }
+            catch (Exception error) { return; }
+            if (bitmap == null) return;
+            if (isSessionActive(session) && cache.get(key) == null) cache.put(key, bitmap);
+            else bitmap.recycle();
+        }});
     }
 
     /** Called while the application page snapshot is built off MAIN. */
@@ -317,46 +362,32 @@ public final class IconPreviewRepository implements ComponentCallbacks2 {
                 final long generation = candidateGeneration;
                 long started = android.os.SystemClock.elapsedRealtime();
                 logPerf("ICON_CANDIDATES_COLLECT_BEGIN", pkg, component, user, "CHOICE", 0, 0);
+                try { IconLibraryCatalog.load(app); } catch (Exception error) {
+                    android.util.Log.w("SmartisanPerf", "ICON_CATALOG_LOAD_FAILED", error);
+                }
+                final String configuredKey = library.selectedKey();
+                android.util.Log.i("SmartisanPerf", "ICON_CANDIDATES_METADATA target=" + pkg + " selected=" + configuredKey);
                 final java.util.LinkedHashMap<String, AppIconCandidate> found =
                         new java.util.LinkedHashMap<String, AppIconCandidate>();
+                for (AppIconCandidate item : library.extraCandidates()) found.put(item.stableKey,item);
                 for (String id : library.sourceIds()) {
                     if (!isCurrentCandidateRequest(session, request)) return;
                     if (TextUtils.isEmpty(id) || found.containsKey("IMPROVED:" + id)) continue;
-                    Drawable drawable = library.load(id, false);
-                    if (!isCurrentCandidateRequest(session, request)) return;
-                    if (drawable != null) {
-                        AppIconCandidate item = new AppIconCandidate(AppIconCandidate.TYPE_LIBRARY,
-                                id, "", false);
-                        IconRenderKey key = candidateRenderKey(pkg, component, user, item);
-                        Bitmap preview = drawableToBitmap(drawable, key.targetPixelSize);
-                        if (preview == null) continue;
-                        cache.put(key, preview);
+                    if (checkCandidateExists(id) || library.contains(id) || ("IMPROVED:" + id).equals(configuredKey)) {
+                        AppIconCandidate item = new AppIconCandidate(AppIconCandidate.TYPE_LIBRARY, id, "", false);
                         found.put(item.stableKey, item);
                     }
                 }
-                ArrayList<String> packs = IconPackManager.getIconPackPackages(app);
-                Collections.sort(packs);
-                for (String pack : packs) {
+                for (AppIconCandidate item : IconPackManager.getCandidateMetadata(app, pkg, component, session)) {
                     if (!isCurrentCandidateRequest(session, request)) return;
-                    // Explicit package API parses on this executor and never changes global selection.
-                    Drawable drawable = IconPackManager.getPackedIcon(app, pack, pkg, component);
-                    if (drawable == null) continue;
-                    AppIconCandidate item = new AppIconCandidate(AppIconCandidate.TYPE_PACKED,
-                            pack, IconPackManager.getIconPackLabel(app, pack),
-                            false);
-                    IconRenderKey key = candidateRenderKey(pkg, component, user, item);
-                    Bitmap preview = drawableToBitmap(drawable, key.targetPixelSize);
-                    if (!isCurrentCandidateRequest(session, request)) return;
-                    if (preview == null) continue;
-                    cache.put(key, preview);
-                    found.put(item.stableKey, item);
+                    if (!found.containsKey("PACK:" + item.packPackage + "#" + item.packDrawableName)) found.put(item.stableKey, item);
                 }
                 final String selectedKey = library.selectedKey();
                 final ArrayList<AppIconCandidate> result = new ArrayList<AppIconCandidate>();
-                if ("DEFAULT".equals(selectedKey)) result.add(new AppIconCandidate(
-                        AppIconCandidate.TYPE_ORIGINAL, "", "", true));
+                result.add(new AppIconCandidate(AppIconCandidate.TYPE_ORIGINAL, "", "",
+                        "DEFAULT".equals(selectedKey)));
                 for (AppIconCandidate item : found.values()) result.add(new AppIconCandidate(
-                        item.type, item.sourceId, item.packLabel, item.stableKey.equals(selectedKey)));
+                        item.type, item.sourceId, item.packLabel, item.stableKey.equals(selectedKey), item.packDrawableName, item.packVersion,item.explicitPackDrawable));
                 // Stable sort moves only the selected entry; library/variant/pack order stays stable.
                 Collections.sort(result, new java.util.Comparator<AppIconCandidate>() {
                     public int compare(AppIconCandidate a, AppIconCandidate b) {
@@ -371,6 +402,8 @@ public final class IconPreviewRepository implements ComponentCallbacks2 {
                 }
                 candidateLists.put(candidatePageKey(pkg, component, user),
                         Collections.unmodifiableList(result));
+                android.util.Log.i("SmartisanPerf", "ICON_CANDIDATES_READY target=" + pkg + " count=" + result.size()
+                        + " durationMs=" + (android.os.SystemClock.elapsedRealtime() - started));
                 logPerf("ICON_CANDIDATES_COLLECT_END", pkg, component, user, "CHOICE", result.size(),
                         android.os.SystemClock.elapsedRealtime() - started);
                 main.post(new Runnable() { public void run() {
@@ -393,16 +426,18 @@ public final class IconPreviewRepository implements ComponentCallbacks2 {
     }
 
     public IconRenderKey candidateRenderKey(String pkg, String component, long user, AppIconCandidate item) {
-        long version = 0;
-        try {
-            String versionPackage = item.type == AppIconCandidate.TYPE_PACKED ? item.packPackage : pkg;
-            version = app.getPackageManager().getPackageInfo(versionPackage, 0).lastUpdateTime;
-        } catch (Exception ignored) { }
+        long version = item.type == AppIconCandidate.TYPE_PACKED ? item.packVersion
+                : item.type == AppIconCandidate.TYPE_CUSTOM ? candidateGeneration : 0L;
+        if (item.type == AppIconCandidate.TYPE_LIBRARY) {
+            IconLibraryCatalog catalog = IconLibraryCatalog.peek();
+            version = catalog == null ? 0L : catalog.revision.hashCode();
+        }
         return new IconRenderKey(pkg, component, user,
                 item.type == AppIconCandidate.TYPE_PACKED ? "PACK"
                         : item.type == AppIconCandidate.TYPE_LIBRARY ? "RESOURCE"
                         : item.type == AppIconCandidate.TYPE_CUSTOM ? "CUSTOM" : "DEFAULT",
-                item.sourceId, version, Math.round(72 * app.getResources().getDisplayMetrics().density),
+                item.type == AppIconCandidate.TYPE_PACKED ? item.packPackage + "#" + item.packDrawableName : item.sourceId,
+                version, Math.round(72 * app.getResources().getDisplayMetrics().density),
                 app.getResources().getDisplayMetrics().densityDpi, 1);
     }
 
@@ -422,6 +457,52 @@ public final class IconPreviewRepository implements ComponentCallbacks2 {
             candidateRequests.remove(session);
         }
         purgeCancelledSessionWork(session);
+        purgeOnlineWork();
+    }
+
+    /** Drop only a recycled cell's subscription; other cells/pages may share this image. */
+    public void cancelRequest(RequestSession session, IconRenderKey key, Callback callback) {
+        synchronized (pending) {
+            ArrayList<PendingCallback> callbacks = pending.get(key);
+            if (callbacks != null) {
+                java.util.Iterator<PendingCallback> it = callbacks.iterator();
+                while (it.hasNext()) {
+                    PendingCallback item = it.next();
+                    if (item.session == session && item.callback == callback) it.remove();
+                }
+                if (callbacks.isEmpty()) pending.remove(key);
+            }
+        }
+        for (Runnable queued : decodePool.getQueue().toArray(new Runnable[0])) {
+            if (queued instanceof RenderTask) {
+                RenderTask task = (RenderTask) queued;
+                if (key.equals(task.key) && !hasActiveConsumers(key, task.callbacks)) decodePool.getQueue().remove(queued);
+            }
+        }
+        purgeOnlineWork();
+    }
+
+    private void purgeOnlineWork() {
+        for (Runnable queued : onlinePool.getQueue().toArray(new Runnable[0])) {
+            if (queued instanceof IoOperation && !isSessionActive(((IoOperation) queued).session)) onlinePool.getQueue().remove(queued);
+        }
+        synchronized (online) {
+            java.util.Iterator<OnlineFetch> it = online.values().iterator();
+            while (it.hasNext()) {
+                OnlineFetch fetch = it.next();
+                java.util.Iterator<RenderTask> consumers = fetch.tasks.iterator();
+                while (consumers.hasNext()) {
+                    RenderTask task = consumers.next();
+                    if (!hasActiveConsumers(task.key, task.callbacks)) consumers.remove();
+                }
+                if (fetch.tasks.isEmpty()) {
+                    fetch.cancelled = true;
+                    onlinePool.getQueue().remove(fetch);
+                    // Socket read is bounded; never disconnect a socket on the UI thread.
+                    it.remove();
+                }
+            }
+        }
     }
 
     public boolean isSessionActive(RequestSession session) {
@@ -544,6 +625,12 @@ public final class IconPreviewRepository implements ComponentCallbacks2 {
         synchronized (pending) {
             ArrayList<PendingCallback> callbacks = pending.get(key);
             if (callbacks != null) {
+                if (callback == null) {
+                    for (PendingCallback existing : callbacks) {
+                        if (existing.callback == null && (session == null ? existing.session == null
+                                : session.equals(existing.session))) return;
+                    }
+                }
                 callbacks.add(new PendingCallback(session, callback));
                 return;
             }
@@ -644,9 +731,12 @@ public final class IconPreviewRepository implements ComponentCallbacks2 {
 
     /** Low-priority maintenance after a completed online-icon write, never on page open. */
     public void trimOnlineDiskCacheAsync() {
+        long now = android.os.SystemClock.uptimeMillis();
+        if (now - lastDiskTrim < 60000L || !diskTrimQueued.compareAndSet(false, true)) return;
+        lastDiskTrim = now;
         decodePool.execute(new RenderTask(null, Priority.P2_IDLE, new DrawableLoader() {
             public Drawable load() {
-                trimOnlineDiskCache();
+                try { trimOnlineDiskCache(); } finally { diskTrimQueued.set(false); }
                 return null;
             }
         }, sequence.incrementAndGet()));
@@ -681,6 +771,8 @@ public final class IconPreviewRepository implements ComponentCallbacks2 {
     private final class RenderTask implements Runnable, Comparable<RenderTask> {
         final RequestSession session; final IconRenderKey key; final Priority priority; final DrawableLoader loader; final long order;
         final ArrayList<PendingCallback> callbacks;
+        String requiredOnlineSource;
+        boolean onlineAttempted;
         RenderTask(RequestSession session, IconRenderKey key, Priority priority, DrawableLoader loader,
                    ArrayList<PendingCallback> callbacks, long order) {
             this.session = session; this.key = key; this.priority = priority; this.loader = loader;
@@ -712,8 +804,16 @@ public final class IconPreviewRepository implements ComponentCallbacks2 {
             if (key != null) {
                 logPerf("ICON_DECODE_BEGIN", key.packageName, key.componentName, key.userSerial, key.sourceType, key.targetPixelSize, 0);
             }
-            try { if (key != null) bitmap = drawableToBitmap(loader.load(), key.targetPixelSize); }
+            requiredOnlineSource = null;
+            CURRENT_RENDER.set(this);
+            try { bitmap = drawableToBitmap(loader.load(), key.targetPixelSize); }
             catch (Throwable ignored) { }
+            finally { CURRENT_RENDER.remove(); }
+            if (requiredOnlineSource != null && !onlineAttempted) {
+                if (bitmap != null) bitmap.recycle();
+                enqueueOnline(this, requiredOnlineSource);
+                return;
+            }
             long durationMs = android.os.SystemClock.elapsedRealtime() - startMs;
             if (key != null) {
                 logPerf("ICON_DECODE_END", key.packageName, key.componentName, key.userSerial, key.sourceType, key.targetPixelSize, durationMs);
@@ -801,6 +901,13 @@ public final class IconPreviewRepository implements ComponentCallbacks2 {
             return new ImprovedCandidate(packageName, componentName, packageName, true);
         }
 
+        // Explicit catalog aliases only; fuzzy search never participates in automatic matching.
+        IconLibraryCatalog catalog = IconLibraryCatalog.peek();
+        String aliased = catalog == null ? null : catalog.resolve(packageName, normalizedClass);
+        if (aliased != null && catalog.contains(aliased)) {
+            return new ImprovedCandidate(packageName, componentName, aliased, true);
+        }
+
         // 5 & 6. variants.json / index.json
         java.util.List<String> variants = sVariantsMap == null ? null : sVariantsMap.get(packageName);
         if (variants != null && !variants.isEmpty()) {
@@ -833,6 +940,8 @@ public final class IconPreviewRepository implements ComponentCallbacks2 {
     }
 
     private boolean checkCandidateExists(String key) {
+        IconLibraryCatalog catalog = IconLibraryCatalog.peek();
+        if (catalog != null && catalog.contains(key)) return true;
         if (TextUtils.isEmpty(key)) return false;
         // Check built-in resources
         String resName = key.replace('.', '_').replace('-', '_');
@@ -951,63 +1060,181 @@ public final class IconPreviewRepository implements ComponentCallbacks2 {
     }
 
     private Bitmap downloadOnlineIcon(String sourceId, int targetPixelSize) {
-        if (TextUtils.isEmpty(sourceId) || !sourceId.matches("[A-Za-z0-9._-]+")) {
+        RenderTask task = CURRENT_RENDER.get();
+        if (task != null) {
+            if (!task.onlineAttempted) task.requiredOnlineSource = sourceId;
             return null;
         }
+        // Metadata work on this pool may inspect availability, but must not block on HTTP.
+        if (isPreviewWorker()) return null;
+        if (Looper.myLooper() == Looper.getMainLooper()) return null;
+        if (!fetchOnlineSource(sourceId, null)) return null;
+        File file = new File(new File(app.getFilesDir(), "online_icon_cache_v4"), sourceId + ".png");
+        return IconBitmapDecoder.decodeFileNearTarget(file, targetPixelSize);
+    }
+
+    private void enqueueOnline(RenderTask task, String sourceId) {
+        if (!hasActiveConsumers(task.key, task.callbacks)) return;
+        synchronized (online) {
+            OnlineFetch fetch = online.get(sourceId);
+            if (fetch != null) { fetch.tasks.add(task); return; }
+            fetch = new OnlineFetch(sourceId);
+            fetch.tasks.add(task);
+            online.put(sourceId, fetch);
+            try { onlinePool.execute(fetch); }
+            catch (java.util.concurrent.RejectedExecutionException rejected) {
+                online.remove(sourceId);
+                finish(task.key, null, task.callbacks);
+                logPerf("ICON_IO_QUEUE_FULL", task.key.packageName, task.key.componentName,
+                        task.key.userSerial, task.key.sourceType, task.key.targetPixelSize, 0);
+            }
+        }
+    }
+
+    private final class OnlineFetch implements Runnable {
+        final String sourceId;
+        final ArrayList<RenderTask> tasks = new ArrayList<RenderTask>();
+        volatile boolean cancelled;
+        OnlineFetch(String sourceId) { this.sourceId = sourceId; }
+        public void run() {
+            boolean downloaded = !cancelled && fetchOnlineSource(sourceId, this);
+            ArrayList<RenderTask> ready;
+            synchronized (online) {
+                if (online.get(sourceId) != this) return;
+                online.remove(sourceId);
+                ready = new ArrayList<RenderTask>(tasks);
+                tasks.clear();
+            }
+            RenderTask automaticOwner = null;
+            for (RenderTask task : ready) {
+                if (task.session != null && !"ICON_LIBRARY".equals(task.session.owner)
+                        && hasActiveConsumers(task.key, task.callbacks)) { automaticOwner = task; break; }
+            }
+            for (RenderTask task : ready) {
+                if (!hasActiveConsumers(task.key, task.callbacks)) continue;
+                task.onlineAttempted = true;
+                decodePool.execute(task);
+            }
+            if (downloaded && automaticOwner != null) {
+                final RenderTask owner = automaticOwner;
+                schedule(owner.session, Priority.P1_ADJACENT, new Runnable() { public void run() {
+                    com.smartisanos.launcher.theme.MaintainedLauncherSettingsHost.onPreviewLibrarySourceDownloaded(
+                            app, sourceId, owner.key.packageName, owner.key.componentName);
+                }});
+            }
+        }
+    }
+
+    /** Existing mirrors/cache, now raw IO only. Decode resumes on the preview pool. */
+    private boolean fetchOnlineSource(String sourceId, OnlineFetch fetch) {
+        if (TextUtils.isEmpty(sourceId) || (!sourceId.matches("[A-Za-z0-9._-]+")
+                && !"com.miui. delock.theme".equals(sourceId))) return false;
+        android.content.SharedPreferences prefs = app.getSharedPreferences("online_icon_cache_v4", Context.MODE_PRIVATE);
+        long miss = prefs.getLong("miss." + sourceId, 0L);
+        if (miss > 0 && System.currentTimeMillis() - miss < 60L * 60L * 1000L) return false;
         String[] mirrors = new String[]{
             "https://gitee.com/RANH-F/Smartisan-original-launcher-download/raw/master/icons/drawable/",
             "https://raw.githubusercontent.com/RANH-F/Smartisan-original-launcher/main/icons/drawable/"
         };
+        boolean allNotFound = true;
         for (String baseUrl : mirrors) {
-            InputStream in = null;
+            if (fetch != null && fetch.cancelled) return false;
             HttpURLConnection conn = null;
             try {
-                URL url = new URL(baseUrl + sourceId + ".png");
-                conn = (HttpURLConnection) url.openConnection();
-                conn.setConnectTimeout(1500);
-                conn.setReadTimeout(2500);
+                String encoded = java.net.URLEncoder.encode(sourceId, "UTF-8").replace("+", "%20");
+                conn = (HttpURLConnection) new URL(baseUrl + encoded + ".png").openConnection();
+                conn.setConnectTimeout(1200);
+                conn.setReadTimeout(1800);
                 conn.setUseCaches(true);
                 conn.setRequestProperty("Accept", "image/png");
                 conn.setRequestProperty("User-Agent", "SmartisanLauncher-OnlineIcon/1");
-                if (conn.getResponseCode() != 200) continue;
-                String contentType = conn.getContentType();
-                if (contentType != null && !contentType.toLowerCase(Locale.US).startsWith("image/")) {
-                    continue;
+                long deadline = android.os.SystemClock.uptimeMillis() + 8000L;
+                int response = conn.getResponseCode();
+                if (response != 200) { if (response != 404) allNotFound = false; continue; }
+                allNotFound = false;
+                String type = conn.getContentType();
+                if (type != null && !type.toLowerCase(Locale.US).startsWith("image/")) continue;
+                InputStream stream = conn.getInputStream();
+                byte[] data;
+                try {
+                    ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+                    byte[] buffer = new byte[8192];
+                    int read;
+                    while ((read = stream.read(buffer)) != -1) {
+                        if ((fetch != null && fetch.cancelled) || bytes.size() + read > 512 * 1024
+                                || android.os.SystemClock.uptimeMillis() > deadline) return false;
+                        bytes.write(buffer, 0, read);
+                    }
+                    data = bytes.toByteArray();
+                } finally { stream.close(); }
+                // Bounds come from PNG IHDR; do not decode a Bitmap on the IO executor.
+                if (data.length < 24 || data[0] != (byte)137 || data[1] != 80 || data[2] != 78
+                        || data[3] != 71 || data[4] != 13 || data[5] != 10 || data[6] != 26 || data[7] != 10
+                        || data[12] != 73 || data[13] != 72 || data[14] != 68 || data[15] != 82) continue;
+                java.nio.ByteBuffer header = java.nio.ByteBuffer.wrap(data);
+                int width = header.getInt(16), height = header.getInt(20);
+                if (width < 32 || height < 32 || width > 1024 || height > 1024) continue;
+                if (!hasValidPngChunks(data)) continue;
+                if (fetch != null && fetch.cancelled) return false;
+                if (saveToDiskCache(sourceId, data)) {
+                    prefs.edit().remove("miss." + sourceId).apply();
+                    trimOnlineDiskCacheAsync();
+                    return true;
                 }
-                in = conn.getInputStream();
-                ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-                byte[] buffer = new byte[8192];
-                int read;
-                while ((read = in.read(buffer)) != -1) {
-                    bytes.write(buffer, 0, read);
-                }
-                byte[] data = bytes.toByteArray();
-                Bitmap bitmap = IconBitmapDecoder.decodeByteArrayNearTarget(data, targetPixelSize);
-                if (bitmap != null && bitmap.getWidth() >= 32 && bitmap.getHeight() >= 32) {
-                    saveToDiskCache(sourceId, data);
-                    return bitmap;
-                }
-            } catch (Throwable ignored) {
-            } finally {
-                if (in != null) try { in.close(); } catch (Throwable ignored) {}
-                if (conn != null) try { conn.disconnect(); } catch (Throwable ignored) {}
-            }
+            } catch (Exception ignored) { allNotFound = false; }
+            finally { if (conn != null) conn.disconnect(); }
         }
-        return null;
+        if (allNotFound && (fetch == null || !fetch.cancelled))
+            prefs.edit().putLong("miss." + sourceId, System.currentTimeMillis()).apply();
+        return false;
     }
 
-    private void saveToDiskCache(String sourceId, byte[] data) {
+    private final class IoOperation implements Runnable {
+        final RequestSession session; final Runnable operation;
+        IoOperation(RequestSession session, Runnable operation) { this.session = session; this.operation = operation; }
+        public void run() { if (isSessionActive(session)) operation.run(); }
+    }
+    /** Large directory preparation belongs to bounded IO, never the preview render workers. */
+    public boolean scheduleIo(RequestSession session, Runnable operation) {
+        if (!isSessionActive(session)) return false;
+        try { onlinePool.execute(new IoOperation(session,operation)); return true; }
+        catch (java.util.concurrent.RejectedExecutionException full) { return false; }
+    }
+
+    private static boolean hasValidPngChunks(byte[] data) {
+        int offset = 8;
+        java.nio.ByteBuffer bytes = java.nio.ByteBuffer.wrap(data);
+        while (offset <= data.length - 12) {
+            int length = bytes.getInt(offset);
+            if (length < 0 || length > data.length - offset - 12) return false;
+            java.util.zip.CRC32 crc = new java.util.zip.CRC32();
+            crc.update(data, offset + 4, length + 4);
+            if ((int) crc.getValue() != bytes.getInt(offset + 8 + length)) return false;
+            if (bytes.getInt(offset + 4) == 0x49454e44) return length == 0 && offset + 12 == data.length;
+            offset += length + 12;
+        }
+        return false;
+    }
+
+    public void logPipelineState(String reason) {
+        android.util.Log.i("SmartisanPerf", "ICON_PIPELINE " + reason + " decodeActive=" + decodePool.getActiveCount()
+                + " decodeQueue=" + decodePool.getQueue().size() + " ioActive=" + onlinePool.getActiveCount()
+                + " ioQueue=" + onlinePool.getQueue().size() + " cacheBytes=" + cache.size()
+                + " cacheLimit=" + cache.maxSize());
+    }
+
+    private boolean saveToDiskCache(String sourceId, byte[] data) {
+        File tmp = null;
         try {
             File dir = new File(app.getFilesDir(), "online_icon_cache_v4");
-            if (!dir.exists()) dir.mkdirs();
+            if (!dir.exists() && !dir.mkdirs()) return false;
             File target = new File(dir, sourceId + ".png");
-            File tmp = new File(dir, sourceId + ".tmp");
+            tmp = File.createTempFile("preview-", ".tmp", dir);
             java.io.FileOutputStream out = new java.io.FileOutputStream(tmp);
-            out.write(data);
-            out.flush();
-            out.close();
-            tmp.renameTo(target);
-        } catch (Throwable ignored) {}
+            try { out.write(data); out.getFD().sync(); } finally { out.close(); }
+            return tmp.renameTo(target);
+        } catch (Exception error) { return false; }
+        finally { if (tmp != null && tmp.exists()) tmp.delete(); }
     }
 
     private void ensureVariantsMapLoaded() {

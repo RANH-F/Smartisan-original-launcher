@@ -12,6 +12,11 @@ import xml.etree.ElementTree as ET
 
 ROOT = pathlib.Path(__file__).resolve().parents[3]
 SOURCES = {
+    "android/app/ActivityManager.java": """package android.app; public class ActivityManager {
+      public static int importance=100; public static boolean fail;
+      public static class RunningAppProcessInfo {public static final int IMPORTANCE_FOREGROUND=100; public int importance;}
+      public static void getMyMemoryState(RunningAppProcessInfo info){if(fail)throw new SecurityException();info.importance=importance;}
+    }""",
     "android/content/Context.java": '''package android.content;
 public class Context {
  public static final int MODE_PRIVATE=0;
@@ -49,6 +54,7 @@ public class SystemClock { private static long clock=100;
     "android/util/Log.java": '''package android.util;
 public class Log { public static int i(String t,String s){return 0;}
  public static int w(String t,String s){return 0;}
+ public static int e(String t,String s){return 0;}
  public static int e(String t,String s,Throwable e){throw new AssertionError(s,e);} }''',
     "com/smartisanos/launcher/data/Constants.java": '''package com.smartisanos.launcher.data;
 public class Constants { public static boolean ENABLE_UNLOCK_ANIMATION=true; }''',
@@ -91,6 +97,7 @@ public class UnlockSessionTest {
    else f.set(null,null);
   }
   ia.prepares=ia.plays=ia.finishes=0;
+  android.app.ActivityManager.importance=100;android.app.ActivityManager.fail=false;
   Handler.pending.clear();
   KeyguardManager.locked=false;PowerManager.interactive=true;
   android.content.SharedPreferences.compat=false;
@@ -110,7 +117,19 @@ public class UnlockSessionTest {
   LauncherBelowKeyguardCompat.onDismissSignal(a,"USER_PRESENT");}
  static void focus(){LauncherBelowKeyguardCompat.onWindowFocusChanged(a,true);}
  public static void main(String[] args)throws Exception{
-  reset();long first=lock();
+  reset();long first=lock();LauncherBelowKeyguardCompat.onLauncherStopped(a);
+  android.app.ActivityManager.importance=400;PowerManager.interactive=true;dismiss();
+  LauncherBelowKeyguardCompat.onLauncherResumed(a);focus();
+  check(ia.plays==0,"background USER_PRESENT replayed on later ordinary HOME resume");
+  reset();first=lock();LauncherBelowKeyguardCompat.onLauncherStopped(a);
+  PowerManager.interactive=true;dismiss();
+  LauncherBelowKeyguardCompat.onLauncherResumed(a);focus();
+  check(ia.plays==1,"foreground dismiss before onResume lost normal unlock");
+  reset();first=lock();LauncherBelowKeyguardCompat.onLauncherStopped(a);
+  android.app.ActivityManager.fail=true;PowerManager.interactive=true;dismiss();
+  LauncherBelowKeyguardCompat.onLauncherResumed(a);focus();
+  check(ia.plays==1,"unknown process importance silently disabled normal unlock");
+  reset();first=lock();
   check(ia.prepares==1,"duplicate screen-off prepared twice");
   check(!flag("unlockPrepared"),"enqueue cannot mean GL ready");
   check(LauncherBelowKeyguardCompat.beginGlEvent(first,false),"valid prepare rejected");
@@ -139,12 +158,26 @@ public class UnlockSessionTest {
   check(ia.plays==0,"focused but locked window played");
   KeyguardManager.locked=false;LauncherBelowKeyguardCompat.onRendererFrame();
   check(ia.plays==1,"no-broadcast direct handoff failed");
+  check(!LauncherBelowKeyguardCompat.beginGlEvent(first,false),"queued prepare mutated a consumed/play scene");
   reset();first=lock();resumeLocked();dismiss();focus();
   LauncherBelowKeyguardCompat.onLauncherPaused(a);
   LauncherBelowKeyguardCompat.onLauncherStopped(a);
   check(!LauncherBelowKeyguardCompat.beginGlEvent(first,true),"covered app replay accepted");
   LauncherBelowKeyguardCompat.onLauncherResumed(a);focus();dismiss();
   check(ia.plays==1,"return from app replayed old unlock");
+  reset();first=lock();LauncherBelowKeyguardCompat.onPrepareReady(first,true);resumeLocked();dismiss();focus();
+  LauncherBelowKeyguardCompat.onLauncherPaused(a);
+  check(!LauncherBelowKeyguardCompat.beginGlEvent(first,true),"pause-only app return accepted old play");
+  LauncherBelowKeyguardCompat.onLauncherResumed(a);focus();
+  check(ia.plays==1,"quick app return replayed old unlock before onStop");
+  reset();first=lock();LauncherBelowKeyguardCompat.onLauncherStopped(a);
+  LauncherBelowKeyguardCompat.onExternalApplicationLaunched(a);
+  PowerManager.interactive=true;dismiss();
+  LauncherBelowKeyguardCompat.onLauncherResumed(a);focus();
+  check(ia.plays==0,"late USER_PRESENT behind launched app replayed on ordinary return");
+  check(!LauncherBelowKeyguardCompat.beginGlEvent(first,false),"cancelled app launch left queued preparation eligible");
+  first=lock();LauncherBelowKeyguardCompat.onPrepareReady(first,true);resumeLocked();dismiss();focus();
+  check(ia.plays==1,"explicit app cancel suppressed the next real HOME unlock");
   reset();LauncherBelowKeyguardCompat.onLauncherPaused(a);
   LauncherBelowKeyguardCompat.onLauncherStopped(a);
   KeyguardManager.locked=true;PowerManager.interactive=false;

@@ -198,6 +198,43 @@
     return p0
 .end method
 
+.method private static unifyThemePageMargins(Lcom/smartisanos/launcher/data/LayoutProperty;Ljava/lang/String;Ljava/lang/String;I)V
+    .locals 2
+
+    # Share the full horizontal page extent with Dock; no render-time compensation.
+    const-string v0, "layout/portrait/"
+    invoke-virtual {p2, v0}, Ljava/lang/String;->startsWith(Ljava/lang/String;)Z
+    move-result v0
+    if-eqz v0, :theme_margins_done
+    const/16 v0, 0x9
+    if-eq p3, v0, :theme_margins_desktop
+    const/16 v0, 0xc
+    if-eq p3, v0, :theme_margins_desktop
+    const/16 v0, 0x14
+    if-ne p3, v0, :theme_margins_done
+
+    :theme_margins_desktop
+    if-eqz p1, :theme_margins_gaussian
+    const-string v0, "_trans"
+    invoke-virtual {v0, p1}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+    move-result v0
+    if-nez v0, :theme_margins_clear
+    # Keep open-folder suffixes and their bookcase geometry intact.
+    goto :theme_margins_done
+
+    :theme_margins_gaussian
+    sget-boolean v0, Lcom/smartisanos/launcher/data/Constants;->sIsGaussianTheme:Z
+    if-eqz v0, :theme_margins_done
+
+    :theme_margins_clear
+    const/4 v0, 0x0
+    iput v0, p0, Lcom/smartisanos/launcher/data/LayoutProperty;->page_view_margin_left:F
+    iput v0, p0, Lcom/smartisanos/launcher/data/LayoutProperty;->page_view_margin_right:F
+
+    :theme_margins_done
+    return-void
+.end method
+
 .method public static a(Landroid/content/res/Resources;ILjava/lang/String;Ljava/lang/String;)Lcom/smartisanos/launcher/data/LayoutProperty;
     .locals 9
 
@@ -417,6 +454,8 @@
     .line 17
     :cond_5
     :goto_4
+    invoke-static {p2, p3, v7, v8}, Lcom/smartisanos/launcher/data/P;->unifyThemePageMargins(Lcom/smartisanos/launcher/data/LayoutProperty;Ljava/lang/String;Ljava/lang/String;I)V
+
     invoke-static {p2, p3, v6, v7, v8}, Lcom/smartisanos/launcher/data/LayoutPropertyAdapter;->adapt(Ljava/lang/Object;Ljava/lang/String;Landroid/content/res/Resources;Ljava/lang/String;I)V
 
     invoke-virtual {p2, p3}, Lcom/smartisanos/launcher/data/LayoutProperty;->initAfterLoadRes(Ljava/lang/String;)V
@@ -470,6 +509,8 @@
 
     .line 20
     :goto_6
+    invoke-static {p2, p3, v7, v8}, Lcom/smartisanos/launcher/data/P;->unifyThemePageMargins(Lcom/smartisanos/launcher/data/LayoutProperty;Ljava/lang/String;Ljava/lang/String;I)V
+
     invoke-static {p2, p3, v6, v7, v8}, Lcom/smartisanos/launcher/data/LayoutPropertyAdapter;->adapt(Ljava/lang/Object;Ljava/lang/String;Landroid/content/res/Resources;Ljava/lang/String;I)V
 
     invoke-virtual {p2, p3}, Lcom/smartisanos/launcher/data/LayoutProperty;->initAfterLoadRes(Ljava/lang/String;)V

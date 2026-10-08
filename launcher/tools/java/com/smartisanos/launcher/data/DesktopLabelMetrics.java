@@ -5,6 +5,15 @@ import java.lang.reflect.Method;
 
 /** Final label anchors for ordinary desktop application cells. */
 public final class DesktopLabelMetrics {
+    public static final int GRID_12 = 12;
+    public static final int GRID_20 = 20;
+    // Legacy engine/resource lookup key for the port's 4x5 desktop, never a 9-icon option.
+    public static final int LEGACY_ENGINE_KEY_GRID_20 = 9;
+
+    public static int desktopGridCount(int engineKey) {
+        return engineKey == LEGACY_ENGINE_KEY_GRID_20 || engineKey == GRID_20 ? GRID_20 : GRID_12;
+    }
+
     private static final float BASE_WIDTH = 1080.0f;
     // Current 1080 resources: MODE_12 = 108 - (160 / 2 - 8) - 43 / 2,
     // MODE_20 = 82 - (118 / 2 - 8) - 36 / 2.  These are the accepted
@@ -74,7 +83,8 @@ public final class DesktopLabelMetrics {
                     "com.smartisanos.launcher.data.Constants");
             Field mode = constants.getDeclaredField("SINGLE_PAGE_MODE");
             mode.setAccessible(true);
-            return mode.getInt(null) == 20 ? 20 : 12;
+            int value = mode.getInt(null);
+            return desktopGridCount(value);
         } catch (Throwable ignored) {
             return 12;
         }
@@ -88,7 +98,9 @@ public final class DesktopLabelMetrics {
             Class<?> constants = Class.forName(
                     "com.smartisanos.launcher.data.Constants");
             Method mode = constants.getMethod("mode", Integer.TYPE);
-            return mode.invoke(null, Integer.valueOf(currentDesktopMode())) == property;
+            Field current = constants.getDeclaredField("SINGLE_PAGE_MODE");
+            current.setAccessible(true);
+            return mode.invoke(null, Integer.valueOf(current.getInt(null))) == property;
         } catch (Throwable ignored) {
             return false;
         }

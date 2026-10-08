@@ -56,6 +56,12 @@ public final class QuickDesktopCaptureGateProbe {
         return f.getBoolean(null);
     }
 
+    private static boolean pendingOpen() throws Exception {
+        Field f = QuickDesktopController.class.getDeclaredField("openAfterBackgroundReady");
+        f.setAccessible(true);
+        return f.getBoolean(null);
+    }
+
     public static void main(String[] args) throws Exception {
         try { runProbe(); } catch (Throwable error) { error.printStackTrace(); System.exit(1); }
     }
@@ -177,10 +183,14 @@ public final class QuickDesktopCaptureGateProbe {
         QuickDesktopController.requestShow();
         progress(600);
         touch(MotionEvent.ACTION_UP, 600, 800); // Fast release before worker completion.
-        check(!ready() && host.getOpenProgress() == 1, "fast release lost target");
+        check(!ready() && Math.abs(host.getOpenProgress() - .001f) < .0001f,
+                "fast release animated before background was available");
+        check(pendingOpen(), "fast release did not retain opening target");
         QuickDesktopBackgroundCapture.ready();
-        check(ready() && host.getOpenProgress() == 1, "fast release background lost");
+        check(ready() && Math.abs(host.getOpenProgress() - .001f) < .0001f,
+                "unattached test window advanced pending opening");
         QuickDesktopController.onHomeIntent();
+        check(!pendingOpen(), "HOME retained deferred opening");
 
         touch(MotionEvent.ACTION_DOWN,100,800); QuickDesktopController.requestShow(); progress(600);
         com.smartisanos.launcher.view.Eb.displayMode=8;

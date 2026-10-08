@@ -52,6 +52,7 @@ public final class QuickDesktopController {
     private static boolean openingGesture;
     private static boolean captureStartedForGesture;
     private static boolean backgroundReadyForGesture;
+    private static boolean openAfterBackgroundReady;
     private static boolean revealWindowTouchable;
     private static boolean cleanupInProgress;
     private static boolean expectedHostWindowDetach;
@@ -180,6 +181,7 @@ public final class QuickDesktopController {
             consumeRootGestureUntilEnd = false;
             openingRevealOccurred = false;
             rootGestureCancelled = false;
+            openAfterBackgroundReady = false;
         } else if (consumeRootGestureUntilEnd) {
             if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
                 consumeRootGestureUntilEnd = false;
@@ -268,8 +270,16 @@ public final class QuickDesktopController {
                 boolean shouldOpen = action != MotionEvent.ACTION_CANCEL
                         && (velocityX > 900.0f
                         || (velocityX >= -900.0f && open > (1.0f / 3.0f)));
-                host.settleTo(shouldOpen ? 1.0f : 0.0f, velocityX,
-                        action == MotionEvent.ACTION_CANCEL ? "open-cancel" : "open-release");
+                if (shouldOpen && !backgroundReadyForGesture) {
+                    // A cold capture can finish after UP. Keep the page at its closed edge
+                    // until the backing frame and PopupWindow can actually be presented.
+                    openAfterBackgroundReady = true;
+                    host.setOpenProgress(0.001f, "await-background");
+                    Log.i(TAG, "QD_OPEN_AWAIT_BACKGROUND");
+                } else {
+                    host.settleTo(shouldOpen ? 1.0f : 0.0f, velocityX,
+                            action == MotionEvent.ACTION_CANCEL ? "open-cancel" : "open-release");
+                }
                 // Once the host has claimed this drag, the GL scene must receive CANCEL,
                 // not the same UP that can also finish a desktop page scroll/pressed cell.
                 // Closing/cancellation already used this RootView cleanup path.
@@ -340,6 +350,10 @@ public final class QuickDesktopController {
         // Do not reveal an empty backing layer and replace it during an active drag. Progress
         // and settling retain their original timing while the fixed layers are prepared.
         if (capturedHost.getOpenProgress() > 0.0f) showHostWindow(revealWindowTouchable);
+        if (openAfterBackgroundReady && hostWindow != null && hostWindow.isShowing()) {
+            openAfterBackgroundReady = false;
+            capturedHost.settleTo(1.0f, 0.0f, "open-after-background");
+        }
     }
 
     public static boolean onKeyEvent(KeyEvent event) {
@@ -588,6 +602,7 @@ public final class QuickDesktopController {
             openingGesture = false;
             captureStartedForGesture = false;
             backgroundReadyForGesture = false;
+            openAfterBackgroundReady = false;
             revealWindowTouchable = false;
             recycleOpeningVelocityTracker();
             actionLaunchPending = false;

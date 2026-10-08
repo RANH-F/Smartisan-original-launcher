@@ -20,7 +20,7 @@ public class AppIconProbe {
     static class Looper {static final Object main=new Object();static Object myLooper(){return Thread.currentThread()==MAIN?main:null;} static Object getMainLooper(){return main;}}
     static class Process {static final int THREAD_PRIORITY_BACKGROUND=10;static void setThreadPriority(int p){}}
     static class SystemClock {static long elapsedRealtime(){return System.nanoTime()/1000000;}}
-    static class Log {static void d(String tag,String msg){} static void w(String t,String m,Throwable e){throw new AssertionError(e);}}
+    static class Log {static void i(String t,String m){}static void d(String tag,String msg){} static void w(String t,String m,Throwable e){throw new AssertionError(e);}}
     static class ComponentCallbacks2 {static final int TRIM_MEMORY_BACKGROUND=40;}
     static class Drawable {final String id;Drawable(String id){this.id=id;}}
     static class Bitmap {final String id; Bitmap(String id){this.id=id;}void recycle(){}
@@ -95,7 +95,7 @@ public class AppIconProbe {
         Assets getAssets(){return new Assets(xml);}Drawable getDrawable(int id){draws++;return new Drawable(pkg+":"+ids.get(id));}
         Metrics getDisplayMetrics(){return new Metrics();}
     }
-    static class Host {static void onSelectedIconPackPreloaded(Context c){}static void onIconPackOverridesChanged(Context c,String p){hotUpdates++;}}
+    static class Host {static void onIconPackSearchDirectoryInvalidated(){}static void onSelectedIconPackPreloaded(Context c){}static void onIconPackOverridesChanged(Context c,String p){hotUpdates++;}}
     PACK_PRODUCTION
     static class Handler {
         final List<Runnable> tasks=new ArrayList<>();boolean global;Handler(){}Handler(Object l){global=true;}
@@ -116,7 +116,15 @@ public class AppIconProbe {
         public boolean equals(Object o){return o instanceof IconRenderKey&&toString().equals(o.toString());}
         public String toString(){return packageName+"|"+componentName+"|"+userSerial+"|"+sourceType+"|"+sourceId+"|"+version+"|"+targetPixelSize;}
     }
+    static class IconLibraryCatalog {
+        static void invalidateInstalledLabels(){}
+        String revision="fixture";
+        static IconLibraryCatalog peek(){return new IconLibraryCatalog();}
+        static IconLibraryCatalog load(Context context){check(Thread.currentThread()!=MAIN,"catalog initialization off MAIN");return peek();}
+    }
+    static boolean hasLocalChoiceSource(Context context,Resources res,String source){return libraryIcons.containsKey(source);}
     static class IconPreviewRepository {
+        interface DrawableLoader {Drawable load() throws Exception;}
         final Context app;final Handler main=new Handler();final AtomicLong sequence=new AtomicLong();
         final LruCache<IconRenderKey,Bitmap> cache=new LruCache<>(64);final List<Runnable> jobs=new ArrayList<>();
         IconPreviewRepository(Context a){app=a;}
@@ -126,18 +134,21 @@ public class AppIconProbe {
         ImprovedCandidate resolveImprovedCandidate(String p,String c){return new ImprovedCandidate(primary,primaryExists);}
         List<String> getVariantsForPackage(String p){return variantIds;}
         enum Priority {P0_VISIBLE,P1_ADJACENT}
-        static class RequestSession {boolean cancelled;}
+        static class RequestSession {boolean cancelled;boolean isCancelled(){return cancelled;}}
         boolean isSessionActive(RequestSession s){return s!=null&&!s.cancelled;}
         void schedule(RequestSession s,Priority p,Runnable r){if(isSessionActive(s))jobs.add(r);}
         void work()throws Exception{while(!jobs.isEmpty())worker(jobs.remove(0));}
         Bitmap drawableToBitmap(Drawable d,int size){check(Thread.currentThread()!=MAIN,"candidate raster off MAIN");return d==null?null:new Bitmap(d.id);}
         void cancel(RequestSession s){s.cancelled=true;synchronized(candidateRefresh){candidateRefresh.remove(s);candidateRequests.remove(s);}}
         static void logPerf(String t,String p,String c,long u,String st,int px,long ms){}
+        boolean checkCandidateExists(String source){return !source.equals("missing");}
         CANDIDATE_PRODUCTION
     }
     static class RedirectIconInfo {String packageName,componentName,drawableName,displayName,originalName;boolean useImprovedAppIcon=true;byte[] iconData;long ownerId,installTime;
         String getPrimaryId(){return packageName+";"+componentName;}}
     static class RedirectIconDB {
+        static String packDrawableNameOf(RedirectIconInfo info){return PersistentRedirectDB.packDrawableNameOf(info);}
+
         static final String MODE_ORIGINAL="original",MODE_CUSTOM="custom",MODE_RESOURCE="resource",MODE_PACK="pack",MODE_AUTO="auto";
         static final Map<String,RedirectIconInfo> db=new HashMap<>();
         static RedirectIconInfo getRedirectIconInfo(Context c,String p,String cmp){return db.get(p+"/"+cmp);}
@@ -154,7 +165,7 @@ public class AppIconProbe {
         static boolean isInstalledIconPack(Context c,String p){return c.pm.packs.containsKey(p);}
     }
     static Drawable libraryIconDrawable(Context c,Resources r,String name){return new Drawable("resource:"+name);}
-    static Drawable smartisanIconDrawableCachedOnly(Context c,ResolveInfo r,Resources res){return new Drawable("improved:"+r.activityInfo.packageName);}
+    static Drawable libraryIconDrawableNonBlocking(Context c,Resources r,String source){if(source!=null&&source.equals("app.edge"))return new Drawable("improved:app.edge");return libraryIcons.get(source);}
     static Drawable packedIconFromPackage(Context c,String p,ResolveInfo r){return IconPackManager.getPackedIcon(c,p,r.activityInfo.packageName,r.activityInfo.name);}
     FALLBACK_PRODUCTION
     static class IconSection {final String title;IconSection(String t){title=t;}}
@@ -169,11 +180,13 @@ public class AppIconProbe {
     static Drawable loadChoiceLibraryIcon(Context c,Resources r,String id,boolean cached){return libraryIcons.get(id);}
     CHOICE_SOURCE_PRODUCTION
     static String getString(Resources r,String k,String f){return f;}
+    static long packageVersionStamp(Context context,String pkg){return context.getPackageManager().getPackageInfo(pkg,0).lastUpdateTime;}
     static String shortError(RuntimeException e){return e.toString();}
     static void logOperation(Context c,String a,String m){}
     static class Grouping {
         final Context activity;final IconManager iconManager;final Resources resources;final Handler reply=new Handler();
         List<RedirectIconInfo> apps=new ArrayList<>();List<Object> rows=new ArrayList<>(),normalRows=new ArrayList<>();
+        Map<String,Long> rowVersions=new HashMap<>();Map<String,String> rowLabels=new HashMap<>();
         Set<String> managedRows=new HashSet<>();AppIconSearchIndex<RedirectIconInfo> searchIndex;String searchQuery="";
         long iconDataGeneration;int groupingGeneration;int changes;Runnable rowsReadyAction,rowsFailedAction;
         IconPreviewRepository.RequestSession requestSession=new IconPreviewRepository.RequestSession();
@@ -190,7 +203,7 @@ public class AppIconProbe {
         List<List<AppIconCandidate>> result=new ArrayList<>();IconPreviewRepository.RequestSession session=new IconPreviewRepository.RequestSession();
         repo.discoverCandidates(session,pkg,".Main",0,new IconPreviewRepository.CandidateLibrary(){
             public List<String> sourceIds(){return Arrays.asList(names);}public String selectedKey(){return selected;}
-            public Drawable load(String id,boolean cached){check(Thread.currentThread()!=MAIN,"library loading off MAIN");return id.equals("missing")?null:new Drawable(id);}
+            public Drawable load(String id,boolean cached){throw new AssertionError("metadata discovery must not load artwork");}
         },items->{published++;result.add(items);});
         check(result.isEmpty(),"first frame does not scan/decode");repo.work();check(result.isEmpty(),"worker cannot mutate UI");repo.main.drain();
         check(result.size()==1,"one batched publish per scan");repo.cancel(session);check(repo.candidateRefresh.isEmpty(),"cancel releases page captures");return result.get(0);
@@ -199,9 +212,10 @@ public class AppIconProbe {
     public static void main(String[]args)throws Exception{
         reset();int before=scans;
         List<AppIconCandidate> list=discover("app.edge","IMPROVED:main","main","variant","variant","missing");
-        check(list.size()==3&&packs(list)==0,"zero packs with duplicate variants and invalid icon");
+        check(list.size()==4&&packs(list)==0,"zero packs with duplicate variants and invalid icon");
         check(list.get(0).selected&&list.get(0).stableKey.equals("IMPROVED:main"),"current improved comes first");
-        check(list.get(2).stableKey.equals("CUSTOM"),"album last");
+        check(list.get(3).stableKey.equals("CUSTOM"),"album last");
+        check(list.stream().anyMatch(x->x.type==AppIconCandidate.TYPE_ORIGINAL&&!x.selected),"original remains available when improved is selected");
         addPack("pack.a","app.edge",".Main",false);
         list=discover("app.edge","PACK:pack.a","main");check(packs(list)==1&&list.get(0).stableKey.equals("PACK:pack.a"),"one installed pack selected first");
         addPack("pack.b","app.edge","app.edge.Main",true);addPack("pack.c","app.edge",".Main",false);addPack("pack.no","app.qq",".Main",false);
@@ -274,7 +288,14 @@ public class AppIconProbe {
         grouping.setSearchQuery("   ");check(grouping.rows.size()==5&&((IconSection)grouping.rows.get(0)).title.equals("已重绘"),"clearing restores exact redraw groups");
         check(scans==scanCount,"typing does not rescan packages");
         grouping.setSearchQuery("Edge");grouping.invalidateIconData(true);repo.work();drainReplies();check(grouping.rows.size()==2,"selection refresh preserves active filter");
-        AppIconSearchIndex<String> index=new AppIconSearchIndex<>();index.add("chinese","设置","pkg.settings",".Settings");check(index.filter("设置").equals(List.of("chinese")),"Chinese label preserved without a second pinyin algorithm");
+        check(grouping.rowVersions.size()==3&&grouping.rowLabels.size()==3,"worker publishes version and label snapshots for binding");
+        RedirectIconDB.db.get("app.edge/app.edge.Main").displayName="Renamed";
+        grouping.invalidateIconData(true);repo.work();drainReplies();grouping.setSearchQuery("Renamed");
+        check(grouping.rows.size()==2&&((RedirectIconInfo)grouping.rows.get(1)).packageName.equals("app.edge"),"selection refresh rebuilds renamed application search terms");
+        AppIconSearchIndex<String> index=new AppIconSearchIndex<>();index.add("chinese","设置","pkg.settings",".Settings");
+        check(index.filter("设置").equals(List.of("chinese")),"Chinese installed label searchable");
+        check(index.filter("shezhi").equals(List.of("chinese")),"installed label full pinyin searchable");
+        check(index.filter("sz").equals(List.of("chinese")),"installed label pinyin initials searchable");
         reset();repo.primary="component.main";repo.primaryExists=true;repo.variantIds=List.of("variant_a","variant_b");localVariants=List.of("variant_a.png","variant_c.png");
         RedirectIconInfo sourceApp=new RedirectIconInfo();sourceApp.packageName="app.system";sourceApp.componentName="app.system.Main";sourceApp.drawableName="auto";
         RedirectIconDB.db.put("app.system/app.system.Main",sourceApp);
@@ -282,7 +303,13 @@ public class AppIconProbe {
             List<String> names=choiceLibrarySourceIds(context,context.getResources(),new IconManager(context),sourceApp);
             check(names.equals(List.of("component.main","system.alias","app.system","variant_a","variant_b","variant_c")),"production source IDs retain component, system alias, base and both variant sources");
             libraryIcons.put("system.alias",new Drawable("alias"));
-            check(selectedChoiceKey(context,context.getResources(),new ResolveInfo("app.system","app.system.Main"),sourceApp).equals("IMPROVED:system.alias"),"current selection resolves the real cached alias if primary unavailable");
+            ResolveInfo resolved = new ResolveInfo("app.system","app.system.Main");
+            check(selectedChoiceKey(context,context.getResources(),resolved,sourceApp).equals("IMPROVED:system.alias"),"current selection resolves the real cached alias if primary unavailable");
+            ManagedIconSource source = resolveManagedIconSource(context,resolved,context.getResources(),null);
+            check(source.choiceKey.equals("IMPROVED:system.alias")&&source.drawable.id.equals("alias"),"artwork and selection identity are one decision despite an unavailable primary");
+            sourceApp.drawableName="original";
+            check(resolveManagedIconSource(context,resolved,context.getResources(),null).choiceKey.equals("DEFAULT"),"forced original remains terminal while an improved alias exists");
+            sourceApp.drawableName="auto";
             sourceApp.drawableName="resource:explicit";
             check(choiceLibrarySourceIds(context,context.getResources(),new IconManager(context),sourceApp).get(0).equals("explicit"),"explicit RESOURCE retained before variants");
             check(selectedChoiceKey(context,context.getResources(),new ResolveInfo("app.system","app.system.Main"),sourceApp).equals("IMPROVED:explicit"),"RESOURCE selected key matches immutable candidate identity");
@@ -292,6 +319,11 @@ public class AppIconProbe {
         Context persistence=new Context();IconPackManager.setSelectedIconPackPackage(persistence,"pack.a");
         PersistentRedirectDB.updatePackIcon(persistence,"app.edge","app.edge.Main","pack.c");
         PersistentRedirectDB.updateResourceIcon(persistence,"app.qq","app.qq.Main","qq_variant");
+        PersistentRedirectDB.updatePackIcon(persistence,"app.cross","app.cross.Main","pack.c","chrome_icon");
+        RedirectIconInfo cross=PersistentRedirectDB.getRedirectIconMetadata(persistence,"app.cross","app.cross.Main");
+        check(PersistentRedirectDB.packNameOf(cross).equals("pack.c")&&PersistentRedirectDB.packDrawableNameOf(cross).equals("chrome_icon"),"specific pack artwork preserves target identity and base pack");
+        cross.packageName="app.cross";cross.componentName="app.cross.Main";
+        check(PersistentRedirectDB.modeOf(cross).equals("pack"),"specific artwork keeps PACK semantics");
         PersistentRedirectDB.updateDisplayName(persistence,"app.edge","app.edge.Main","Edge renamed","Edge");
         check(IconPackManager.getSelectedIconPackPackage(persistence).equals("pack.a"),"single-app DB write never changes global pack A");
         java.util.Properties persisted=new java.util.Properties();persisted.putAll(persistence.preferences.values);
@@ -303,7 +335,7 @@ public class AppIconProbe {
         RedirectIconInfo loadedOverride=PersistentRedirectDB.getRedirectIconMetadata(reopened,"app.edge","app.edge.Main");
         check(PersistentRedirectDB.modeOf(loadedOverride).equals("pack")&&PersistentRedirectDB.packNameOf(loadedOverride).equals("pack.c"),"persisted override rereads without an in-memory record");
         check(loadedOverride.displayName.equals("Edge renamed")&&loadedOverride.iconData==null,"pack preserves rename and raw-source metadata");
-        check(PersistentRedirectDB.listAllInfo(reopened).size()==2,"override index persists once per component");
+        check(PersistentRedirectDB.listAllInfo(reopened).size()==3,"override index persists once per component");
         check(PersistentRedirectDB.resourceNameOf(PersistentRedirectDB.getRedirectIconMetadata(reopened,"app.qq","app.qq.Main")).equals("qq_variant"),"unrelated RESOURCE owner preserved");
         System.out.println("PASS PRODUCTION_ICON_CHECKS="+checks+" appfilterParses="+parses+" packageScans="+scans+"; controlled platform/XML adapters, no Android UI or device claim");
     }

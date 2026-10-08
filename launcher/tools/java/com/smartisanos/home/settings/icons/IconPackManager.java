@@ -34,6 +34,262 @@ public final class IconPackManager {
     private static final HashSet<String> sLoadingPacks = new HashSet<String>();
     private static boolean sSelectedPackPreloadPending;
     private static volatile long sPackGeneration;
+    private static final java.util.concurrent.atomic.AtomicBoolean sSearchInvalidationPosted = new java.util.concurrent.atomic.AtomicBoolean();
+    private static final Object sSearchLock = new Object();
+    private static android.database.sqlite.SQLiteDatabase sSearchDb;
+    private static long sSearchReadyGeneration = -1;
+    private static String sSearchRevision = "";
+    private static volatile long sSearchDatabaseEpoch;
+    private static volatile java.util.Map<String,String> sSearchLabels = java.util.Collections.emptyMap();
+
+    public static long searchGeneration() { return sPackGeneration; }
+    public static String cachedPackLabel(String pack) { String label=sSearchLabels.get(pack);return label==null?pack:label; }
+    public static boolean isSearchSnapshotCurrent(SearchSnapshot snapshot) {
+        return snapshot != null && snapshot.generation==sPackGeneration && snapshot.epoch==sSearchDatabaseEpoch;
+    }
+
+    private static android.database.sqlite.SQLiteDatabase searchDb(Context context) {
+        if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) throw new IllegalStateException("Pack directory IO on MAIN");
+        synchronized (sSearchLock) {
+            java.io.File file = new java.io.File(context.getCacheDir(), "icon_pack_search_v1.db");
+            if (sSearchDb == null || !sSearchDb.isOpen() || !file.exists()) {
+                if (sSearchDb != null && sSearchDb.isOpen()) sSearchDb.close();
+                sSearchDb = android.database.sqlite.SQLiteDatabase.openOrCreateDatabase(file, null);
+                android.database.Cursor budget = sSearchDb.rawQuery("PRAGMA max_page_count=16384",null);
+                try { budget.moveToFirst(); } finally { budget.close(); }
+                sSearchDb.execSQL("CREATE TABLE IF NOT EXISTS packs (package TEXT PRIMARY KEY, stamp TEXT NOT NULL)");
+                sSearchDb.execSQL("CREATE TABLE IF NOT EXISTS icons (_id INTEGER PRIMARY KEY, pack TEXT NOT NULL, drawable TEXT NOT NULL, name TEXT NOT NULL, name_n TEXT NOT NULL, category TEXT NOT NULL, terms TEXT NOT NULL, version INTEGER NOT NULL, UNIQUE(pack,drawable))");
+                sSearchReadyGeneration = -1;
+                ++sSearchDatabaseEpoch;
+            }
+            return sSearchDb;
+        }
+    }
+
+    /** One pack at a time; persisted descriptors replace keeping every complete appfilter in RAM. */
+    public static void prepareSearchIndex(Context context, IconPreviewRepository.RequestSession session,
+            IconLibraryCatalog catalog) throws Exception {
+        synchronized (sSearchLock) {
+            android.database.sqlite.SQLiteDatabase db = searchDb(context);
+            long generation = sPackGeneration;
+            if (sSearchReadyGeneration == generation && sSearchRevision.equals(catalog.revision)) return;
+            ArrayList<String> packs = getIconPackPackages(context);
+            java.util.Collections.sort(packs);
+            HashSet<String> present = new HashSet<String>(packs);
+            HashMap<String,String> labels = new HashMap<String,String>();
+            for (String pack : packs) {
+                if (session.isCancelled()) throw new android.os.OperationCanceledException();
+                long version = context.getPackageManager().getPackageInfo(pack, 0).lastUpdateTime;
+                labels.put(pack,getIconPackLabel(context,pack));
+                String stamp = version + ":" + catalog.revision + ":1";
+                android.database.Cursor old = db.rawQuery("SELECT stamp FROM packs WHERE package=?", new String[]{pack});
+                boolean valid;
+                try { valid = old.moveToFirst() && stamp.equals(old.getString(0)); } finally { old.close(); }
+                if (valid) continue;
+                PackMap map;
+                synchronized (sPackMapCache) { map = sPackMapCache.get(pack); }
+                if (map == null) {
+                    map = new PackMap();
+                    if (!loadPackMap(context, pack, map.packageToDrawable, map.componentToDrawable, session))
+                        throw new java.io.IOException("Unable to parse icon pack: " + pack);
+                }
+                Resources resources = context.getPackageManager().getResourcesForApplication(pack);
+                String label = getIconPackLabel(context, pack);
+                HashMap<String, SearchArtwork> artwork = new HashMap<String, SearchArtwork>();
+                for (java.util.Map.Entry<String,String> entry : map.componentToDrawable.entrySet()) {
+                    if (session.isCancelled()) throw new android.os.OperationCanceledException();
+                    String component = entry.getKey(); int slash = component.indexOf('/');
+                    addSearchArtwork(artwork, resources, pack, label, entry.getValue(),
+                            slash < 0 ? component : component.substring(0, slash), catalog);
+                }
+                for (java.util.Map.Entry<String,String> entry : map.packageToDrawable.entrySet())
+                    addSearchArtwork(artwork, resources, pack, label, entry.getValue(), entry.getKey(), catalog);
+                // Standard pack picker XML declares alternates which appfilter does not map.
+                for (String xmlName : new String[]{"drawable", "icon_pack"}) {
+                    int id = resources.getIdentifier(xmlName, "xml", pack);
+                    if (id == 0) continue;
+                    XmlResourceParser xml = resources.getXml(id);
+                    try {
+                        while (xml.getEventType() != XmlPullParser.END_DOCUMENT) {
+                            if (session.isCancelled()) throw new android.os.OperationCanceledException();
+                            if (xml.getEventType() == XmlPullParser.START_TAG && "item".equals(xml.getName()))
+                                addSearchArtwork(artwork, resources, pack, label, xml.getAttributeValue(null, "drawable"), "", catalog);
+                            xml.next();
+                        }
+                    } finally { xml.close(); }
+                }
+                db.beginTransaction();
+                try {
+                    db.delete("icons", "pack=?", new String[]{pack});
+                    android.database.sqlite.SQLiteStatement insert = db.compileStatement("INSERT INTO icons(pack,drawable,name,name_n,category,terms,version) VALUES(?,?,?,?,?,?,?)");
+                    try {
+                        for (SearchArtwork row : artwork.values()) {
+                            if (session.isCancelled() || generation != sPackGeneration) throw new android.os.OperationCanceledException();
+                            insert.clearBindings(); insert.bindString(1,pack); insert.bindString(2,row.drawable);
+                            insert.bindString(3,row.name); insert.bindString(4,IconLibrarySearchIndex.normalize(row.name));
+                            insert.bindString(5,row.category); insert.bindString(6,row.terms.toString()); insert.bindLong(7,version);
+                            insert.executeInsert();
+                        }
+                    } finally { insert.close(); }
+                    android.content.ContentValues values = new android.content.ContentValues(); values.put("package",pack); values.put("stamp",stamp);
+                    db.insertWithOnConflict("packs",null,values,android.database.sqlite.SQLiteDatabase.CONFLICT_REPLACE);
+                    db.setTransactionSuccessful();
+                } finally { db.endTransaction(); }
+            }
+            if (session.isCancelled() || generation != sPackGeneration) throw new android.os.OperationCanceledException();
+            android.database.Cursor existing = db.rawQuery("SELECT package FROM packs", null);
+            ArrayList<String> obsolete = new ArrayList<String>();
+            try { while (existing.moveToNext()) if (!present.contains(existing.getString(0))) obsolete.add(existing.getString(0)); }
+            finally { existing.close(); }
+            for (String pack : obsolete) { db.delete("icons","pack=?",new String[]{pack}); db.delete("packs","package=?",new String[]{pack}); }
+            sSearchRevision = catalog.revision; sSearchReadyGeneration = generation;
+            sSearchLabels = java.util.Collections.unmodifiableMap(labels);
+        }
+    }
+
+    private static final class SearchArtwork {
+        final String drawable; String name, category = "other"; final StringBuilder terms = new StringBuilder("|");
+        SearchArtwork(String drawable) { this.drawable = drawable; name = drawable; }
+        void term(String text) { String value = IconLibrarySearchIndex.normalize(text); if (!value.isEmpty() && terms.indexOf("|"+value+"|") < 0) terms.append(value).append('|'); }
+    }
+    private static void addSearchArtwork(HashMap<String,SearchArtwork> rows, Resources resources, String pack,
+            String label, String drawable, String pkg, IconLibraryCatalog catalog) {
+        if (TextUtils.isEmpty(drawable)) return;
+        if (drawable.startsWith("@drawable/") || drawable.startsWith("@mipmap/")) drawable = drawable.substring(drawable.indexOf('/')+1);
+        int id = resources.getIdentifier(drawable,"drawable",pack);
+        if (id == 0) id = resources.getIdentifier(drawable,"mipmap",pack);
+        if (id == 0) return;
+        drawable = resources.getResourceEntryName(id);
+        SearchArtwork row = rows.get(drawable);
+        if (row == null) { row = new SearchArtwork(drawable); rows.put(drawable,row); row.term(pack); row.term(label); row.term(drawable); }
+        row.term(pkg);
+        IconLibrarySearchIndex.Entry known = catalog.entryForPackage(pkg);
+        if (known != null) { row.name = known.name; row.category = known.category; row.term(known.name); row.term(known.searchText); }
+    }
+
+    public static final class SearchSnapshot {
+        public final long[] ids;
+        public final long generation;
+        public final long epoch;
+        private SearchSnapshot(long[] ids, long generation) { this.ids = ids; this.generation = generation; this.epoch=sSearchDatabaseEpoch; }
+        public int size() { return ids.length; }
+    }
+    public static SearchSnapshot searchDirectory(Context context, String text, String category,
+            android.os.CancellationSignal cancel) {
+        android.database.sqlite.SQLiteDatabase db = searchDb(context);
+        String query = IconLibrarySearchIndex.normalize(text);
+        String escaped = query.replace("\\","\\\\").replace("%","\\%").replace("_","\\_");
+        String where = "terms LIKE ? ESCAPE '\\'"; ArrayList<String> args = new ArrayList<String>(); args.add("%"+escaped+"%");
+        if (category != null) { where += " AND category=?"; args.add(category); }
+        args.add(query); args.add("%|"+escaped+"|%"); args.add(escaped+"%");
+        android.database.Cursor cursor = db.rawQuery("SELECT _id FROM icons WHERE "+where
+                +" ORDER BY CASE WHEN name_n=? THEN 0 WHEN terms LIKE ? ESCAPE '\\' THEN 1 WHEN name_n LIKE ? ESCAPE '\\' THEN 2 ELSE 3 END,pack,drawable",
+                args.toArray(new String[0]), cancel);
+        try {
+            int count = cursor.getCount();
+            if (count > 1000000) throw new IllegalStateException("Icon directory exceeds metadata budget");
+            long[] ids = new long[count]; int i = 0;
+            while (cursor.moveToNext()) { if ((i&63)==0) cancel.throwIfCanceled(); ids[i++] = cursor.getLong(0); }
+            return new SearchSnapshot(ids,sPackGeneration);
+        } finally { cursor.close(); }
+    }
+    /** At most one 60-row page; the UI keeps four pages, never all Drawable metadata objects. */
+    public static List<IconLibrarySearchIndex.Entry> readSearchPage(Context context, SearchSnapshot snapshot,
+            int offset, int count, android.os.CancellationSignal cancel) {
+        android.database.sqlite.SQLiteDatabase db=searchDb(context);
+        if (!isSearchSnapshotCurrent(snapshot)) throw new android.os.OperationCanceledException();
+        int end = Math.min(snapshot.ids.length,offset+count);
+        if (offset >= end) return java.util.Collections.emptyList();
+        StringBuilder sql = new StringBuilder("SELECT _id,pack,drawable,name,category,terms,version FROM icons WHERE _id IN (");
+        String[] values = new String[end-offset];
+        for (int i=offset;i<end;i++) { if (i>offset)sql.append(',');sql.append('?');values[i-offset]=Long.toString(snapshot.ids[i]); }
+        sql.append(')');
+        android.database.Cursor cursor = db.rawQuery(sql.toString(),values,cancel);
+        HashMap<Long,IconLibrarySearchIndex.Entry> rows = new HashMap<Long,IconLibrarySearchIndex.Entry>();
+        try {
+            while (cursor.moveToNext()) {
+                String pack=cursor.getString(1), drawable=cursor.getString(2);
+                rows.put(cursor.getLong(0),new IconLibrarySearchIndex.Entry(pack+"#"+drawable,cursor.getString(3),cursor.getString(4),
+                        new String[]{cursor.getString(5)},pack,drawable,cursor.getLong(6)));
+            }
+        } finally { cursor.close(); }
+        ArrayList<IconLibrarySearchIndex.Entry> result = new ArrayList<IconLibrarySearchIndex.Entry>();
+        for(int i=offset;i<end;i++) { IconLibrarySearchIndex.Entry entry=rows.get(snapshot.ids[i]); if(entry==null) throw new android.os.OperationCanceledException();result.add(entry); }
+        return result;
+    }
+    private static final android.util.LruCache<String, List<AppIconCandidate>> sCandidateCache =
+            new android.util.LruCache<String, List<AppIconCandidate>>(512) {
+                protected int sizeOf(String key, List<AppIconCandidate> value) {
+                    return Math.max(8, value.size());
+                }
+            };
+
+    public static List<AppIconCandidate> cachedCandidateMetadata(String pkg, String cls) {
+        return sCandidateCache.get(pkg + "/" + cls);
+    }
+
+    /** Appfilter hits only, never Drawable decoding; called by candidate discovery off MAIN. */
+    public static List<AppIconCandidate> getCandidateMetadata(Context context, String pkg, String cls,
+            IconPreviewRepository.RequestSession session) {
+        if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper())
+            throw new IllegalStateException("Pack metadata scan on MAIN");
+        String key = pkg + "/" + cls;
+        long generation = sPackGeneration;
+        List<AppIconCandidate> cached = sCandidateCache.get(key);
+        if (cached != null) return cached;
+        ArrayList<String> packs = getIconPackPackages(context);
+        java.util.Collections.sort(packs);
+        ArrayList<AppIconCandidate> result = new ArrayList<AppIconCandidate>();
+        for (String pack : packs) {
+            if (session != null && session.isCancelled()) return java.util.Collections.emptyList();
+            String drawable = null;
+            boolean selectedLoaded;
+            synchronized (IconPackManager.class) {
+                selectedLoaded = pack.equals(sLoadedPackage);
+                if (selectedLoaded) {
+                    drawable = !TextUtils.isEmpty(cls) ? sComponentToDrawable.get(flatten(pkg, cls)) : null;
+                    if (TextUtils.isEmpty(drawable) && !isDialerComponent(pkg, cls)) drawable = sPackageToDrawable.get(pkg);
+                }
+            }
+            PackMap map;
+            synchronized (sPackMapCache) { map = sPackMapCache.get(pack); }
+            if (!selectedLoaded && map == null) {
+                map = new PackMap();
+                loadPackMap(context, pack, map.packageToDrawable, map.componentToDrawable);
+                synchronized (sPackMapCache) {
+                    if (generation != sPackGeneration) return java.util.Collections.emptyList();
+                    putPackMapLocked(context, pack, map);
+                }
+            }
+            if (!selectedLoaded) {
+                drawable = !TextUtils.isEmpty(cls) ? map.componentToDrawable.get(flatten(pkg, cls)) : null;
+                if (TextUtils.isEmpty(drawable) && !isDialerComponent(pkg, cls)) drawable = map.packageToDrawable.get(pkg);
+            }
+            if (TextUtils.isEmpty(drawable)) continue;
+            try {
+                Resources res = context.getPackageManager().getResourcesForApplication(pack);
+                if (res.getIdentifier(drawable, "drawable", pack) == 0
+                        && res.getIdentifier(drawable, "mipmap", pack) == 0) continue;
+                long version = context.getPackageManager().getPackageInfo(pack, 0).lastUpdateTime;
+                result.add(new AppIconCandidate(AppIconCandidate.TYPE_PACKED, pack,
+                        getIconPackLabel(context, pack), false, drawable, version));
+            } catch (android.content.pm.PackageManager.NameNotFoundException unavailable) { }
+        }
+        List<AppIconCandidate> immutable = java.util.Collections.unmodifiableList(result);
+        synchronized (IconPackManager.class) {
+            if (generation == sPackGeneration && (session == null || !session.isCancelled())) sCandidateCache.put(key, immutable);
+        }
+        return immutable;
+    }
+
+    public static Drawable loadCandidateDrawable(Context context, AppIconCandidate candidate) {
+        return TextUtils.isEmpty(candidate.packDrawableName) ? null
+                : drawableFor(context, candidate.packPackage, candidate.packDrawableName);
+    }
+
+    public static Drawable getPackedDrawable(Context context, String pack, String drawable) {
+        return TextUtils.isEmpty(drawable) ? null : drawableFor(context,pack,drawable);
+    }
 
     private IconPackManager() {
     }
@@ -337,19 +593,29 @@ public final class IconPackManager {
     }
 
     public static void invalidateIconPackList() {
+        IconLibraryCatalog.invalidateInstalledLabels();
         synchronized (IconPackManager.class) {
             ++sPackGeneration;
             sIconPackList = null;
+            sCandidateCache.evictAll();
         }
     }
 
     /** Package events evict only that pack; ordinary app installs keep the active artwork map. */
     public static void invalidateIconPackPackage(String packageName) {
+        IconLibraryCatalog.invalidateInstalledLabels();
         synchronized (IconPackManager.class) {
             ++sPackGeneration;
+            sCandidateCache.evictAll();
             if (packageName != null && packageName.equals(sLoadedPackage)) clearLoaded();
             synchronized (sPackMapCache) { sPackMapCache.remove(packageName); }
         }
+        if (sSearchInvalidationPosted.compareAndSet(false,true)) new android.os.Handler(android.os.Looper.getMainLooper()).post(new Runnable() {
+            public void run() {
+                sSearchInvalidationPosted.set(false);
+                com.smartisanos.launcher.theme.MaintainedLauncherSettingsHost.onIconPackSearchDirectoryInvalidated();
+            }
+        });
     }
 
     public static void trimMemory(Context context, int level) {
@@ -473,9 +739,14 @@ public final class IconPackManager {
         }
     }
 
-    private static void loadPackMap(Context context, String packageName,
+    private static boolean loadPackMap(Context context, String packageName,
                                     HashMap<String, String> packageMap,
                                     HashMap<String, String> componentMap) {
+        return loadPackMap(context,packageName,packageMap,componentMap,null);
+    }
+    private static boolean loadPackMap(Context context, String packageName,
+            HashMap<String,String> packageMap, HashMap<String,String> componentMap,
+            IconPreviewRepository.RequestSession session) {
         XmlResourceParser parser = null;
         InputStream stream = null;
         XmlPullParser xml = null;
@@ -494,6 +765,7 @@ public final class IconPackManager {
                 xml.setInput(stream, "UTF-8");
             }
             while (xml.getEventType() != XmlPullParser.END_DOCUMENT) {
+                if (session != null && session.isCancelled()) return false;
                 if (xml.getEventType() == XmlPullParser.START_TAG
                         && "item".equals(xml.getName())) {
                     String component = xml.getAttributeValue(null, "component");
@@ -502,7 +774,9 @@ public final class IconPackManager {
                 }
                 xml.next();
             }
+            return true;
         } catch (Throwable ignored) {
+            return false;
         } finally {
             if (parser != null) {
                 parser.close();

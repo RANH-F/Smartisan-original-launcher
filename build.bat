@@ -4,6 +4,14 @@ setlocal
 
 set "ROOT=%~dp0"
 
+rem Strict icon source audit precedes generation; derived assets are checked before packaging.
+python -B "%ROOT%tools\icon_library.py" source-audit
+if errorlevel 1 exit /b 1
+python -B "%ROOT%tools\generate_icon_index.py"
+if errorlevel 1 exit /b 1
+python -B "%ROOT%tools\icon_library.py" audit
+if errorlevel 1 exit /b 1
+
 rem ============================================================
 rem 1. Detect JDK
 rem ============================================================

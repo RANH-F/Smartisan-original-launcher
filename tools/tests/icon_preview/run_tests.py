@@ -30,6 +30,12 @@ def main():
     methods += block(source, "    public static void logPerf")
     methods += source[source.index("    public void request(final IconRenderKey"):source.index("    public Drawable cachedDrawable")]
     methods += source[source.index("    private final class RenderTask"):source.index("    private IconRenderKey defaultKey")]
+    methods += block(source, "    public void prefetchLocal(")
+    methods += block(source, "    private void enqueueOnline(")
+    methods += block(source, "    private final class OnlineFetch")
+    methods += block(source, "    private final class IoOperation")
+    methods += block(source, "    public boolean scheduleIo(")
+    methods = methods.replace("com.smartisanos.launcher.theme.MaintainedLauncherSettingsHost.onPreviewLibrarySourceDownloaded", "Host.onPreviewLibrarySourceDownloaded")
     fields = source[source.index("    private static final int MAX_SESSION_QUEUE_SIZE"):source.index("    private IconPreviewRepository(Context")]
     fields = fields.replace("private static volatile IconPreviewRepository sInstance;", "")
     fields = fields.replace("private final Context app;", "")
@@ -47,7 +53,19 @@ def main():
     }
     IconPreviewRepository() {
         cache=new LruCache<>(1000);
+        onlinePool=new ThreadPoolExecutor(2,2,15L,TimeUnit.SECONDS,new ArrayBlockingQueue<Runnable>(24),job->new Thread(job,"probe-io"));
         decodePool=new ThreadPoolExecutor(2,2,15L,TimeUnit.SECONDS,new PriorityBlockingQueue<Runnable>());
+    }
+    final Object app = new Object();
+    final Map<RequestSession,Runnable> candidateRefresh=new HashMap<>();
+    final Map<RequestSession,Long> candidateRequests=new HashMap<>();
+    static class Host { static void onPreviewLibrarySourceDownloaded(Object app,String source,String pkg,String component){} }
+    CountDownLatch ioEntered, ioRelease;
+    boolean fetchOnlineSource(String source, OnlineFetch fetch) {
+        check(Thread.currentThread().getName().startsWith("probe-io"),"HTTP isolated from preview workers");
+        if(ioEntered!=null)ioEntered.countDown();
+        try { if(ioRelease!=null)await(ioRelease); } catch(Exception e){throw new RuntimeException(e);}
+        return !fetch.cancelled;
     }
     static Bitmap drawableToBitmap(Drawable d,int size){return d==null?null:new Bitmap(d.id);}
     static IconRenderKey key(int i){return new IconRenderKey("pkg"+i,"Activity",0,"DEFAULT","",1,52,320,1);}
@@ -71,6 +89,27 @@ def main():
             check(operations.get()==beforePause,"memory-pressure metadata stays paused");
             check(r.pendingCount()==0,"prefetch releases pending marker");
         }finally{r.decodePool.shutdownNow();}
+    }
+    static void localPrefetchAndDedup()throws Exception {
+        IconPreviewRepository r=new IconPreviewRepository();
+        CountDownLatch entered=new CountDownLatch(1),release=new CountDownLatch(1);
+        try {
+            RequestSession s=r.openSession("warm");IconRenderKey shared=key(800);
+            r.prefetchLocal(s,shared,()->{entered.countDown();await(release);return null;});
+            await(entered);
+            check(r.pendingCount()==0,"local miss never reserves a visible pending slot");
+            AtomicInteger visible=new AtomicInteger();
+            r.request(s,shared,Priority.P0_VISIBLE,()->new Drawable(88),(k,b)->visible.set(b==null?-1:b.id));
+            release.countDown();idle(r);
+            check(visible.get()==88,"visible decode independent of local-only miss");
+            final CountDownLatch blocked=new CountDownLatch(1),gate=new CountDownLatch(1);
+            IconRenderKey key=key(801);
+            r.request(s,key,Priority.P0_VISIBLE,()->{blocked.countDown();await(gate);return new Drawable(1);},null);
+            await(blocked);
+            for(int i=0;i<100;i++)r.request(s,key,Priority.P0_VISIBLE,()->new Drawable(1),null);
+            check(r.pending.get(key).size()==1,"scroll prefetch subscriptions deduplicated per session");
+            gate.countDown();idle(r);r.cancelSession(s);
+        }finally{release.countDown();r.decodePool.shutdownNow();r.onlinePool.shutdownNow();}
     }
     static void eviction()throws Exception {
         IconPreviewRepository r=new IconPreviewRepository();CountDownLatch entered=new CountDownLatch(2),release=new CountDownLatch(1);
@@ -151,8 +190,31 @@ def main():
             check(r.pendingCount()==0,"pressure leaves no pending entries");
         }finally{release.countDown();r.decodePool.shutdownNow();}
     }
+    static void networkIsolation()throws Exception {
+        IconPreviewRepository r=new IconPreviewRepository();
+        r.ioEntered=new CountDownLatch(2); r.ioRelease=new CountDownLatch(1);
+        RequestSession s=r.openSession("library");
+        try {
+            DrawableLoader deferred=()->{RenderTask task=CURRENT_RENDER.get();if(!task.onlineAttempted){task.requiredOnlineSource=task.key.sourceId;return null;}return new Drawable(99);};
+            for(int i=0;i<2;i++)r.request(s,new IconRenderKey("pkg","Activity",0,"RESOURCE","source"+i,1,72,320,1),Priority.P0_VISIBLE,deferred,(k,b)->{});
+            await(r.ioEntered);
+            CountDownLatch prepared=new CountDownLatch(1);
+            r.schedule(s,Priority.P0_VISIBLE,()->prepared.countDown());await(prepared);
+            AtomicInteger other=new AtomicInteger();r.request(key(1000),Priority.P0_VISIBLE,()->new Drawable(42),(k,b)->other.set(b.id));idle(r);
+            check(other.get()==42,"another page renders while both HTTP workers are blocked");
+            for(int i=2;i<40;i++)r.request(s,new IconRenderKey("pkg","Activity",0,"RESOURCE","source"+i,1,72,320,1),Priority.P0_VISIBLE,deferred,(k,b)->{});
+            idle(r);
+            check(r.onlinePool.getQueue().size()<=24,"IO queue hard bound");
+            check(r.online.size()<=26,"IO dedup/inflight map hard bound");
+            r.cancelSession(s);
+            check(r.onlinePool.getQueue().isEmpty()&&r.online.isEmpty(),"exit purges all queued IO and callbacks");
+            check(r.pendingCount()==0,"exit releases pending image ownership");
+            r.ioRelease.countDown();r.onlinePool.shutdown();r.onlinePool.awaitTermination(3,TimeUnit.SECONDS);idle(r);
+            check(r.activeSessions.isEmpty(),"no leaked page sessions");
+        } finally {r.ioRelease.countDown();r.decodePool.shutdownNow();r.onlinePool.shutdownNow();}
+    }
     public static void main(String[] args)throws Exception {
-        prefetch();eviction();staleCompletion();sharedConsumers();cancelledPreparation();memoryPressure();
+        networkIsolation();prefetch();localPrefetchAndDedup();eviction();staleCompletion();sharedConsumers();cancelledPreparation();memoryPressure();
         System.out.println("production preview checks="+checks+" failures="+failures);
         if(failures!=0)System.exit(1);
     }

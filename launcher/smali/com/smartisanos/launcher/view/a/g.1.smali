@@ -146,6 +146,8 @@
 
 .field protected mRenderTarget:Lcom/smartisanos/smengine/N;
 
+.field private pageProjectionViewportMapped:Z
+
 .field protected nH:Z
 
 .field private nI:Ljava/lang/String;
@@ -9813,6 +9815,121 @@
     return-void
 .end method
 
+.method protected preparePageProjectionViewport(Lcom/smartisanos/smengine/Camera;)V
+    .locals 14
+
+    iget-boolean v0, p0, Lcom/smartisanos/launcher/view/a/g;->nH:Z
+    if-eqz v0, :projection_viewport_restore
+    iget-boolean v0, p0, Lcom/smartisanos/launcher/view/a/g;->oH:Z
+    if-eqz v0, :projection_viewport_restore
+
+    iget-object v0, p0, Lcom/smartisanos/launcher/view/a/g;->sc:[Lcom/smartisanos/smengine/SceneNode;
+    const/16 v1, 0x1b
+    aget-object v0, v0, v1
+    if-eqz v0, :projection_viewport_done
+    invoke-virtual {v0}, Lcom/smartisanos/smengine/SceneNode;->getViewPort()Lcom/smartisanos/smengine/Ga;
+    move-result-object v1
+    if-eqz v1, :projection_viewport_done
+    iget-object v2, p0, Lcom/smartisanos/launcher/view/a/g;->mRenderTarget:Lcom/smartisanos/smengine/N;
+    if-eqz v2, :projection_viewport_done
+    invoke-virtual {v2}, Lcom/smartisanos/smengine/N;->getViewPort()Lcom/smartisanos/smengine/Ga;
+    move-result-object v2
+
+    invoke-virtual {v2}, Lcom/smartisanos/smengine/Ga;->Qs()I
+    move-result v3
+    int-to-float v3, v3
+    invoke-virtual {v2}, Lcom/smartisanos/smengine/Ga;->Ps()I
+    move-result v4
+    int-to-float v4, v4
+    invoke-virtual {v1}, Lcom/smartisanos/smengine/Ga;->Qs()I
+    move-result v5
+    int-to-float v5, v5
+    invoke-virtual {v1}, Lcom/smartisanos/smengine/Ga;->Ps()I
+    move-result v6
+    int-to-float v6, v6
+    div-float v7, v5, v3
+    div-float v8, v6, v4
+
+    # Map the same cell-local clip coordinates into the complete existing atlas.
+    # Only the projection can span neighbouring slots; body/background viewports stay local.
+    invoke-virtual {v1}, Lcom/smartisanos/smengine/Ga;->Rs()I
+    move-result v9
+    int-to-float v9, v9
+    invoke-virtual {v1}, Lcom/smartisanos/smengine/Ga;->Ss()I
+    move-result v10
+    int-to-float v10, v10
+    const/high16 v11, 0x40000000
+    mul-float/2addr v9, v11
+    add-float/2addr v9, v5
+    sub-float/2addr v9, v3
+    div-float/2addr v9, v3
+    div-float/2addr v9, v11
+    mul-float/2addr v10, v11
+    add-float/2addr v10, v6
+    sub-float/2addr v10, v4
+    div-float/2addr v10, v4
+    div-float/2addr v10, v11
+    invoke-virtual {p1}, Lcom/smartisanos/smengine/Camera;->getWidth()I
+    move-result v11
+    int-to-float v11, v11
+    mul-float/2addr v9, v11
+    invoke-virtual {p1}, Lcom/smartisanos/smengine/Camera;->getHeight()I
+    move-result v11
+    int-to-float v11, v11
+    mul-float/2addr v10, v11
+
+    # Rebuild from original weather geometry so repeated draws never accumulate a scale.
+    invoke-static {}, Lcom/smartisanos/smengine/Ra;->getInstance()Lcom/smartisanos/smengine/Ra;
+    move-result-object v13
+    invoke-virtual {v13}, Lcom/smartisanos/smengine/Ra;->nt()F
+    move-result v11
+    mul-float/2addr v11, v7
+    add-float/2addr v9, v11
+    invoke-virtual {v13}, Lcom/smartisanos/smengine/Ra;->ot()F
+    move-result v11
+    mul-float/2addr v11, v8
+    add-float/2addr v10, v11
+    invoke-virtual {v13}, Lcom/smartisanos/smengine/Ra;->mt()F
+    move-result v11
+    iget-object v12, p0, Lcom/smartisanos/launcher/view/a/g;->dH:Lcom/smartisanos/launcher/data/LayoutProperty;
+    iget v12, v12, Lcom/smartisanos/launcher/data/LayoutProperty;->icon_size_with_shadow:F
+    mul-float/2addr v11, v12
+    const/high16 v12, 0x40000000
+    div-float/2addr v11, v12
+    mul-float v12, v11, v8
+    mul-float/2addr v11, v7
+    const/high16 v13, 0x3f800000
+    invoke-virtual {v0, v11, v12, v13}, Lcom/smartisanos/smengine/SceneNode;->setScale(FFF)V
+    const/4 v13, 0x0
+    invoke-virtual {v0, v9, v10, v13}, Lcom/smartisanos/smengine/SceneNode;->setTranslate(FFF)V
+    # Copy bounds; SceneNode's Ga setter would alias the RenderTarget's shared viewport.
+    invoke-virtual {v2}, Lcom/smartisanos/smengine/Ga;->Rs()I
+    move-result v9
+    invoke-virtual {v2}, Lcom/smartisanos/smengine/Ga;->Ss()I
+    move-result v10
+    invoke-virtual {v2}, Lcom/smartisanos/smengine/Ga;->Qs()I
+    move-result v11
+    invoke-virtual {v2}, Lcom/smartisanos/smengine/Ga;->Ps()I
+    move-result v12
+    invoke-virtual {v0, v9, v10, v11, v12}, Lcom/smartisanos/smengine/SceneNode;->setViewPort(IIII)V
+    invoke-virtual {v0}, Lcom/smartisanos/smengine/SceneNode;->updateGeometricState()V
+
+    const/4 v1, 0x1
+    iput-boolean v1, p0, Lcom/smartisanos/launcher/view/a/g;->pageProjectionViewportMapped:Z
+    goto :projection_viewport_done
+
+    :projection_viewport_restore
+    iget-boolean v0, p0, Lcom/smartisanos/launcher/view/a/g;->pageProjectionViewportMapped:Z
+    if-eqz v0, :projection_viewport_done
+    # Dragging or moving to Dock returns to the original direct geometry exactly once.
+    invoke-virtual {p0}, Lcom/smartisanos/launcher/view/a/g;->forceUpdateShadowMap()V
+    const/4 v0, 0x0
+    iput-boolean v0, p0, Lcom/smartisanos/launcher/view/a/g;->pageProjectionViewportMapped:Z
+
+    :projection_viewport_done
+    return-void
+.end method
+
 .method public d(Lcom/smartisanos/smengine/Camera;)V
     .locals 3
 
@@ -9895,6 +10012,35 @@
 
     .line 15
     :goto_1
+    invoke-virtual {p0, p1}, Lcom/smartisanos/launcher/view/a/g;->preparePageProjectionViewport(Lcom/smartisanos/smengine/Camera;)V
+
+    # Only the depth-test bit changes; keep the original target, queue and viewport.
+    invoke-static {}, Lcom/smartisanos/launcher/view/Eb;->getInstance()Lcom/smartisanos/launcher/view/Eb;
+
+    move-result-object v0
+
+    invoke-virtual {v0}, Lcom/smartisanos/launcher/view/Eb;->Ch()Lcom/smartisanos/launcher/view/b/t;
+
+    move-result-object v0
+
+    const/4 v2, 0x0
+
+    if-eqz v0, :projection_depth_ready
+
+    # Restore original depth occlusion while the existing folder owner is present.
+    const/4 v2, 0x1
+
+    :projection_depth_ready
+    iget-object v0, p0, Lcom/smartisanos/launcher/view/a/g;->sc:[Lcom/smartisanos/smengine/SceneNode;
+
+    aget-object v0, v0, v1
+
+    invoke-virtual {v0}, Lcom/smartisanos/smengine/SceneNode;->getRenderState()Lcom/smartisanos/smengine/L;
+
+    move-result-object v0
+
+    invoke-virtual {v0, v2}, Lcom/smartisanos/smengine/L;->setIsEnableDepthTest(Z)V
+
     iget-object p0, p0, Lcom/smartisanos/launcher/view/a/g;->sc:[Lcom/smartisanos/smengine/SceneNode;
 
     aget-object p0, p0, v1
