@@ -33,6 +33,8 @@ python -B tools/generate_icon_index.py
 python -B tools/icon_library.py audit
 ```
 
+图标库构建仍使用既有三个审计／生成步骤。源Catalog的nameStatus=verified必须有名称证据，中文名称／别名需有pinyin或pinyinOverrides（三项：全拼、分词拼音、首字母）。可选nameEn／tags／typed groups／pronunciations保留schema 1兼容；缺证据或词表审计失败时不改派生文件。正常build.bat不联网补名称，也不需要pypinyin；资料整理可显式使用collect-store／enrich，整理结果提交前仍须人工审核和源审计。
+
 `icons/catalog.json` 是人工可维护元数据；生成器不会删除失效引用来掩盖源数据错误。主动删除 PNG 后应先清理 catalog / variants 中的对应引用，新增 PNG 可在源数据审计通过后由生成器增量登记，文件名和已有 sourceId 保持不变。构建成功后仍需检查签名、产物时间及实际安装结果；不要在 ADB 安装仍占用 APK 时并发重建同一路径。
 
 脚本会自动构建 maintained 设置资源、重新打包 launcher、注入二进制 Manifest、编译 Java 兼容宿主为 `classes2.dex`，最后 zipalign 并签名。

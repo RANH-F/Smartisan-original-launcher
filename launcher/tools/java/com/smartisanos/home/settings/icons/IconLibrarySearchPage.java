@@ -38,6 +38,19 @@ public final class IconLibrarySearchPage extends LinearLayout {
     private static final String[] CATEGORY_LABELS = {"全部", "图标包", "系统", "社交", "影音", "浏览器", "购物", "工具", "游戏", "新闻资讯", "生活实用", "交通出行", "商务办公", "学习教育", "金融理财", "铃声壁纸", "儿童母婴", "书刊阅读", "其他"};
     private final Activity activity;
     private final Host host;
+    /** Bound to one target navigation chain; contains no Activity, View or bitmap. */
+    public static final class State {
+        final android.util.LruCache<String,ResultState> results = new android.util.LruCache<String,ResultState>(3);
+        String revision = "";
+    }
+    private static final class ResultState {
+        String revision, query;
+        List<IconLibrarySearchIndex.Entry> rows;
+        IconPackManager.SearchSnapshot packs;
+        int first, top, pageOffset;
+        List<IconLibrarySearchIndex.Entry> page;
+    }
+    private final State navigation;
     private final IconPreviewRepository repository;
     private IconPreviewRepository.RequestSession session;
     private final String targetPackage, targetComponent;
@@ -78,14 +91,21 @@ public final class IconLibrarySearchPage extends LinearLayout {
     private final java.util.Set<Integer> loadingPages = new java.util.HashSet<Integer>();
     private boolean paused;
     private long directoryGeneration;
+    private long directoryRequest;
+    private volatile boolean packsReady;
+    private volatile IconLibraryCatalog directoryCatalog;
+    private boolean indexPreparing;
+    private String appliedQuery = "";
+    private final int[] onlineRanks = new int[IconLibrarySearchIndex.RANKS];
 
     private int oldSoftInputMode;
 
     public IconLibrarySearchPage(Activity activity, IconPreviewRepository.RequestSession session,
             String pkg, String component, long user, String selectedSource, Drawable searchBackground, Host host,
-            String browseCategory, int categoryFirst, int categoryTop) {
+            String browseCategory, int categoryFirst, int categoryTop, State navigation) {
         super(activity);
         this.activity = activity; this.session = session; this.host = host;
+        this.navigation = navigation;
         categoryPage = browseCategory != null;
         category = browseCategory == null || browseCategory.length() == 0 ? null : browseCategory;
         showingResults = categoryPage;
@@ -192,6 +212,29 @@ public final class IconLibrarySearchPage extends LinearLayout {
 
     private int dp(int value) { return Math.round(value * getResources().getDisplayMetrics().density); }
     private boolean active() { return !closed && !paused && repository.isSessionActive(session); }
+    private String stateKey(String query) { return String.valueOf(category) + ":" + IconLibrarySearchIndex.normalize(query); }
+    private void saveResultState() {
+        if (!showingResults || !packsReady || !directoryReady || !IconPackManager.isSearchSnapshotCurrent(packed)
+                || !appliedQuery.equals(search.getEditText().getText().toString())) return;
+        IconLibraryCatalog catalog = IconLibraryCatalog.peek();
+        if (catalog == null) return;
+        ResultState state = new ResultState();
+        state.revision=catalog.revision; state.query=appliedQuery; state.rows=adapter.rows; state.packs=packed;
+        state.first=grid.getFirstVisiblePosition(); View first=grid.getChildAt(0);state.top=first==null?0:first.getTop();
+        int offset=packOffsetAt(state.first);
+        state.pageOffset=offset<0?0:offset/60*60;state.page=packedPages.get(state.pageOffset);
+        navigation.results.put(stateKey(appliedQuery),state);
+    }
+    private boolean restoreResultState(IconLibraryCatalog catalog) {
+        ResultState state=navigation.results.get(stateKey(search.getEditText().getText().toString()));
+        if(state==null || !state.revision.equals(catalog.revision) || !IconPackManager.isSearchSnapshotCurrent(state.packs)) return false;
+        queryCancel=new android.os.CancellationSignal();
+        setRows(state.rows,state.packs,state.query);
+        if(state.page!=null) packedPages.put(state.pageOffset,state.page);
+        showResultCount();grid.setSelectionFromTop(state.first,state.top);
+        grid.post(new Runnable() {public void run() {if(active())bindVisible();}});
+        return true;
+    }
     private void showCategories() {
         showingResults = false;
         resultCount.setVisibility(GONE);
@@ -202,6 +245,7 @@ public final class IconLibrarySearchPage extends LinearLayout {
     /** Consume one browser level; the settings host exits only from the category home. */
     public boolean handleBack() {
         if (closed || categoryPage || !showingResults) return false;
+        saveResultState();
         ++generation;
         if (filter != null) main.removeCallbacks(filter);
         if (queryCancel != null) queryCancel.cancel();
@@ -220,36 +264,82 @@ public final class IconLibrarySearchPage extends LinearLayout {
         if (!closed && !paused) initializeDirectory();
     }
     private void initializeDirectory() {
-        final long token = ++generation;
-        directoryReady = false;
-        if (queryCancel != null) queryCancel.cancel();
-        if (filter != null) main.removeCallbacks(filter);
-        cancelSelection(); releaseBindings(); packed=null; packedPages.evictAll(); loadingPages.clear();
-        search.setInputEnabled(false); categories.setVisibility(GONE); grid.setVisibility(GONE);
-        message.setText(""); loading.root.setVisibility(VISIBLE); loading.progress.setVisibility(VISIBLE);
-        resultCount.setVisibility(GONE);
-        loading.message.setText("正在加载所有图标"); loading.message.setVisibility(GONE); loading.root.setOnClickListener(null);
-        final IconPreviewRepository.RequestSession owner = session;
-        boolean queued = repository.scheduleIo(owner, new Runnable() { public void run() {
-            long started = android.os.SystemClock.uptimeMillis();
+        final long request=++directoryRequest;
+        ++generation;
+        final boolean visible=directoryReady;
+        packsReady=false;
+        indexPreparing=true;
+        if(queryCancel!=null) queryCancel.cancel();
+        if(filter!=null) main.removeCallbacks(filter);
+        cancelSelection(); releaseBindings(); packed=null;packedPages.evictAll();loadingPages.clear();
+        final IconPreviewRepository.RequestSession owner=session;
+        IconLibraryCatalog cached=IconLibraryCatalog.peek();
+        if(cached!=null) {
+            packsReady=IconPackManager.isSearchIndexReady(cached);
+            acceptCatalog(cached);
+            if(packsReady) {
+                indexPreparing=false;
+                packsReady=true;directoryGeneration=IconPackManager.searchGeneration();
+                if(showingResults && !restoreResultState(cached)) scheduleFilter(true,false);
+                return;
+            }
+        } else if(!visible) {
+            directoryReady=false;search.setInputEnabled(false);categories.setVisibility(GONE);grid.setVisibility(GONE);
+            message.setText("");resultCount.setVisibility(GONE);loading.root.setVisibility(VISIBLE);
+            loading.progress.setVisibility(VISIBLE);loading.message.setVisibility(GONE);loading.root.setOnClickListener(null);
+        }
+        boolean queued=repository.scheduleIndex(owner,new Runnable() {public void run() {
+            long started=android.os.SystemClock.uptimeMillis();
             try {
-                IconLibraryCatalog catalog = IconLibraryCatalog.load(activity.getApplicationContext());
-                IconPackManager.prepareSearchIndex(activity.getApplicationContext(), owner, catalog);
-                main.post(new Runnable() { public void run() {
-                    if (!active() || generation != token || owner != session) return;
-                    directoryReady = true; directoryGeneration=IconPackManager.searchGeneration(); loading.root.setVisibility(GONE); search.setInputEnabled(true);
-                    if (search.getEditText().getText().length() == 0 && category == null && !showingResults) showCategories();
-                    else scheduleFilter(true,false);
+                final IconLibraryCatalog catalog=IconLibraryCatalog.load(activity.getApplicationContext());
+                main.post(new Runnable() {public void run() {
+                    if(active() && directoryRequest==request && owner==session) acceptCatalog(catalog);
+                }});
+                IconPackManager.prepareSearchIndex(activity.getApplicationContext(),owner,catalog);
+                main.post(new Runnable() {public void run() {
+                    if(!active() || directoryRequest!=request || owner!=session) return;
+                    indexPreparing=false;
+                    packsReady=true;directoryGeneration=IconPackManager.searchGeneration();
+                    if(IconPackManager.searchFailureCount()>0)
+                        Toast.makeText(activity,IconPackManager.searchFailureCount()+" 个图标包无法读取",Toast.LENGTH_SHORT).show();
+                    if(showingResults || categoryPage || search.getEditText().getText().length()!=0) scheduleFilter(true,false);
                     android.util.Log.i("SmartisanPerf","ICON_DIRECTORY_READY durationMs="+(android.os.SystemClock.uptimeMillis()-started));
                 }});
-            } catch (Exception error) {
+            } catch(Exception error) {
                 android.util.Log.w("SmartisanPerf","ICON_DIRECTORY_LOAD_FAILED",error);
-                main.post(new Runnable() { public void run() {
-                    if(active() && generation==token) showDirectoryError();
+                main.post(new Runnable() {public void run() {
+                    if(!active() || directoryRequest!=request || owner!=session) return;
+                    indexPreparing=false;
+                    if(!directoryReady) showDirectoryError();
+                    else Toast.makeText(activity,"部分图标包暂时无法读取",Toast.LENGTH_SHORT).show();
                 }});
             }
         }});
-        if (!queued) showDirectoryError();
+        if(!queued) {indexPreparing=false;if(!directoryReady) showDirectoryError();}
+    }
+    private void acceptCatalog(IconLibraryCatalog catalog) {
+        if(!navigation.revision.equals(catalog.revision)) {
+            navigation.results.evictAll();navigation.revision=catalog.revision;
+        }
+        directoryCatalog=catalog;
+        directoryReady=true;loading.root.setVisibility(GONE);search.setInputEnabled(true);
+        if(category==null && !showingResults && search.getEditText().getText().length()==0) showCategories();
+        else if(!packsReady) scheduleFilter(true,false);
+    }
+    private void setRows(List<IconLibrarySearchIndex.Entry> rows,IconPackManager.SearchSnapshot packs,String query) {
+        releaseBindings();packed=packs;packedPages.evictAll();loadingPages.clear();adapter.rows=rows;appliedQuery=query;
+        java.util.Arrays.fill(onlineRanks,0);
+        IconLibrarySearchIndex.Query normalized=new IconLibrarySearchIndex.Query(query);
+        for(IconLibrarySearchIndex.Entry entry:rows) {
+            int rank=entry.rank(normalized);if(rank<onlineRanks.length)++onlineRanks[rank];
+        }
+        adapter.notifyDataSetChanged();
+    }
+    private void showResultCount() {
+        showingResults=true;categories.setVisibility(GONE);grid.setVisibility(VISIBLE);
+        int count=adapter.getCount();
+        message.setText(count==0?"未找到相关图标":"搜索结果");
+        resultCount.setText((packsReady?"共 ":"已找到 ")+count+" 个");resultCount.setVisibility(VISIBLE);
     }
     private void showDirectoryError() {
         loading.progress.setVisibility(GONE); loading.message.setText("加载失败，点击重试");
@@ -257,6 +347,7 @@ public final class IconLibrarySearchPage extends LinearLayout {
     }
     private void scheduleFilter(boolean browse, boolean debounce) {
         if (!directoryReady || !active()) return;
+        saveResultState();
         final long token = ++generation;
         cancelSelection();
         if (filter != null) main.removeCallbacks(filter);
@@ -270,27 +361,29 @@ public final class IconLibrarySearchPage extends LinearLayout {
             category = null; showCategories(); return;
         }
         final String filterCategory = category;
+        final IconLibraryCatalog catalog = directoryCatalog;
+        if(catalog==null) return;
         showingResults = true;
         categories.setVisibility(GONE); grid.setVisibility(VISIBLE);
         message.setText("搜索结果");
         resultCount.setVisibility(GONE);
         filter = new Runnable() { public void run() {
             if (!active() || generation != token) return;
-            repository.schedule(session, IconPreviewRepository.Priority.P0_VISIBLE, new Runnable() {
+            boolean queued = repository.scheduleMetadata(session, new Runnable() {
                 public void run() {
                     if (!active() || generation != token) return;
                     final List<IconLibrarySearchIndex.Entry> found;
                     final IconPackManager.SearchSnapshot packResult;
                     long started = android.os.SystemClock.uptimeMillis();
                     try {
-                        IconLibraryCatalog catalog = IconLibraryCatalog.load(activity.getApplicationContext());
                         found = "__packs__".equals(filterCategory) ? Collections.<IconLibrarySearchIndex.Entry>emptyList() : IconLibrarySearchIndex.search(catalog.entries, query, filterCategory,
                                 new IconLibrarySearchIndex.Current() { public boolean isCurrent() {
                                     return active() && generation == token;
                                 }});
                         if (found == null || !active() || generation != token) return;
-                        packResult = IconPackManager.searchDirectory(activity.getApplicationContext(),query,
-                                "__packs__".equals(filterCategory) ? null : filterCategory,cancel);
+                        packResult = packsReady && IconPackManager.isSearchIndexReady(catalog)
+                                ? IconPackManager.searchDirectory(activity.getApplicationContext(),query,
+                                    "__packs__".equals(filterCategory) ? null : filterCategory,cancel) : null;
                     } catch (Exception error) {
                         android.util.Log.w("SmartisanPerf", "ICON_LIBRARY_SEARCH_FAILED", error);
                         main.post(new Runnable() { public void run() {
@@ -302,16 +395,22 @@ public final class IconLibrarySearchPage extends LinearLayout {
                     final long duration = android.os.SystemClock.uptimeMillis() - started;
                     main.post(new Runnable() { public void run() {
                         if (!active() || generation != token) return;
-                        releaseBindings(); packed=packResult; packedPages.evictAll(); loadingPages.clear(); adapter.rows = found; adapter.notifyDataSetChanged(); grid.setSelection(0);
-                        message.setText(found.isEmpty() && packResult.size()==0 ? "未找到相关图标" : "搜索结果");
-                        resultCount.setText("共 " + (found.size()+packResult.size()) + " 个");
-                        resultCount.setVisibility(VISIBLE);
-                        android.util.Log.i("SmartisanPerf", "ICON_LIBRARY_SEARCH count=" + (found.size()+packResult.size()) + " durationMs=" + duration);
+                        if(packsReady && !IconPackManager.isSearchIndexReady(catalog) && !indexPreparing) {
+                            initializeDirectory();return;
+                        }
+                        boolean preserve = appliedQuery.equals(query);
+                        int first=grid.getFirstVisiblePosition();View firstView=grid.getChildAt(0);int top=firstView==null?0:firstView.getTop();
+                        IconLibrarySearchIndex.Entry anchor=preserve?entryAt(first):null;
+                        setRows(found,packResult,query);showResultCount();
+                        int restored=anchor==null?-1:onlinePositionOf(anchor.stableKey());
+                        if(preserve && restored>=0) grid.setSelectionFromTop(restored,top);else grid.setSelection(0);
+                        android.util.Log.i("SmartisanPerf", "ICON_LIBRARY_SEARCH count=" + adapter.getCount() + " durationMs=" + duration);
                         repository.logPipelineState("library-results");
                         grid.post(new Runnable() { public void run() { if (active()) bindVisible(); }});
                     }});
                 }
             });
+            if(!queued && active() && generation==token) message.setText("图标查询繁忙，请重试");
         }};
         main.postDelayed(filter, debounce ? 120L : 0L);
     }
@@ -469,18 +568,46 @@ public final class IconLibrarySearchPage extends LinearLayout {
                         activity, entry.sourceId, cachedOnly);
     }
     private IconLibrarySearchIndex.Entry entryAt(int position) {
-        if (position < adapter.rows.size()) return adapter.rows.get(position);
+        if(position<0 || position>=adapter.getCount()) return null;
+        int online=0,packOffset=0,remaining=position;
+        for(int rank=0;rank<onlineRanks.length;rank++) {
+            int packCount=packed==null?0:packed.ranks[rank];
+            if(remaining<onlineRanks[rank]) return adapter.rows.get(online+remaining);
+            remaining-=onlineRanks[rank];online+=onlineRanks[rank];
+            if(remaining<packCount) {packOffset+=remaining;break;}
+            remaining-=packCount;packOffset+=packCount;
+        }
         if (packed==null) return null;
-        int offset=position-adapter.rows.size(),page=offset/60*60;
+        int offset=packOffset,page=offset/60*60;
         List<IconLibrarySearchIndex.Entry> rows=packedPages.get(page);
         if(rows==null) { requestPackPage(page); return null; }
         return offset-page < rows.size() ? rows.get(offset-page) : null;
+    }
+    private int packOffsetAt(int position) {
+        int offset=0,remaining=position;
+        for(int rank=0;rank<onlineRanks.length;rank++) {
+            int count=packed==null?0:packed.ranks[rank];
+            if(remaining<onlineRanks[rank]) return -1;
+            remaining-=onlineRanks[rank];
+            if(remaining<count) return offset+remaining;
+            remaining-=count;offset+=count;
+        }
+        return -1;
+    }
+    private int onlinePositionOf(String key) {
+        int index=0,position=0;
+        for(int rank=0;rank<onlineRanks.length;rank++) {
+            for(int i=0;i<onlineRanks[rank];i++,index++,position++)
+                if(adapter.rows.get(index).stableKey().equals(key)) return position;
+            if(packed!=null) position+=packed.ranks[rank];
+        }
+        return -1;
     }
     private void requestPackPage(final int offset) {
         if(!active() || packed==null || !loadingPages.add(offset)) return;
         final long token=generation; final IconPackManager.SearchSnapshot snapshot=packed;
         final android.os.CancellationSignal cancel=queryCancel;
-        repository.schedule(session,IconPreviewRepository.Priority.P0_VISIBLE,new Runnable() { public void run() {
+        boolean queued=repository.scheduleMetadata(session,new Runnable() { public void run() {
             if(!active() || token!=generation) return;
             try {
                 final List<IconLibrarySearchIndex.Entry> rows=IconPackManager.readSearchPage(activity.getApplicationContext(),snapshot,offset,60,cancel);
@@ -492,9 +619,11 @@ public final class IconLibrarySearchPage extends LinearLayout {
                 if(active() && token==generation) {loadingPages.remove(offset); if(!IconPackManager.isSearchSnapshotCurrent(snapshot)) initializeDirectory();}
             }}); }
         }});
+        if(!queued) {loadingPages.remove(offset);message.setText("图标查询繁忙，请重试");}
     }
     public void pause() {
         if(closed || paused) return;
+        saveResultState();
         paused=true; ++generation; if(queryCancel!=null)queryCancel.cancel();
         grid.removeCallbacks(bindFrame); bindPosted = false;
         main.removeCallbacksAndMessages(null);cancelSelection();releaseBindings();repository.cancelSession(session);
@@ -502,7 +631,7 @@ public final class IconLibrarySearchPage extends LinearLayout {
     public IconPreviewRepository.RequestSession resume() {
         if(!closed && paused) {
             paused=false;session=repository.openSession("ICON_LIBRARY");queryCancel=new android.os.CancellationSignal();
-            if(directoryReady && directoryGeneration==IconPackManager.searchGeneration()) {
+            if(directoryReady && packsReady && directoryGeneration==IconPackManager.searchGeneration()) {
                 loadingPages.clear();bindVisible();
             } else initializeDirectory();
         }
@@ -510,6 +639,7 @@ public final class IconLibrarySearchPage extends LinearLayout {
     }
     public void close() {
         if (closed) return;
+        saveResultState();
         closed = true; ++generation; cancelSelection(); main.removeCallbacksAndMessages(null);
         grid.removeCallbacks(bindFrame); bindPosted = false;
         if(queryCancel!=null)queryCancel.cancel();

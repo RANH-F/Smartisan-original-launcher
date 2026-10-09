@@ -2324,7 +2324,15 @@
 
     iget v1, p1, Lcom/smartisanos/smengine/Na;->lU:F
 
+    sget-object v2, Lcom/smartisanos/smengine/Ra;->gV:Lcom/smartisanos/smengine/Oa;
+    iget-boolean v3, v2, Lcom/smartisanos/smengine/Oa;->hasSample:Z
+    if-eqz v3, :weather_without_light_sample
+    iget v2, v2, Lcom/smartisanos/smengine/Oa;->currentLux:F
+    invoke-virtual {v0, v2, v1}, Lcom/smartisanos/smengine/Ra;->applyShadowLux(FF)V
+    goto :weather_light_applied
+    :weather_without_light_sample
     invoke-virtual {v0, v1}, Lcom/smartisanos/smengine/Ra;->V(F)V
+    :weather_light_applied
 
     .line 9
     invoke-static {}, Lcom/smartisanos/smengine/Ra;->getInstance()Lcom/smartisanos/smengine/Ra;
@@ -2479,12 +2487,19 @@
     .line 1
     sget-object p0, Lcom/smartisanos/smengine/Ra;->gV:Lcom/smartisanos/smengine/Oa;
 
-    iget p0, p0, Lcom/smartisanos/smengine/Oa;->start:I
-
+    iget-boolean v0, p0, Lcom/smartisanos/smengine/Oa;->running:Z
+    if-eqz v0, :cond_0
+    iget v0, p0, Lcom/smartisanos/smengine/Oa;->nU:F
+    cmpl-float v1, v0, p2
+    if-eqz v1, :shadow_target_accepted
+    # A new reading continues from the displayed lux, never from an obsolete target.
+    iget p1, p0, Lcom/smartisanos/smengine/Oa;->currentLux:F
+    iput p1, p0, Lcom/smartisanos/smengine/Oa;->mU:F
+    iput p2, p0, Lcom/smartisanos/smengine/Oa;->nU:F
     const/4 v0, 0x0
-
-    if-eqz p0, :cond_0
-
+    iput v0, p0, Lcom/smartisanos/smengine/Oa;->start:I
+    :shadow_target_accepted
+    const/4 v0, 0x1
     return v0
 
     .line 2
@@ -2496,7 +2511,12 @@
     .line 3
     sget-object v1, Lcom/smartisanos/smengine/Ra;->gV:Lcom/smartisanos/smengine/Oa;
 
+    const/4 v0, 0x1
+    iput-boolean v0, v1, Lcom/smartisanos/smengine/Oa;->running:Z
+    iput-boolean v0, v1, Lcom/smartisanos/smengine/Oa;->hasSample:Z
+    const/4 v0, 0x0
     iput p1, v1, Lcom/smartisanos/smengine/Oa;->mU:F
+    iput p1, v1, Lcom/smartisanos/smengine/Oa;->currentLux:F
 
     .line 4
     iput p2, v1, Lcom/smartisanos/smengine/Oa;->nU:F
@@ -2543,4 +2563,84 @@
 
     :cond_0
     return-void
+.end method
+
+.method public static resumeShadowOwner()Lcom/smartisanos/smengine/Oa;
+    .locals 1
+    sget-object v0, Lcom/smartisanos/smengine/Ra;->gV:Lcom/smartisanos/smengine/Oa;
+    return-object v0
+.end method
+
+.method public resumeShadowTransition()V
+    .locals 3
+    sget-object v0, Lcom/smartisanos/smengine/Ra;->gV:Lcom/smartisanos/smengine/Oa;
+    iget-boolean v1, v0, Lcom/smartisanos/smengine/Oa;->suspended:Z
+    if-eqz v1, :done
+    const/4 v1, 0x0
+    iput-boolean v1, v0, Lcom/smartisanos/smengine/Oa;->suspended:Z
+    invoke-static {}, Lcom/smartisanos/smengine/n;->obtain()Lcom/smartisanos/smengine/n;
+    move-result-object v2
+    invoke-virtual {v2, v0}, Lcom/smartisanos/smengine/n;->j(Ljava/lang/Runnable;)V
+    const/4 v1, 0x0
+    invoke-virtual {v2, v1}, Lcom/smartisanos/smengine/n;->q(F)V
+    :done
+    return-void
+.end method
+
+.method public applyShadowLux(FF)V
+    .locals 3
+    invoke-static {p1}, Lcom/smartisanos/smengine/Ra;->S(F)F
+    move-result v0
+    const/4 v1, 0x0
+    invoke-static {v0, v1}, Ljava/lang/Math;->max(FF)F
+    move-result v0
+    const/high16 v1, 0x3f800000
+    invoke-static {v0, v1}, Ljava/lang/Math;->min(FF)F
+    move-result v0
+    mul-float/2addr v0, p2
+    invoke-virtual {p0, v0}, Lcom/smartisanos/smengine/Ra;->V(F)V
+    const/4 v1, -0x1
+    invoke-static {p1, v0, v1}, Lcom/smartisanos/launcher/theme/IconIlluminationCompat;->traceLightFrame(FFI)V
+    return-void
+.end method
+
+.method public restoreShadowLux(F)Z
+    .locals 4
+    sget-object v0, Lcom/smartisanos/smengine/Ra;->gV:Lcom/smartisanos/smengine/Oa;
+    iget-boolean v1, v0, Lcom/smartisanos/smengine/Oa;->hasSample:Z
+    if-nez v1, :known_light_sample
+    const/4 v1, 0x1
+    iput p1, v0, Lcom/smartisanos/smengine/Oa;->currentLux:F
+    iput p1, v0, Lcom/smartisanos/smengine/Oa;->mU:F
+    iput p1, v0, Lcom/smartisanos/smengine/Oa;->nU:F
+    iput-boolean v1, v0, Lcom/smartisanos/smengine/Oa;->hasSample:Z
+    goto :restore_known_light
+    :known_light_sample
+    iget v1, v0, Lcom/smartisanos/smengine/Oa;->currentLux:F
+    sub-float v2, v1, p1
+    invoke-static {v2}, Ljava/lang/Math;->abs(F)F
+    move-result v2
+    const/high16 v3, 0x41200000
+    cmpg-float v2, v2, v3
+    if-lez v2, :restore_known_light
+    invoke-virtual {p0, v1, p1}, Lcom/smartisanos/smengine/Ra;->w(FF)Z
+    move-result v1
+    return v1
+    :restore_known_light
+    invoke-virtual {p0}, Lcom/smartisanos/smengine/Ra;->tt()Z
+    move-result v2
+    const/high16 v1, 0x3f000000
+    if-nez v2, :restore_weather_coefficient
+    const v1, 0x3f333333
+    :restore_weather_coefficient
+    iget p1, v0, Lcom/smartisanos/smengine/Oa;->currentLux:F
+    invoke-virtual {p0, p1, v1}, Lcom/smartisanos/smengine/Ra;->applyShadowLux(FF)V
+    invoke-virtual {p0}, Lcom/smartisanos/smengine/Ra;->jt()Lcom/smartisanos/smengine/Q;
+    move-result-object v2
+    invoke-virtual {v2}, Lcom/smartisanos/smengine/Q;->getRootNode()Lcom/smartisanos/smengine/SceneNode;
+    move-result-object v2
+    invoke-virtual {v2}, Lcom/smartisanos/smengine/SceneNode;->forceUpdateNeedDisplay()V
+    invoke-virtual {p0}, Lcom/smartisanos/smengine/Ra;->wt()V
+    const/4 v1, 0x1
+    return v1
 .end method

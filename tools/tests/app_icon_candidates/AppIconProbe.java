@@ -20,7 +20,7 @@ public class AppIconProbe {
     static class Looper {static final Object main=new Object();static Object myLooper(){return Thread.currentThread()==MAIN?main:null;} static Object getMainLooper(){return main;}}
     static class Process {static final int THREAD_PRIORITY_BACKGROUND=10;static void setThreadPriority(int p){}}
     static class SystemClock {static long elapsedRealtime(){return System.nanoTime()/1000000;}}
-    static class Log {static void i(String t,String m){}static void d(String tag,String msg){} static void w(String t,String m,Throwable e){throw new AssertionError(e);}}
+    static class Log {static void i(String t,String m){}static void d(String tag,String msg){}static void w(String t,String m){} static void w(String t,String m,Throwable e){throw new AssertionError(e);}}
     static class ComponentCallbacks2 {static final int TRIM_MEMORY_BACKGROUND=40;}
     static class Drawable {final String id;Drawable(String id){this.id=id;}}
     static class Bitmap {final String id; Bitmap(String id){this.id=id;}void recycle(){}
@@ -137,6 +137,7 @@ public class AppIconProbe {
         static class RequestSession {boolean cancelled;boolean isCancelled(){return cancelled;}}
         boolean isSessionActive(RequestSession s){return s!=null&&!s.cancelled;}
         void schedule(RequestSession s,Priority p,Runnable r){if(isSessionActive(s))jobs.add(r);}
+        boolean scheduleMetadata(RequestSession s,Runnable r){if(!isSessionActive(s))return false;jobs.add(r);return true;}
         void work()throws Exception{while(!jobs.isEmpty())worker(jobs.remove(0));}
         Bitmap drawableToBitmap(Drawable d,int size){check(Thread.currentThread()!=MAIN,"candidate raster off MAIN");return d==null?null:new Bitmap(d.id);}
         void cancel(RequestSession s){s.cancelled=true;synchronized(candidateRefresh){candidateRefresh.remove(s);candidateRequests.remove(s);}}
@@ -188,7 +189,7 @@ public class AppIconProbe {
         List<RedirectIconInfo> apps=new ArrayList<>();List<Object> rows=new ArrayList<>(),normalRows=new ArrayList<>();
         Map<String,Long> rowVersions=new HashMap<>();Map<String,String> rowLabels=new HashMap<>();
         Set<String> managedRows=new HashSet<>();AppIconSearchIndex<RedirectIconInfo> searchIndex;String searchQuery="";
-        long iconDataGeneration;int groupingGeneration;int changes;Runnable rowsReadyAction,rowsFailedAction;
+        long iconDataGeneration;long publishedIconDataGeneration=-1L;int groupingGeneration;int changes;Runnable rowsReadyAction,rowsFailedAction;
         IconPreviewRepository.RequestSession requestSession=new IconPreviewRepository.RequestSession();
         Grouping(Context c){activity=c;iconManager=new IconManager(c);resources=c.getResources();}
         boolean isActivityInvalid(){return false;}void notifyDataSetChanged(){changes++;}
@@ -212,10 +213,10 @@ public class AppIconProbe {
     public static void main(String[]args)throws Exception{
         reset();int before=scans;
         List<AppIconCandidate> list=discover("app.edge","IMPROVED:main","main","variant","variant","missing");
-        check(list.size()==4&&packs(list)==0,"zero packs with duplicate variants and invalid icon");
+        check(list.size()==2&&packs(list)==0,"zero packs with duplicate variants and invalid icon");
         check(list.get(0).selected&&list.get(0).stableKey.equals("IMPROVED:main"),"current improved comes first");
-        check(list.get(3).stableKey.equals("CUSTOM"),"album last");
-        check(list.stream().anyMatch(x->x.type==AppIconCandidate.TYPE_ORIGINAL&&!x.selected),"original remains available when improved is selected");
+        check(list.stream().noneMatch(x->x.type==AppIconCandidate.TYPE_CUSTOM),"album action is not a recommended icon");
+        check(list.stream().noneMatch(x->x.type==AppIconCandidate.TYPE_ORIGINAL),"default image is absent from recommended icons");
         addPack("pack.a","app.edge",".Main",false);
         list=discover("app.edge","PACK:pack.a","main");check(packs(list)==1&&list.get(0).stableKey.equals("PACK:pack.a"),"one installed pack selected first");
         addPack("pack.b","app.edge","app.edge.Main",true);addPack("pack.c","app.edge",".Main",false);addPack("pack.no","app.qq",".Main",false);
@@ -227,7 +228,7 @@ public class AppIconProbe {
         list=discover("app.edge","PACK:pack.b","main");check(packs(list)==3&&list.get(0).packPackage.equals("pack.b"),"global A plus override B");
         check(IconPackManager.getSelectedIconPackPackage(context).equals("pack.a"),"discovery never changes global source");
         context.pm.packs.remove("pack.b");IconPackManager.invalidateIconPackList();repo.invalidateCandidates();repo.main.drain();
-        list=discover("app.edge","DEFAULT","main");check(packs(list)==2&&list.get(0).stableKey.equals("DEFAULT"),"uninstalled candidate excluded and default first");
+        list=discover("app.edge","DEFAULT","main");check(packs(list)==2&&list.stream().noneMatch(x->x.selected||x.type==AppIconCandidate.TYPE_ORIGINAL),"default mode has no selected recommendation; uninstalled pack excluded");
         for(int i=0;i<18;i++)addPack("pack.z"+i,"app.edge",".Main",false);
         list=discover("app.edge","IMPROVED:main","main");check(packs(list)==20,"many packs all matched without persistent map growth");
         check(IconPackManager.sPackMapCache.size()<=2,"appfilter cache bounded after 20 packs");
@@ -292,6 +293,25 @@ public class AppIconProbe {
         RedirectIconDB.db.get("app.edge/app.edge.Main").displayName="Renamed";
         grouping.invalidateIconData(true);repo.work();drainReplies();grouping.setSearchQuery("Renamed");
         check(grouping.rows.size()==2&&((RedirectIconInfo)grouping.rows.get(1)).packageName.equals("app.edge"),"selection refresh rebuilds renamed application search terms");
+        Grouping returning = new Grouping(context); returning.apps.addAll(grouping.apps);
+        check(returning.seedKnownRows(grouping), "same page restores published row metadata before worker");
+        returning.setSearchQuery(grouping.searchQuery);
+        check(returning.rows.size()==grouping.rows.size() && returning.rows.get(1)==grouping.rows.get(1), "return preserves active filtered rows immediately");
+        check(returning.rowVersions.equals(grouping.rowVersions) && returning.managedRows.equals(grouping.managedRows), "return uses matching version and source snapshots");
+        Grouping secondReturn = new Grouping(context); secondReturn.apps.addAll(grouping.apps);
+        check(secondReturn.seedKnownRows(returning), "published metadata remains reusable across successive returns");
+        grouping.iconDataGeneration++;
+        Grouping dirtyReturn = new Grouping(context); dirtyReturn.apps.addAll(grouping.apps);
+        check(!dirtyReturn.seedKnownRows(grouping), "pending source change cannot restore obsolete selection snapshot");
+        grouping.iconDataGeneration--;
+        Grouping otherActivity = new Grouping(new Context()); otherActivity.apps.addAll(grouping.apps);
+        check(!otherActivity.seedKnownRows(grouping), "different activity cannot reuse row metadata");
+        Grouping differentApps = new Grouping(context); differentApps.apps.addAll(grouping.apps); differentApps.apps.remove(0);
+        check(!differentApps.seedKnownRows(grouping), "changed application set rejects old snapshot");
+        List<AppIconCandidate> sameCandidates = List.of(new AppIconCandidate(AppIconCandidate.TYPE_LIBRARY,"edge","",true));
+        check(returning.sameChoiceCandidates(sameCandidates,List.of(new AppIconCandidate(AppIconCandidate.TYPE_LIBRARY,"edge","",true))), "unchanged candidate metadata does not replace views");
+        check(!returning.sameChoiceCandidates(sameCandidates,List.of(new AppIconCandidate(AppIconCandidate.TYPE_LIBRARY,"edge","",false))), "changed selection replaces candidate metadata");
+        check(!returning.sameChoiceCandidates(sameCandidates,List.of(new AppIconCandidate(AppIconCandidate.TYPE_LIBRARY,"qq","",true))), "different source cannot be hidden by equality guard");
         AppIconSearchIndex<String> index=new AppIconSearchIndex<>();index.add("chinese","设置","pkg.settings",".Settings");
         check(index.filter("设置").equals(List.of("chinese")),"Chinese installed label searchable");
         check(index.filter("shezhi").equals(List.of("chinese")),"installed label full pinyin searchable");

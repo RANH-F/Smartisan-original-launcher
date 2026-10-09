@@ -34,9 +34,40 @@ public final class IconIlluminationCompat {
     public static final String KEY = "launcher_icon_illumination_enabled";
     public static final String VERSION = "projection:v3-skia10-adreno-contact";
     private static final String TAG = "IconIllumination";
+    private static final boolean TRACE_STATE = Log.isLoggable(TAG, Log.DEBUG);
+    private static final Map<String, Boolean> TRACE_BINDINGS = new LinkedHashMap<String, Boolean>() {
+        @Override protected boolean removeEldestEntry(Map.Entry<String, Boolean> entry) { return size() > 256; }
+    };
+
+    public static void traceProjectionBinding(String path, boolean ready) {
+        if (!TRACE_STATE) return;
+        Boolean previous = TRACE_BINDINGS.put(path, ready);
+        if (previous == null || previous.booleanValue() != ready)
+            Log.i(TAG, "PROJECTION_BIND ready=" + ready + " texture=" + new File(path).getName());
+    }
+
+    public static void traceLightFrame(float lux, float opacity, int phase) {
+        if (TRACE_STATE) Log.i(TAG, "LIGHT_FRAME lux=" + lux + " opacity=" + opacity + " phase=" + phase);
+    }
+
     private static final int[] SIGMAS = {1, 1, 2, 3, 7, 10, 15, 20};
     private static final Map<SensorEventListener, HandlerThread> THREADS =
             new HashMap<SensorEventListener, HandlerThread>();
+    private static final Map<SensorEventListener, Object> SENSOR_CALLBACKS = new HashMap<SensorEventListener, Object>();
+    private static final Map<SensorEventListener, Long> SENSOR_STARTS = new HashMap<SensorEventListener, Long>();
+    private static final java.util.Set<String> WRITING_MASKS = java.util.Collections.newSetFromMap(
+            new java.util.concurrent.ConcurrentHashMap<String, Boolean>());
+    private static final java.util.Set<String> BROKEN_MASKS = java.util.Collections.newSetFromMap(
+            new java.util.concurrent.ConcurrentHashMap<String, Boolean>());
+    private static final Map<String, Boolean> READY_MASKS = java.util.Collections.synchronizedMap(
+            new LinkedHashMap<String, Boolean>(32, 0.75f, true) {
+                @Override protected boolean removeEldestEntry(Map.Entry<String, Boolean> entry) {
+                    return size() > 256;
+                }
+            });
+    private static volatile long recoveryEpoch;
+    public static long recoveryEpoch() { return recoveryEpoch; }
+    private static final Object MASK_LOCK = new Object();
     private static final int MAX_MASK_ENTRIES = 256;
     private static final int INDEX_MAGIC = 0x50524a31;
     private static final Map<String, MaskEntry> MASKS =
@@ -82,6 +113,69 @@ public final class IconIlluminationCompat {
                 .edit().putBoolean(KEY, enabled).commit();
     }
 
+    /** Reject callbacks queued before the current registration or after pause. */
+    public static synchronized boolean acceptsSensorEvent(SensorEventListener listener, long timestamp) {
+        // A newly activated on-change sensor may report a cached value with an older timestamp.
+        return SENSOR_STARTS.containsKey(listener) && SENSOR_CALLBACKS.get(listener) == Thread.currentThread();
+    }
+
+    public static synchronized long sensorEpoch(SensorEventListener listener) {
+        Long start = SENSOR_STARTS.get(listener);
+        return start == null ? 0L : start.longValue();
+    }
+
+    public static synchronized boolean sensorActive(SensorEventListener listener) {
+        return SENSOR_STARTS.containsKey(listener);
+    }
+
+    /** Only our eight on-disk projection layers use this failure policy. */
+    public static boolean isProjectionTexture(String path) {
+        if (path == null || !path.startsWith("/data/") || !path.contains("/shadow/")) return false;
+        int nameStart = path.lastIndexOf('/') + 1;
+        // Folder's original shared projection/fallback remains owned by its existing compositor.
+        if (path.startsWith("com.smartisan.folder_", nameStart)) return false;
+        int suffix = path.length() - 6;
+        return suffix >= 0 && path.charAt(suffix) == '_'
+                && path.charAt(suffix + 1) >= '1' && path.charAt(suffix + 1) <= '8'
+                && path.endsWith(".png");
+    }
+
+    public static boolean projectionBeingWritten(String key) { return WRITING_MASKS.contains(key); }
+
+    public static boolean projectionFilesReady(String key) {
+        if (key == null || WRITING_MASKS.contains(key) || BROKEN_MASKS.contains(key)) return false;
+        if (READY_MASKS.containsKey(key)) return true;
+        Context context = MaintainedLauncherSettingsHost.currentApplicationContext();
+        if (context == null) return false;
+        File directory = new File(context.getFilesDir(), "shadow");
+        for (int i = 1; i <= 8; i++) {
+            File layer = new File(directory, key + '_' + i + ".png");
+            if (!layer.isFile() || layer.length() == 0L) return false;
+        }
+        READY_MASKS.put(key, Boolean.TRUE);
+        return true;
+    }
+
+    public static void projectionReadFailed(String path) {
+        if (!isProjectionTexture(path)) return;
+        String name = new File(path).getName();
+        String key = name.substring(0, name.length() - 6);
+        READY_MASKS.remove(key);
+        if (BROKEN_MASKS.add(key)) Log.w(TAG, "PROJECTION_LAYER_UNREADABLE key=" + key);
+    }
+
+    public static boolean projectionFileReadable(String path) {
+        if (!isProjectionTexture(path)) return true;
+        String name = new File(path).getName();
+        return projectionFilesReady(name.substring(0, name.length() - 6));
+    }
+
+    public static boolean allProjectionLayersBound(boolean[] bound) {
+        if (bound == null || bound.length < 8) return false;
+        for (int i = 0; i < 8; i++) if (!bound[i]) return false;
+        return true;
+    }
+
     public static synchronized boolean register(Context context, SensorEventListener rotation,
             SensorEventListener light) {
         if (THREADS.containsKey(rotation)) return true;
@@ -103,22 +197,34 @@ public final class IconIlluminationCompat {
         thread.start();
         Handler handler = new Handler(thread.getLooper());
         boolean registered;
+        long start = android.os.SystemClock.elapsedRealtimeNanos();
+        recoveryEpoch = start;
+        SENSOR_STARTS.put(rotation, start);
+        SENSOR_STARTS.put(light, start);
+        SENSOR_CALLBACKS.put(rotation, thread); SENSOR_CALLBACKS.put(light, thread);
         try {
             registered = sensors.registerListener(rotation, vector, 20000, handler);
         } catch (SecurityException | IllegalArgumentException | IllegalStateException error) {
+            SENSOR_STARTS.remove(rotation); SENSOR_STARTS.remove(light);
+            SENSOR_CALLBACKS.remove(rotation); SENSOR_CALLBACKS.remove(light);
             thread.quitSafely();
             Log.w(TAG, "ROTATION_SENSOR_REGISTRATION_FAILED", error);
             return false;
         }
         if (!registered) {
+            SENSOR_STARTS.remove(rotation); SENSOR_STARTS.remove(light);
+            SENSOR_CALLBACKS.remove(rotation); SENSOR_CALLBACKS.remove(light);
             thread.quitSafely();
             Log.w(TAG, "ROTATION_SENSOR_REGISTRATION_FAILED");
             return false;
         }
         try {
             Sensor lux = sensors.getDefaultSensor(Sensor.TYPE_LIGHT);
-            if (lux != null) sensors.registerListener(light, lux, 2000, handler);
+            if (lux == null || !sensors.registerListener(light, lux, 100000, handler)) {
+                SENSOR_STARTS.remove(light); SENSOR_CALLBACKS.remove(light);
+            }
         } catch (SecurityException | IllegalArgumentException | IllegalStateException error) {
+            SENSOR_STARTS.remove(light); SENSOR_CALLBACKS.remove(light);
             Log.w(TAG, "LIGHT_SENSOR_UNAVAILABLE_USING_WEATHER_PRESET", error);
         }
         THREADS.put(rotation, thread);
@@ -128,6 +234,8 @@ public final class IconIlluminationCompat {
 
     public static synchronized void unregister(Context context, SensorEventListener rotation,
             SensorEventListener light) {
+        SENSOR_STARTS.remove(rotation); SENSOR_STARTS.remove(light);
+            SENSOR_CALLBACKS.remove(rotation); SENSOR_CALLBACKS.remove(light);
         HandlerThread thread = THREADS.remove(rotation);
         try {
             SensorManager sensors = context == null ? null
@@ -277,9 +385,10 @@ public final class IconIlluminationCompat {
     }
 
     /** Original Aa exact-key removal and generation share one monitor, even while disabled. */
-    public static synchronized void remove(File files, String key) {
+    public static void remove(File files, String key) {
+        synchronized (MASK_LOCK) {
         if (key == null) return;
-        MASKS.remove(key);
+        MASKS.remove(key); READY_MASKS.remove(key); BROKEN_MASKS.remove(key);
         if (files == null) return;
         File directory = new File(files, "shadow");
         try { deleteIndex(directory, key); }
@@ -290,12 +399,19 @@ public final class IconIlluminationCompat {
                 if (file.exists() && !file.delete()) Log.w(TAG, "PROJECTION_REMOVE_FAILED key=" + key);
             }
         }
+            }
     }
 
     /** Package removal keeps the delimiter: com.foo must never remove com.foobar. */
-    public static synchronized void removePackage(File files, String packageName) {
+    public static void removePackage(File files, String packageName) {
+        synchronized (MASK_LOCK) {
         if (packageName == null || packageName.length() == 0) return;
         String prefix = packageName + '_';
+        synchronized (READY_MASKS) {
+            for (Iterator<String> keys = READY_MASKS.keySet().iterator(); keys.hasNext();)
+                if (keys.next().startsWith(prefix)) keys.remove();
+        }
+        for (String key : BROKEN_MASKS.toArray(new String[0])) if (key.startsWith(prefix)) BROKEN_MASKS.remove(key);
         for (Iterator<String> keys = MASKS.keySet().iterator(); keys.hasNext();) {
             if (keys.next().startsWith(prefix)) keys.remove();
         }
@@ -312,6 +428,7 @@ public final class IconIlluminationCompat {
                 derived = name.endsWith("_" + i + ".png") || name.endsWith("_" + i + ".png.tmp");
             if (derived && !child.delete()) Log.w(TAG, "PROJECTION_PACKAGE_REMOVE_FAILED");
         }
+            }
     }
 
     /** Scan only source Alpha, one row at a time, before allocating the 256px mask. */
@@ -336,12 +453,14 @@ public final class IconIlluminationCompat {
     }
 
     /** Original Aa contract: full Alpha, 140px destination, eight 256px PNG files. */
-    public static synchronized boolean write(String key, Bitmap artwork, boolean force) {
+    public static boolean write(String key, Bitmap artwork, boolean force) {
+        synchronized (MASK_LOCK) {
         if (!enabled() || key == null || artwork == null || artwork.isRecycled()) return false;
         Context context = MaintainedLauncherSettingsHost.currentApplicationContext();
         File directory = new File(context.getFilesDir(), "shadow");
         if (!directory.isDirectory() && !directory.mkdirs()) return false;
         String path = directory.getAbsolutePath();
+        if (BROKEN_MASKS.contains(key)) force = true;
         MaskEntry cached = MASKS.get(key);
         boolean complete = false;
         if (cached != null) {
@@ -362,6 +481,9 @@ public final class IconIlluminationCompat {
                     cached.lengths, cached.checksums, cached.modified));
             return true;
         }
+        WRITING_MASKS.add(key);
+        READY_MASKS.remove(key); BROKEN_MASKS.add(key);
+        try {
         // No previous success may survive a partial rewrite or a changing source revision.
         MASKS.remove(key);
         try { deleteIndex(directory, key); }
@@ -418,11 +540,14 @@ public final class IconIlluminationCompat {
                     Log.w(TAG, "PROJECTION_INDEX_WRITE_FAILED key=" + key, error);
                 }
             }
+            BROKEN_MASKS.remove(key); READY_MASKS.put(key, Boolean.TRUE);
             Log.i(TAG, "ORIGINAL_PROJECTION_MASK_READY key=" + key + " layers=8 alphaCutoff=0");
             return true;
         } catch (java.io.IOException error) {
             Log.e(TAG, "PROJECTION_MASK_WRITE_FAILED key=" + key, error);
             return false;
         }
+        } finally { WRITING_MASKS.remove(key); }
+            }
     }
 }

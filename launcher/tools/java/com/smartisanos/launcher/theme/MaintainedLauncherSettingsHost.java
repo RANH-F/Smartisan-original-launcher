@@ -4209,9 +4209,11 @@ public final class MaintainedLauncherSettingsHost {
             installed.setAdapter(installedAdapter);
             installed.setOnItemClickListener(new android.widget.AdapterView.OnItemClickListener() {
                 public void onItemClick(android.widget.AdapterView<?> parent, View view, int position, long id) {
+                    ThemeEntry entry = installedAdapter.entryAt(position);
+                    if (entry == null) return;
                     stopThemePagePolling();
                     sThemePageScrollY = currentScrollY(activity);
-                    showThemeItemPage(activity, installedAdapter.entryAt(position));
+                    showThemeItemPage(activity, entry);
                 }
             });
         }
@@ -4219,9 +4221,11 @@ public final class MaintainedLauncherSettingsHost {
             notInstalled.setAdapter(onlineAdapter);
             notInstalled.setOnItemClickListener(new android.widget.AdapterView.OnItemClickListener() {
                 public void onItemClick(android.widget.AdapterView<?> parent, View view, int position, long id) {
+                    ThemeEntry entry = onlineAdapter.entryAt(position);
+                    if (entry == null) return;
                     stopThemePagePolling();
                     sThemePageScrollY = currentScrollY(activity);
-                    showThemeItemPage(activity, onlineAdapter.entryAt(position));
+                    showThemeItemPage(activity, entry);
                 }
             });
         }
@@ -4778,6 +4782,8 @@ public final class MaintainedLauncherSettingsHost {
             IconPreviewRepository.logPerf("ICON_PAGE_BUILD_BEGIN", "", "", 0, "PAGE", 0, 0);
             AppIconAdapter adapter = new AppIconAdapter(activity, context, resources,
                     data.entries, data.iconManager);
+            AppIconAdapter previousAdapter = sActiveAppIconAdapter == null ? null : sActiveAppIconAdapter.get();
+            boolean seededRows = restorePosition >= 0 && adapter.seedKnownRows(previousAdapter);
             synchronized (MaintainedLauncherSettingsHost.class) {
                 sActiveAppIconAdapter = new java.lang.ref.WeakReference<AppIconAdapter>(adapter);
             }
@@ -4799,9 +4805,14 @@ public final class MaintainedLauncherSettingsHost {
                     footer.addView(failure, new LinearLayout.LayoutParams(-1, dp(context, 88)));
                 }
             };
-            if (list.getTag() instanceof EditText)
-                adapter.setSearchQuery(((EditText) list.getTag()).getText().toString());
+            if (list.getTag() instanceof EditText) {
+                EditText editor = (EditText) list.getTag();
+                if (seededRows) editor.setText(previousAdapter.searchQuery);
+                adapter.setSearchQuery(editor.getText().toString());
+            }
             list.setAdapter(adapter);
+            if (seededRows) adapter.rowsReadyAction.run();
+            if (!seededRows || !isIconPageDataFresh()) adapter.rebuildRows();
             IconPreviewRepository.logPerf("ICON_PAGE_BUILD_END", "", "", 0, "PAGE", 0, android.os.SystemClock.elapsedRealtime() - startMs);
             list.setOnScrollListener(new AbsListView.OnScrollListener() {
                 public void onScrollStateChanged(AbsListView view, int state) {
@@ -17569,14 +17580,11 @@ public final class MaintainedLauncherSettingsHost {
             progressId = resources.getIdentifier("theme_block_downloading_progress", "id", SETTINGS_PKG);
             checkedId = resources.getIdentifier("checked_image", "id", SETTINGS_PKG);
             fallbackId = drawable(resources, "theme_preview_phone_black");
-            backgroundIds = new int[entries.size()];
-            for (int i = 0; i < entries.size(); i++) {
-                backgroundIds[i] = drawable(resources, gridCellBackground(i, entries.size()));
-            }
+            updateBackgrounds();
         }
 
         public int getCount() {
-            return entries.size();
+            return entries.size() + (entries.size() & 1);
         }
 
         public Object getItem(int position) {
@@ -17588,7 +17596,8 @@ public final class MaintainedLauncherSettingsHost {
         }
 
         ThemeEntry entryAt(int position) {
-            return position >= 0 && position < entries.size() ? entries.get(position) : null;
+            if (position < 0 || position >= getCount() || entries.isEmpty()) return null;
+            return entries.get(position == entries.size() ? 0 : position);
         }
 
         void applyState(ThemeListState updated) {
@@ -17596,11 +17605,16 @@ public final class MaintainedLauncherSettingsHost {
             currentThemeId = updated.currentThemeId;
             entries.clear();
             entries.addAll(themeEntriesFor(updated, local));
-            backgroundIds = new int[entries.size()];
-            for (int i = 0; i < entries.size(); i++) {
-                backgroundIds[i] = drawable(resources, gridCellBackground(i, entries.size()));
-            }
+            updateBackgrounds();
             super.notifyDataSetChanged();
+        }
+
+        private void updateBackgrounds() {
+            int count = getCount();
+            backgroundIds = new int[count];
+            for (int i = 0; i < count; i++) {
+                backgroundIds[i] = drawable(resources, gridCellBackground(i, count));
+            }
         }
 
         public View getView(int position, View convertView, android.view.ViewGroup parent) {
@@ -17967,6 +17981,7 @@ public final class MaintainedLauncherSettingsHost {
         private final LayoutInflater inflater;
         private final IconPreviewRepository.RequestSession requestSession;
         private long iconDataGeneration;
+        private long publishedIconDataGeneration = -1L;
         private IconPreviewRepository.RequestSession choiceSession;
         private boolean choiceApplyPending;
         private int groupingGeneration;
@@ -18006,7 +18021,7 @@ public final class MaintainedLauncherSettingsHost {
             if (entries != null) {
                 this.apps.addAll(entries);
             }
-            rebuildRows();
+            // The page seeds matching published rows before deciding whether to refresh.
         }
 
         static List<RedirectIconInfo> loadEntries(Context context) {
@@ -18099,6 +18114,7 @@ public final class MaintainedLauncherSettingsHost {
                 sIconPageDataCacheUptime = 0L;
             }
             iconDataGeneration++;
+            IconPreviewRepository.get(activity).invalidateCandidates();
             rebuildRows(rebuildSections);
             logOperation(activity, "ICON_ADAPTER_INVALIDATED",
                     "generation=" + iconDataGeneration + ", count=" + apps.size()
@@ -18230,6 +18246,25 @@ public final class MaintainedLauncherSettingsHost {
             return info.ownerId + "|" + info.packageName + "|" + info.componentName;
         }
 
+        /** Reuse the previous published metadata until the background refresh is ready. */
+        private boolean seedKnownRows(AppIconAdapter previous) {
+            if (previous == null || previous.activity != activity || previous.normalRows.isEmpty()
+                    || previous.publishedIconDataGeneration != previous.iconDataGeneration
+                    || previous.apps.size() != apps.size()) return false;
+            java.util.HashSet<String> identities = new java.util.HashSet<String>();
+            for (RedirectIconInfo info : apps) identities.add(rowIdentity(info));
+            for (RedirectIconInfo info : previous.apps)
+                if (!identities.remove(rowIdentity(info))) return false;
+            if (!identities.isEmpty()) return false;
+            normalRows.addAll(previous.normalRows);
+            managedRows.addAll(previous.managedRows);
+            rowVersions = previous.rowVersions;
+            rowLabels = previous.rowLabels;
+            searchIndex = previous.searchIndex;
+            publishedIconDataGeneration = iconDataGeneration;
+            return true;
+        }
+
         private void rebuildRows() {
             rebuildRows(true);
         }
@@ -18292,6 +18327,7 @@ public final class MaintainedLauncherSettingsHost {
                                 if (generation != groupingGeneration || dataGeneration != iconDataGeneration
                                         || isActivityInvalid() || (requestSession != null
                                         && !previews.isSessionActive(requestSession))) return;
+                                publishedIconDataGeneration = dataGeneration;
                                 searchIndex = index;
                                 if (rebuildSections) { normalRows.clear(); normalRows.addAll(grouped); }
                                 filterSearchRows();
@@ -18399,7 +18435,7 @@ public final class MaintainedLauncherSettingsHost {
 
         private IconPreviewRepository.IconRenderKey managedRowKey(RedirectIconInfo info, long version, int px) {
             return new IconPreviewRepository.IconRenderKey(info.packageName, info.componentName, info.ownerId,
-                    "SETTINGS_MANAGED", (requestSession == null ? 0 : requestSession.id) + ":" + iconDataGeneration,
+                    "SETTINGS_MANAGED", String.valueOf(IconPreviewRepository.get(activity).candidateRevision()),
                     version, px, activity.getResources().getDisplayMetrics().densityDpi, 1);
         }
 
@@ -18552,9 +18588,9 @@ public final class MaintainedLauncherSettingsHost {
                     content.addView(settingsSectionHeader(activity, resources, "可选图标"));
                     List<AppIconCandidate> cachedChoices = IconPreviewRepository.get(activity)
                             .cachedCandidates(info.packageName, info.componentName, info.ownerId);
-                    if (cachedChoices.isEmpty()) cachedChoices = Collections.singletonList(
-                            new AppIconCandidate(AppIconCandidate.TYPE_CUSTOM, "", "+", false));
-                    content.addView(createChoiceGridCard(row, info, null, returnScrollY, cachedChoices));
+                    View cachedGrid = createChoiceGridCard(row, info, null, returnScrollY, cachedChoices);
+                    cachedGrid.setTag(cachedChoices);
+                    content.addView(cachedGrid);
                     View libraryEntry = iconHeaderRow(activity, context, resources, "搜索更多图标", "",
                             "selector_setting_sub_item_bg_single", new View.OnClickListener() {
                                 public void onClick(View view) { showIconLibraryPage(row, info, returnScrollY, currentScrollY(activity)); }
@@ -18562,6 +18598,13 @@ public final class MaintainedLauncherSettingsHost {
                     LinearLayout.LayoutParams libraryParams = new LinearLayout.LayoutParams(-1, dp(activity, 72));
                     libraryParams.setMargins(0, dp(activity, 12), 0, 0);
                     content.addView(libraryEntry, libraryParams);
+                    View albumEntry = iconHeaderRow(activity, context, resources, "从相册选择", "",
+                            "selector_setting_sub_item_bg_single", new View.OnClickListener() {
+                                public void onClick(View view) { pickCustomIcon(info, returnScrollY); }
+                            }, false, 0);
+                    LinearLayout.LayoutParams albumParams = new LinearLayout.LayoutParams(-1, dp(activity, 72));
+                    albumParams.setMargins(0, dp(activity, 12), 0, 0);
+                    content.addView(albumEntry, albumParams);
                     discoverChoiceCandidates(content, row, info, returnScrollY);
                     scroll.addView(content, new ScrollView.LayoutParams(-1, -2));
                     parent.addView(scroll, index, lp);
@@ -18579,12 +18622,14 @@ public final class MaintainedLauncherSettingsHost {
 
         private void showIconLibraryPage(final View row, final RedirectIconInfo info,
                 final int returnScrollY, final int choiceScrollY) {
-            showIconLibraryPage(row, info, returnScrollY, choiceScrollY, null, 0, 0, true);
+            showIconLibraryPage(row, info, returnScrollY, choiceScrollY, null, 0, 0, true,
+                    new IconLibrarySearchPage.State());
         }
 
         private void showIconLibraryPage(final View row, final RedirectIconInfo info,
                 final int returnScrollY, final int choiceScrollY, final String browseCategory,
-                final int categoryFirst, final int categoryTop, final boolean forward) {
+                final int categoryFirst, final int categoryTop, final boolean forward,
+                final IconLibrarySearchPage.State navigation) {
             cancelCurrentIconPageSession(activity);
             final IconPreviewRepository.RequestSession session = IconPreviewRepository.get(activity).openSession("ICON_LIBRARY");
             sCurrentIconPageSession = session;
@@ -18600,7 +18645,7 @@ public final class MaintainedLauncherSettingsHost {
                     if (browseCategory != null) {
                         hideInputMethod(activity, page);
                         showIconLibraryPage(row, info, returnScrollY, choiceScrollY, null,
-                                categoryFirst, categoryTop, false);
+                                categoryFirst, categoryTop, false, navigation);
                         return;
                     }
                     if (sCurrentIconLibraryPage != null && sCurrentIconPageOwner != null
@@ -18650,11 +18695,11 @@ public final class MaintainedLauncherSettingsHost {
                             public void openCategory(String category, int firstVisible, int top) {
                                 hideInputMethod(activity, page);
                                 showIconLibraryPage(row, info, returnScrollY, choiceScrollY,
-                                        category, firstVisible, top, true);
+                                        category, firstVisible, top, true, navigation);
                             }
                             public void back() { activity.onBackPressed(); }
                             public void hideKeyboard(View view) { hideInputMethod(activity, view); }
-                        }, browseCategory, categoryFirst, categoryTop);
+                        }, browseCategory, categoryFirst, categoryTop, navigation);
                 browser.setId(list.getId());
                 sCurrentIconLibraryPage = browser;
                 final IconLibrarySearchPage selectedBrowser = browser;
@@ -18690,12 +18735,33 @@ public final class MaintainedLauncherSettingsHost {
             LinearLayout.LayoutParams gridLp = new LinearLayout.LayoutParams(-1, -2);
             card.addView(grid, gridLp);
 
-            for (int i = 0; i < choices.size(); i++) {
-                addChoiceCell(grid, row, info, choices.get(i), dialog, returnScrollY, i);
+            int visible = 0;
+            for (AppIconCandidate choice : choices) {
+                if (choice.type != AppIconCandidate.TYPE_LIBRARY && choice.type != AppIconCandidate.TYPE_PACKED) continue;
+                addChoiceCell(grid, row, info, choice, dialog, returnScrollY, visible++);
+            }
+            if (visible == 0) {
+                TextView empty = text(activity, "暂无匹配图标，可搜索更多图标", 13, 0xff999999, false);
+                empty.setGravity(Gravity.CENTER);
+                card.addView(empty, new LinearLayout.LayoutParams(-1, -2));
             }
             LinearLayout.LayoutParams cardLp = new LinearLayout.LayoutParams(-1, -2);
             card.setLayoutParams(cardLp);
             return card;
+        }
+
+        private boolean sameChoiceCandidates(Object cached, List<AppIconCandidate> current) {
+            if (!(cached instanceof List)) return false;
+            List<?> previous = (List<?>) cached;
+            if (previous.size() != current.size()) return false;
+            for (int i = 0; i < current.size(); i++) {
+                if (!(previous.get(i) instanceof AppIconCandidate)) return false;
+                AppIconCandidate a = (AppIconCandidate) previous.get(i), b = current.get(i);
+                if (!a.stableKey.equals(b.stableKey) || a.selected != b.selected
+                        || a.packVersion != b.packVersion || !a.packLabel.equals(b.packLabel)
+                        || !a.packDrawableName.equals(b.packDrawableName)) return false;
+            }
+            return true;
         }
 
         private void discoverChoiceCandidates(final LinearLayout content, final View row,
@@ -18723,14 +18789,16 @@ public final class MaintainedLauncherSettingsHost {
                         public void onCandidates(List<AppIconCandidate> choices) {
                             if (choiceSession != session || !repository.isSessionActive(session)
                                     || isActivityInvalid() || content.getChildCount() < 3) return;
+                            View old = content.getChildAt(2);
+                            if (sameChoiceCandidates(old.getTag(), choices)) return;
                             View oldHeader = content.getChildAt(0);
                             content.removeViewAt(0);
                             content.addView(createChoiceAppCard(info, iconManager.getResolveInfo(info.packageName,
                                     info.componentName)), 0, oldHeader.getLayoutParams());
-                            View old = content.getChildAt(2);
                             content.removeViewAt(2);
-                            content.addView(createChoiceGridCard(row, info, null, returnScrollY, choices),
-                                    2, old.getLayoutParams());
+                            View updatedGrid = createChoiceGridCard(row, info, null, returnScrollY, choices);
+                            updatedGrid.setTag(choices);
+                            content.addView(updatedGrid, 2, old.getLayoutParams());
                         }
                     });
         }
@@ -18758,7 +18826,7 @@ public final class MaintainedLauncherSettingsHost {
             final IconPreviewRepository.RequestSession session = choiceSession;
             final IconPreviewRepository.IconRenderKey topKey = new IconPreviewRepository.IconRenderKey(
                     info.packageName, info.componentName, info.ownerId, "CHOICE_CURRENT",
-                    session.id + ":" + iconDataGeneration,
+                    String.valueOf(previews.candidateRevision()),
                     packageVersionStamp(activity, info.packageName), dp(activity, 72),
                     activity.getResources().getDisplayMetrics().densityDpi, 1);
             icon.setImageDrawable(previews.cachedDrawable(topKey));

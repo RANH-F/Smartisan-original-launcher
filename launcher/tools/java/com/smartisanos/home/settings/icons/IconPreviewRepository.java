@@ -191,11 +191,15 @@ public final class IconPreviewRepository implements ComponentCallbacks2 {
 
     private static final int DISK_LIMIT_BYTES = 64 * 1024 * 1024;
     private static final int MAX_SESSION_QUEUE_SIZE = 96;
+    private static final int MAX_RENDER_QUEUE_SIZE = 512;
+    private final Object renderAdmission = new Object();
     private static volatile IconPreviewRepository sInstance;
     private final Context app;
     private final LruCache<IconRenderKey, Bitmap> cache;
     private final ThreadPoolExecutor decodePool;
     private final ThreadPoolExecutor onlinePool;
+    private final ThreadPoolExecutor metadataPool;
+    private final ThreadPoolExecutor indexPool;
     private final Map<String, OnlineFetch> online = new HashMap<String, OnlineFetch>();
     private static final ThreadLocal<RenderTask> CURRENT_RENDER = new ThreadLocal<RenderTask>();
     private static final ThreadLocal<Boolean> DECODE_THREAD = new ThreadLocal<Boolean>();
@@ -231,6 +235,8 @@ public final class IconPreviewRepository implements ComponentCallbacks2 {
         onlinePool = new ThreadPoolExecutor(2, 2, 15L, TimeUnit.SECONDS,
                 new java.util.concurrent.ArrayBlockingQueue<Runnable>(24), backgroundFactory("icon-online"),
                 new ThreadPoolExecutor.AbortPolicy());
+        metadataPool = metadataExecutor("icon-metadata", 16);
+        indexPool = metadataExecutor("icon-directory", 4);
         schedule(Priority.P2_IDLE, new Runnable() { public void run() {
             try { IconLibraryCatalog.load(app); } catch (Exception e) {
                 android.util.Log.w("SmartisanPerf", "ICON_CATALOG_LOAD_FAILED", e);
@@ -249,6 +255,14 @@ public final class IconPreviewRepository implements ComponentCallbacks2 {
                 }}, name);
             }
         };
+    }
+
+    private static ThreadPoolExecutor metadataExecutor(String name, int capacity) {
+        ThreadPoolExecutor pool = new ThreadPoolExecutor(1, 1, 15L, TimeUnit.SECONDS,
+                new java.util.concurrent.ArrayBlockingQueue<Runnable>(capacity), backgroundFactory(name),
+                new ThreadPoolExecutor.AbortPolicy());
+        pool.allowCoreThreadTimeOut(true);
+        return pool;
     }
 
     public static boolean isPreviewWorker() { return Boolean.TRUE.equals(DECODE_THREAD.get()); }
@@ -281,6 +295,8 @@ public final class IconPreviewRepository implements ComponentCallbacks2 {
     private volatile long candidateGeneration;
     private final Map<RequestSession, Runnable> candidateRefresh = new HashMap<RequestSession, Runnable>();
     private final Map<RequestSession, Long> candidateRequests = new HashMap<RequestSession, Long>();
+
+    public long candidateRevision() { return candidateGeneration; }
 
     public synchronized void invalidateCandidates() {
         candidateGeneration++;
@@ -331,7 +347,6 @@ public final class IconPreviewRepository implements ComponentCallbacks2 {
         cache.put(key, preview);
         ArrayList<AppIconCandidate> items = new ArrayList<AppIconCandidate>();
         items.add(item);
-        items.add(new AppIconCandidate(AppIconCandidate.TYPE_CUSTOM, "", "+", false));
         candidateLists.put(pageKey, Collections.unmodifiableList(items));
     }
 
@@ -356,7 +371,7 @@ public final class IconPreviewRepository implements ComponentCallbacks2 {
                 discoverCandidates(session, pkg, component, user, library, callback);
             }});
         }
-        schedule(session, Priority.P0_VISIBLE, new Runnable() {
+        boolean queued = scheduleMetadata(session, new Runnable() {
             public void run() {
                 if (!isCurrentCandidateRequest(session, request)) return;
                 final long generation = candidateGeneration;
@@ -384,8 +399,6 @@ public final class IconPreviewRepository implements ComponentCallbacks2 {
                 }
                 final String selectedKey = library.selectedKey();
                 final ArrayList<AppIconCandidate> result = new ArrayList<AppIconCandidate>();
-                result.add(new AppIconCandidate(AppIconCandidate.TYPE_ORIGINAL, "", "",
-                        "DEFAULT".equals(selectedKey)));
                 for (AppIconCandidate item : found.values()) result.add(new AppIconCandidate(
                         item.type, item.sourceId, item.packLabel, item.stableKey.equals(selectedKey), item.packDrawableName, item.packVersion,item.explicitPackDrawable));
                 // Stable sort moves only the selected entry; library/variant/pack order stays stable.
@@ -394,7 +407,6 @@ public final class IconPreviewRepository implements ComponentCallbacks2 {
                         return a.selected == b.selected ? 0 : a.selected ? -1 : 1;
                     }
                 });
-                result.add(new AppIconCandidate(AppIconCandidate.TYPE_CUSTOM, "", "+", "CUSTOM".equals(selectedKey)));
                 if (!isCurrentCandidateRequest(session, request)) return;
                 if (generation != candidateGeneration) {
                     discoverCandidates(session, pkg, component, user, library, callback);
@@ -416,6 +428,7 @@ public final class IconPreviewRepository implements ComponentCallbacks2 {
                 }});
             }
         });
+        if (!queued && isSessionActive(session)) android.util.Log.w("SmartisanPerf", "ICON_CANDIDATES_QUEUE_FULL target=" + pkg);
     }
 
     private boolean isCurrentCandidateRequest(RequestSession session, long request) {
@@ -458,6 +471,8 @@ public final class IconPreviewRepository implements ComponentCallbacks2 {
         }
         purgeCancelledSessionWork(session);
         purgeOnlineWork();
+        purgeMetadataWork(metadataPool);
+        purgeMetadataWork(indexPool);
     }
 
     /** Drop only a recycled cell's subscription; other cells/pages may share this image. */
@@ -649,8 +664,40 @@ public final class IconPreviewRepository implements ComponentCallbacks2 {
             trimSessionQueueIfNeeded(session);
         }
 
-        decodePool.execute(new RenderTask(session, key, priority, loader,
+        enqueueRender(new RenderTask(session, key, priority, loader,
                 requestCallbacks, sequence.incrementAndGet()));
+    }
+
+    /** Every producer, including HTTP completions and sessionless work, shares this bound. */
+    private boolean enqueueRender(RenderTask incoming) {
+        RenderTask evicted=null;
+        boolean accepted=false;
+        synchronized(renderAdmission) {
+            // Keep a small reserve for preparation which publishes the page's metadata.
+            int capacity=incoming.key==null?MAX_RENDER_QUEUE_SIZE:MAX_RENDER_QUEUE_SIZE-8;
+            if(decodePool.getQueue().size()>=capacity) {
+                for(Runnable queued:decodePool.getQueue().toArray(new Runnable[0])) {
+                    if(!(queued instanceof RenderTask)) continue;
+                    RenderTask candidate=(RenderTask)queued;
+                    if(candidate.priority.ordinal()<=incoming.priority.ordinal()) continue;
+                    boolean visible=false;
+                    synchronized(pending) {
+                        if(candidate.callbacks!=null) for(PendingCallback callback:candidate.callbacks)
+                            if(callback.callback!=null && (callback.session==null || isSessionActive(callback.session))) visible=true;
+                    }
+                    if(visible) continue;
+                    if(evicted==null || candidate.priority.ordinal()>evicted.priority.ordinal()) evicted=candidate;
+                }
+                if(evicted!=null && !decodePool.getQueue().remove(evicted)) evicted=null;
+            }
+            if(decodePool.getQueue().size()<capacity) {decodePool.execute(incoming);accepted=true;}
+        }
+        if(evicted!=null && evicted.key!=null) finish(evicted.key,null,evicted.callbacks);
+        if(!accepted) {
+            if(incoming.key!=null) finish(incoming.key,null,incoming.callbacks);
+            android.util.Log.w("SmartisanPerf","ICON_RENDER_QUEUE_FULL");
+        }
+        return accepted;
     }
 
     private void trimSessionQueueIfNeeded(RequestSession session) {
@@ -695,7 +742,15 @@ public final class IconPreviewRepository implements ComponentCallbacks2 {
                 || (priority == Priority.P2_IDLE && pauseP2)) return;
         if (priority != Priority.P2_IDLE) pauseP2 = false;
         if (session != null) trimSessionQueueIfNeeded(session);
-        decodePool.execute(new RenderTask(session, null, priority, new DrawableLoader() {
+        enqueueRender(new RenderTask(session, null, priority, new DrawableLoader() {
+            public Drawable load() { operation.run(); return null; }
+        }, null, sequence.incrementAndGet()));
+    }
+
+    /** Rare missing-mask recovery reuses the bounded bitmap executor, outside the GL thread. */
+    public boolean scheduleProjectionRecovery(final Runnable operation) {
+        if (operation == null) return false;
+        return enqueueRender(new RenderTask(null, null, Priority.P0_VISIBLE, new DrawableLoader() {
             public Drawable load() { operation.run(); return null; }
         }, null, sequence.incrementAndGet()));
     }
@@ -734,7 +789,7 @@ public final class IconPreviewRepository implements ComponentCallbacks2 {
         long now = android.os.SystemClock.uptimeMillis();
         if (now - lastDiskTrim < 60000L || !diskTrimQueued.compareAndSet(false, true)) return;
         lastDiskTrim = now;
-        decodePool.execute(new RenderTask(null, Priority.P2_IDLE, new DrawableLoader() {
+        enqueueRender(new RenderTask(null, Priority.P2_IDLE, new DrawableLoader() {
             public Drawable load() {
                 try { trimOnlineDiskCache(); } finally { diskTrimQueued.set(false); }
                 return null;
@@ -1113,7 +1168,7 @@ public final class IconPreviewRepository implements ComponentCallbacks2 {
             for (RenderTask task : ready) {
                 if (!hasActiveConsumers(task.key, task.callbacks)) continue;
                 task.onlineAttempted = true;
-                decodePool.execute(task);
+                enqueueRender(task);
             }
             if (downloaded && automaticOwner != null) {
                 final RenderTask owner = automaticOwner;
@@ -1194,6 +1249,24 @@ public final class IconPreviewRepository implements ComponentCallbacks2 {
         IoOperation(RequestSession session, Runnable operation) { this.session = session; this.operation = operation; }
         public void run() { if (isSessionActive(session)) operation.run(); }
     }
+    private void purgeMetadataWork(ThreadPoolExecutor pool) {
+        for (Runnable queued : pool.getQueue().toArray(new Runnable[0])) {
+            if (queued instanceof IoOperation && !isSessionActive(((IoOperation) queued).session))
+                pool.getQueue().remove(queued);
+        }
+    }
+    public boolean scheduleMetadata(RequestSession session, Runnable operation) {
+        return scheduleMetadataOn(metadataPool, session, operation);
+    }
+    public boolean scheduleIndex(RequestSession session, Runnable operation) {
+        return scheduleMetadataOn(indexPool, session, operation);
+    }
+    private boolean scheduleMetadataOn(ThreadPoolExecutor pool, RequestSession session, Runnable operation) {
+        if (!isSessionActive(session)) return false;
+        purgeMetadataWork(pool);
+        try { pool.execute(new IoOperation(session, operation)); return true; }
+        catch (java.util.concurrent.RejectedExecutionException full) { return false; }
+    }
     /** Large directory preparation belongs to bounded IO, never the preview render workers. */
     public boolean scheduleIo(RequestSession session, Runnable operation) {
         if (!isSessionActive(session)) return false;
@@ -1221,6 +1294,8 @@ public final class IconPreviewRepository implements ComponentCallbacks2 {
                 + " decodeQueue=" + decodePool.getQueue().size() + " ioActive=" + onlinePool.getActiveCount()
                 + " ioQueue=" + onlinePool.getQueue().size() + " cacheBytes=" + cache.size()
                 + " cacheLimit=" + cache.maxSize());
+        android.util.Log.i("SmartisanPerf", "ICON_METADATA " + reason + " queryQueue=" + metadataPool.getQueue().size()
+                + " indexQueue=" + indexPool.getQueue().size());
     }
 
     private boolean saveToDiskCache(String sourceId, byte[] data) {

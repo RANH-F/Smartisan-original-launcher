@@ -1232,7 +1232,8 @@
 .end method
 
 .method protected a(Ljava/lang/String;Lcom/smartisanos/smengine/Ca;I)Z
-    .locals 8
+    .locals 9
+    move-object v8, p1
 
     .line 9
     invoke-static {}, Lcom/smartisanos/smengine/Ra;->getInstance()Lcom/smartisanos/smengine/Ra;
@@ -1254,6 +1255,13 @@
     invoke-virtual {p0, p1}, Lcom/smartisanos/smengine/mymaterial/f;->hb(Ljava/lang/String;)Landroid/graphics/Bitmap;
 
     move-result-object v7
+    if-nez v7, :projection_bitmap_ready
+    invoke-static {p1}, Lcom/smartisanos/launcher/theme/IconIlluminationCompat;->isProjectionTexture(Ljava/lang/String;)Z
+    move-result v2
+    if-eqz v2, :projection_bitmap_ready
+    const/4 v2, 0x0
+    return v2
+    :projection_bitmap_ready
 
     .line 12
     new-instance v1, Lcom/smartisanos/smengine/Da;
@@ -1306,7 +1314,12 @@
     invoke-virtual {v1, p0}, Lcom/smartisanos/smengine/Da;->Sb(Z)Z
 
     move-result p0
-
+    if-nez p0, :projection_bound_result
+    invoke-static {v8}, Lcom/smartisanos/launcher/theme/IconIlluminationCompat;->isProjectionTexture(Ljava/lang/String;)Z
+    move-result v2
+    if-eqz v2, :projection_bound_result
+    invoke-virtual {v0, v8}, Lcom/smartisanos/smengine/Ea;->ab(Ljava/lang/String;)V
+    :projection_bound_result
     return p0
 .end method
 
@@ -1947,6 +1960,12 @@
 
 .method protected hb(Ljava/lang/String;)Landroid/graphics/Bitmap;
     .locals 4
+    invoke-static {p1}, Lcom/smartisanos/launcher/theme/IconIlluminationCompat;->projectionFileReadable(Ljava/lang/String;)Z
+    move-result v0
+    if-nez v0, :readable_projection_bundle
+    const/4 v0, 0x0
+    return-object v0
+    :readable_projection_bundle
 
     .line 1
     invoke-static {p1}, Lcom/smartisanos/smengine/Da;->_a(Ljava/lang/String;)Z
@@ -2043,6 +2062,13 @@
     return-object v0
 
     :cond_1
+    invoke-static {p1}, Lcom/smartisanos/launcher/theme/IconIlluminationCompat;->isProjectionTexture(Ljava/lang/String;)Z
+    move-result v0
+    if-eqz v0, :legacy_missing_bitmap
+    invoke-static {p1}, Lcom/smartisanos/launcher/theme/IconIlluminationCompat;->projectionReadFailed(Ljava/lang/String;)V
+    const/4 v0, 0x0
+    return-object v0
+    :legacy_missing_bitmap
     const-string p1, "Textures/1080p/shadow/com.android.settings_8.png"
 
     .line 8
@@ -3013,4 +3039,23 @@
         :pswitch_1
         :pswitch_0
     .end packed-switch
+.end method
+
+.method protected projectionTexturesReady()Z
+    .locals 3
+    iget-object v0, p0, Lcom/smartisanos/smengine/mymaterial/f;->XV:[Ljava/lang/String;
+    const/4 v1, 0x0
+    aget-object v0, v0, v1
+    move-object v2, v0
+    invoke-static {v0}, Lcom/smartisanos/launcher/theme/IconIlluminationCompat;->isProjectionTexture(Ljava/lang/String;)Z
+    move-result v0
+    if-nez v0, :projection
+    const/4 v0, 0x1
+    return v0
+    :projection
+    iget-object v0, p0, Lcom/smartisanos/smengine/mymaterial/f;->jW:[Z
+    invoke-static {v0}, Lcom/smartisanos/launcher/theme/IconIlluminationCompat;->allProjectionLayersBound([Z)Z
+    move-result v0
+    invoke-static {v2, v0}, Lcom/smartisanos/launcher/theme/IconIlluminationCompat;->traceProjectionBinding(Ljava/lang/String;Z)V
+    return v0
 .end method

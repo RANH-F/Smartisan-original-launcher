@@ -7,6 +7,10 @@
 
 
 # instance fields
+.field public running:Z
+.field public suspended:Z
+.field public volatile hasSample:Z
+.field public volatile currentLux:F
 .field public duration:I
 
 .field public mU:F
@@ -129,10 +133,17 @@
 
     invoke-virtual {p0}, Lcom/smartisanos/launcher/ub;->Sc()V
 
+    # Keep the interrupted interpolation; Qa resumes it when the scene accepts updates.
+    invoke-static {}, Lcom/smartisanos/smengine/Ra;->resumeShadowOwner()Lcom/smartisanos/smengine/Oa;
+    move-result-object v0
+    const/4 v1, 0x1
+    iput-boolean v1, v0, Lcom/smartisanos/smengine/Oa;->suspended:Z
     return-void
 
     .line 8
     :cond_2
+    const/4 v0, 0x0
+    iput-boolean v0, p0, Lcom/smartisanos/smengine/Oa;->suspended:Z
     iget v0, p0, Lcom/smartisanos/smengine/Oa;->start:I
 
     .line 9
@@ -148,10 +159,8 @@
     if-le v1, v2, :cond_3
 
     const/4 v0, 0x0
-
-    .line 11
     iput v0, p0, Lcom/smartisanos/smengine/Oa;->start:I
-
+    iput-boolean v0, p0, Lcom/smartisanos/smengine/Oa;->running:Z
     return-void
 
     .line 12
@@ -199,6 +208,7 @@
     add-float/2addr v0, v3
 
     .line 16
+    iput v0, p0, Lcom/smartisanos/smengine/Oa;->currentLux:F
     invoke-static {v0}, Lcom/smartisanos/smengine/Ra;->S(F)F
 
     move-result v1
@@ -250,6 +260,8 @@
     mul-float/2addr v2, v1
 
     invoke-virtual {v3, v2}, Lcom/smartisanos/smengine/Ra;->V(F)V
+    iget v3, p0, Lcom/smartisanos/smengine/Oa;->start:I
+    invoke-static {v0, v2, v3}, Lcom/smartisanos/launcher/theme/IconIlluminationCompat;->traceLightFrame(FFI)V
 
     .line 19
     invoke-static {}, Lcom/smartisanos/smengine/n;->obtain()Lcom/smartisanos/smengine/n;

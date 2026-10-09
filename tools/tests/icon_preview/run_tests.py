@@ -35,6 +35,10 @@ def main():
     methods += block(source, "    private final class OnlineFetch")
     methods += block(source, "    private final class IoOperation")
     methods += block(source, "    public boolean scheduleIo(")
+    methods += block(source, "    private void purgeMetadataWork(")
+    methods += block(source, "    public boolean scheduleMetadata(")
+    methods += block(source, "    public boolean scheduleIndex(")
+    methods += block(source, "    private boolean scheduleMetadataOn(")
     methods = methods.replace("com.smartisanos.launcher.theme.MaintainedLauncherSettingsHost.onPreviewLibrarySourceDownloaded", "Host.onPreviewLibrarySourceDownloaded")
     fields = source[source.index("    private static final int MAX_SESSION_QUEUE_SIZE"):source.index("    private IconPreviewRepository(Context")]
     fields = fields.replace("private static volatile IconPreviewRepository sInstance;", "")
@@ -55,6 +59,8 @@ def main():
         cache=new LruCache<>(1000);
         onlinePool=new ThreadPoolExecutor(2,2,15L,TimeUnit.SECONDS,new ArrayBlockingQueue<Runnable>(24),job->new Thread(job,"probe-io"));
         decodePool=new ThreadPoolExecutor(2,2,15L,TimeUnit.SECONDS,new PriorityBlockingQueue<Runnable>());
+        metadataPool=new ThreadPoolExecutor(1,1,15L,TimeUnit.SECONDS,new ArrayBlockingQueue<Runnable>(16));
+        indexPool=new ThreadPoolExecutor(1,1,15L,TimeUnit.SECONDS,new ArrayBlockingQueue<Runnable>(4));
     }
     final Object app = new Object();
     final Map<RequestSession,Runnable> candidateRefresh=new HashMap<>();
@@ -74,7 +80,9 @@ def main():
     static void await(CountDownLatch latch)throws Exception{if(!latch.await(3,TimeUnit.SECONDS))throw new AssertionError("worker timeout");}
     static void idle(IconPreviewRepository r)throws Exception {
         long end=System.nanoTime()+TimeUnit.SECONDS.toNanos(3);
-        while((r.decodePool.getActiveCount()!=0||!r.decodePool.getQueue().isEmpty())&&System.nanoTime()<end)Thread.sleep(2);
+        // A worker's first task can be assigned before it becomes active or enters the queue.
+        while((r.decodePool.getActiveCount()!=0||!r.decodePool.getQueue().isEmpty()
+                ||r.decodePool.getTaskCount()!=r.decodePool.getCompletedTaskCount())&&System.nanoTime()<end)Thread.sleep(2);
         check(r.decodePool.getActiveCount()==0&&r.decodePool.getQueue().isEmpty(),"workers drained");r.main.drain();
     }
     static void prefetch()throws Exception {
@@ -213,7 +221,41 @@ def main():
             check(r.activeSessions.isEmpty(),"no leaked page sessions");
         } finally {r.ioRelease.countDown();r.decodePool.shutdownNow();r.onlinePool.shutdownNow();}
     }
+    static void metadataIsolation()throws Exception {
+        IconPreviewRepository r=new IconPreviewRepository();
+        RequestSession directory=r.openSession("directory"),query=r.openSession("query");
+        CountDownLatch entered=new CountDownLatch(1),release=new CountDownLatch(1),finished=new CountDownLatch(1);
+        try {
+            check(r.scheduleIndex(directory,()->{entered.countDown();try{await(release);}catch(Exception e){throw new RuntimeException(e);}}),"index task queued");
+            await(entered);
+            check(r.scheduleMetadata(query,finished::countDown),"query queued separately");await(finished);
+            check(r.indexPool.getActiveCount()==1,"query completes while directory worker is blocked");
+            java.util.concurrent.atomic.AtomicInteger stale=new java.util.concurrent.atomic.AtomicInteger();
+            check(r.scheduleIndex(query,stale::incrementAndGet),"queued directory consumer");
+            r.cancelSession(query);
+            check(r.indexPool.getQueue().isEmpty(),"cancel removes queued metadata consumer");
+            release.countDown();r.indexPool.shutdown();r.indexPool.awaitTermination(3,TimeUnit.SECONDS);
+            check(stale.get()==0,"cancelled metadata never runs");
+            check(r.metadataPool.getQueue().isEmpty(),"query queue drains");
+        } finally {release.countDown();r.cancelSession(directory);r.metadataPool.shutdownNow();r.indexPool.shutdownNow();r.decodePool.shutdownNow();r.onlinePool.shutdownNow();}
+    }
+    static void globalQueueBound()throws Exception {
+        IconPreviewRepository r=new IconPreviewRepository();CountDownLatch entered=new CountDownLatch(2),release=new CountDownLatch(1);
+        try {
+            for(int i=0;i<2;i++)r.request(key(2000+i),Priority.P0_VISIBLE,()->{entered.countDown();await(release);return new Drawable(1);},null);
+            await(entered);
+            for(int i=0;i<MAX_RENDER_QUEUE_SIZE+32;i++)r.request(key(3000+i),Priority.P2_IDLE,()->new Drawable(2),null);
+            check(r.decodePool.getQueue().size()<=MAX_RENDER_QUEUE_SIZE,"sessionless requests obey global render bound");
+            check(r.pendingCount()<=MAX_RENDER_QUEUE_SIZE+2,"rejection releases pending consumers");
+            AtomicInteger visible=new AtomicInteger();r.request(key(9000),Priority.P0_VISIBLE,()->new Drawable(9),(k,b)->visible.set(b==null?0:b.id));
+            check(r.decodePool.getQueue().size()<=MAX_RENDER_QUEUE_SIZE,"visible admission replaces idle work within bound");
+            release.countDown();idle(r);check(visible.get()==9,"visible icon completes despite an idle backlog");
+            check(r.pendingCount()==0,"bounded backlog fully drains");
+        } finally {release.countDown();r.decodePool.shutdownNow();r.onlinePool.shutdownNow();r.metadataPool.shutdownNow();r.indexPool.shutdownNow();}
+    }
     public static void main(String[] args)throws Exception {
+        globalQueueBound();
+        metadataIsolation();
         networkIsolation();prefetch();localPrefetchAndDedup();eviction();staleCompletion();sharedConsumers();cancelledPreparation();memoryPressure();
         System.out.println("production preview checks="+checks+" failures="+failures);
         if(failures!=0)System.exit(1);
@@ -225,7 +267,7 @@ def main():
         java.write_text("import java.util.*;import java.util.concurrent.*;import java.util.concurrent.atomic.*;\npublic class IconPreviewRepository {\n" + declarations + fields + methods + fixture + "\n}", encoding="utf-8")
         log = base / "android/util/Log.java"
         log.parent.mkdir(parents=True)
-        log.write_text("package android.util;public class Log {public static int d(String t,String s){return 0;}public static int w(String t,String s,Throwable e){return 0;}}")
+        log.write_text("package android.util;public class Log {public static int d(String t,String s){return 0;}public static int w(String t,String s){return 0;}public static int w(String t,String s,Throwable e){return 0;}}")
         clock = base / "android/os/SystemClock.java"
         clock.parent.mkdir(parents=True)
         clock.write_text("package android.os;public class SystemClock {public static long elapsedRealtime(){return System.nanoTime()/1000000;}}")

@@ -10767,6 +10767,10 @@
 
     move-result-object v9
 
+    invoke-virtual {v8}, Lcom/smartisanos/launcher/view/a/g;->Rl()Lcom/smartisanos/launcher/data/ItemInfo;
+    move-result-object v10
+    invoke-static {v10, v9}, Lcom/smartisanos/launcher/theme/IconRasterDiagnostics;->prepareSettingsIconProjection(Ljava/lang/Object;Ljava/lang/String;)V
+
     .line 110
     invoke-static {}, Lcom/smartisanos/launcher/J;->getInstance()Lcom/smartisanos/launcher/J;
 

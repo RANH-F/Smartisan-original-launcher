@@ -473,6 +473,12 @@
 .method public onSurfaceCreated(Ljavax/microedition/khronos/opengles/GL10;Ljavax/microedition/khronos/egl/EGLConfig;)V
     .locals 6
 
+    invoke-static {}, Lcom/smartisanos/smengine/Ra;->getInstance()Lcom/smartisanos/smengine/Ra;
+    move-result-object v0
+    invoke-virtual {v0}, Lcom/smartisanos/smengine/Ra;->rt()Lcom/smartisanos/smengine/Ea;
+    move-result-object v0
+    invoke-virtual {v0}, Lcom/smartisanos/smengine/Ea;->resetProjectionBindings()V
+
     .line 1
     sget-boolean p1, Lcom/smartisanos/launcher/va;->DBG:Z
 

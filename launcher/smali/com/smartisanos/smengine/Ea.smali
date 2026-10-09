@@ -382,3 +382,31 @@
 
     return-void
 .end method
+
+.method public resetProjectionBindings()V
+    .locals 5
+    # A new EGL context owns new texture IDs. Remove only derived projection descriptors.
+    iget-object v0, p0, Lcom/smartisanos/smengine/Ea;->tT:Ljava/util/HashMap;
+    invoke-virtual {v0}, Ljava/util/HashMap;->keySet()Ljava/util/Set;
+    move-result-object v0
+    const/4 v1, 0x0
+    new-array v1, v1, [Ljava/lang/String;
+    invoke-interface {v0, v1}, Ljava/util/Set;->toArray([Ljava/lang/Object;)[Ljava/lang/Object;
+    move-result-object v0
+    check-cast v0, [Ljava/lang/String;
+    const/4 v1, 0x0
+    array-length v2, v0
+    :next_projection_binding
+    if-ge v1, v2, :projection_bindings_reset
+    aget-object v3, v0, v1
+    invoke-static {v3}, Lcom/smartisanos/launcher/theme/IconIlluminationCompat;->isProjectionTexture(Ljava/lang/String;)Z
+    move-result v4
+    if-eqz v4, :keep_context_binding
+    # cb drops the stale descriptor without deleting an old-context ID in the new context.
+    invoke-virtual {p0, v3}, Lcom/smartisanos/smengine/Ea;->cb(Ljava/lang/String;)V
+    :keep_context_binding
+    add-int/lit8 v1, v1, 0x1
+    goto :next_projection_binding
+    :projection_bindings_reset
+    return-void
+.end method

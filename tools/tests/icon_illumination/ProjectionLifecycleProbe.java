@@ -11,6 +11,10 @@ import static com.smartisanos.launcher.theme.ProjectionCacheProbe.*;
 
 /** Actual Aa removal methods/Pe plus the complete production cache, in a shell-only root. */
 public final class ProjectionLifecycleProbe {
+    static Object maskMonitor() throws Exception {
+        try { Field lock=IconIlluminationCompat.class.getDeclaredField("MASK_LOCK");lock.setAccessible(true);return lock.get(null); }
+        catch(NoSuchFieldException baseline){return IconIlluminationCompat.class;}
+    }
     static Map<String,Object> map() throws Exception {
         Field f=IconIlluminationCompat.class.getDeclaredField("MASKS");f.setAccessible(true);
         return (Map<String,Object>)f.get(null);
@@ -98,7 +102,7 @@ public final class ProjectionLifecycleProbe {
         final AtomicReference<Throwable> error=new AtomicReference<Throwable>();
         Thread writer=new Thread(new Runnable(){public void run(){try{IconIlluminationCompat.write("fixture.serial_Entry_-1",a,true);}catch(Throwable t){error.set(t);}}});
         Thread remover=new Thread(new Runnable(){public void run(){try{aa("E","fixture.serial_Entry_-1");}catch(Throwable t){error.set(t);}}});
-        synchronized(IconIlluminationCompat.class){writer.start();remover.start();
+        synchronized(maskMonitor()){writer.start();remover.start();
             long end=System.nanoTime()+2_000_000_000L;
             while((writer.getState()!=Thread.State.BLOCKED||remover.getState()!=Thread.State.BLOCKED)&&System.nanoTime()<end)Thread.yield();
             check(writer.getState()==Thread.State.BLOCKED&&remover.getState()==Thread.State.BLOCKED,"actual write and Aa delete share monitor");}

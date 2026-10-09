@@ -120,6 +120,8 @@
     .line 8
     :cond_2
     iget-object v0, p0, Lcom/smartisanos/smengine/Qa;->this$0:Lcom/smartisanos/smengine/Ra;
+    invoke-virtual {v0}, Lcom/smartisanos/smengine/Ra;->resumeShadowTransition()V
+    iget-object v0, p0, Lcom/smartisanos/smengine/Qa;->this$0:Lcom/smartisanos/smengine/Ra;
 
     invoke-static {v0}, Lcom/smartisanos/smengine/Ra;->c(Lcom/smartisanos/smengine/Ra;)Lcom/smartisanos/smengine/a/c;
 

@@ -772,7 +772,6 @@ public final class SmartisanInstallManager {
         }
         ensure(context);
         try {
-            com.smartisanos.home.settings.icons.IconPackManager.invalidateIconPackList();
             com.smartisanos.home.settings.icons.IconPackManager.invalidateIconPackPackage(packageName);
             com.smartisanos.launcher.theme.MaintainedLauncherSettingsHost
                     .onIconPackOverridesChanged(context, packageName);

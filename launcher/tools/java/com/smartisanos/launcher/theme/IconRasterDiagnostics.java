@@ -13,6 +13,7 @@ import android.util.Log;
 import com.smartisanos.launcher.profile.DoppelgangerCompat;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.Arrays;
 import java.io.File;
@@ -291,6 +292,73 @@ public final class IconRasterDiagnostics {
     }
 
     /** Keeps projection masks available when an existing final texture is reused. */
+    private static final Map<String, Long> PROJECTION_REPAIRS = new java.util.LinkedHashMap<String, Long>() {
+        @Override protected boolean removeEldestEntry(Map.Entry<String, Long> entry) { return size() > 256; }
+    };
+
+    /** Missing layers are repaired by the existing source composer, never by a new size owner. */
+    public static void requestMissingProjection(final Object itemInfo, final String key, final int pageMode) {
+        if (itemInfo == null || key == null || IconIlluminationCompat.projectionBeingWritten(key)
+                || IconIlluminationCompat.projectionFilesReady(key)) return;
+        if ((!isDesktopSettingsShortcut(itemInfo) && !"0".equals(itemField(itemInfo, "itemType")))
+                || !IconIlluminationCompat.enabled()) return;
+        final android.content.Context context = MaintainedLauncherSettingsHost.currentApplicationContext();
+        // Live contours continue to belong to the original ActiveIcon body update.
+        if (LauncherSettingBridge.dynamicWeatherCalendarEnabled(context)
+                && LauncherSettingBridge.isDynamicIconPackage(itemField(itemInfo, "packageName"))) return;
+        final long epoch = IconIlluminationCompat.recoveryEpoch();
+        synchronized (PROJECTION_REPAIRS) {
+            Long previous = PROJECTION_REPAIRS.get(key);
+            if (previous != null && previous.longValue() == epoch) return;
+            PROJECTION_REPAIRS.put(key, epoch);
+        }
+        boolean accepted = com.smartisanos.home.settings.icons.IconPreviewRepository.get(context)
+                .scheduleProjectionRecovery(new Runnable() { public void run() {
+            boolean restored = false;
+            try {
+                if (!IconIlluminationCompat.enabled()) return;
+                if (isDesktopSettingsShortcut(itemInfo)) {
+                    prepareSettingsIconProjection(itemInfo, key);
+                } else {
+                    Bitmap source = sourceBitmap(loadCurrentDesktopDrawable(itemInfo));
+                    if (source == null) { Log.w(TAG, "PROJECTION_RECOVERY_SOURCE_MISSING key=" + key); return; }
+                    Bitmap composed = null;
+                    try { composed = composeStaticApplicationIconTexture(itemInfo, source, pageMode); }
+                    finally {
+                        if (composed != null && composed != source && !composed.isRecycled()) composed.recycle();
+                        if (!source.isRecycled()) source.recycle();
+                    }
+                }
+                restored = IconIlluminationCompat.projectionFilesReady(key);
+                if (restored) {
+                    final String directory = new java.io.File(context.getFilesDir(), "shadow").getAbsolutePath();
+                    Class<?> eventClass = Class.forName("com.smartisanos.smengine.n");
+                    Object event = eventClass.getMethod("obtain").invoke(null);
+                    eventClass.getMethod("j", Runnable.class).invoke(event, new Runnable() { public void run() {
+                        try {
+                            Class<?> worldClass = Class.forName("com.smartisanos.smengine.Ra");
+                            Object world = worldClass.getMethod("getInstance").invoke(null);
+                            Object textures = worldClass.getMethod("rt").invoke(world);
+                            for (int layer = 1; layer <= 8; layer++)
+                                textures.getClass().getMethod("ab", String.class).invoke(textures, directory + '/' + key + '_' + layer + ".png");
+                            Object scene = worldClass.getMethod("jt").invoke(world);
+                            Object root = scene.getClass().getMethod("getRootNode").invoke(scene);
+                            root.getClass().getMethod("forceUpdateNeedDisplay").invoke(root);
+                            worldClass.getMethod("wt").invoke(world);
+                            Log.i(TAG, "PROJECTION_RECOVERED key=" + key);
+                        } catch (Exception error) { Log.e(TAG, "PROJECTION_RECOVERY_BIND_FAILED key=" + key, error); }
+                    }});
+                    eventClass.getMethod("q", float.class).invoke(event, 0f);
+                }
+            } catch (Exception error) { Log.e(TAG, "PROJECTION_RECOVERY_FAILED key=" + key, error); }
+            finally {
+                // Failure stays bounded until the next foreground registration; no per-frame retry loop.
+                if (restored) synchronized (PROJECTION_REPAIRS) { PROJECTION_REPAIRS.remove(key); }
+            }
+        }});
+        if (!accepted) synchronized (PROJECTION_REPAIRS) { PROJECTION_REPAIRS.remove(key); }
+    }
+
     public static void prepareSettingsIconProjection(Object itemInfo, String key) {
         if (!IconIlluminationCompat.enabled() || key == null
                 || !isDesktopSettingsShortcut(itemInfo)) return;

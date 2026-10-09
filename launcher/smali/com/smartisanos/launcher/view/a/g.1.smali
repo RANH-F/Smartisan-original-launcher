@@ -10183,7 +10183,7 @@
 .end method
 
 .method public draw(Lcom/smartisanos/smengine/Camera;)V
-    .locals 1
+    .locals 3
 
     .line 1
     invoke-virtual {p0}, Lcom/smartisanos/smengine/SceneNode;->isVisible()Z
@@ -10226,6 +10226,18 @@
 
     .line 4
     :cond_2
+    sget-boolean v0, Lcom/smartisanos/launcher/data/Constants;->SHOW_ICON_SHADOW_LIST:Z
+    if-eqz v0, :projection_recovery_checked
+    iget-object v0, p0, Lcom/smartisanos/launcher/view/a/g;->Rj:Lcom/smartisanos/launcher/data/ItemInfo;
+    if-eqz v0, :projection_recovery_checked
+    iget-byte v1, v0, Lcom/smartisanos/launcher/data/ItemInfo;->itemType:B
+    const/4 v2, 0x2
+    if-eq v1, v2, :projection_recovery_checked
+    invoke-virtual {p0}, Lcom/smartisanos/launcher/view/a/g;->Pe()Ljava/lang/String;
+    move-result-object v1
+    iget v2, p0, Lcom/smartisanos/launcher/view/a/g;->jH:I
+    invoke-static {v0, v1, v2}, Lcom/smartisanos/launcher/theme/IconRasterDiagnostics;->requestMissingProjection(Ljava/lang/Object;Ljava/lang/String;I)V
+    :projection_recovery_checked
     invoke-static {p0}, Lcom/smartisanos/launcher/theme/LauncherSettingBridge;->alignStaticIconPixelGrid(Ljava/lang/Object;)V
 
     iget-boolean v0, p0, Lcom/smartisanos/launcher/view/a/g;->HH:Z

@@ -42,6 +42,48 @@ public final class DirectoryProbe {
         Method method=IconPackManager.class.getDeclaredMethod("searchDb",Context.class);method.setAccessible(true);
         return (SQLiteDatabase)method.invoke(null,context);
     }
+    static void insertEntry(SQLiteDatabase db,IconLibrarySearchIndex.Entry entry) {
+        android.content.ContentValues values=new android.content.ContentValues();
+        values.put("pack",entry.packPackage);values.put("drawable",entry.drawableName);values.put("name",entry.name);
+        values.put("name_n",IconLibrarySearchIndex.compact(entry.name));values.put("category",entry.category);
+        values.put("terms",entry.searchText);values.put("version",entry.packVersion);
+        for(int i=0;i<entry.groups.length;i++) values.put(IconLibrarySearchIndex.GROUPS[i],entry.groupText(i));
+        db.insertOrThrow("icons",null,values);
+    }
+    static void matching(Context context,SQLiteDatabase db)throws Exception {
+        db.delete("icons",null,null);
+        String[][] qq={{"QQ"},{"腾讯QQ"},{"tengxunqq","teng xun qq"},{"txqq"},{"com.tencent.mobileqq"},{"聊天","社交"}};
+        String[][] music={{"QQ音乐"},{"QQ Music"},{"qqyinyue","qq yin yue"},{"qqyy"},{"com.tencent.qqmusic"},{"音乐"}};
+        String[][] weak={{"Helper"},{},{},{},{"fixture.helper"},{"QQ","聊天"}};
+        List<IconLibrarySearchIndex.Entry> entries=new ArrayList<IconLibrarySearchIndex.Entry>();
+        entries.add(new IconLibrarySearchIndex.Entry("fixture.pack#qq","QQ","social",new String[0],"fixture.pack","qq",1L,qq));
+        entries.add(new IconLibrarySearchIndex.Entry("fixture.pack#music","QQ音乐","media",new String[0],"fixture.pack","music",1L,music));
+        entries.add(new IconLibrarySearchIndex.Entry("fixture.pack#helper","Helper","tools",new String[]{"a_b%literal"},"fixture.pack","helper",1L,weak));
+        for(IconLibrarySearchIndex.Entry entry:entries) insertEntry(db,entry);
+        for(String query:new String[]{"QQ","腾讯QQ","qq yin yue","qqyy","com.tencent.qqmusic","QQ 聊天","ｑｑ","a_b%literal","' OR 1=1 --","音乐"}) {
+            List<IconLibrarySearchIndex.Entry> expected=IconLibrarySearchIndex.search(entries,query,null,null);
+            IconPackManager.SearchSnapshot snapshot=IconPackManager.searchDirectory(context,query,null,new CancellationSignal());
+            List<IconLibrarySearchIndex.Entry> actual=IconPackManager.readSearchPage(context,snapshot,0,60,new CancellationSignal());
+            check(actual.size()==expected.size(),"SQL/text match count: "+query);
+            for(int i=0;i<actual.size();i++) {
+                check(actual.get(i).stableKey().equals(expected.get(i).stableKey()),"SQL/text ordering: "+query);
+                check(actual.get(i).rank(query)==expected.get(i).rank(query),"typed ranks survive database: "+query);
+            }
+        }
+        check(IconLibrarySearchIndex.search(entries,"QQ",null,null).get(0).name.equals("QQ"),"QQ outranks music and keyword helper");
+        check(IconLibrarySearchIndex.search(entries,"QQ",null,new IconLibrarySearchIndex.Current(){public boolean isCurrent(){return false;}})==null,"text generation cancellation");
+        db.delete("icons",null,null);
+    }
+    static void labelRevision()throws Exception {
+        Class<?> label=Class.forName(IconLibraryCatalog.class.getName()+"$InstalledLabel");
+        java.lang.reflect.Constructor<?> constructor=label.getDeclaredConstructor(String.class,String.class);constructor.setAccessible(true);
+        Object aa=constructor.newInstance("Aa","tools"),bb=constructor.newInstance("BB","tools");
+        check(aa.hashCode()==bb.hashCode(),"fixture exercises a real legacy hash collision");
+        Method revision=IconLibraryCatalog.class.getDeclaredMethod("installedRevision",java.util.Map.class);revision.setAccessible(true);
+        java.util.Map<String,Object> labels=new java.util.HashMap<String,Object>();labels.put("fixture.app",aa);
+        String first=(String)revision.invoke(null,labels);labels.put("fixture.app",bb);
+        check(!first.equals(revision.invoke(null,labels)),"label change cannot reuse old metadata on hash collision");
+    }
     static void run(Context context)throws Exception {
         SQLiteDatabase db=database(context);
         for(int packs:new int[]{0,1,5,20}) {
@@ -77,6 +119,8 @@ public final class DirectoryProbe {
             System.out.println("DIRECTORY_SQL packs="+packs+" rows="+all.size()+" emptyMs="+emptyMs+" matches="+match.size());
         }
         db.delete("icons",null,null);db.delete("packs",null,null);
+        matching(context,db);
+        labelRevision();
         IconLibraryCatalog catalog=IconLibraryCatalog.load(context);
         for (String term : new String[]{"微信", "日历", "浏览器"}) {
             List<IconLibrarySearchIndex.Entry> matches = IconLibrarySearchIndex.search(catalog.entries,term,null,null);
@@ -98,14 +142,35 @@ public final class DirectoryProbe {
         IconPackManager.prepareSearchIndex(context,session,catalog);
         long cold=android.os.SystemClock.uptimeMillis()-begin;
         IconPackManager.SearchSnapshot real=IconPackManager.searchDirectory(context,"",null,new CancellationSignal());
-        long modified=new File(context.getCacheDir(),"icon_pack_search_v1.db").lastModified();
+        boolean fixtureInstalled=false;
+        for(android.content.pm.PackageInfo pkg:context.getPackageManager().getInstalledPackages(0))
+            if(pkg.packageName.equals("com.smartisanos.iconfixture.pack1"))fixtureInstalled=true;
+        if(fixtureInstalled) {
+            Cursor fixtureRows=db.rawQuery("SELECT COUNT(*) FROM icons WHERE pack LIKE 'com.smartisanos.iconfixture.pack%'",null);
+            try {fixtureRows.moveToFirst();check(fixtureRows.getInt(0)==15,"five valid fixture packs retained while malformed sixth is isolated");}
+            finally {fixtureRows.close();}
+            check(IconPackManager.searchFailureCount()==1,"malformed pack reported once");
+            for(String query:new String[]{"微信","QQ","支付宝","qqyy"}) {
+                IconPackManager.SearchSnapshot found=IconPackManager.searchDirectory(context,query,null,new CancellationSignal());
+                if(!query.equals("qqyy"))check(found.size()>0,"pack names from catalog including uninstalled apps: "+query);
+            }
+            Field revision=IconLibraryCatalog.class.getDeclaredField("revision");revision.setAccessible(true);
+            revision.set(catalog,catalog.revision+":controlled-label-change");
+            IconPackManager.prepareSearchIndex(context,session,catalog);
+            IconPackManager.SearchSnapshot alipay=IconPackManager.searchDirectory(context,"支付宝",null,new CancellationSignal());
+            int fixtureMatches=0;
+            for(IconLibrarySearchIndex.Entry entry:IconPackManager.readSearchPage(context,alipay,0,60,new CancellationSignal()))
+                if(entry.packPackage.startsWith("com.smartisanos.iconfixture.pack"))fixtureMatches++;
+            check(fixtureMatches==5,"case-sensitive package targets survive metadata-only refresh");
+        }
+        long modified=new File(context.getCacheDir(),IconPackManager.SEARCH_DB_NAME).lastModified();
         begin=android.os.SystemClock.uptimeMillis();IconPackManager.prepareSearchIndex(context,session,catalog);
         long warm=android.os.SystemClock.uptimeMillis()-begin;
-        check(new File(context.getCacheDir(),"icon_pack_search_v1.db").lastModified()==modified,"warm index not rewritten");
+        check(new File(context.getCacheDir(),IconPackManager.SEARCH_DB_NAME).lastModified()==modified,"warm index not rewritten");
         Field ready=IconPackManager.class.getDeclaredField("sSearchReadyGeneration");ready.setAccessible(true);ready.setLong(null,-1L);
         begin=android.os.SystemClock.uptimeMillis();IconPackManager.prepareSearchIndex(context,session,catalog);
         long diskWarm=android.os.SystemClock.uptimeMillis()-begin;
-        check(new File(context.getCacheDir(),"icon_pack_search_v1.db").lastModified()==modified,"disk index reused after memory cache loss");
+        check(new File(context.getCacheDir(),IconPackManager.SEARCH_DB_NAME).lastModified()==modified,"disk index reused after memory cache loss");
         Field generation=IconPackManager.class.getDeclaredField("sPackGeneration");generation.setAccessible(true);generation.setLong(null,generation.getLong(null)+1);
         try{IconPackManager.readSearchPage(context,real,0,60,new CancellationSignal());if(real.size()>0)throw new AssertionError("stale generation accepted");}
         catch(android.os.OperationCanceledException expected){checks++;}
@@ -120,6 +185,6 @@ public final class DirectoryProbe {
         Context context=new Base(app,new File("/data/local/tmp/icon-directory-probe-"+android.os.SystemClock.uptimeMillis()));
         final Throwable[] failure=new Throwable[1];
         Thread worker=new Thread(new Runnable(){public void run(){try{DirectoryProbe.run(context);}catch(Throwable error){failure[0]=error;}}},"directory-probe");worker.start();worker.join();
-        if(failure[0]!=null)throw new RuntimeException(failure[0]);
+        if(failure[0]!=null) {failure[0].printStackTrace(System.out);System.exit(1);}
     }
 }

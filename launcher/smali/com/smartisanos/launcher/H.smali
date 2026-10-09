@@ -42,6 +42,12 @@
 .method public onSensorChanged(Landroid/hardware/SensorEvent;)V
     .locals 3
 
+    iget-wide v0, p1, Landroid/hardware/SensorEvent;->timestamp:J
+    invoke-static {p0, v0, v1}, Lcom/smartisanos/launcher/theme/IconIlluminationCompat;->acceptsSensorEvent(Landroid/hardware/SensorEventListener;J)Z
+    move-result v0
+    if-nez v0, :current_sensor_event
+    return-void
+    :current_sensor_event
     .line 1
     iget-object v0, p1, Landroid/hardware/SensorEvent;->sensor:Landroid/hardware/Sensor;
 

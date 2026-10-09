@@ -67,4 +67,35 @@ class CatalogTests(unittest.TestCase):
         self.assertTrue({'news','lifestyle','travel','education','finance','reading'}<=categories)
         self.assertTrue(categories<=set(library.CATEGORIES))
 
+    def test_typed_terms_preserve_identity_and_component_search(self):
+        p=self.root/'icons/catalog.json';cat=library.read(p);app=cat['apps']['com.example.app']
+        app.update(name='微信',nameEn='WeChat',aliases=['微信手机版'],tags=['聊天'],
+                   pinyin={'微信':['weixin','wei xin','wx'],'微信手机版':['weixinshoujiban','wei xin shou ji ban','wxsjb']})
+        cat['components']['com.example.app/com.example.Main']='com.example.app'
+        library.write(p,cat);self.run_generate()
+        index=library.read(self.root/'icons/search-index.json')
+        self.assertEqual(index['packages']['com.example.app'],'com.example.app')
+        for entry in index['entries']:
+            self.assertIn('WeChat',entry['groups']['names'])
+            self.assertIn('wei xin',entry['groups']['pinyin'])
+            self.assertIn('wx',entry['groups']['initials'])
+            self.assertIn('com.example.app/com.example.Main',entry['terms'])
+
+    def test_verified_name_requires_evidence_and_pinyin_before_writing(self):
+        self.run_generate();p=self.root/'icons/catalog.json';cat=library.read(p)
+        app=cat['apps']['com.example.app'];app.update(name='微信',nameStatus='verified')
+        library.write(p,cat);before=(self.root/'icons/search-index.json').read_bytes()
+        with self.assertRaises(ValueError),contextlib.redirect_stdout(io.StringIO()):library.run(self.root,True)
+        self.assertEqual(before,(self.root/'icons/search-index.json').read_bytes())
+        app['evidence']=[{'fields':['name'],'value':'微信','ref':'reviewed-fixture'}]
+        library.write(p,cat)
+        with self.assertRaises(ValueError),contextlib.redirect_stdout(io.StringIO()):library.run(self.root,True)
+        app['pinyin']={'微信':['weixin','wei xin','wx']};library.write(p,cat);self.run_generate()
+
+    def test_unknown_identifier_is_not_a_formal_name(self):
+        self.run_generate();entry=library.read(self.root/'icons/search-index.json')['entries'][0]
+        self.assertNotIn('names',entry['groups'])
+        self.assertIn('com.example.app',entry['groups']['identities'])
+        self.assertIn('com.example.app',entry['terms'])
+
 if __name__=='__main__':unittest.main()

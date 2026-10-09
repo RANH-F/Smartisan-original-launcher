@@ -40,10 +40,12 @@ def main():
     fallback = '\n'.join(method(host, sig) for sig in ['    private static final class ManagedIconSource', '    private static Drawable resolveManagedIcon(', '    private static ManagedIconSource resolveManagedIconSource(', '    private static ManagedIconSource resolveImprovedIconSource(']).replace('android.graphics.drawable.BitmapDrawable', 'BitmapDrawable')
     choice_sources = '\n'.join(method(host, sig) for sig in ['    private static List<String> choiceLibrarySourceIds(', '    private static String selectedChoiceKey(', '    private static String stripPng('])
     grouping = '\n'.join(method(host, sig) for sig in [
-        '        private String rowIdentity(', '        private void rebuildRows() {',
+        '        private String rowIdentity(', '        private boolean seedKnownRows(',
+        '        private boolean sameChoiceCandidates(', '        private void rebuildRows() {',
         '        private void rebuildRows(final boolean rebuildSections)',
         '        void setSearchQuery(', '        private void filterSearchRows()',
         '        void invalidateIconData(boolean rebuildSections)'])
+    grouping = grouping.replace('AppIconAdapter previous', 'Grouping previous')
     grouping = grouping.replace('synchronized (MaintainedLauncherSettingsHost.class) {\n                sIconPageDataCacheUptime = 0L;\n            }', '')
     code = (Path(__file__).parent / 'AppIconProbe.java').read_text('utf-8')
     code = code.replace('PACK_PRODUCTION', pack).replace('CANDIDATE_PRODUCTION', candidates).replace('FALLBACK_PRODUCTION', fallback).replace('GROUPING_PRODUCTION', grouping).replace('DB_PRODUCTION', db).replace('CHOICE_SOURCE_PRODUCTION', choice_sources)
@@ -73,8 +75,13 @@ def main():
         ('existing row layout retained', '"app_icon_settings_item_layout"' in host),
         ('no timed chooser rebuild', 'refreshChoiceGridLater' not in host and 'retryBindChoiceIcon' not in host),
         ('choice render has session', 'request(session, renderKey' in host),
+        ('warm render keys do not depend on navigation session', 'requestSession.id' not in method(host, '        private IconPreviewRepository.IconRenderKey managedRowKey(') and 'session.id' not in method(host, '        private View createChoiceAppCard(')),
+        ('source changes invalidate reusable preview revision', 'invalidateCandidates()' in method(host, '        void invalidateIconData(boolean rebuildSections)')),
         ('existing selection marker', '"preview_picture_selected"' in host),
         ('single app DB and hot dispatch', 'RedirectIconDB.updatePackIcon(activity' in host and 'forceUpdateIcon(activity, info);' in host),
+        ('default action stays in app row; album stays in chooser', '"还原默认图标"' not in method(host, '        private void showIconChoicePage(final View row, final RedirectIconInfo info, final int returnScrollY,') and '"从相册选择"' in host),
+        ('recommended grid excludes default and album', 'choice.type != AppIconCandidate.TYPE_LIBRARY && choice.type != AppIconCandidate.TYPE_PACKED' in method(host, '        private View createChoiceGridCard(')),
+        ('candidate metadata separated from bitmap decoding', 'scheduleMetadata(session,' in method(repo, '    public void discoverCandidates(')),
         ('cancel releases discovery ownership', 'candidateRefresh.remove(session)' in repo and 'candidateRequests.remove(session)' in repo),
         ('uninstall event invalidates', '.onIconPackOverridesChanged(context, packageName)' in (base / 'com/smartisanos/launcher/install/SmartisanInstallManager.java').read_text('utf-8')),
         ('QuickSearch shares resource owner', 'return OriginalQuickSearchResources.create(this)' in (base / 'com/smartisanos/launcher/quicksearch/ui/OriginalQuickSearchActivity.java').read_text('utf-8')),
@@ -82,5 +89,10 @@ def main():
     for label, ok in checks:
         if not ok: raise AssertionError(label)
     print(f'PASS UI_WIRING_STATIC_CHECKS={len(checks)}; Android UI/runtime unverified')
+    page=(base/'com/smartisanos/home/settings/icons/IconLibrarySearchPage.java').read_text('utf8')
+    query=method(page,'    private void scheduleFilter(')
+    assert 'IconLibraryCatalog.load(' not in query and 'getPackageManager(' not in query
+    assert 'directoryCatalog' in query and 'scheduleMetadata(' in query
+    print('PASS keystrokes use an existing immutable catalog, with no asset or PackageManager pass')
 
 if __name__ == '__main__': main()

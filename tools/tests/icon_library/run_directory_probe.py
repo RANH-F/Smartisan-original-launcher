@@ -20,7 +20,7 @@ def main():
     sources=[]
     for name,text in files.items():
         path=stub/name;path.parent.mkdir(parents=True,exist_ok=True);path.write_text(text,encoding='utf-8');sources.append(path)
-    sources += [ROOT/'launcher/tools/java/com/smartisanos/home/settings/icons'/ (name+'.java') for name in ('IconPackManager','AppIconCandidate','IconLibraryCatalog','IconLibrarySearchIndex')]
+    sources += [ROOT/'launcher/tools/java/com/smartisanos/home/settings/icons'/ (name+'.java') for name in ('IconPackManager','AppIconCandidate','IconLibraryCatalog','IconLibrarySearchIndex','IconPinyin')]
     sources.append(pathlib.Path(__file__).with_name('DirectoryProbe.java'))
     run([jdk/'bin/javac.exe','-encoding','UTF-8','-source','8','-target','8','-bootclasspath',sdk/'platforms/android-36/android.jar','-d',classes,*sources],'compile.log')
     run([jdk/'bin/jar.exe','cf',out/'probe.jar','-C',classes,'.'],'jar.log');os.environ['JAVA_HOME']=str(jdk)
