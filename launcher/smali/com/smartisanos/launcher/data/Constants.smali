@@ -5927,6 +5927,8 @@
 .method public static initGaussianDarkLight(Landroid/content/Context;)V
     .locals 7
 
+    const/4 v6, 0x0
+
     .line 1
     sget-boolean v0, Lcom/smartisanos/launcher/data/Constants;->isTransparentTheme:Z
 
@@ -5997,13 +5999,33 @@
     move-result-object v1
 
     :cond_1
-    const/4 p0, 0x0
+    if-nez v1, :cond_gaussian_wallpaper_ready
+    # No selected wallpaper: analyze the actual theme default before binding the
+    # pre-color material. Otherwise the initial 1.0 cover paints the gaps black.
+    invoke-static {}, Lcom/smartisanos/launcher/theme/X;->eg()Lcom/smartisanos/launcher/theme/v;
+    move-result-object v0
+    invoke-static {v0, v1}, Lcom/smartisanos/launcher/e/s;->a(Lcom/smartisanos/launcher/theme/v;Landroid/graphics/Bitmap;)Landroid/graphics/Bitmap;
+    move-result-object v1
+    # Cover strength keeps the original full-image algorithm. Label contrast
+    # samples the actual grid region, so a dark Dock does not whiten bright labels.
+    # Selected wallpapers retain their existing top/bottom bar analysis below.
+    if-eqz v1, :cond_gaussian_wallpaper_ready
+    invoke-static {v1}, Lcom/smartisanos/launcher/e/s;->l(Landroid/graphics/Bitmap;)Z
+    move-result v0
+    invoke-static {v1}, Lcom/smartisanos/launcher/theme/LauncherSettingBridge;->isDesktopWallpaperDark(Landroid/graphics/Bitmap;)Z
+    move-result v6
+    invoke-virtual {v1}, Landroid/graphics/Bitmap;->recycle()V
+    const/4 v1, 0x0
+    :cond_gaussian_wallpaper_ready
+    move p0, v6
 
     if-eqz v1, :cond_2
 
     .line 8
     invoke-static {v1}, Lcom/smartisanos/launcher/e/s;->l(Landroid/graphics/Bitmap;)Z
 
+    move-result p0
+    invoke-static {v1}, Lcom/smartisanos/launcher/theme/LauncherSettingBridge;->isDesktopWallpaperDark(Landroid/graphics/Bitmap;)Z
     move-result p0
 
     .line 9

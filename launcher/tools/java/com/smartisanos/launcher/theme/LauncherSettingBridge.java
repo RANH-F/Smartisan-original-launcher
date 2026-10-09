@@ -74,9 +74,86 @@ public final class LauncherSettingBridge {
         }
     }
 
+    public static boolean isDesktopWallpaperDark(Bitmap bitmap) {
+        if (bitmap == null || bitmap.isRecycled()) return false;
+        try {
+            Class<?> constants = Class.forName("com.smartisanos.launcher.data.Constants");
+            float height = constants.getField("window_height").getInt(null);
+            if (height <= 0f) return false; // No window geometry during Application initialization.
+            Object layout = constants.getMethod("mode", Integer.TYPE)
+                    .invoke(null, IconRasterDiagnostics.desktopRenderMode());
+            if (layout == null) return false;
+            float dock = layout.getClass().getField("dock_height").getFloat(layout);
+            float margin = layout.getClass().getField("dock_margin_bottom").getFloat(layout);
+            float top = constants.getField("status_bar_height").getInt(null) / height;
+            float bottom = Math.max(top, (height - dock - margin) / height);
+            if (bottom <= top) return false;
+            double luminance = 0;
+            final int samples = 48;
+            for (int y = 0; y < samples; y++) {
+                int sy = Math.min(bitmap.getHeight() - 1, Math.max(0,
+                        (int) (bitmap.getHeight() * (top + (bottom - top) * (y + .5f) / samples))));
+                for (int x = 0; x < samples; x++) {
+                    int sx = Math.min(bitmap.getWidth() - 1, (int) (bitmap.getWidth() * (x + .5f) / samples));
+                    int color = bitmap.getPixel(sx, sy);
+                    luminance += .299 * android.graphics.Color.red(color)
+                            + .587 * android.graphics.Color.green(color) + .114 * android.graphics.Color.blue(color);
+                }
+            }
+            // Keep the original 0.6 threshold, sampling the icon-label region rather than Dock.
+            return luminance / (samples * samples) < 256 * .6;
+        } catch (ReflectiveOperationException error) {
+            Log.w("LauncherThemeBar", "WALLPAPER_LABEL_REGION_UNAVAILABLE", error);
+            return false;
+        }
+    }
+
+    private static int sStatusBarRefreshGeneration;
+
+    public static void refreshDesktopStatusBarAfterTransition(final Window window) {
+        if (window == null) return;
+        final View decor = window.getDecorView();
+        final int generation = ++sStatusBarRefreshGeneration;
+        // OEM SystemUI may keep a white tint although both appearance interfaces
+        // already contain LIGHT_STATUS_BAR. Cross a real frame boundary so the
+        // next request is a change, rather than a coalesced no-op.
+        decor.postOnAnimation(new Runnable() {
+            public void run() {
+                if (generation != sStatusBarRefreshGeneration || !decor.isAttachedToWindow()) return;
+                decor.setSystemUiVisibility(decor.getSystemUiVisibility()
+                        & ~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+                if (Build.VERSION.SDK_INT >= 30 && window.getInsetsController() != null) {
+                    window.getInsetsController().setSystemBarsAppearance(0,
+                            WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS);
+                }
+                decor.postOnAnimation(new Runnable() {
+                    public void run() {
+                        if (generation != sStatusBarRefreshGeneration || !decor.isAttachedToWindow()) return;
+                        applyCurrentDesktopStatusBarAppearance(window);
+                    }
+                });
+            }
+        });
+    }
+
+    public static void applyCurrentDesktopStatusBarAppearance(Window window) {
+        try {
+            Class<?> constants = Class.forName("com.smartisanos.launcher.data.Constants");
+            int color = constants.getField("app_text_color").getInt(null);
+            if (color != 0) applyDesktopStatusBarAppearance(window, color);
+        } catch (ReflectiveOperationException error) {
+            Log.w("LauncherThemeBar", "DESKTOP_COLOR_UNAVAILABLE", error);
+        }
+    }
+
     public static void applyDesktopStatusBarAppearance(Window window, int appTextColor) {
         if (window == null) return;
         boolean darkText = (appTextColor & 0x00ffffff) < 0x00808080;
+        // Translucent status windows can suppress LIGHT_STATUS_BAR on OEM ROMs.
+        // Submit the complete transparent-window policy with the same label color.
+        window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+        window.addFlags(android.view.WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+        window.setStatusBarColor(android.graphics.Color.TRANSPARENT);
         View decor = window.getDecorView();
         if (Build.VERSION.SDK_INT >= 23) {
             int flags = decor.getSystemUiVisibility();
@@ -94,6 +171,7 @@ public final class LauncherSettingBridge {
                         WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS);
             }
         }
+        MaintainedLauncherSettingsHost.ensureDefaultAeroWallpaper(window.getContext());
         traceThemeBarState("WINDOW_APPLIED", decor.getSystemUiVisibility());
         if (Build.VERSION.SDK_INT >= 30 && window.getInsetsController() != null) {
             Log.w("LauncherThemeBar", "appearance="

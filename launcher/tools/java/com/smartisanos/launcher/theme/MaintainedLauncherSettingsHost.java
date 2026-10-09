@@ -1482,6 +1482,9 @@ public final class MaintainedLauncherSettingsHost {
                 getString(resources, "ocd_setting", "OCD Settings"));
         bindCurrentThemePreviewIcon(activity, resources, root, "item_id_themes");
         boolean showWallpaperSetting = shouldShowLauncherWallpaperSetting(activity);
+        View wallpaperSetting = find(resources, root, "item_id_launcher_wallpaper");
+        if (wallpaperSetting != null) wallpaperSetting.setVisibility(
+                showWallpaperSetting ? View.VISIBLE : View.GONE);
         if (showWallpaperSetting) {
             bindWallpaperSettingIcon(activity, resources, root);
         } else {
@@ -1624,6 +1627,64 @@ public final class MaintainedLauncherSettingsHost {
         }
     }
 
+    private static String sDefaultAeroWallpaperAttempt;
+
+    public static void ensureDefaultAeroWallpaper(final Context context) {
+        if (context == null) return;
+        final Context app = context.getApplicationContext();
+        if (!"smartisan_theme_aero".equals(currentTheme(context))
+                || isTransparentThemeEnabled(context)
+                || !TextUtils.isEmpty(currentLauncherWallpaperUri(context))) {
+            synchronized (MaintainedLauncherSettingsHost.class) { sDefaultAeroWallpaperAttempt = null; }
+            return;
+        }
+        try {
+            Object theme = Class.forName("com.smartisanos.launcher.theme.X").getMethod("eg").invoke(null);
+            final Resources resources = (Resources) theme.getClass().getField("mResources").get(theme);
+            String path = (String) theme.getClass().getField("mPath").get(theme);
+            String texture = (String) Class.forName("com.smartisanos.launcher.pb")
+                    .getMethod("path", String.class).invoke(null, "background.png");
+            final String asset = path + texture;
+            final String key = "default-aero:v2:" + theme.getClass().getField("mPackage").get(theme) + ":" + asset;
+            final WallpaperManager manager = WallpaperManager.getInstance(context);
+            final SharedPreferences prefs = context.getSharedPreferences("launcher_settings", Context.MODE_PRIVATE);
+            if (key.equals(prefs.getString("launcher_default_aero_wallpaper_source", ""))
+                    && (Build.VERSION.SDK_INT < 24 || manager.getWallpaperId(WallpaperManager.FLAG_SYSTEM)
+                    == prefs.getInt("launcher_default_aero_wallpaper_id", -1))) return;
+            synchronized (MaintainedLauncherSettingsHost.class) {
+                if (key.equals(sDefaultAeroWallpaperAttempt)) return;
+                sDefaultAeroWallpaperAttempt = key;
+            }
+            THEME_PREVIEW_FETCH_EXECUTOR.execute(new Runnable() {
+                public void run() {
+                    if (!"smartisan_theme_aero".equals(currentTheme(app))
+                            || isTransparentThemeEnabled(app)
+                            || !TextUtils.isEmpty(currentLauncherWallpaperUri(app))) return;
+                    try {
+                        InputStream input = resources.getAssets().open(asset);
+                        try {
+                            if (Build.VERSION.SDK_INT >= 24) {
+                                int writtenId = manager.setStream(input, null, true, WallpaperManager.FLAG_SYSTEM);
+                                if (writtenId <= 0 || manager.getWallpaperId(WallpaperManager.FLAG_SYSTEM) != writtenId) {
+                                    Log.w(LOG_TAG, "DEFAULT_AERO_WALLPAPER_NOT_APPLIED permissionOrDeferred=true");
+                                    return;
+                                }
+                            } else manager.setStream(input);
+                        } finally { input.close(); }
+                        prefs.edit().putString("launcher_default_aero_wallpaper_source", key)
+                                .putInt("launcher_default_aero_wallpaper_id", Build.VERSION.SDK_INT >= 24
+                                ? manager.getWallpaperId(WallpaperManager.FLAG_SYSTEM) : 0).apply();
+                        Log.i(LOG_TAG, "DEFAULT_AERO_WALLPAPER_APPLIED source=" + key);
+                    } catch (Exception error) {
+                        Log.w(LOG_TAG, "DEFAULT_AERO_WALLPAPER_FAILED", error);
+                    }
+                }
+            });
+        } catch (Exception error) {
+            Log.w(LOG_TAG, "DEFAULT_AERO_WALLPAPER_SOURCE_FAILED", error);
+        }
+    }
+
     public static void applyNavigationBarIfChanged(Activity activity) {
         if (activity == null || activity.getWindow() == null) {
             return;
@@ -1634,6 +1695,8 @@ public final class MaintainedLauncherSettingsHost {
             if (decor == null) {
                 return;
             }
+            // Reapply after Window/Insets restoration even when navigation flags are cached.
+            LauncherSettingBridge.applyCurrentDesktopStatusBarAppearance(window);
             int visibility = decor.getSystemUiVisibility();
             visibility |= View.SYSTEM_UI_FLAG_LAYOUT_STABLE;
             visibility |= View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN;
@@ -6778,6 +6841,18 @@ public final class MaintainedLauncherSettingsHost {
                 sSettingsSessions.put(activity, session);
             }
             session.resume();
+            ViewGroup settingsContent = activity.findViewById(android.R.id.content);
+            View settingsRoot = settingsContent == null || settingsContent.getChildCount() == 0
+                    ? null : settingsContent.getChildAt(settingsContent.getChildCount() - 1);
+            if ("MAIN".equals(settingsPageId(settingsRoot))) {
+                Resources mainResources = getMaintainedResources(activity);
+                bindCurrentThemePreviewIcon(activity, mainResources, settingsRoot);
+                View wallpaperRow = find(mainResources, settingsRoot, "item_id_launcher_wallpaper");
+                boolean wallpaperVisible = shouldShowLauncherWallpaperSetting(activity);
+                if (wallpaperRow != null) wallpaperRow.setVisibility(
+                        wallpaperVisible ? View.VISIBLE : View.GONE);
+                if (wallpaperVisible) bindWallpaperSettingIcon(activity, mainResources, settingsRoot);
+            }
             if (sCurrentIconLibraryPage != null && sCurrentIconPageOwner != null && sCurrentIconPageOwner.get() == activity)
                 sCurrentIconPageSession = sCurrentIconLibraryPage.resume();
             if (sThemePollingOwner != null && sThemePollingOwner.get() == activity) {
@@ -15096,6 +15171,21 @@ public final class MaintainedLauncherSettingsHost {
     }
 
     private static String currentTheme(Context context) {
+        // The native theme manager owns the applied selection. ROM Settings
+        // mirrors can be readable but unwritable and retain an earlier value.
+        try {
+            Class<?> manager = Class.forName("com.smartisanos.launcher.theme.X");
+            java.lang.reflect.Field selected = manager.getDeclaredField("Zt");
+            selected.setAccessible(true);
+            Object theme = selected.get(null);
+            if (theme != null) {
+                Object id = theme.getClass().getField("mId").get(theme);
+                if (id instanceof String && !TextUtils.isEmpty((String) id)
+                        && !"smartisan_theme_trans".equals(id)) return (String) id;
+            }
+        } catch (ReflectiveOperationException error) {
+            Log.w(LOG_TAG, "RUNTIME_THEME_UNAVAILABLE", error);
+        }
         try {
             Class<?> cls = Class.forName("com.smartisanos.launcher.data.O");
             Object value = cls.getMethod("j", android.content.ContentResolver.class)

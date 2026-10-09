@@ -2100,6 +2100,12 @@
     :cond_3
     if-nez p1, :cond_5
 
+    # Default wallpaper belongs to the selected theme, not the previous renderer assets.
+    if-nez p0, :cond_default_wallpaper_theme_ready
+    invoke-static {}, Lcom/smartisanos/launcher/theme/X;->eg()Lcom/smartisanos/launcher/theme/v;
+    move-result-object p0
+    :cond_default_wallpaper_theme_ready
+
     const-string p1, "background.png"
 
     .line 206

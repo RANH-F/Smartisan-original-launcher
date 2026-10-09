@@ -25,7 +25,7 @@ public final class IconRasterDiagnostics {
     private static final Set<String> REPORTED = new HashSet<String>();
     private static final int DIAGNOSTIC_ALPHA_CUTOFF = 40;
     private static final String SOURCE_CANVAS_VERSION = "source-canvas:v13-default-circle-sync-pref";
-    private static final String RASTER_CACHE_VERSION = "raster:v29-follow-app-content-box";
+    private static final String RASTER_CACHE_VERSION = "raster:v30-consistent-source-classification";
 
     /**
      * The original theme transition evicts target textures while the outgoing
@@ -516,7 +516,7 @@ public final class IconRasterDiagnostics {
     public static Bitmap composeStaticApplicationIconTexture(Object itemInfo,
             Bitmap source, int pageMode) {
         if (isQuickLaunchItem(itemInfo)) return source;
-        return composeTexture(source, 0, itemInfo, pageMode, resizeClassification(itemInfo));
+        return composeTexture(source, 0, itemInfo, pageMode, resizeClassification(itemInfo, source));
     }
 
     public static Bitmap composeStaticApplicationIconTexture(Object itemInfo,
@@ -561,7 +561,7 @@ public final class IconRasterDiagnostics {
     private static Bitmap composeTexture(Bitmap source, int actualLogicalTexture,
             Object itemInfo, int pageMode) {
         return composeTexture(source, actualLogicalTexture, itemInfo, pageMode,
-                resizeClassification(itemInfo));
+                resizeClassification(itemInfo, source));
     }
 
     private static Bitmap composeTexture(Bitmap source, int actualLogicalTexture,
@@ -733,6 +733,21 @@ public final class IconRasterDiagnostics {
                 || title.contains("云服务") || title.contains("天气")
                 || title.contains("日历") || title.contains("weather")
                 || title.contains("calendar");
+    }
+
+    private static boolean resizeClassification(Object itemInfo, Bitmap source) {
+        if (source != null && !source.isRecycled()) {
+            try {
+                // Match Utils' normal texture path: classify the prepared source,
+                // not the retained ItemInfo color from an earlier icon/theme.
+                Class<?> classifier = Class.forName("com.smartisanos.launcher.actions.sort.color.f");
+                Object color = classifier.getMethod("c", Bitmap.class).invoke(null, source);
+                if (color != null) return color.getClass().getField("resize").getBoolean(color);
+            } catch (ReflectiveOperationException error) {
+                Log.w(TAG, "STATIC_SOURCE_CLASSIFICATION_FAILED", error);
+            }
+        }
+        return resizeClassification(itemInfo);
     }
 
     private static boolean resizeClassification(Object itemInfo) {

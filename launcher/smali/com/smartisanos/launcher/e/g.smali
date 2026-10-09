@@ -81,6 +81,7 @@
     invoke-virtual {v4, v11}, Landroid/view/Window;->setAttributes(Landroid/view/WindowManager$LayoutParams;)V
 
     invoke-static {v4, v1}, Lcom/smartisanos/launcher/theme/LauncherSettingBridge;->applyDesktopStatusBarAppearance(Landroid/view/Window;I)V
+    invoke-static {v4}, Lcom/smartisanos/launcher/theme/LauncherSettingBridge;->refreshDesktopStatusBarAfterTransition(Landroid/view/Window;)V
     :try_end_0
     .catch Ljava/lang/Exception; {:try_start_0 .. :try_end_0} :catch_0
 
