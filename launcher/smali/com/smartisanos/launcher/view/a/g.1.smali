@@ -830,6 +830,27 @@
     return-void
 .end method
 
+.method private projectionLayoutOffsetY()F
+    .locals 2
+
+    # Match the icon body's layout choice in Cm(), including Dock label eligibility.
+    iget v0, p0, Lcom/smartisanos/launcher/view/a/g;->hH:I
+    invoke-static {v0}, Lcom/smartisanos/launcher/data/Constants;->mode(I)Lcom/smartisanos/launcher/data/LayoutProperty;
+    move-result-object v0
+    invoke-virtual {p0}, Lcom/smartisanos/launcher/view/a/g;->Um()Z
+    move-result v1
+    if-eqz v1, :without_name
+    iget v0, v0, Lcom/smartisanos/launcher/data/LayoutProperty;->icon_offset_y:I
+    goto :offset_ready
+
+    :without_name
+    iget v0, v0, Lcom/smartisanos/launcher/data/LayoutProperty;->icon_offset_y_without_app_name:I
+
+    :offset_ready
+    int-to-float v0, v0
+    return v0
+.end method
+
 .method private ay()F
     .locals 3
 
@@ -3390,6 +3411,10 @@
     invoke-virtual {v5}, Lcom/smartisanos/smengine/Ra;->ot()F
 
     move-result v5
+
+    invoke-direct {p0}, Lcom/smartisanos/launcher/view/a/g;->projectionLayoutOffsetY()F
+    move-result v6
+    add-float/2addr v5, v6
 
     .line 14
     iget-object v6, p0, Lcom/smartisanos/launcher/view/a/g;->sc:[Lcom/smartisanos/smengine/SceneNode;
@@ -9887,6 +9912,10 @@
     add-float/2addr v9, v11
     invoke-virtual {v13}, Lcom/smartisanos/smengine/Ra;->ot()F
     move-result v11
+
+    invoke-direct {p0}, Lcom/smartisanos/launcher/view/a/g;->projectionLayoutOffsetY()F
+    move-result v12
+    add-float/2addr v11, v12
     mul-float/2addr v11, v8
     add-float/2addr v10, v11
     invoke-virtual {v13}, Lcom/smartisanos/smengine/Ra;->mt()F
@@ -11445,6 +11474,10 @@
     invoke-virtual {v3}, Lcom/smartisanos/smengine/Ra;->ot()F
 
     move-result v3
+
+    invoke-direct {p0}, Lcom/smartisanos/launcher/view/a/g;->projectionLayoutOffsetY()F
+    move-result v6
+    add-float/2addr v3, v6
 
     .line 5
     invoke-static {}, Lcom/smartisanos/smengine/Ra;->getInstance()Lcom/smartisanos/smengine/Ra;
@@ -14670,6 +14703,10 @@
     invoke-virtual {v5}, Lcom/smartisanos/smengine/Ra;->ot()F
 
     move-result v5
+
+    invoke-direct {p0}, Lcom/smartisanos/launcher/view/a/g;->projectionLayoutOffsetY()F
+    move-result v7
+    add-float/2addr v5, v7
 
     .line 23
     invoke-static {}, Lcom/smartisanos/smengine/Ra;->getInstance()Lcom/smartisanos/smengine/Ra;

@@ -92,6 +92,17 @@
 
     if-eqz p2, :cond_codex_unlock_action_ready
 
+    # Reset password verification independently of unlock animation eligibility.
+    iget-object p2, p0, Lcom/smartisanos/launcher/ia;->this$0:Lcom/smartisanos/launcher/ja;
+
+    invoke-static {p2}, Lcom/smartisanos/launcher/ja;->f(Lcom/smartisanos/launcher/ja;)Lcom/smartisanos/smengine/n;
+
+    move-result-object p2
+
+    const/4 v0, 0x0
+
+    invoke-virtual {p2, v0}, Lcom/smartisanos/smengine/n;->q(F)V
+
     invoke-static {}, Lcom/smartisanos/launcher/theme/MaintainedLauncherSettingsHost;->onSettingsScreenOff()V
 
     const-string p1, "SCREEN_OFF"
