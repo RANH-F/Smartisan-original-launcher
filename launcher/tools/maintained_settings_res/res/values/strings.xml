@@ -644,7 +644,7 @@
     <string name="hello_world">Hello world!</string>
     <string name="launcher_color_sort_sub_text">Sort App Icon By Color</string>
     <string name="launcher_color_sort_text">Launcher Color Sort</string>
-    <string name="more_current_version_txt">1.6.0-T</string>
+    <string name="more_current_version_txt">1.6.1-T</string>
     <string name="os_update_dlg_cancel_btn">稍后更新</string>
     <string name="os_update_dlg_msg">检测到系统版本过低，为保证您个人信息安全，正常使用手机完整功能，请 Smartisan 用户尽快升级到最新系统版本！</string>
     <string name="os_update_dlg_ok_btn">现在更新</string>

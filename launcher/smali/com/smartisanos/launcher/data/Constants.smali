@@ -8164,10 +8164,12 @@
 
     .line 48
     :cond_6
+    invoke-static {v2}, Lcom/smartisanos/launcher/data/Constants;->initLayoutProperty(Landroid/content/res/Resources;)V
+
+    # Wallpaper label analysis requires the populated layout properties.
     invoke-static {p0}, Lcom/smartisanos/launcher/data/Constants;->initByTheme(Landroid/content/Context;)V
 
     .line 49
-    invoke-static {v2}, Lcom/smartisanos/launcher/data/Constants;->initLayoutProperty(Landroid/content/res/Resources;)V
 
     invoke-static {p0}, Lcom/smartisanos/launcher/data/Constants;->applyLauncherIconSize(Landroid/content/Context;)V
 
