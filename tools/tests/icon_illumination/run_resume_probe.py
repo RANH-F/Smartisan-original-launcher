@@ -46,6 +46,8 @@ public Ea rt(){return textures;}public static com.smartisanos.launcher.va access
         L+'J.java': 'package com.smartisanos.launcher;public class J {public float zg=10;public static float c(J j){return j.zg;}public static float a(J j,float v){return j.zg=v;}}',
         L+'r.java': 'package com.smartisanos.launcher;public class r implements android.hardware.SensorEventListener,Runnable {public J this$0;private volatile float latestLux;private volatile boolean queued;private volatile long deliveryEpoch;private long appliedEpoch;public r(J j){this$0=j;}public void onSensorChanged(android.hardware.SensorEvent e){}public void onAccuracyChanged(android.hardware.Sensor s,int i){}public void run(){}}',
         L+'view/Eb.java': 'package com.smartisanos.launcher.view;public class Eb {public static Eb getInstance(){return new Eb();}public com.smartisanos.launcher.view.b.fa Ih(){return new com.smartisanos.launcher.view.b.fa();}public com.smartisanos.launcher.view.b.fa Gh(){return Ih();}}',
+        S+'F.java': 'package com.smartisanos.smengine;public class F {}',
+        L+'view/b/t.java': 'package com.smartisanos.launcher.view.b;public class t {public static com.smartisanos.smengine.F Ur(){return null;}}',
         L+'view/b/fa.java': 'package com.smartisanos.launcher.view.b;public class fa {public static boolean editing;public boolean vm(){return editing;}public int getSinglePageMode(){return 9;}}',
         L+'ub.java': 'package com.smartisanos.launcher;public class ub {public static ub getInstance(){return new ub();}public boolean Rc(){return true;}public boolean S(int v){return true;}public void Sc(){}}',
         L+'theme/IconIlluminationCompat.java': '''package com.smartisanos.launcher.theme;public class IconIlluminationCompat {
@@ -56,7 +58,7 @@ public static void traceLightFrame(float a,float b,int c){}public static void tr
 public static boolean projectionFileReadable(String s){return true;}public static void projectionReadFailed(String s){}
 public static boolean isProjectionTexture(String s){return s!=null&&s.contains("/shadow/");}
 public static boolean allProjectionLayersBound(boolean[] b){for(boolean v:b)if(!v)return false;return true;}}''',
-        L+'theme/IconRasterDiagnostics.java': 'package com.smartisanos.launcher.theme;public class IconRasterDiagnostics {public static android.graphics.Bitmap recoverMissingGeneratedTexture(String s){return null;}}',
+        L+'theme/IconRasterDiagnostics.java': 'package com.smartisanos.launcher.theme;public class IconRasterDiagnostics {public static android.graphics.Bitmap recoverMissingGeneratedTexture(String s){return null;}public static boolean isRetainedGeneratedForegroundKey(String s){return false;}public static Object recoverRetainedGeneratedTexture(String s){return null;}}',
         L+'xa.java': 'package com.smartisanos.launcher;public class xa {public static android.graphics.Bitmap getBitmap(String s){com.smartisanos.smengine.mymaterial.f.fallback=s;return android.graphics.Bitmap.createBitmap(2,2,android.graphics.Bitmap.Config.ARGB_8888);}}',
         L+'e/s.java': 'package com.smartisanos.launcher.e;public class s {public static android.graphics.Bitmap k(int a,int b){return null;}}',
         S+'Ca.java': 'package com.smartisanos.smengine;public class Ca {public int mT=1,nT=1,mWrapS,mWrapT;}',

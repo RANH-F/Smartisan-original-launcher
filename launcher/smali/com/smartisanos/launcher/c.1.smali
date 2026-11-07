@@ -35,5 +35,7 @@
     .line 2
     invoke-static {}, Lcom/smartisanos/launcher/data/z;->Ge()V
 
+    invoke-static {}, Lcom/smartisanos/launcher/view/Eb;->prepareVisibleFolderLayers()V
+
     return-void
 .end method

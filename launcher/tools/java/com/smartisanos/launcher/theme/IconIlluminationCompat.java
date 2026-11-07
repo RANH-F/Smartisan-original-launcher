@@ -2,6 +2,7 @@ package com.smartisanos.launcher.theme;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
@@ -68,6 +69,10 @@ public final class IconIlluminationCompat {
     private static volatile long recoveryEpoch;
     public static long recoveryEpoch() { return recoveryEpoch; }
     private static final Object MASK_LOCK = new Object();
+    private static final Object PREPARED_LOCK = new Object();
+    private static final Map<String, Bitmap> PREPARED_FOLDER_LAYERS = new HashMap<>();
+    private static String[] preparedPaths = new String[0];
+    private static long preparedRevision;
     private static final int MAX_MASK_ENTRIES = 256;
     private static final int INDEX_MAGIC = 0x50524a31;
     private static final Map<String, MaskEntry> MASKS =
@@ -78,6 +83,93 @@ public final class IconIlluminationCompat {
                 }
             };
     private IconIlluminationCompat() {}
+
+    public static void prepareFolderLayers(final String[] paths) {
+        final Context context = MaintainedLauncherSettingsHost.currentApplicationContext();
+        if (context == null) return;
+        final long revision;
+        synchronized (PREPARED_LOCK) {
+            revision = clearPreparedFolderLayers();
+            preparedPaths = paths;
+        }
+        com.smartisanos.home.settings.icons.IconPreviewRepository.get(context)
+                .schedulePersistence(new Runnable() {
+            @Override public void run() {
+                // Let a bundle replacement that already started finish before reading.
+                synchronized (MASK_LOCK) {
+                    synchronized (PREPARED_LOCK) {
+                        if (revision != preparedRevision) return;
+                    }
+                }
+                Map<String, Bitmap> decoded = new HashMap<>();
+                for (String path : paths) {
+                    if (path == null || decoded.containsKey(path)
+                            || !isProjectionTexture(path) || !projectionFileReadable(path)) continue;
+                    Bitmap bitmap = BitmapFactory.decodeFile(path);
+                    if (bitmap == null) continue;
+                    if (bitmap.getWidth() == 256 && bitmap.getHeight() == 256) {
+                        decoded.put(path, bitmap);
+                    } else {
+                        bitmap.recycle();
+                    }
+                }
+                synchronized (PREPARED_LOCK) {
+                    if (revision == preparedRevision) {
+                        PREPARED_FOLDER_LAYERS.putAll(decoded);
+                        if (TRACE_STATE) {
+                            Log.d(TAG, "FOLDER_LAYERS_PREPARED count=" + decoded.size());
+                            for (String path : decoded.keySet())
+                                Log.d(TAG, "FOLDER_LAYER_READY " + new File(path).getName());
+                        }
+                    } else {
+                        for (Bitmap bitmap : decoded.values()) bitmap.recycle();
+                    }
+                }
+            }
+        });
+        new Handler(android.os.Looper.getMainLooper()).postDelayed(new Runnable() {
+            @Override public void run() {
+                synchronized (PREPARED_LOCK) {
+                    if (revision == preparedRevision) clearPreparedFolderLayers();
+                }
+            }
+        }, 15000L);
+    }
+
+    /** Transfer ownership to the original material or use its existing synchronous decode. */
+    public static Bitmap decodeMaterialFile(String path) {
+        Bitmap bitmap;
+        synchronized (PREPARED_LOCK) {
+            bitmap = PREPARED_FOLDER_LAYERS.remove(path);
+            if (bitmap == null && TRACE_STATE && !PREPARED_FOLDER_LAYERS.isEmpty()
+                    && isProjectionTexture(path))
+                Log.d(TAG, "FOLDER_LAYER_MISS " + new File(path).getName());
+        }
+        if (bitmap == null) return BitmapFactory.decodeFile(path);
+        if (TRACE_STATE) Log.d(TAG, "FOLDER_LAYER_CONSUMED " + new File(path).getName());
+        return bitmap;
+    }
+
+    private static long clearPreparedFolderLayers() {
+        synchronized (PREPARED_LOCK) {
+            for (Bitmap bitmap : PREPARED_FOLDER_LAYERS.values()) bitmap.recycle();
+            PREPARED_FOLDER_LAYERS.clear();
+            preparedPaths = new String[0];
+            return ++preparedRevision;
+        }
+    }
+
+    private static void invalidatePreparedFolderLayers(String keyPrefix) {
+        synchronized (PREPARED_LOCK) {
+            for (String path : preparedPaths) {
+                if (path != null && new File(path).getName().startsWith(keyPrefix)) {
+                    clearPreparedFolderLayers();
+                    if (TRACE_STATE) Log.d(TAG, "FOLDER_LAYERS_INVALIDATED " + keyPrefix);
+                    return;
+                }
+            }
+        }
+    }
 
     public static boolean enabled(Context context) {
         return context != null && context.getSharedPreferences(
@@ -388,6 +480,7 @@ public final class IconIlluminationCompat {
     public static void remove(File files, String key) {
         synchronized (MASK_LOCK) {
         if (key == null) return;
+        invalidatePreparedFolderLayers(key + '_');
         MASKS.remove(key); READY_MASKS.remove(key); BROKEN_MASKS.remove(key);
         if (files == null) return;
         File directory = new File(files, "shadow");
@@ -406,6 +499,7 @@ public final class IconIlluminationCompat {
     public static void removePackage(File files, String packageName) {
         synchronized (MASK_LOCK) {
         if (packageName == null || packageName.length() == 0) return;
+        invalidatePreparedFolderLayers(packageName + '_');
         String prefix = packageName + '_';
         synchronized (READY_MASKS) {
             for (Iterator<String> keys = READY_MASKS.keySet().iterator(); keys.hasNext();)
@@ -481,6 +575,7 @@ public final class IconIlluminationCompat {
                     cached.lengths, cached.checksums, cached.modified));
             return true;
         }
+        invalidatePreparedFolderLayers(key + '_');
         WRITING_MASKS.add(key);
         READY_MASKS.remove(key); BROKEN_MASKS.add(key);
         try {

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout android:background="@drawable/background" android:fitsSystemWindows="true" android:layout_width="match_parent" android:layout_height="match_parent"
+  xmlns:android="http://schemas.android.com/apk/res/android" xmlns:setting="http://schemas.android.com/apk/res-auto">
+    <com.smartisanos.home.widget.sys.Title android:id="@id/view_title" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_alignParentTop="true" android:overScrollMode="always" setting:title_titlex="@string/obsession_header_title" />
+    <ScrollView android:layout_width="match_parent" android:layout_height="match_parent" android:layout_below="@id/view_title" android:layout_alignParentBottom="true" android:overScrollMode="always">
+        <LinearLayout android:orientation="vertical" android:layout_width="match_parent" android:layout_height="match_parent">
+            <com.smartisanos.home.settings.SettingItemSwitch android:id="@+id/item_id_home_icon_animation" android:layout_marginTop="@dimen/settings_item_top_bottom_margin" setting:setting_item_switch_title="@string/home_icon_animation_title" style="@style/SettingSubItemSingleStyle" />
+            <com.smartisanos.home.widget.sys.TipsView android:layout_marginTop="@dimen/settings_item_title_margin_top" android:text="@string/home_icon_animation_tips" style="@style/SettingItemTipsStyle" />
+            <com.smartisanos.home.settings.SettingItemSwitch android:id="@id/item_id_hide_lable" android:layout_marginTop="@dimen/settings_item_top_bottom_margin" setting:setting_item_switch_title="@string/obsession_hide_lable" style="@style/SettingSubItemSingleStyle" />
+            <com.smartisanos.home.settings.SettingItemSwitch android:id="@id/item_id_hide_navigation_bar" android:layout_marginTop="@dimen/settings_item_top_bottom_margin" setting:setting_item_switch_title="@string/hide_navigation_bar_label" style="@style/SettingSubItemSingleStyle" />
+            <com.smartisanos.home.widget.sys.TipsView android:layout_marginTop="@dimen/settings_item_title_margin_top" android:text="@string/usage_tips_hide_navigation_summary" style="@style/SettingItemTipsStyle" />
+            <com.smartisanos.home.settings.SettingItemSwitch android:id="@id/item_id_hide_badge" android:layout_marginTop="@dimen/settings_item_top_bottom_margin" setting:setting_item_switch_title="@string/obsession_hide_badge" style="@style/SettingSubItemSingleStyle" />
+            <com.smartisanos.home.widget.sys.TipsView android:layout_marginTop="@dimen/settings_item_title_margin_top" android:text="@string/obsession_badge_reminder_tips" style="@style/SettingItemTipsStyle" />
+            <com.smartisanos.home.settings.SettingItemSwitch android:id="@+id/item_id_badge_swipe_clean" android:layout_marginTop="@dimen/settings_item_top_bottom_margin" setting:setting_item_switch_title="@string/obsession_badge_swipe_clean" style="@style/SettingSubItemSingleStyle" />
+            <com.smartisanos.home.widget.sys.TipsView android:layout_marginTop="@dimen/settings_item_title_margin_top" android:text="@string/obsession_badge_swipe_clean_tips" style="@style/SettingItemTipsStyle" />
+            <com.smartisanos.home.settings.SettingItemSwitch android:id="@id/item_id_unlock_anim" android:layout_marginTop="@dimen/settings_item_top_bottom_margin" setting:setting_item_switch_title="@string/unlock_animation_title" style="@style/SettingSubItemSingleStyle" />
+            <com.smartisanos.home.widget.sys.TipsView android:layout_marginTop="@dimen/settings_item_title_margin_top" android:text="@string/unlock_animation_tips" style="@style/SettingItemTipsStyle" />
+            <com.smartisanos.home.settings.SettingItemSwitch android:id="@+id/item_id_unlock_wait_for_focus" android:layout_marginTop="@dimen/settings_item_top_bottom_margin" setting:setting_item_switch_title="@string/unlock_wait_for_focus_title" style="@style/SettingSubItemSingleStyle" />
+            <com.smartisanos.home.widget.sys.TipsView android:layout_marginTop="@dimen/settings_item_title_margin_top" android:text="@string/unlock_wait_for_focus_tips" style="@style/SettingItemTipsStyle" />
+            <include layout="@layout/item_bottom_shadow_layout" />
+        </LinearLayout>
+    </ScrollView>
+    <include android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_below="@id/view_title" layout="@layout/title_bar_shadow" />
+</RelativeLayout>

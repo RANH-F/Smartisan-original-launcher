@@ -152,6 +152,98 @@ public final class LauncherModelRepository {
         Log.i(TAG, "[MODEL][RESTORE] key=" + key + " reason=" + reason);
     }
 
+    /** Reuse original update/migration/placement; never reinterpret empty resolution as uninstall. */
+    public static void refreshLauncherComponents(final Context context, final String pkg, final int userId) {
+        try {
+            Class.forName("com.smartisanos.launcher.data.A").getMethod("e", Runnable.class)
+                    .invoke(null, new Runnable() {
+                        @Override public void run() { refreshLauncherComponentsOnWorker(context, pkg, userId); }
+                    });
+        } catch (Exception error) {
+            Log.w(TAG, "[COMPONENT][RETAIN] pkg=" + pkg + " reason=worker_unavailable", error);
+        }
+    }
+
+    private static void refreshLauncherComponentsOnWorker(Context context, String pkg, int userId) {
+        if (context == null || pkg == null || userId != 0) return;
+        Collection items;
+        try {
+            Object rows = Class.forName("com.smartisanos.launcher.data.a.l").getMethod("V", String.class)
+                    .invoke(null, "packageName='" + pkg.replace("'", "''") + "' AND itemType=0");
+            if (!(rows instanceof List)) return;
+            items = (List) rows;
+        } catch (Exception error) {
+            Log.w(TAG, "[COMPONENT][RETAIN] pkg=" + pkg + " reason=database_snapshot_unavailable", error);
+            return;
+        }
+        PackageStateRepository packages = new PackageStateRepository(context, new ProfileRepository(context));
+        List<android.content.pm.ResolveInfo> enabled = packages.launcherComponentsForRefresh(pkg, userId);
+        if (enabled == null) return;
+        Set<String> names = new HashSet<String>();
+        for (android.content.pm.ResolveInfo resolve : enabled) {
+            if (resolve == null || resolve.activityInfo == null || !pkg.equals(resolve.activityInfo.packageName)) return;
+            names.add(resolve.activityInfo.name);
+        }
+        for (Object item : items) {
+            if (!pkg.equals(stringField(item, "packageName")) || longField(item, "itemType", -1L) != 0L) continue;
+            // The original updater groups by package/component. Do not let it cross profile owners.
+            if (legacyUserId(item) != userId) return;
+            String component = stringField(item, "componentName");
+            if (!names.contains(component) && !packages.isLauncherComponentExplicitlyDisabled(pkg, component, userId)) {
+                Log.i(TAG, "[COMPONENT][RETAIN] pkg=" + pkg + " component=" + component + " reason=unconfirmed_missing");
+                return;
+            }
+        }
+        try {
+            Class<?> constants = Class.forName("com.smartisanos.launcher.data.Constants");
+            if (Boolean.TRUE.equals(constants.getMethod("isInBlackPkgList", String.class).invoke(null, pkg))) return;
+            ArrayList<android.content.pm.ResolveInfo> matches = new ArrayList<android.content.pm.ResolveInfo>();
+            for (android.content.pm.ResolveInfo resolve : enabled) {
+                if (!Boolean.TRUE.equals(constants.getMethod("isInBlackCmpList", String.class)
+                        .invoke(null, pkg + ";" + resolve.activityInfo.name))) matches.add(resolve);
+            }
+            Class.forName("com.smartisanos.launcher.data.A")
+                    .getMethod("refreshLauncherComponents", String.class, List.class).invoke(null, pkg, matches);
+            SearchIndexRepository.noteModelPackageDispatch(pkg, userId, "changed");
+            Log.i(TAG, "[COMPONENT][REFRESH] pkg=" + pkg + " enabled=" + names + " executor=original_update");
+        } catch (Exception error) {
+            Log.w(TAG, "[COMPONENT][RETAIN] pkg=" + pkg + " reason=update_failed", error);
+        }
+    }
+
+    /** Last check at the original DB worker, after its fresh launcher query. */
+    public static boolean canRemoveDisabledLauncherComponent(Object item) {
+        Context context = launcherApplication();
+        if (context == null || item == null || longField(item, "itemType", -1L) != 0L) {
+            Log.i(TAG, "[COMPONENT][RETAIN] reason=context_or_item_unavailable");
+            return false;
+        }
+        String pkg = stringField(item, "packageName");
+        int userId = legacyUserId(item);
+        PackageStateRepository packages = new PackageStateRepository(context, new ProfileRepository(context));
+        if (packages.launcherComponentsForRefresh(pkg, userId) == null
+                || !packages.isLauncherComponentExplicitlyDisabled(pkg, stringField(item, "componentName"), userId)) {
+            Log.i(TAG, "[COMPONENT][RETAIN] pkg=" + pkg + " reason=disabled_state_unconfirmed");
+            return false;
+        }
+        Log.i(TAG, "[COMPONENT][HIDE] itemId=" + longField(item, "id", -1L) + " pkg=" + pkg
+                + " component=" + stringField(item, "componentName") + " reason=explicitly_disabled packageRemoved=false");
+        return true;
+    }
+
+    public static void refreshStartupDisabledComponents(Context context) {
+        Collection items = currentModelItems();
+        if (context == null || items == null) return;
+        PackageStateRepository packages = new PackageStateRepository(context, new ProfileRepository(context));
+        Set<String> visited = new HashSet<String>();
+        for (Object item : items) {
+            String pkg = stringField(item, "packageName");
+            if (longField(item, "itemType", -1L) == 0L && legacyUserId(item) == 0
+                    && packages.isLauncherComponentExplicitlyDisabled(pkg, stringField(item, "componentName"), 0)
+                    && visited.add(pkg)) refreshLauncherComponents(context, pkg, 0);
+        }
+    }
+
     /** System UI has returned; reconcile only its exact application item through the frozen gate. */
     public static boolean finishSystemUninstall(Object item) {
         Context context = launcherApplication();

@@ -915,6 +915,13 @@
 
     invoke-virtual {v0}, Lcom/smartisanos/smengine/c/b;->create()V
 
+    invoke-virtual {v0}, Lcom/smartisanos/smengine/c/b;->isReady()Z
+    move-result v0
+    if-nez v0, :shadow_depth_created
+    invoke-virtual {p0}, Lcom/smartisanos/smengine/c/i;->iu()V
+    return-void
+    :shadow_depth_created
+
     .line 17
     iget-object v0, p0, Lcom/smartisanos/smengine/c/i;->HX:Lcom/smartisanos/smengine/c/b;
 
@@ -981,6 +988,13 @@
     :cond_0
     invoke-virtual {p0}, Lcom/smartisanos/smengine/c/i;->fu()V
 
+    iget-object v0, p0, Lcom/smartisanos/smengine/c/i;->HX:Lcom/smartisanos/smengine/c/b;
+    invoke-virtual {v0}, Lcom/smartisanos/smengine/c/b;->isReady()Z
+    move-result v0
+    if-nez v0, :shadow_depth_renderable
+    return-void
+    :shadow_depth_renderable
+
     .line 3
     invoke-static {}, Lcom/smartisanos/launcher/view/Ha;->getInstance()Lcom/smartisanos/launcher/view/Ha;
 
@@ -1001,6 +1015,15 @@
     .locals 17
 
     move-object/from16 v0, p0
+
+    iget-object v1, v0, Lcom/smartisanos/smengine/c/i;->HX:Lcom/smartisanos/smengine/c/b;
+    if-eqz v1, :shadow_depth_unavailable
+    invoke-virtual {v1}, Lcom/smartisanos/smengine/c/b;->isReady()Z
+    move-result v1
+    if-nez v1, :shadow_depth_sampleable
+    :shadow_depth_unavailable
+    return-void
+    :shadow_depth_sampleable
 
     .line 1
     invoke-direct/range {p0 .. p0}, Lcom/smartisanos/smengine/c/i;->pB()V
@@ -1241,6 +1264,14 @@
 .end method
 
 .method public init()V
+    .locals 0
+
+    invoke-static {}, Lcom/smartisanos/smengine/c/i;->advanceContextGeneration()V
+    return-void
+.end method
+
+# Renderer invalidation must not construct the worker-owning singleton on the GL thread.
+.method public static advanceContextGeneration()V
     .locals 4
 
     .line 1

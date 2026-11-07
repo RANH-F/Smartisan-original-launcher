@@ -4,6 +4,8 @@
 
 
 # instance fields
+.field private mBufferContextGeneration:I
+
 .field private RE:Lcom/smartisanos/smengine/w;
 
 .field private SE:[F
@@ -340,6 +342,8 @@
 .method private Yx()V
     .locals 3
 
+    invoke-direct {p0}, Lcom/smartisanos/smengine/y;->ensureBufferContext()V
+
     .line 1
     iget v0, p0, Lcom/smartisanos/smengine/y;->cF:I
 
@@ -440,6 +444,8 @@
 .method public Ak()I
     .locals 3
 
+    invoke-direct {p0}, Lcom/smartisanos/smengine/y;->ensureBufferContext()V
+
     .line 1
     iget v0, p0, Lcom/smartisanos/smengine/y;->bF:I
 
@@ -494,6 +500,8 @@
 .method public Dk()V
     .locals 3
 
+    invoke-direct {p0}, Lcom/smartisanos/smengine/y;->ensureBufferContext()V
+
     .line 1
     iget v0, p0, Lcom/smartisanos/smengine/y;->bF:I
 
@@ -546,6 +554,8 @@
 
 .method public Ta(I)V
     .locals 4
+
+    invoke-direct {p0}, Lcom/smartisanos/smengine/y;->ensureBufferContext()V
 
     .line 1
     iget v0, p0, Lcom/smartisanos/smengine/y;->YE:I
@@ -1758,6 +1768,8 @@
 .method public ok()V
     .locals 5
 
+    invoke-direct {p0}, Lcom/smartisanos/smengine/y;->ensureBufferContext()V
+
     .line 1
     iget v0, p0, Lcom/smartisanos/smengine/y;->bF:I
 
@@ -1892,6 +1904,8 @@
 .method public rk()I
     .locals 3
 
+    invoke-direct {p0}, Lcom/smartisanos/smengine/y;->ensureBufferContext()V
+
     .line 1
     iget v0, p0, Lcom/smartisanos/smengine/y;->cF:I
 
@@ -2019,6 +2033,8 @@
 
 .method public za(Z)V
     .locals 5
+
+    invoke-direct {p0}, Lcom/smartisanos/smengine/y;->ensureBufferContext()V
 
     const/4 v0, -0x1
 
@@ -3461,4 +3477,22 @@
         :pswitch_1
         :pswitch_0
     .end packed-switch
+.end method
+
+# Buffer names belong to the EGL generation that uploaded their CPU data.
+.method private ensureBufferContext()V
+    .locals 2
+
+    invoke-static {}, Lcom/smartisanos/launcher/gesture/LauncherHomeCompat;->getEglContextGeneration()I
+    move-result v0
+    iget v1, p0, Lcom/smartisanos/smengine/y;->mBufferContextGeneration:I
+    if-eq v0, v1, :current_context
+
+    const/4 v1, -0x1
+    iput v1, p0, Lcom/smartisanos/smengine/y;->bF:I
+    iput v1, p0, Lcom/smartisanos/smengine/y;->cF:I
+    iput v0, p0, Lcom/smartisanos/smengine/y;->mBufferContextGeneration:I
+
+    :current_context
+    return-void
 .end method

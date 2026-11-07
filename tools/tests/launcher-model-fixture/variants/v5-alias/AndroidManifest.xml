@@ -1,0 +1,13 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.smartisan.launchertest.fixture" android:versionCode="5" android:versionName="5.0">
+    <uses-sdk android:minSdkVersion="23" android:targetSdkVersion="28" />
+    <application android:theme="@android:style/Theme.Material.Light.NoActionBar" android:label="Launcher Model Fixture">
+        <activity android:name=".LauncherActivityA" android:exported="true" />
+        <activity android:name=".ComponentSettingsActivity" android:exported="true" android:label="Component Test Settings" />
+        <activity-alias android:name=".DefaultIcon" android:targetActivity=".LauncherActivityA" android:enabled="true" android:exported="true" android:label="Fixture Default" android:icon="@drawable/fixture_a">
+            <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
+        </activity-alias>
+        <activity-alias android:name=".AlternateIcon" android:targetActivity=".LauncherActivityA" android:enabled="false" android:exported="true" android:label="Fixture Alternate" android:icon="@drawable/fixture_b">
+            <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
+        </activity-alias>
+    </application>
+</manifest>

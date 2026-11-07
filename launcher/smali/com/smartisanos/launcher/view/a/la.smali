@@ -58,6 +58,8 @@
 
 .field protected jz:Z
 
+.field private mFolderIconsContextGeneration:I
+
 .field protected kz:Lcom/smartisanos/smengine/Camera;
 
 .field private log:Lcom/smartisanos/launcher/va;
@@ -2666,9 +2668,101 @@
     return-void
 .end method
 
+.method private restoreRetainedIconSources()V
+    .locals 15
+
+    # Miniature F nodes are not application Cells, so Eb.q cannot own their reload.
+    # Reuse their original FolderIcons source factory and retained active owners.
+    iget-object v9, p0, Lcom/smartisanos/launcher/view/a/la;->iz:[Lcom/smartisanos/smengine/F;
+    if-eqz v9, :folder_sources_done
+    iget-object v0, p0, Lcom/smartisanos/launcher/view/a/la;->Qj:Lcom/smartisanos/launcher/view/a/ka;
+    if-eqz v0, :folder_sources_done
+    iget-object v0, v0, Lcom/smartisanos/launcher/view/a/g;->Rj:Lcom/smartisanos/launcher/data/ItemInfo;
+    if-eqz v0, :folder_sources_done
+    check-cast v0, Lcom/smartisanos/launcher/data/FolderInfo;
+    invoke-virtual {v0}, Lcom/smartisanos/launcher/data/FolderInfo;->nf()Ljava/util/ArrayList;
+    move-result-object v10
+    if-eqz v10, :folder_sources_done
+    array-length v12, v9
+    invoke-virtual {v10}, Ljava/util/ArrayList;->size()I
+    move-result v0
+    invoke-static {v12, v0}, Ljava/lang/Math;->min(II)I
+    move-result v12
+    const/4 v11, 0x0
+    :folder_sources_loop
+    if-ge v11, v12, :folder_sources_done
+    aget-object v13, v9, v11
+    if-eqz v13, :folder_sources_next
+    invoke-virtual {v10, v11}, Ljava/util/ArrayList;->get(I)Ljava/lang/Object;
+    move-result-object v2
+    check-cast v2, Lcom/smartisanos/launcher/data/ItemInfo;
+    if-eqz v2, :folder_sources_next
+    const/4 v1, 0x0
+    invoke-virtual {v2}, Lcom/smartisanos/launcher/data/ItemInfo;->bf()Z
+    move-result v0
+    if-eqz v0, :folder_sources_calendar
+    iget-object v1, p0, Lcom/smartisanos/launcher/view/a/la;->cy:Lcom/smartisanos/launcher/view/activeicon/H;
+    goto :folder_sources_owner_ready
+    :folder_sources_calendar
+    invoke-virtual {v2}, Lcom/smartisanos/launcher/data/ItemInfo;->Te()Z
+    move-result v0
+    if-eqz v0, :folder_sources_owner_ready
+    iget-object v1, p0, Lcom/smartisanos/launcher/view/a/la;->mCalendarView:Lcom/smartisanos/launcher/view/activeicon/m;
+    :folder_sources_owner_ready
+    if-nez v1, :folder_sources_active
+    invoke-virtual {p0, v13, v2}, Lcom/smartisanos/launcher/view/a/la;->a(Lcom/smartisanos/smengine/F;Lcom/smartisanos/launcher/data/ItemInfo;)V
+    goto :folder_sources_next
+    :folder_sources_active
+    invoke-virtual {v2}, Lcom/smartisanos/launcher/data/ItemInfo;->Ne()Ljava/lang/String;
+    move-result-object v3
+    invoke-static {}, Lcom/smartisanos/launcher/theme/IconRasterDiagnostics;->desktopRenderMode()I
+    move-result v8
+    invoke-static {v2, v3, v8}, Lcom/smartisanos/launcher/theme/IconRasterDiagnostics;->textureCacheKey(Ljava/lang/Object;Ljava/lang/String;I)Ljava/lang/String;
+    move-result-object v3
+    const/4 v4, 0x0
+    iget-boolean v5, v2, Lcom/smartisanos/launcher/data/ItemInfo;->mFGTransparentAndBlackWhiteFlag:Z
+    iget-object v0, p0, Lcom/smartisanos/launcher/view/a/la;->Qj:Lcom/smartisanos/launcher/view/a/ka;
+    iget-object v0, v0, Lcom/smartisanos/launcher/view/a/g;->dH:Lcom/smartisanos/launcher/data/LayoutProperty;
+    iget v0, v0, Lcom/smartisanos/launcher/data/LayoutProperty;->icon_size_with_shadow:F
+    float-to-int v6, v0
+    move v7, v6
+    invoke-static/range {v1 .. v8}, Lcom/smartisanos/launcher/e/s;->a(Lcom/smartisanos/launcher/view/activeicon/a;Lcom/smartisanos/launcher/data/ItemInfo;Ljava/lang/String;ZZIII)Lcom/smartisanos/smengine/Da;
+    invoke-virtual {v13, v3}, Lcom/smartisanos/smengine/F;->setImageName(Ljava/lang/String;)V
+    :folder_sources_next
+    add-int/lit8 v11, v11, 0x1
+    goto :folder_sources_loop
+    :folder_sources_done
+    return-void
+.end method
+
+.method public restoreTargetForThemeCube()V
+    .locals 2
+
+    invoke-static {}, Lcom/smartisanos/launcher/gesture/LauncherHomeCompat;->getEglContextGeneration()I
+    move-result v0
+    iget v1, p0, Lcom/smartisanos/launcher/view/a/la;->mFolderIconsContextGeneration:I
+    if-eq v0, v1, :target_ready
+    const/4 v0, 0x1
+    invoke-virtual {p0, v0}, Lcom/smartisanos/launcher/view/a/la;->oa(Z)V
+    :target_ready
+    return-void
+.end method
+
 .method public oa(Z)V
     .locals 5
 
+    # FolderIcons is not a SceneNode: root refresh cannot invalidate its jz cache.
+    # Its retained target has no pixels after an EGL generation change.
+    invoke-static {}, Lcom/smartisanos/launcher/gesture/LauncherHomeCompat;->getEglContextGeneration()I
+    move-result v1
+    iget v2, p0, Lcom/smartisanos/launcher/view/a/la;->mFolderIconsContextGeneration:I
+    if-eq v1, v2, :folder_icons_context_ready
+    iput v1, p0, Lcom/smartisanos/launcher/view/a/la;->mFolderIconsContextGeneration:I
+    if-eqz v2, :folder_icons_notify_dirty
+    invoke-direct {p0}, Lcom/smartisanos/launcher/view/a/la;->restoreRetainedIconSources()V
+    :folder_icons_notify_dirty
+    invoke-virtual {p0}, Lcom/smartisanos/launcher/view/a/la;->dj()V
+    :folder_icons_context_ready
     const/4 v0, 0x0
 
     iget-boolean v1, p0, Lcom/smartisanos/launcher/view/a/la;->jz:Z

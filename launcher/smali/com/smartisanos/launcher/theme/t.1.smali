@@ -2495,6 +2495,33 @@
     .line 13
     invoke-virtual {p0, v10}, Lcom/smartisanos/smengine/Ea;->ab(Ljava/lang/String;)V
 
+    # The offscreen Cell already owns its generated foreground. If a material
+    # later requests the legacy key, the original loader reads the same ItemInfo.
+    invoke-virtual {v7, v5}, Lcom/smartisanos/launcher/view/a/g;->gb(I)Lcom/smartisanos/smengine/SceneNode;
+    move-result-object v11
+    if-nez v11, :cond_4
+    iget-boolean v11, v9, Lcom/smartisanos/launcher/data/ItemInfo;->mFGTransparentAndBlackWhiteFlag:Z
+    if-nez v11, :cond_4
+    invoke-virtual {v7}, Lcom/smartisanos/launcher/view/a/g;->Ol()Ljava/lang/String;
+    move-result-object v11
+    if-eqz v11, :cond_4
+    const-string v12, "#raster:"
+    invoke-virtual {v11, v12}, Ljava/lang/String;->contains(Ljava/lang/CharSequence;)Z
+    move-result v12
+    if-eqz v12, :cond_4
+    invoke-virtual {p0, v11}, Lcom/smartisanos/smengine/Ea;->bb(Ljava/lang/String;)Lcom/smartisanos/smengine/Da;
+    move-result-object v11
+    if-eqz v11, :cond_4
+    iget-wide v11, v9, Lcom/smartisanos/launcher/data/ItemInfo;->id:J
+    invoke-static {v11, v12}, Lcom/smartisanos/launcher/Aa;->i(J)Lcom/smartisanos/launcher/data/ItemInfo;
+    move-result-object v11
+    if-ne v11, v9, :cond_4
+    invoke-virtual {v9}, Lcom/smartisanos/launcher/data/ItemInfo;->Oe()[B
+    move-result-object v11
+    if-eqz v11, :cond_4
+    array-length v11, v11
+    if-nez v11, :cond_2
+
     .line 14
     :cond_4
     invoke-virtual {v9}, Lcom/smartisanos/launcher/data/ItemInfo;->Oe()[B
@@ -6960,6 +6987,28 @@
     return-void
 .end method
 
+.method public restoreTransitionTexturesAfterEglLoss()V
+    .locals 2
+    iget-boolean v0, p0, Lcom/smartisanos/launcher/theme/t;->et:Z
+    if-eqz v0, :transition_textures_ready
+    iget-boolean v0, p0, Lcom/smartisanos/launcher/theme/t;->gt:Z
+    if-eqz v0, :transition_textures_ready
+    iget-object v0, p0, Lcom/smartisanos/launcher/theme/t;->st:Lcom/smartisanos/smengine/g;
+    if-eqz v0, :transition_textures_ready
+    iget-object v0, p0, Lcom/smartisanos/launcher/theme/t;->nt:Lcom/smartisanos/launcher/theme/v;
+    if-eqz v0, :transition_textures_ready
+    invoke-static {}, Lcom/smartisanos/smengine/Ra;->getInstance()Lcom/smartisanos/smengine/Ra;
+    move-result-object v1
+    invoke-virtual {v1}, Lcom/smartisanos/smengine/Ra;->rt()Lcom/smartisanos/smengine/Ea;
+    move-result-object v1
+    invoke-virtual {v1}, Lcom/smartisanos/smengine/Ea;->resetThemeTransitionBindingsAfterEglLoss()V
+    const/4 v1, 0x1
+    invoke-direct {p0, v0, v1}, Lcom/smartisanos/launcher/theme/t;->d(Lcom/smartisanos/launcher/theme/v;Z)V
+    invoke-direct {p0}, Lcom/smartisanos/launcher/theme/t;->bx()V
+    :transition_textures_ready
+    return-void
+.end method
+
 .method public ag()V
     .locals 1
 
@@ -7289,7 +7338,8 @@
     const/4 v0, 0x1
 
     .line 11
-    invoke-virtual {v1, v0}, Lcom/smartisanos/smengine/Da;->Tb(Z)V
+    const/4 v3, 0x0
+    invoke-virtual {v1, v3}, Lcom/smartisanos/smengine/Da;->Tb(Z)V
 
     const-string v3, "t_blur_anim_background"
 

@@ -44,6 +44,8 @@
 
 .field private mName:Ljava/lang/String;
 
+.field private mContextGeneration:I
+
 .field protected mShader:Lcom/smartisanos/smengine/sa;
 
 
@@ -695,6 +697,12 @@
 
     aput-boolean v3, v4, v1
 
+    # A failed layer must not sample the previous material's texture on this unit.
+    if-nez v3, :layer_binding_ready
+    const/16 v4, 0xde1
+    invoke-static {v4, v0}, Lcom/smartisanos/smengine/P;->glBindTexture(II)V
+    :layer_binding_ready
+
     if-eqz v3, :cond_0
 
     const/4 v2, 0x1
@@ -1251,6 +1259,31 @@
 
     if-nez v1, :cond_0
 
+    # This generated bitmap belongs to FolderPageView, not LauncherAssetManager.
+    const-string v2, "t_blur_background_folder"
+    invoke-virtual {v2, p1}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+    move-result v2
+    if-eqz v2, :retained_foreground_source
+    invoke-static {}, Lcom/smartisanos/launcher/view/b/t;->Ur()Lcom/smartisanos/smengine/F;
+    invoke-virtual {v0, p1}, Lcom/smartisanos/smengine/Ea;->bb(Ljava/lang/String;)Lcom/smartisanos/smengine/Da;
+    move-result-object v1
+    if-nez v1, :cond_0
+    # Missing original source must not become a fake APK path or stale binding.
+    const/4 v2, 0x0
+    return v2
+
+    :retained_foreground_source
+    invoke-static {p1}, Lcom/smartisanos/launcher/theme/IconRasterDiagnostics;->isRetainedGeneratedForegroundKey(Ljava/lang/String;)Z
+    move-result v2
+    if-eqz v2, :legacy_bitmap_source
+    invoke-static {p1}, Lcom/smartisanos/launcher/theme/IconRasterDiagnostics;->recoverRetainedGeneratedTexture(Ljava/lang/String;)Ljava/lang/Object;
+    move-result-object v1
+    check-cast v1, Lcom/smartisanos/smengine/Da;
+    if-nez v1, :cond_0
+    # A stale/removed retained owner is not an APK asset or a legacy DB bitmap.
+    const/4 v2, 0x0
+    return v2
+    :legacy_bitmap_source
     .line 11
     invoke-virtual {p0, p1}, Lcom/smartisanos/smengine/mymaterial/f;->hb(Ljava/lang/String;)Landroid/graphics/Bitmap;
 
@@ -1485,25 +1518,31 @@
 .end method
 
 .method public create()V
-    .locals 1
+    .locals 3
 
-    .line 1
-    iget-object p0, p0, Lcom/smartisanos/smengine/mymaterial/f;->mShader:Lcom/smartisanos/smengine/sa;
+    iget-object v0, p0, Lcom/smartisanos/smengine/mymaterial/f;->mShader:Lcom/smartisanos/smengine/sa;
 
-    if-nez p0, :cond_0
+    if-nez v0, :cond_0
 
-    .line 2
-    sget-object p0, Lcom/smartisanos/smengine/mymaterial/f;->log:Lcom/smartisanos/launcher/va;
+    sget-object v0, Lcom/smartisanos/smengine/mymaterial/f;->log:Lcom/smartisanos/launcher/va;
 
-    const-string v0, "shader is null"
+    const-string v1, "shader is null"
 
-    invoke-virtual {p0, v0}, Lcom/smartisanos/launcher/va;->u(Ljava/lang/String;)V
+    invoke-virtual {v0, v1}, Lcom/smartisanos/launcher/va;->u(Ljava/lang/String;)V
 
     return-void
 
-    .line 3
     :cond_0
-    invoke-virtual {p0}, Lcom/smartisanos/smengine/sa;->create()V
+    invoke-virtual {v0}, Lcom/smartisanos/smengine/sa;->create()V
+
+    # Material's numeric-location cache must follow the shared Shader owner.
+    invoke-static {}, Lcom/smartisanos/launcher/gesture/LauncherHomeCompat;->getEglContextGeneration()I
+    move-result v1
+    iget v2, p0, Lcom/smartisanos/smengine/mymaterial/f;->mContextGeneration:I
+    if-eq v1, v2, :material_context_ready
+    invoke-virtual {p0}, Lcom/smartisanos/smengine/mymaterial/f;->clear()V
+    iput v1, p0, Lcom/smartisanos/smengine/mymaterial/f;->mContextGeneration:I
+    :material_context_ready
 
     return-void
 .end method
@@ -1997,7 +2036,7 @@
     if-eqz v0, :cond_2
 
     .line 5
-    invoke-static {p1}, Landroid/graphics/BitmapFactory;->decodeFile(Ljava/lang/String;)Landroid/graphics/Bitmap;
+    invoke-static {p1}, Lcom/smartisanos/launcher/theme/IconIlluminationCompat;->decodeMaterialFile(Ljava/lang/String;)Landroid/graphics/Bitmap;
 
     move-result-object v0
 

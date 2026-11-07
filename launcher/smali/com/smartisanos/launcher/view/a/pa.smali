@@ -1727,6 +1727,15 @@
 .method public draw(Lcom/smartisanos/smengine/Camera;)V
     .locals 3
 
+    # The cube replaces the normal cell draw, but still samples its folder target.
+    iget-object v0, p0, Lcom/smartisanos/launcher/view/a/pa;->mQ:Lcom/smartisanos/launcher/view/a/g;
+    instance-of v1, v0, Lcom/smartisanos/launcher/view/a/ka;
+    if-eqz v1, :folder_target_ready
+    check-cast v0, Lcom/smartisanos/launcher/view/a/ka;
+    invoke-virtual {v0}, Lcom/smartisanos/launcher/view/a/ka;->Ll()Lcom/smartisanos/launcher/view/a/la;
+    move-result-object v0
+    invoke-virtual {v0}, Lcom/smartisanos/launcher/view/a/la;->restoreTargetForThemeCube()V
+    :folder_target_ready
     const/4 v0, 0x0
 
     :goto_0

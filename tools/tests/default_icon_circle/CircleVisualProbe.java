@@ -14,6 +14,36 @@ import java.io.FileOutputStream;
 /** Native Canvas demonstration fixtures; these are not screenshots of the reported apps. */
 public final class CircleVisualProbe {
     public static void main(String[] args) throws Exception {
+        if (args.length > 1) {
+            android.os.Looper.prepareMainLooper();
+            Class<?> type = Class.forName("android.app.ActivityThread");
+            Object thread = type.getMethod("systemMain").invoke(null);
+            android.content.Context context = (android.content.Context) type.getMethod("getSystemContext").invoke(thread);
+            android.content.pm.PackageManager pm = context.getPackageManager();
+            for (int i = 1; i < args.length; i++) {
+                String pkg = args[i];
+                android.content.Intent request = new android.content.Intent(android.content.Intent.ACTION_MAIN)
+                        .addCategory(android.content.Intent.CATEGORY_LAUNCHER).setPackage(pkg);
+                android.content.pm.ResolveInfo info = pm.queryIntentActivities(request, 0).get(0);
+                Drawable input = pm.getResourcesForApplication(info.activityInfo.applicationInfo)
+                        .getDrawableForDensity(info.getIconResource(), 640);
+                if (input instanceof BitmapDrawable) ((BitmapDrawable) input).setFilterBitmap(true);
+                Bitmap raw = Bitmap.createBitmap(256, 256, Bitmap.Config.ARGB_8888);
+                android.graphics.Rect bounds = new android.graphics.Rect(input.getBounds());
+                input.setBounds(0, 0, 256, 256); input.draw(new Canvas(raw)); input.setBounds(bounds);
+                Bitmap output = DefaultIconCircleRenderer.render(input, 256);
+                for (String suffix : new String[]{"raw", "rendered"}) {
+                    try (FileOutputStream stream = new FileOutputStream(args[0] + "." + pkg + "." + suffix + ".png")) {
+                        ("raw".equals(suffix) ? raw : output).compress(Bitmap.CompressFormat.PNG, 100, stream);
+                    }
+                }
+                System.out.println("REAL_ICON " + pkg + " component=" + info.activityInfo.name
+                        + " resource=" + info.getIconResource() + " drawable=" + input.getClass().getName());
+                raw.recycle(); output.recycle();
+            }
+            System.out.println("DEFAULT_CIRCLE_VISUAL_WRITTEN");
+            return;
+        }
         Bitmap panel = Bitmap.createBitmap(720, 590, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(panel);
         canvas.drawColor(0xffdddddd);

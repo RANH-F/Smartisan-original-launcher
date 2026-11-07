@@ -64,6 +64,9 @@
     .line 1
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
+    const/4 v0, -0x1
+    iput v0, p0, Lcom/smartisanos/smengine/Da;->mContextGeneration:I
+
     .line 2
     new-instance v0, Lcom/smartisanos/smengine/Ca;
 
@@ -99,6 +102,9 @@
 
     .line 16
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
+
+    const/4 v0, -0x1
+    iput v0, p0, Lcom/smartisanos/smengine/Da;->mContextGeneration:I
 
     .line 17
     new-instance v0, Lcom/smartisanos/smengine/Ca;
@@ -192,6 +198,9 @@
     .line 32
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 
+    const/4 v0, -0x1
+    iput v0, p0, Lcom/smartisanos/smengine/Da;->mContextGeneration:I
+
     .line 33
     new-instance v0, Lcom/smartisanos/smengine/Ca;
 
@@ -270,6 +279,9 @@
 
     .line 7
     invoke-direct {p0}, Ljava/lang/Object;-><init>()V
+
+    const/4 v0, -0x1
+    iput v0, p0, Lcom/smartisanos/smengine/Da;->mContextGeneration:I
 
     .line 8
     new-instance v0, Lcom/smartisanos/smengine/Ca;
@@ -881,6 +893,15 @@
 
     .line 8
     :cond_2
+    invoke-direct {p0}, Lcom/smartisanos/smengine/Da;->hasCurrentContext()Z
+    move-result v0
+    if-nez v0, :texture_context_ready
+    # Invalidate only the GL name; retained pixels keep their existing owner.
+    const/4 v0, -0x1
+    iput v0, p0, Lcom/smartisanos/smengine/Da;->sG:I
+    const/4 v0, 0x1
+    iput-boolean v0, p0, Lcom/smartisanos/smengine/Da;->rT:Z
+    :texture_context_ready
     iget v0, p0, Lcom/smartisanos/smengine/Da;->sG:I
 
     if-eq v0, v1, :cond_5
@@ -1243,6 +1264,10 @@
 
     invoke-static/range {v5 .. v13}, Lcom/smartisanos/smengine/P;->glTexImage2D(IIIIIIIILjava/nio/Buffer;)V
 
+    invoke-static {}, Lcom/smartisanos/launcher/gesture/LauncherHomeCompat;->getEglContextGeneration()I
+    move-result v0
+    iput v0, p0, Lcom/smartisanos/smengine/Da;->mContextGeneration:I
+
     .line 49
     iget-boolean v0, p0, Lcom/smartisanos/smengine/Da;->yG:Z
 
@@ -1362,6 +1387,16 @@
 .method public Ka(Z)V
     .locals 6
 
+    if-eqz p1, :texture_release_context_ready
+    iget-object v0, p0, Lcom/smartisanos/smengine/Da;->mRenderTarget:Lcom/smartisanos/smengine/N;
+    if-nez v0, :texture_release_context_ready
+    invoke-direct {p0}, Lcom/smartisanos/smengine/Da;->hasCurrentContext()Z
+    move-result v0
+    if-nez v0, :texture_release_context_ready
+    # An old-context number may belong to another texture in the current context.
+    const/4 p1, 0x0
+    :texture_release_context_ready
+
     .line 1
     iget-object v0, p0, Lcom/smartisanos/smengine/Da;->mBitmap:Landroid/graphics/Bitmap;
 
@@ -1459,6 +1494,12 @@
 
     .line 3
     :cond_0
+    invoke-direct {p0}, Lcom/smartisanos/smengine/Da;->hasCurrentContext()Z
+    move-result v0
+    if-nez v0, :texture_id_context_ready
+    const/4 v0, -0x1
+    return v0
+    :texture_id_context_ready
     iget p0, p0, Lcom/smartisanos/smengine/Da;->sG:I
 
     return p0
@@ -1579,6 +1620,39 @@
     .locals 0
     iget p0, p0, Lcom/smartisanos/smengine/Da;->mContextGeneration:I
     return p0
+.end method
+
+.method private hasCurrentContext()Z
+    .locals 2
+    invoke-static {}, Lcom/smartisanos/launcher/gesture/LauncherHomeCompat;->getEglContextGeneration()I
+    move-result v0
+    iget v1, p0, Lcom/smartisanos/smengine/Da;->mContextGeneration:I
+    if-ne v0, v1, :old_texture_context
+    const/4 v0, 0x1
+    return v0
+    :old_texture_context
+    const/4 v0, 0x0
+    return v0
+.end method
+
+.method public needsSourceReload()Z
+    .locals 1
+    iget-object v0, p0, Lcom/smartisanos/smengine/Da;->mRenderTarget:Lcom/smartisanos/smengine/N;
+    if-nez v0, :source_pixels_available
+    iget v0, p0, Lcom/smartisanos/smengine/Da;->mContextGeneration:I
+    if-ltz v0, :source_pixels_available
+    invoke-direct {p0}, Lcom/smartisanos/smengine/Da;->hasCurrentContext()Z
+    move-result v0
+    if-nez v0, :source_pixels_available
+    iget-object v0, p0, Lcom/smartisanos/smengine/Da;->mBitmap:Landroid/graphics/Bitmap;
+    if-nez v0, :source_pixels_available
+    iget-object v0, p0, Lcom/smartisanos/smengine/Da;->qT:Ljava/nio/Buffer;
+    if-nez v0, :source_pixels_available
+    const/4 v0, 0x1
+    return v0
+    :source_pixels_available
+    const/4 v0, 0x0
+    return v0
 .end method
 
 .method public getWidth()F

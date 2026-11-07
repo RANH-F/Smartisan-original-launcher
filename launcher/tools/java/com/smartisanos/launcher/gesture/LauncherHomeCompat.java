@@ -3,6 +3,11 @@ package com.smartisanos.launcher.gesture;
 import android.app.Activity;
 import android.app.KeyguardManager;
 import android.content.Context;
+import android.graphics.RectF;
+import android.os.Handler;
+import android.os.Looper;
+import com.smartisanos.launcher.model.ProfileRepository;
+import com.smartisanos.launcher.model.ProfileState;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
@@ -45,6 +50,40 @@ public final class LauncherHomeCompat {
     private static boolean wallpaperAdjusted;
     private static int lifecycleStrategy;
     private static boolean experimentPaused;
+
+    // Paused 2026-11-04: release builds cannot enable this unfinished experiment,
+    // including devices that retained an enabled preference from a diagnostic APK.
+    private static final boolean HOME_ICON_EXPERIMENT_AVAILABLE = false;
+
+    private static boolean iconAnimationEnabled(Context context) {
+        return HOME_ICON_EXPERIMENT_AVAILABLE
+                && LauncherSettingBridge.readBool(context, ICON_ANIMATION_SETTING, false);
+    }
+
+    public static final String ICON_ANIMATION_SETTING = "launcher_home_icon_animation_enabled";
+    private static final HomeGestureContract.State GESTURES = new HomeGestureContract.State();
+    private static volatile GestureWork gestureWork;
+    private static Handler gestureHandler;
+    private static Runnable gestureExpiry;
+    private static boolean homeResumed;
+    private static volatile boolean geometryCapture;
+
+    private static final class GestureWork {
+        final HomeGestureContract.Request request;
+        final WeakReference<Activity> owner;
+        final ProfileRepository profiles;
+        final long userSerial;
+        // Captured on the UI thread. Bound only after a completed original resume.
+        int width, height, rotation, surfaceGen, scene;
+        volatile boolean ready;
+        GestureWork(HomeGestureContract.Request request, Activity activity,
+                ProfileRepository profiles, long userSerial) {
+            this.request = request;
+            owner = new WeakReference<Activity>(activity);
+            this.profiles = profiles;
+            this.userSerial = userSerial;
+        }
+    }
 
     private LauncherHomeCompat() { }
 
@@ -91,11 +130,12 @@ public final class LauncherHomeCompat {
 
     public static void onLauncherCreated(Activity activity) {
         activityRef = new WeakReference<Activity>(activity);
+        homeResumed = false;
         wallpaperCaptured = false;
         wallpaperAdjusted = false;
         diagnostics = diagnosticsEnabled(activity);
         mark("ACTIVITY_CREATE");
-        inspectGestureContract(activity.getIntent(), "CREATE");
+        acceptGestureContract(activity, activity.getIntent(), "CREATE");
     }
 
     public static void bindSurface(GLSurfaceView surface) {
@@ -148,6 +188,14 @@ public final class LauncherHomeCompat {
         // J/Eb already restore their existing scene and request an engine update.
         // Do not hide/show a valid Surface, re-layout it, or recreate its textures.
         window(activity, "RESUME_END");
+        geometryCapture = iconAnimationEnabled(activity) && Log.isLoggable("HomeGeometry", Log.DEBUG);
+        if (geometryCapture && surface()!=null) {
+            int[] location=new int[2]; surface().getLocationOnScreen(location);
+            Log.i("HomeGeometry", "SURFACE width="+surface().getWidth()+" height="+surface().getHeight()
+                    +" x="+location[0]+" y="+location[1]+" scene="+sceneIdentity+" generation="+surfaceGeneration);
+        }
+        homeResumed = true;
+        prepareGestureFrame(activity);
     }
 
     private static void applyWallpaperExperiment(Activity activity) {
@@ -172,8 +220,13 @@ public final class LauncherHomeCompat {
         wallpaperAdjusted = show != originalWallpaper;
     }
 
-    public static void onLauncherPaused(Activity activity) { window(activity, "PAUSE"); }
+    public static void onLauncherPaused(Activity activity) {
+        homeResumed = false;
+        cancelGestureFor(activity, "pause");
+        window(activity, "PAUSE");
+    }
     public static void onLauncherStopped(Activity activity) {
+        cancelGestureFor(activity, "stop");
         window(activity, "STOP");
         // A retained Surface must not keep scheduling engine updates
         // running behind another app. The experiment alone uses the existing
@@ -189,26 +242,212 @@ public final class LauncherHomeCompat {
         window(activity, "FOCUS value=" + focused);
     }
     public static void onHomeIntent(Activity activity, Intent intent) {
-        inspectGestureContract(intent, "NEW_INTENT");
-        if (isStandardAndroidHome(intent)) window(activity, "HOME_INTENT");
-    }
-    private static void inspectGestureContract(Intent intent, String source) {
-        if (!diagnostics || !isStandardAndroidHome(intent)) return;
-        try {
-            Bundle contract = intent.getBundleExtra("gesture_nav_contract_v1");
-            Message callback = contract == null ? null :
-                    (Message) contract.getParcelable("android.intent.extra.REMOTE_CALLBACK");
-            mark("GESTURE_CONTRACT source=" + source + " present=" + (contract != null)
-                    + " callback=" + (callback != null && callback.replyTo != null));
-        } catch (android.os.BadParcelableException | ClassCastException error) {
-            mark("GESTURE_CONTRACT malformed=" + error.getClass().getSimpleName());
+        if (!isStandardAndroidHome(intent)) cancelGestureFor(activity, "non_home_intent");
+        acceptGestureContract(activity, intent, "NEW_INTENT");
+        if (isStandardAndroidHome(intent)) {
+            window(activity, "HOME_INTENT");
+            // Posted after the original onNewIntent/J.a handler, never changes its ordering.
+            scheduleGesturePreparation();
         }
     }
 
+    public static void onIconAnimationSettingChanged(Context context) {
+        if (!iconAnimationEnabled(context)) {
+            geometryCapture = false;
+            cancelGesture("setting_off");
+        }
+    }
+
+    private static void acceptGestureContract(Activity activity, Intent intent, String source) {
+        if (!isStandardAndroidHome(intent)) return;
+        cancelGesture("new_home");
+        if (Build.VERSION.SDK_INT < 30) return;
+        try {
+            // Disabled/no-contract HOME never allocates a handler, request or GL job.
+            if (!intent.hasExtra(HomeGestureContract.EXTRA)) return;
+            HomeGestureContract.Request request = HomeGestureContract.consume(intent,
+                    iconAnimationEnabled(activity),
+                    SystemClock.uptimeMillis());
+            request = GESTURES.start(request, SystemClock.uptimeMillis());
+            if (request == null) return;
+            ProfileRepository profiles = new ProfileRepository(activity);
+            long userSerial = profiles.serialFor(request.user);
+            if (userSerial < 0 || profiles.stateFor(request.user) != ProfileState.AVAILABLE) {
+                GESTURES.cancel();
+                // No Binder token is retained without a scheduled expiry.
+                GESTURES.expire(request.received + HomeGestureContract.DEADLINE_MS);
+                gestureLog(request, "fallback=profile_unavailable");
+                return;
+            }
+            if (gestureHandler == null) gestureHandler = new Handler(Looper.getMainLooper());
+            final GestureWork work = new GestureWork(request, activity, profiles, userSerial);
+            gestureWork = work;
+            if (gestureExpiry != null) gestureHandler.removeCallbacks(gestureExpiry);
+            gestureExpiry = new Runnable() {
+                @Override public void run() {
+                    if (gestureExpiry == this) gestureExpiry = null;
+                    GESTURES.expire(SystemClock.uptimeMillis());
+                    if (gestureWork == work) cancelGesture("timeout");
+                }
+            };
+            if (!gestureHandler.postAtTime(gestureExpiry,
+                    request.received + HomeGestureContract.DEADLINE_MS)) {
+                cancelGesture("handler_closed");
+                GESTURES.clear();
+                gestureExpiry = null;
+            }
+            gestureLog(request, "received source=" + source + " userSerial=" + userSerial);
+        } catch (android.os.BadParcelableException | ClassCastException | IllegalArgumentException error) {
+            cancelGesture("malformed");
+            try { intent.removeExtra(HomeGestureContract.EXTRA); }
+            catch (android.os.BadParcelableException ignored) { /* Unusable parcel; HOME still proceeds. */ }
+        }
+    }
+
+    private static void prepareGestureFrame(Activity activity) {
+        GestureWork work = gestureWork;
+        if (work == null || work.owner.get() != activity
+                || !homeResumed || sceneIdentity == 0
+                || !GESTURES.current(work.request, SystemClock.uptimeMillis())) return;
+        KeyguardManager keyguard = (KeyguardManager) activity.getSystemService(Context.KEYGUARD_SERVICE);
+        PowerManager power = (PowerManager) activity.getSystemService(Context.POWER_SERVICE);
+        if (activity.isFinishing() || activity.isDestroyed()
+                || (power != null && !power.isInteractive())
+                || (keyguard != null && keyguard.isKeyguardLocked())) {
+            cancelGesture("owner_unavailable_or_locked");
+            return;
+        }
+        GLSurfaceView view = surface();
+        if (view == null || view.getDisplay() == null || !view.isAttachedToWindow()
+                || view.getWidth() <= 0 || view.getHeight() <= 0
+                || !view.getHolder().getSurface().isValid()) return;
+        int[] origin=new int[2]; view.getLocationOnScreen(origin);
+        if(origin[0]!=0 || origin[1]!=0 || !gestureSurfaceUntransformed(view) || view.getDisplay().getRotation()!=0) {
+            cancelGesture("surface_transform_unverified"); return;
+        }
+        work.width = view.getWidth(); work.height = view.getHeight();
+        work.rotation = view.getDisplay().getRotation();
+        work.surfaceGen = surfaceGeneration; work.scene = sceneIdentity;
+        work.ready = true;
+    }
+
+    private static boolean gestureSurfaceUntransformed(View view) {
+        for(int depth=0;view!=null;depth++) {
+            if(depth>=64 || view.getScaleX()!=1f || view.getScaleY()!=1f
+                    || view.getRotation()!=0f || view.getRotationX()!=0f || view.getRotationY()!=0f
+                    || view.getTranslationX()!=0f || view.getTranslationY()!=0f) return false;
+            Object parent=view.getParent();view=parent instanceof View?(View)parent:null;
+        }
+        return true;
+    }
+
+    private static void scheduleGesturePreparation() {
+        final GestureWork work = gestureWork;
+        if (work == null) return;
+        gestureHandler.post(new Runnable() {
+            @Override public void run() {
+                Activity owner = work.owner.get();
+                if (gestureWork == work && owner != null) prepareGestureFrame(owner);
+            }
+        });
+    }
+
+    /** One read-only lookup on the next original GL frame; no queue waits or requestRender. */
+    private static void sampleGestureFrame() {
+        final GestureWork work = gestureWork;
+        if (work == null || !work.ready) return;
+        if (!GESTURES.current(work.request, SystemClock.uptimeMillis())) return;
+        final HomeGestureContract.Request request = GESTURES.claim(SystemClock.uptimeMillis());
+        if (request != work.request) return;
+        HomeIconTarget.Result found;
+        try {
+            if (work.surfaceGen != surfaceGeneration || work.scene != sceneIdentity) {
+                found = new HomeIconTarget.Result(null, "scene_or_surface_changed");
+            } else {
+                found = HomeIconTarget.resolve(request.component, request.user, work.profiles, work.width, work.height);
+            }
+        } catch (ReflectiveOperationException | ClassCastException | IllegalArgumentException error) {
+            found = new HomeIconTarget.Result(null, "model_unavailable_" + error.getClass().getSimpleName());
+        }
+        final HomeIconTarget.Result result = found;
+        gestureHandler.post(new Runnable() {
+            @Override public void run() { completeGestureFrame(work, result); }
+        });
+    }
+
+    private static void completeGestureFrame(GestureWork work, HomeIconTarget.Result result) {
+        if (gestureWork != work || !GESTURES.current(work.request, SystemClock.uptimeMillis())) return;
+        Activity owner = work.owner.get();
+        GLSurfaceView view = surface();
+        if (owner == null || owner.isFinishing() || owner.isDestroyed() || view == null
+                || !iconAnimationEnabled(owner)
+                || view.getDisplay() == null || view.getDisplay().getRotation() != work.rotation
+                || view.getWidth() != work.width || view.getHeight() != work.height
+                || work.surfaceGen != surfaceGeneration || work.scene != sceneIdentity
+                || !view.isAttachedToWindow() || !view.getHolder().getSurface().isValid()) {
+            cancelGesture("stale_owner_or_geometry");
+            return;
+        }
+        KeyguardManager keyguard = (KeyguardManager) owner.getSystemService(Context.KEYGUARD_SERVICE);
+        PowerManager power = (PowerManager) owner.getSystemService(Context.POWER_SERVICE);
+        if ((keyguard != null && keyguard.isKeyguardLocked())
+                || (power != null && !power.isInteractive())) {
+            cancelGesture("locked_before_reply");
+            return;
+        }
+        int[] origin=new int[2]; view.getLocationOnScreen(origin);
+        if(origin[0]!=0 || origin[1]!=0 || !gestureSurfaceUntransformed(view)) {
+            cancelGesture("surface_moved_before_reply");return;
+        }
+        if (result.position == null) {
+            cancelGesture(result.reason);
+            return;
+        }
+        // The resolver admits only the calibrated static-composer subset.
+        if (!HomeGestureContract.validPosition(result.position)
+                || !GESTURES.finish(work.request, SystemClock.uptimeMillis())) {
+            cancelGesture("invalid_position");
+            return;
+        }
+        gestureWork = null;
+        try {
+            HomeGestureContract.send(work.request, result.position);
+            gestureLog(work.request, "sent rect=" + result.position + " source=" + result.reason
+                    + " surface=false system_target_applied=unknown visual=unknown");
+        } catch (android.os.RemoteException | IllegalArgumentException error) {
+            gestureLog(work.request, "fallback=callback_failed");
+        }
+    }
+
+    private static void cancelGestureFor(Activity activity, String reason) {
+        GestureWork work = gestureWork;
+        if (work != null && work.owner.get() == activity) cancelGesture(reason);
+    }
+
+    private static void cancelGesture(String reason) {
+        GestureWork work = gestureWork;
+        gestureWork = null;
+        GESTURES.cancel();
+        if (work != null) gestureLog(work.request, "fallback=" + reason);
+        // A single bounded expiry also clears the recent callback token after cancellation.
+    }
+
+    private static void gestureLog(HomeGestureContract.Request request, String event) {
+        Log.i(TAG, "GESTURE_S1 requestId=" + request.id + " " + event
+                + " component=" + request.component.flattenToShortString()
+                + " elapsed_ns=" + SystemClock.elapsedRealtimeNanos());
+    }
+
     public static void onLauncherDestroyed(Activity activity) {
+        cancelGestureFor(activity, "destroy");
         window(activity, "ACTIVITY_DESTROY");
         Activity current = activityRef == null ? null : activityRef.get();
         if (current == activity) {
+            homeResumed = false;
+            GESTURES.clear();
+            if (gestureHandler != null && gestureExpiry != null)
+                gestureHandler.removeCallbacks(gestureExpiry);
+            gestureExpiry = null;
             activityRef = null;
             surfaceRef = null;
             FRAMES.set(0);
@@ -216,7 +455,10 @@ public final class LauncherHomeCompat {
     }
 
     public static void onSurfaceAttached(GLSurfaceView surface) { surfaceEvent(surface, "ATTACH"); }
-    public static void onSurfaceDetached(GLSurfaceView surface) { surfaceEvent(surface, "DETACH"); }
+    public static void onSurfaceDetached(GLSurfaceView surface) {
+        cancelGesture("surface_detached");
+        surfaceEvent(surface, "DETACH");
+    }
     public static void onWindowVisibilityChanged(GLSurfaceView surface, int visibility) {
         surfaceEvent(surface, "WINDOW_VISIBLE value=" + visibility);
     }
@@ -225,9 +467,14 @@ public final class LauncherHomeCompat {
         surfaceEvent(surface, "SURFACE_CREATE");
     }
     public static void onSurfaceDestroyed(GLSurfaceView surface) {
+        cancelGesture("surface_destroyed");
         surfaceEvent(surface, "SURFACE_DESTROY");
     }
     public static void onSurfaceSizeChanged(GLSurfaceView surface, int width, int height) {
+        GestureWork work = gestureWork;
+        if (work != null && work.ready && (work.width != width || work.height != height))
+            cancelGesture("size_changed");
+        else if (work != null && !work.ready) scheduleGesturePreparation();
         surfaceEvent(surface, "SURFACE_SIZE width=" + width + " height=" + height);
     }
 
@@ -258,12 +505,17 @@ public final class LauncherHomeCompat {
         mark("GL_SURFACE_SIZE width=" + width + " height=" + height);
     }
     public static void onSceneCreate(Object scene) {
+        GestureWork work = gestureWork;
+        if (work != null && work.ready) cancelGesture("scene_changed");
         sceneIdentity = System.identityHashCode(scene);
+        if (work != null && !work.ready) scheduleGesturePreparation();
         mark("SCENE_CREATE");
     }
 
     /** Before GLSurfaceView performs EGL swap; this is not a first-present signal. */
     public static void onRendererFrameComplete() {
+        if (geometryCapture) { geometryCapture=false; HomeGeometryDiagnostics.capture(); }
+        if (gestureWork != null) sampleGestureFrame();
         if (!diagnostics || FRAMES.get() <= 0) return;
         int left = FRAMES.getAndDecrement();
         if (left <= 0) return;

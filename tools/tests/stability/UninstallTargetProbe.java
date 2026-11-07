@@ -67,6 +67,16 @@ public final class UninstallTargetProbe {
         UninstallCompat.requestUninstallItem(current);
         intent(calls, Intent.ACTION_UNINSTALL_PACKAGE, 12);
         UninstallCompat.onLauncherResumed();
+        calls = ja.context.calls;
+        UninstallCompat.requestUninstall("com.smartisanos.launcher");
+        check(ja.context.calls == calls && !UninstallCompat.isSystemUninstallPending());
+        Item self = new Item(0);
+        self.packageName = "com.smartisanos.launcher";
+        UninstallCompat.requestUninstallItem(self);
+        check(ja.context.calls == calls && !UninstallCompat.isSystemUninstallPending());
+        UninstallCompat.requestUninstall("com.smartisanos.launcher.theme.aero");
+        check(ja.context.calls == calls + 1 && UninstallCompat.isSystemUninstallPending());
+        UninstallCompat.onLauncherResumed();
         System.out.println("PASS ANDROID_UNINSTALL_TARGET_CHECKS=" + checks);
     }
 }

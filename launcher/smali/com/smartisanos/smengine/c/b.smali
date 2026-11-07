@@ -4,6 +4,10 @@
 
 
 # instance fields
+.field private mReady:Z
+
+.field private mCreateFailed:Z
+
 .field public UW:I
 
 .field private VW:I
@@ -61,7 +65,17 @@
 
 # virtual methods
 .method public Ac(I)V
-    .locals 0
+    .locals 1
+
+    invoke-virtual {p0}, Lcom/smartisanos/smengine/c/b;->isReady()Z
+    move-result v0
+    if-nez v0, :depth_binding_ready
+    invoke-static {p1}, Lcom/smartisanos/smengine/P;->glActiveTexture(I)V
+    const/4 v0, 0x0
+    const/16 p1, 0xde1
+    invoke-static {p1, v0}, Lcom/smartisanos/smengine/P;->glBindTexture(II)V
+    return-void
+    :depth_binding_ready
 
     .line 1
     invoke-static {p1}, Lcom/smartisanos/smengine/P;->glActiveTexture(I)V
@@ -96,6 +110,12 @@
 
 .method public bind()V
     .locals 1
+
+    invoke-virtual {p0}, Lcom/smartisanos/smengine/c/b;->isReady()Z
+    move-result v0
+    if-nez v0, :depth_binding_ready
+    return-void
+    :depth_binding_ready
 
     .line 1
     iget p0, p0, Lcom/smartisanos/smengine/c/b;->uG:I
@@ -133,8 +153,16 @@
     .line 5
     iput-wide v2, p0, Lcom/smartisanos/smengine/c/b;->WW:J
 
+    const/4 v0, 0x0
+    iput-boolean v0, p0, Lcom/smartisanos/smengine/c/b;->mReady:Z
+    iput-boolean v0, p0, Lcom/smartisanos/smengine/c/b;->mCreateFailed:Z
+
     .line 6
     :cond_0
+    iget-boolean v0, p0, Lcom/smartisanos/smengine/c/b;->mCreateFailed:Z
+    if-eqz v0, :depth_creation_allowed
+    return-void
+    :depth_creation_allowed
     iget v0, p0, Lcom/smartisanos/smengine/c/b;->UW:I
 
     const v2, 0x8d40
@@ -234,6 +262,21 @@
 
     invoke-static {v2, v0, v4, v1, v3}, Lcom/smartisanos/smengine/P;->glFramebufferTexture2D(IIIII)V
 
+    iget v0, p0, Lcom/smartisanos/smengine/c/b;->UW:I
+    if-lez v0, :depth_creation_failed
+    iget v0, p0, Lcom/smartisanos/smengine/c/b;->uG:I
+    if-lez v0, :depth_creation_failed
+    invoke-static {v2}, Lcom/smartisanos/smengine/P;->glCheckFramebufferStatus(I)I
+    move-result v0
+    const v1, 0x8cd5
+    if-eq v0, v1, :depth_creation_complete
+    :depth_creation_failed
+    invoke-direct {p0}, Lcom/smartisanos/smengine/c/b;->failCreation()V
+    return-void
+    :depth_creation_complete
+    const/4 v0, 0x1
+    iput-boolean v0, p0, Lcom/smartisanos/smengine/c/b;->mReady:Z
+
     .line 19
     invoke-static {v2, v3}, Lcom/smartisanos/smengine/P;->glBindFramebuffer(II)V
 
@@ -308,5 +351,54 @@
     .line 7
     invoke-super {p0}, Ljava/lang/Object;->finalize()V
 
+    return-void
+.end method
+
+.method public isReady()Z
+    .locals 4
+    iget-wide v0, p0, Lcom/smartisanos/smengine/c/b;->WW:J
+    sget-wide v2, Lcom/smartisanos/smengine/c/i;->WX:J
+    cmp-long v0, v0, v2
+    if-nez v0, :depth_not_ready
+    iget-boolean v0, p0, Lcom/smartisanos/smengine/c/b;->mReady:Z
+    if-eqz v0, :depth_not_ready
+    iget v0, p0, Lcom/smartisanos/smengine/c/b;->UW:I
+    if-lez v0, :depth_not_ready
+    iget v0, p0, Lcom/smartisanos/smengine/c/b;->uG:I
+    if-lez v0, :depth_not_ready
+    const/4 v0, 0x1
+    return v0
+    :depth_not_ready
+    const/4 v0, 0x0
+    return v0
+.end method
+
+# A failed immutable target is retried only after the existing context/theme generation changes.
+.method private failCreation()V
+    .locals 4
+    const/4 v1, 0x0
+    const/4 v2, 0x1
+    iget v0, p0, Lcom/smartisanos/smengine/c/b;->UW:I
+    if-lez v0, :depth_failed_fbo
+    new-array v3, v2, [I
+    aput v0, v3, v1
+    invoke-static {v2, v3, v1}, Lcom/smartisanos/smengine/P;->glDeleteTextures(I[II)V
+    :depth_failed_fbo
+    iget v0, p0, Lcom/smartisanos/smengine/c/b;->uG:I
+    if-lez v0, :depth_failed_reset
+    new-array v3, v2, [I
+    aput v0, v3, v1
+    invoke-static {v2, v3, v1}, Lcom/smartisanos/smengine/P;->glDeleteFramebuffers(I[II)V
+    :depth_failed_reset
+    const/4 v0, -0x1
+    iput v0, p0, Lcom/smartisanos/smengine/c/b;->UW:I
+    iput v0, p0, Lcom/smartisanos/smengine/c/b;->uG:I
+    iput-boolean v1, p0, Lcom/smartisanos/smengine/c/b;->mReady:Z
+    iput-boolean v2, p0, Lcom/smartisanos/smengine/c/b;->mCreateFailed:Z
+    const v0, 0x8d40
+    invoke-static {v0, v1}, Lcom/smartisanos/smengine/P;->glBindFramebuffer(II)V
+    const-string v0, "SmartisanDepthTarget"
+    const-string v1, "Depth framebuffer incomplete; retry after context/theme rebuild"
+    invoke-static {v0, v1}, Landroid/util/Log;->w(Ljava/lang/String;Ljava/lang/String;)I
     return-void
 .end method

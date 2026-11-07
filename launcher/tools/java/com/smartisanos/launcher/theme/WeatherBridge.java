@@ -702,8 +702,12 @@ public final class WeatherBridge {
         } catch (IllegalArgumentException | UnsupportedOperationException unavailableFusedProvider) {
             // Some vendor builds omit fused service; use an enabled permitted provider.
         } catch (SecurityException denied) {
-            listener.fail("定位权限不可用，请检查授权后重试");
-            return;
+            if (!hasLocationPermission(context)) {
+                listener.fail("定位权限不可用，请检查授权后重试");
+                return;
+            }
+            // A vendor fused provider can reject an otherwise permitted coarse request.
+            // Reuse the enabled-provider fallback without requesting wider permissions.
         } catch (RuntimeException unavailable) {
             listener.fail("定位服务不可用，请检查系统定位设置");
             return;

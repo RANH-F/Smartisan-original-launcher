@@ -5768,6 +5768,26 @@
 
     move-result-object v12
 
+    if-eqz v12, :cond_8
+
+    # The target Dock already composed a foreground for its own icon bounds.
+    # Keep that raster when present instead of replacing it with the page-sized snapshot.
+    invoke-virtual {v12, v15}, Lcom/smartisanos/smengine/SceneNode;->getTextureName(I)Ljava/lang/String;
+    move-result-object v15
+    if-eqz v15, :dock_legacy_theme_texture
+    const-string v8, ":STATIC_APPLICATION_COMPOSER:"
+    invoke-virtual {v15, v8}, Ljava/lang/String;->contains(Ljava/lang/CharSequence;)Z
+    move-result v8
+    if-eqz v8, :dock_legacy_theme_texture
+    invoke-static {}, Lcom/smartisanos/smengine/Ra;->getInstance()Lcom/smartisanos/smengine/Ra;
+    move-result-object v8
+    invoke-virtual {v8}, Lcom/smartisanos/smengine/Ra;->rt()Lcom/smartisanos/smengine/Ea;
+    move-result-object v8
+    invoke-virtual {v8, v15}, Lcom/smartisanos/smengine/Ea;->bb(Ljava/lang/String;)Lcom/smartisanos/smengine/Da;
+    move-result-object v8
+    if-nez v8, :cond_8
+
+    :dock_legacy_theme_texture
     invoke-virtual {v12, v14}, Lcom/smartisanos/smengine/SceneNode;->setImageName(Ljava/lang/String;)V
 
     :cond_8

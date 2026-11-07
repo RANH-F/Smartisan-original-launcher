@@ -215,6 +215,13 @@ public class IconManager {
             return dataDrivenAlias;
         }
         dataDrivenAlias = SystemAliasResolver.EXACT_PACKAGE_MAP.get(pkg);
+        // Shared dialer/contacts packages need component/label disambiguation
+        // before their coarse package default. Exact component aliases stay first.
+        if ("app_icon_phone".equals(dataDrivenAlias)
+                || "source_contactcommon_icon".equals(dataDrivenAlias)) {
+            if (isDialerActivity(cls, label)) return "app_icon_phone";
+            if (isContactsActivity(cls, label)) return "source_contactcommon_icon";
+        }
         if (dataDrivenAlias != null) {
             return dataDrivenAlias;
         }

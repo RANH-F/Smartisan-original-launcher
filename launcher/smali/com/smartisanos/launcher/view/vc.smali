@@ -527,11 +527,47 @@
 
     invoke-static {}, Lcom/smartisanos/launcher/gesture/LauncherHomeCompat;->onEglContextCreated()V
 
+    invoke-static {}, Lcom/smartisanos/smengine/c/i;->advanceContextGeneration()V
+
+    # Rebuild procedural settings-button textures through their original owner.
+    # Initial scene construction creates them itself; only retained scenes need this.
+    invoke-static {}, Lcom/smartisanos/launcher/gesture/LauncherHomeCompat;->getEglContextGeneration()I
+    move-result v0
+    const/4 v1, 0x1
+    if-le v0, v1, :settings_context_ready
+    iget-object v0, p0, Lcom/smartisanos/launcher/view/vc;->ly:Lcom/smartisanos/launcher/view/Eb;
+    if-eqz v0, :settings_context_ready
+    invoke-virtual {v0}, Lcom/smartisanos/launcher/view/Eb;->zh()Lcom/smartisanos/launcher/view/V;
+    move-result-object v0
+    if-eqz v0, :settings_context_ready
+    invoke-virtual {v0}, Lcom/smartisanos/launcher/view/V;->So()Lcom/smartisanos/launcher/view/Ec;
+    move-result-object v0
+    if-eqz v0, :settings_context_ready
+    invoke-virtual {v0}, Lcom/smartisanos/launcher/view/Ec;->Bi()V
+    :settings_context_ready
+
     invoke-static {}, Lcom/smartisanos/smengine/Ra;->getInstance()Lcom/smartisanos/smengine/Ra;
     move-result-object v0
     invoke-virtual {v0}, Lcom/smartisanos/smengine/Ra;->rt()Lcom/smartisanos/smengine/Ea;
     move-result-object v0
     invoke-virtual {v0}, Lcom/smartisanos/smengine/Ea;->resetProjectionBindings()V
+
+    # GPU targets lost their pixels; retained producer dirty flags must follow.
+    # Reuse the original hierarchy refresh once per rebuilt context, not per frame.
+    invoke-static {}, Lcom/smartisanos/launcher/gesture/LauncherHomeCompat;->getEglContextGeneration()I
+    move-result v0
+    const/4 v1, 0x1
+    if-le v0, v1, :scene_targets_context_ready
+    invoke-static {}, Lcom/smartisanos/smengine/Ra;->getInstance()Lcom/smartisanos/smengine/Ra;
+    move-result-object v0
+    invoke-virtual {v0}, Lcom/smartisanos/smengine/Ra;->jt()Lcom/smartisanos/smengine/Q;
+    move-result-object v0
+    if-eqz v0, :scene_targets_context_ready
+    invoke-virtual {v0}, Lcom/smartisanos/smengine/Q;->getRootNode()Lcom/smartisanos/smengine/SceneNode;
+    move-result-object v0
+    if-eqz v0, :scene_targets_context_ready
+    invoke-virtual {v0}, Lcom/smartisanos/smengine/SceneNode;->refreshRenderTarget()V
+    :scene_targets_context_ready
 
     .line 1
     sget-boolean p1, Lcom/smartisanos/launcher/va;->DBG:Z
@@ -812,6 +848,29 @@
     move-result-object p1
 
     invoke-virtual {p1, p0}, Lcom/smartisanos/launcher/theme/t;->a(Ljavax/microedition/khronos/egl/EGLContext;)V
+
+    invoke-static {}, Lcom/smartisanos/launcher/gesture/LauncherHomeCompat;->getEglContextGeneration()I
+    move-result v0
+    const/4 v1, 0x1
+    if-le v0, v1, :theme_transition_context_ready
+    invoke-virtual {p1}, Lcom/smartisanos/launcher/theme/t;->restoreTransitionTexturesAfterEglLoss()V
+    :theme_transition_context_ready
+
+    # Run in the original engine event phase, so Ab cleanup remains after production.
+    invoke-static {}, Lcom/smartisanos/launcher/gesture/LauncherHomeCompat;->getEglContextGeneration()I
+    move-result v0
+    const/4 v1, 0x1
+    if-le v0, v1, :gaussian_context_restore_ready
+    invoke-static {}, Lcom/smartisanos/launcher/view/Eb;->getInstance()Lcom/smartisanos/launcher/view/Eb;
+    move-result-object v0
+    if-eqz v0, :gaussian_context_restore_ready
+    sget-boolean v1, Lcom/smartisanos/launcher/data/Constants;->sIsGaussianTheme:Z
+    if-eqz v1, :gaussian_context_restore_ready
+    new-instance v1, Lcom/smartisanos/launcher/view/GaussianBackgroundRestore;
+    invoke-direct {v1, v0}, Lcom/smartisanos/launcher/view/GaussianBackgroundRestore;-><init>(Lcom/smartisanos/launcher/view/Eb;)V
+    const/4 v0, 0x0
+    invoke-virtual {v1, v0}, Lcom/smartisanos/smengine/n;->q(F)V
+    :gaussian_context_restore_ready
 
     return-void
 .end method

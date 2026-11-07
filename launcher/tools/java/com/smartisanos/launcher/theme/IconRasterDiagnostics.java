@@ -167,11 +167,82 @@ public final class IconRasterDiagnostics {
                     }
     }
 
-    /**
-     * The original theme transition evicts target textures while the outgoing
-     * scene can still draw one frame. Rebuild only our generated application
-     * texture keys from their ItemInfo instead of treating them as APK paths.
-     */
+    /** Only retained foreground nodes have an original Cell capable of exact regeneration. */
+    public static boolean isRetainedGeneratedForegroundKey(String key) {
+        if (key == null || key.startsWith("target/--/")) return false;
+        int stamp = key.indexOf("#" + RASTER_CACHE_VERSION + ":");
+        return stamp > 0 && key.substring(0, stamp).matches("[0-9]+_[^/]+_fore")
+                && (key.contains(":STATIC_APPLICATION_COMPOSER:")
+                || key.contains(":ORIGINAL_ACTIVE_ICON:"));
+    }
+
+    private static boolean sameRasterExceptShadowSpec(String previous, String current) {
+        if (previous == null || current == null || !isRetainedGeneratedForegroundKey(previous)
+                || !isRetainedGeneratedForegroundKey(current)) return false;
+        int oldStart = previous.indexOf(":shadowSpec=");
+        int newStart = current.indexOf(":shadowSpec=");
+        if (oldStart < 0 || newStart < 0) return false;
+        int oldEnd = previous.indexOf(":projection=", oldStart);
+        int newEnd = current.indexOf(":projection=", newStart);
+        return oldEnd > oldStart && newEnd > newStart
+                && previous.substring(0, oldStart).equals(current.substring(0, newStart))
+                && previous.substring(oldEnd).equals(current.substring(newEnd));
+    }
+
+    /** Reuse the retained Cell, including its actual active-icon owner and layout arguments. */
+    public static Object recoverRetainedGeneratedTexture(String key) {
+        if (!isRetainedGeneratedForegroundKey(key)) return null;
+        try {
+            long id = Long.parseLong(key.substring(0, key.indexOf('_')));
+            Class<?> main = Class.forName("com.smartisanos.launcher.view.Eb");
+            Object mainView = main.getMethod("getInstance").invoke(null);
+            Object cell = main.getMethod("q", Long.TYPE).invoke(mainView, Long.valueOf(id));
+            if (cell == null || !sameRasterExceptShadowSpec(key,
+                    (String) cell.getClass().getMethod("Ol").invoke(cell))) {
+                Object dock = main.getMethod("zh").invoke(mainView);
+                if (dock != null) {
+                    Object entries = dock.getClass().getMethod("Fo").invoke(dock);
+                    if (entries instanceof Iterable<?>) {
+                        for (Object entry : (Iterable<?>) entries) {
+                            Object item = entry.getClass().getMethod("Rl").invoke(entry);
+                            if (item != null && String.valueOf(id).equals(itemField(item, "id"))) {
+                                cell = entry;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            if (cell == null || !sameRasterExceptShadowSpec(key,
+                    (String) cell.getClass().getMethod("Ol").invoke(cell))) {
+                Log.w(TAG, "ICON_RETAINED_TEXTURE_UNAVAILABLE reason=owner_or_key_changed itemId=" + id);
+                return null;
+            }
+            // Regenerate through the original Cell, without fb(false)'s Cm() anchor reset.
+            cell.getClass().getMethod("reloadRetainedForegroundTexture").invoke(cell);
+            String currentKey = (String) cell.getClass().getMethod("Ol").invoke(cell);
+            if (!sameRasterExceptShadowSpec(key, currentKey)) {
+                Log.w(TAG, "ICON_RETAINED_TEXTURE_UNAVAILABLE reason=source_changed itemId=" + id);
+                return null;
+            }
+            if (!key.equals(currentKey)) {
+                Object foreground = cell.getClass().getMethod("gb", Integer.TYPE).invoke(cell, Integer.valueOf(0));
+                if (foreground == null) return null;
+                foreground.getClass().getMethod("setImageName", String.class).invoke(foreground, currentKey);
+                Log.i(TAG, "ICON_RETAINED_SHADOW_KEY_REBOUND itemId=" + id);
+            }
+            Class<?> world = Class.forName("com.smartisanos.smengine.Ra");
+            Object manager = world.getMethod("rt").invoke(world.getMethod("getInstance").invoke(null));
+            Object restored = manager.getClass().getMethod("bb", String.class).invoke(manager, currentKey);
+            Log.w(TAG, "ICON_RETAINED_TEXTURE_RECOVERED itemId=" + id + " ready=" + (restored != null));
+            return restored;
+        } catch (ReflectiveOperationException | NumberFormatException error) {
+            Log.w(TAG, "ICON_RETAINED_TEXTURE_RECOVERY_FAILED", error);
+            return null;
+        }
+    }
+
+    /** Existing outgoing-theme compatibility; never used to rebuild a retained foreground. */
     public static Bitmap recoverMissingGeneratedTexture(String key) {
         if (key == null || !key.startsWith("target/--/")
                 || !key.contains("#" + RASTER_CACHE_VERSION + ":")
@@ -179,6 +250,8 @@ public final class IconRasterDiagnostics {
                 && !key.contains(":ORIGINAL_ACTIVE_ICON:"))) {
             return null;
         }
+        // Preserve the existing outgoing-theme target fallback only. Retained
+        // foreground textures must use their original Cell, never this DB bitmap.
         try {
             int idStart = "target/--/".length();
             int idEnd = key.indexOf('_', idStart);

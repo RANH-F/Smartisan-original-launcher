@@ -8816,6 +8816,19 @@
 .method public static j(Lcom/smartisanos/launcher/data/ItemInfo;)Z
     .locals 4
 
+    iget-object v0, p0, Lcom/smartisanos/launcher/data/ItemInfo;->packageName:Ljava/lang/String;
+
+    invoke-static {v0}, Lcom/smartisanos/launcher/compat/UninstallCompat;->isLauncherPackage(Ljava/lang/String;)Z
+
+    move-result v0
+
+    if-eqz v0, :self_uninstall_allowed
+
+    const/4 v0, 0x0
+
+    return v0
+
+    :self_uninstall_allowed
     .line 1
     invoke-virtual {p0}, Lcom/smartisanos/launcher/data/ItemInfo;->We()Z
 

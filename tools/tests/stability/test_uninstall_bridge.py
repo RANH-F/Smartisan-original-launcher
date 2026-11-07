@@ -30,6 +30,12 @@ public class CheckBridge{static void check(boolean ok){if(!ok)throw new Assertio
  com.smartisanos.launcher.model.LauncherModelRepository.removed=true;
  UninstallCompat.requestUninstallItem(main);UninstallCompat.onLauncherResumed();check(oa.animated==3);
  UninstallCompat.onLauncherResumed();check(oa.animated==3);
+ int beforeSelf=ja.context.calls;
+ UninstallCompat.requestUninstall("com.smartisanos.launcher");check(ja.context.calls==beforeSelf&&!UninstallCompat.isSystemUninstallPending());
+ Item self=new Item(4,0,0);self.packageName="com.smartisanos.launcher";
+ UninstallCompat.requestUninstallItem(self);check(ja.context.calls==beforeSelf&&!UninstallCompat.isSystemUninstallPending());
+ UninstallCompat.requestUninstall("com.smartisanos.launcher.theme.aero");check(ja.context.calls==beforeSelf+1&&UninstallCompat.isSystemUninstallPending());UninstallCompat.onLauncherResumed();
+ System.out.println("PASS self-package blocked for package and item routes; theme package still allowed");
  System.out.println("PASS production uninstall bridge: animated cancel, return once, confirmed removal, clone isolation, shortcut exclusion, launch fallback/failure");}
  public static class Item{public long id;public int userId,itemType;public String packageName="app.test";public Item(long i,int u,int t){id=i;userId=u;itemType=t;}}
 }'''

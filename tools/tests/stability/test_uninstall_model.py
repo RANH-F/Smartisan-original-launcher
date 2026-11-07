@@ -6,6 +6,8 @@ import tempfile
 
 ROOT = pathlib.Path(__file__).resolve().parents[3]
 STUBS = {
+    'android/content/pm/ResolveInfo.java': 'package android.content.pm;public class ResolveInfo{public ActivityInfo activityInfo;}',
+    'android/content/pm/ActivityInfo.java': 'package android.content.pm;public class ActivityInfo{public String packageName,name;}',
     'android/database/sqlite/SQLiteTransactionListener.java': 'package android.database.sqlite;public interface SQLiteTransactionListener{void onBegin();void onCommit();void onRollback();}',
     'android/content/Context.java': 'package android.content;public class Context{public Context getApplicationContext(){return this;}}',
     'android/os/UserHandle.java': 'package android.os;public class UserHandle{public int id;public UserHandle(int i){id=i;}}',
@@ -53,6 +55,12 @@ public class CheckModel{
  }
 }''',
 }
+
+STUBS['com/smartisanos/launcher/model/PackageStateRepository.java'] = STUBS['com/smartisanos/launcher/model/PackageStateRepository.java'].replace(
+    'public static class PackageStateResult',
+    'public java.util.List<android.content.pm.ResolveInfo> launcherComponentsForRefresh(String p,int u){return null;}'
+    'public boolean isLauncherComponentExplicitlyDisabled(String p,String c,int u){return false;}'
+    'public static class PackageStateResult')
 
 def check_scene_contract():
     scene = (ROOT/'launcher/smali/com/smartisanos/launcher/view/Sc.smali').read_text('utf-8')

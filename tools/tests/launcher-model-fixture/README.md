@@ -7,6 +7,7 @@ This directory builds an independent test APK for Phase 2B package/model lifecyc
 - `v2`: the same two components, versionCode 2, for replace-position tests
 - `v3-stale`: only LauncherActivityB, versionCode 3, for the stale-component safety gate
 - `v4-add`: LauncherActivityA, LauncherActivityB and LauncherActivityC, versionCode 4, for update component-discovery observation
+- `v5-alias`: two launcher aliases targeting ActivityA, with different icons and labels; exported ComponentSettingsActivity toggles its own aliases with public PackageManager calls (show, switch, hide, and manifest-default reset).
 
 It is not referenced by `build.bat`, `launcher/`, or the production Launcher manifest. Its local debug signing key is created under this fixture's `build/` directory and is intentionally separate from the Launcher signing path.
 

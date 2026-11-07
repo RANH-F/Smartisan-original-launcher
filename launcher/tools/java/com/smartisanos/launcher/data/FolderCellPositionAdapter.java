@@ -63,15 +63,27 @@ public final class FolderCellPositionAdapter {
         try {
             float correctionY = FolderVisualGeometry.contentGroupCenterCorrectionYForFolder(layoutProperty);
             float rowGap = FolderVisualGeometry.rowGapForFolder(layoutProperty);
+            float frameWidth = floatField(layoutProperty, "folder_bookcase_width", 0.0f);
+            float left = floatField(layoutProperty, "page_view_margin_left", 0.0f);
+            float right = floatField(layoutProperty, "page_view_margin_right", 0.0f);
             int length = Array.getLength(positions);
             Object adapted = Array.newInstance(positions.getClass().getComponentType(), length);
+            Class<?> pointType = null;
+            Constructor<?> copyConstructor = null;
             for (int index = 0; index < length; index++) {
                 Object source = Array.get(positions, index);
-                Object copy = copyPoint(source);
-                if (copy != null) {
+                Object copy = null;
+                if (source != null) {
+                    Class<?> sourceType = source.getClass();
+                    if (sourceType != pointType) {
+                        copyConstructor = sourceType.getDeclaredConstructor(sourceType);
+                        copyConstructor.setAccessible(true);
+                        pointType = sourceType;
+                    }
+                    copy = copyConstructor.newInstance(source);
                     float x = floatField(copy, "x", 0.0f);
                     setFloatField(copy, "x",
-                            columnCenterX(layoutProperty, index % COLUMN_COUNT, x));
+                            columnCenterX(frameWidth, left, right, index % COLUMN_COUNT, x));
                     float y = floatField(copy, "y", 0.0f);
                     setFloatField(copy, "y",
                             adjustedY(positions, index, y, correctionY, rowGap));
@@ -137,16 +149,6 @@ public final class FolderCellPositionAdapter {
         return null;
     }
 
-    private static Object copyPoint(Object source) throws Exception {
-        if (source == null) {
-            return null;
-        }
-        Class<?> type = source.getClass();
-        Constructor<?> constructor = type.getDeclaredConstructor(type);
-        constructor.setAccessible(true);
-        return constructor.newInstance(source);
-    }
-
     private static float adjustedY(Object positions, int index, float fallback,
             float correctionY, float rowGap) {
         int column = clampColumn(index % COLUMN_COUNT);
@@ -198,6 +200,11 @@ public final class FolderCellPositionAdapter {
         float frameWidth = floatField(layoutProperty, "folder_bookcase_width", 0.0f);
         float left = floatField(layoutProperty, "page_view_margin_left", 0.0f);
         float right = floatField(layoutProperty, "page_view_margin_right", 0.0f);
+        return columnCenterX(frameWidth, left, right, column, fallback);
+    }
+
+    private static float columnCenterX(float frameWidth, float left, float right,
+            int column, float fallback) {
         float usableWidth = frameWidth - left - right;
         if (frameWidth <= 0.0f || usableWidth <= 0.0f) {
             return fallback;

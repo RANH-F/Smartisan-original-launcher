@@ -29,6 +29,10 @@ public final class UninstallCompat {
     private UninstallCompat() {
     }
 
+    public static boolean isLauncherPackage(String packageName) {
+        return "com.smartisanos.launcher".equals(packageName);
+    }
+
     public static void requestUninstall(String packageName) {
         // Package-only callers (for example theme removal) address the current user.
         requestUninstall(packageName, null);
@@ -40,6 +44,10 @@ public final class UninstallCompat {
         }
         if (sPendingSystemUninstall) {
             Log.w(TAG, "Uninstall ignored: another system confirmation is pending");
+            return;
+        }
+        if (isLauncherPackage(packageName)) {
+            cancelSystemUninstallScene();
             return;
         }
         Context context = null;

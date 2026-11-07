@@ -3092,7 +3092,21 @@
 .end method
 
 .method public createComposedBitmap()Landroid/graphics/Bitmap;
-    .locals 12
+    .locals 13
+
+    # Bitmap recovery may outlive the live scene cleared by g(ZZ).
+    # Reuse the constructor's desktop layout source without reviving cleared nodes.
+    iget-object v12, p0, Lcom/smartisanos/launcher/view/activeicon/m;->Nn:Lcom/smartisanos/launcher/data/LayoutProperty;
+    if-nez v12, :calendar_composition_layout_ready
+    invoke-static {}, Lcom/smartisanos/launcher/view/Eb;->getInstance()Lcom/smartisanos/launcher/view/Eb;
+    move-result-object v12
+    invoke-virtual {v12}, Lcom/smartisanos/launcher/view/Eb;->Ih()Lcom/smartisanos/launcher/view/b/fa;
+    move-result-object v12
+    invoke-virtual {v12}, Lcom/smartisanos/launcher/view/b/fa;->getSinglePageMode()I
+    move-result v12
+    invoke-static {v12}, Lcom/smartisanos/launcher/data/Constants;->mode(I)Lcom/smartisanos/launcher/data/LayoutProperty;
+    move-result-object v12
+    :calendar_composition_layout_ready
 
     const-string v0, "calendar/bg.png"
 
@@ -3143,7 +3157,7 @@
     move-result-object v3
 
     .line 7
-    iget-object v4, p0, Lcom/smartisanos/launcher/view/activeicon/m;->Nn:Lcom/smartisanos/launcher/data/LayoutProperty;
+    move-object v4, v12
 
     iget v4, v4, Lcom/smartisanos/launcher/data/LayoutProperty;->calendar_back_size:F
 
@@ -3168,7 +3182,7 @@
 
     invoke-direct {v5, v4}, Landroid/graphics/Canvas;-><init>(Landroid/graphics/Bitmap;)V
 
-    iget-object v7, p0, Lcom/smartisanos/launcher/view/activeicon/m;->Nn:Lcom/smartisanos/launcher/data/LayoutProperty;
+    move-object v7, v12
 
     iget v7, v7, Lcom/smartisanos/launcher/data/LayoutProperty;->calendar_back_size:F
 
@@ -3210,7 +3224,7 @@
 
     new-instance v8, Landroid/graphics/RectF;
 
-    iget-object v9, p0, Lcom/smartisanos/launcher/view/activeicon/m;->Nn:Lcom/smartisanos/launcher/data/LayoutProperty;
+    move-object v9, v12
 
     iget v9, v9, Lcom/smartisanos/launcher/data/LayoutProperty;->calendar_back_size:F
 
@@ -3235,7 +3249,7 @@
 
     new-instance v8, Landroid/graphics/RectF;
 
-    iget-object v9, p0, Lcom/smartisanos/launcher/view/activeicon/m;->Nn:Lcom/smartisanos/launcher/data/LayoutProperty;
+    move-object v9, v12
 
     iget v9, v9, Lcom/smartisanos/launcher/data/LayoutProperty;->calendar_back_size:F
 
@@ -3258,7 +3272,7 @@
 
     new-instance v8, Landroid/graphics/RectF;
 
-    iget-object v9, p0, Lcom/smartisanos/launcher/view/activeicon/m;->Nn:Lcom/smartisanos/launcher/data/LayoutProperty;
+    move-object v9, v12
 
     iget v9, v9, Lcom/smartisanos/launcher/data/LayoutProperty;->calendar_back_size:F
 
@@ -3281,7 +3295,7 @@
 
     new-instance v8, Landroid/graphics/RectF;
 
-    iget-object p0, p0, Lcom/smartisanos/launcher/view/activeicon/m;->Nn:Lcom/smartisanos/launcher/data/LayoutProperty;
+    move-object p0, v12
 
     iget v9, p0, Lcom/smartisanos/launcher/data/LayoutProperty;->calendar_day_offsetx:F
 

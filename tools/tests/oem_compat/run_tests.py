@@ -25,7 +25,7 @@ public class WeatherProbe {
  static boolean sLocationRequesting,sPendingForcedRefresh;static final long LOCATION_REQUEST_TIMEOUT_MS=20000;
  static void check(boolean v,String m){checks++;if(!v)throw new AssertionError(m);}
  static class Build {static class VERSION {static int SDK_INT=36;}}
- static class Manifest {static class permission {static String ACCESS_FINE_LOCATION="fine";}}
+ static class Manifest {static class permission {static String ACCESS_FINE_LOCATION="fine",ACCESS_COARSE_LOCATION="coarse";}}
  static class PackageManager {static int PERMISSION_GRANTED=0;}
  static class Bundle {}
  static class Looper {static Looper getMainLooper(){return new Looper();}}
@@ -42,13 +42,14 @@ public class WeatherProbe {
  void removeUpdates(LocationListener l){removed++;}List<String> getProviders(boolean e){return enabled;}
  String getBestProvider(Criteria c,boolean e){return enabled.isEmpty()?null:enabled.get(0);}Location getLastKnownLocation(String p){return last.get(p);}}
  static class Prefs {Map<String,String> values=new HashMap<>();Prefs edit(){return this;}Prefs putString(String k,String v){values.put(k,v);return this;}Prefs remove(String k){values.remove(k);return this;}void apply(){}}
- static class Context {static String LOCATION_SERVICE="location";LocationManager manager=new LocationManager();Prefs prefs=new Prefs();boolean fine,enabled=true,automatic=true;
- Object getSystemService(String n){return manager;}int checkSelfPermission(String n){return fine?0:-1;}}
+ static class Context {static String LOCATION_SERVICE="location";LocationManager manager=new LocationManager();Prefs prefs=new Prefs();boolean fine,coarse=true,enabled=true,automatic=true;
+ Object getSystemService(String n){return manager;}int checkSelfPermission(String n){return (Manifest.permission.ACCESS_FINE_LOCATION.equals(n)?fine:coarse)?0:-1;}}
  static class LauncherSettingBridge {static boolean dynamicWeatherCalendarEnabled(Context c){return c.enabled;}}
  static class Log {static void w(String a,String b,Throwable e){}}
  static Prefs prefs(Context c){return c.prefs;}static boolean isAutomaticLocation(Context c){return c.automatic;}
  static void rememberLocation(Context c,Location l){remembers++;}static void fetchAsync(Context c,double a,double b){fetches++;}
  static void scheduleRefresh(Context c,boolean force){manual++;}
+ @PERMISSION@
  @REQUEST@
  @FINISH@
  @VALID@
@@ -65,7 +66,15 @@ public class WeatherProbe {
    requestSingleLocation(c);check(sLocationRequesting,"retry after timeout allowed");saved.onLocationChanged(new Location(31,121));check(sLocationRequesting&&fetches==0,"late old fix cannot finish a newer request");c.manager.listener.onLocationChanged(new Location(31,121));check(!sLocationRequesting&&fetches==1&&!c.prefs.values.containsKey("weather_last_error"),"successful retry clears error");
    c=fresh();c.manager.criteria=false;c.manager.enabled.add("gps");requestSingleLocation(c);check(!sLocationRequesting&&c.manager.requested==null&&Handler.jobs.isEmpty(),"coarse-only permission never starts GPS");
    c=fresh();c.fine=true;c.manager.criteria=false;c.manager.enabled.add("gps");requestSingleLocation(c);check("gps".equals(c.manager.requested),"already-granted fine permission permits GPS fallback");c.manager.listener.onLocationChanged(new Location(31,121));
-   c=fresh();c.manager.denied=true;requestSingleLocation(c);check(!sLocationRequesting&&Handler.jobs.isEmpty(),"revoked permission releases request");
+   c=fresh();c.coarse=false;c.manager.denied=true;requestSingleLocation(c);check(!sLocationRequesting&&Handler.jobs.isEmpty(),"revoked permission releases request");
+   c=fresh();c.manager.denied=true;c.manager.enabled.add("network");requestSingleLocation(c);
+   check(sLocationRequesting&&"network".equals(c.manager.requested)&&!c.fine,"provider-specific fused denial falls back to permitted coarse network");
+   c.manager.listener.onLocationChanged(new Location(31,121));check(fetches==1&&remembers==1&&!sLocationRequesting&&Handler.jobs.isEmpty(),"network fallback completes and releases deadline");
+   c=fresh();c.manager.denied=true;c.manager.enabled.add("gps");requestSingleLocation(c);
+   check(!sLocationRequesting&&c.manager.requested==null&&Handler.jobs.isEmpty(),"fused denial never widens coarse permission to GPS");
+   c=fresh();c.coarse=false;c.manager.denied=true;c.manager.enabled.add("network");requestSingleLocation(c);
+   check(!sLocationRequesting&&c.manager.requested==null&&Handler.jobs.isEmpty()&&c.prefs.values.get("weather_last_error").contains("权限"),"actual permission revocation stops before provider fallback");
+   c.coarse=true;c.manager.denied=false;requestSingleLocation(c);check(sLocationRequesting,"permission denial allows a later explicit retry");c.manager.listener.onLocationChanged(new Location(31,121));
    c=fresh();c.manager.runtimeFailure=true;requestSingleLocation(c);check(!sLocationRequesting&&Handler.jobs.isEmpty(),"failed service releases request");
    c=fresh();Handler.accepted=false;requestSingleLocation(c);check(!sLocationRequesting&&c.manager.criteriaCalls==0,"unavailable callback loop does not leak a request");
    c=fresh();c.enabled=false;requestSingleLocation(c);check(!sLocationRequesting&&Handler.jobs.isEmpty()&&c.manager.criteriaCalls==0,"disabled weather does no location work");
@@ -88,16 +97,25 @@ public class IconProbe {
  static class android {static class util {static class DisplayMetrics {static int DENSITY_XXXHIGH=640;}}}
  static class TextUtils {static boolean isEmpty(String s){return s==null||s.isEmpty();}}
  static class Drawable {final String id;Drawable(String s){id=s;}}
- static class Resources {static class NotFoundException extends RuntimeException{}boolean missing;int id,density;final Drawable raw=new Drawable("raw");
- Drawable getDrawableForDensity(int i,int d){if(missing)throw new NotFoundException();id=i;density=d;return raw;}}
+ static class Resources {static class NotFoundException extends RuntimeException{}boolean missing,denied;int id,density;final Drawable raw=new Drawable("raw");
+ Drawable getDrawableForDensity(int i,int d){if(denied)throw new SecurityException();if(missing)throw new NotFoundException();id=i;density=d;return raw;}}
  static class ApplicationInfo {int icon=10;}static class ActivityInfo {int icon=11;ApplicationInfo applicationInfo=new ApplicationInfo();}
  static class ResolveInfo {int icon,decorations;String resolvePackageName;ActivityInfo activityInfo=new ActivityInfo();final Drawable decorated=new Drawable("OEM-frame");
  int getIconResource(){return icon!=0?icon:activityInfo.icon!=0?activityInfo.icon:activityInfo.applicationInfo.icon;}
  Drawable loadIcon(PackageManager p){decorations++;return decorated;}}
- static class PackageManager {static class NameNotFoundException extends Exception{}Resources resources=new Resources();boolean missing;String owner;
+ static class PackageManager {static class NameNotFoundException extends Exception{}Resources resources=new Resources();boolean missing,metadataDenied;String owner;ResolveInfo resolved;ApplicationInfo application=new ApplicationInfo();int applicationDecorations;final Drawable decorated=new Drawable("OEM-application-frame");
+ ApplicationInfo getApplicationInfo(String p,int flags)throws NameNotFoundException{if(metadataDenied)throw new SecurityException();if(missing)throw new NameNotFoundException();return application;}
+ Drawable getApplicationIcon(String p)throws NameNotFoundException{applicationDecorations++;return decorated;}
  Resources getResourcesForApplication(ApplicationInfo a)throws NameNotFoundException{if(missing)throw new NameNotFoundException();owner="component";return resources;}
  Resources getResourcesForApplication(String s)throws NameNotFoundException{if(missing)throw new NameNotFoundException();owner=s;return resources;}}
+ static class Context {final PackageManager pm=new PackageManager();PackageManager getPackageManager(){return pm;}}
+ static Drawable profileIcon;
+ static Drawable profileLauncherIcon(Context c,String p,String n,int user){return profileIcon;}
+ static ResolveInfo resolveLauncherActivity(PackageManager pm,String p,String n){return pm.resolved;}
  @LOAD@
+ @RESOURCE@
+ @RAWAPP@
+ @DEFAULT@
  public static void main(String[] a){
   for(int api:new int[]{23,24,26,28,30,35,36}){Build.VERSION.SDK_INT=api;
    PackageManager pm=new PackageManager();ResolveInfo r=new ResolveInfo();r.icon=21;
@@ -108,6 +126,25 @@ public class IconProbe {
    pm.missing=false;r.icon=0;r.activityInfo.icon=0;r.activityInfo.applicationInfo.icon=0;check(loadApkIcon(r,pm)==r.decorated,"zero resource fallback retained");
   }
   for(int api:new int[]{23,36}){Build.VERSION.SDK_INT=api;ResolveInfo r=new ResolveInfo();r.activityInfo.applicationInfo=null;check(loadApkIcon(r,new PackageManager())==r.decorated,"incomplete vendor component metadata retains fallback");}
+  for(int api:new int[]{23,24,26,28,30,35,36}){Build.VERSION.SDK_INT=api;
+   Context c=new Context();
+   check(loadDefaultIconForDesktopItem(c,"app.pkg","OldActivity",0)==c.pm.resources.raw&&c.pm.applicationDecorations==0,"unresolved component must read raw application APK icon before OEM wrapper");
+   check(c.pm.resources.id==10&&c.pm.resources.density==640,"application fallback retains APK resource and canonical density");
+   c.pm.resolved=new ResolveInfo();c.pm.resolved.icon=21;
+   check(loadDefaultIconForDesktopItem(c,"app.pkg","Activity",0)==c.pm.resources.raw&&c.pm.resources.id==21,"resolved component wins over application fallback");
+   c.pm.resolved=null;c.pm.resources.missing=true;
+   check(loadDefaultIconForDesktopItem(c,"app.pkg","OldActivity",0)==c.pm.decorated&&c.pm.applicationDecorations==1,"unavailable raw application drawable retains existing fallback");
+   c.pm.resources.missing=false;c.pm.resources.denied=true;
+   check(loadDefaultIconForDesktopItem(c,"app.pkg","OldActivity",0)==c.pm.decorated,"denied raw resources retain fallback");
+   c.pm.resources.denied=false;c.pm.metadataDenied=true;
+   check(loadDefaultIconForDesktopItem(c,"app.pkg","OldActivity",0)==c.pm.decorated,"denied application metadata retains fallback");
+   c.pm.metadataDenied=false;c.pm.application.icon=0;
+   check(loadDefaultIconForDesktopItem(c,"app.pkg","OldActivity",0)==c.pm.decorated,"zero application icon retains platform default");
+   profileIcon=new Drawable("profile-user");int decorations=c.pm.applicationDecorations;
+   check(loadDefaultIconForDesktopItem(c,"app.pkg","Activity",12)==profileIcon&&c.pm.applicationDecorations==decorations,"work profile icon never replaced by owner-user APK artwork");profileIcon=null;
+   check(loadDefaultIconForDesktopItem(null,"app.pkg","Activity",0)==null,"null context remains null");
+   check(loadDefaultIconForDesktopItem(c,"","Activity",0)==null,"empty package remains null");
+  }
   System.out.println("PASS RAW_APK_ICON checks="+checks);
  }
 }
@@ -126,8 +163,8 @@ public class RefreshProbe {
   static class Display {Mode current;Mode[] supported;Display(){current=new Mode(1080,2400,60);supported=new Mode[]{current,new Mode(1080,2400,90),new Mode(1080,2400,120),new Mode(1440,3200,144)};}
    Mode getMode(){return current;}Mode[] getSupportedModes(){return supported;}
    static class Mode {int w,h;float rate;Mode(int a,int b,float r){w=a;h=b;rate=r;}int getPhysicalWidth(){return w;}int getPhysicalHeight(){return h;}float getRefreshRate(){return rate;}}}
-  static class Surface {static final int FRAME_RATE_COMPATIBILITY_DEFAULT=0,CHANGE_FRAME_RATE_ONLY_IF_SEAMLESS=0;boolean valid=true,fail;float requested;int calls,arity;
-   boolean isValid(){return valid;}void setFrameRate(float r,int c){if(fail)throw new IllegalStateException();requested=r;calls++;arity=2;}void setFrameRate(float r,int c,int s){if(fail)throw new IllegalStateException();requested=r;calls++;arity=3;}}
+  static class Surface {static final int FRAME_RATE_COMPATIBILITY_DEFAULT=0,FRAME_RATE_COMPATIBILITY_AT_LEAST=2,CHANGE_FRAME_RATE_ONLY_IF_SEAMLESS=0;boolean valid=true,fail;float requested;int calls,arity,compatibility,strategy;
+   boolean isValid(){return valid;}void setFrameRate(float r,int c){if(fail)throw new IllegalStateException();requested=r;compatibility=c;calls++;arity=2;}void setFrameRate(float r,int c,int s){if(fail)throw new IllegalStateException();requested=r;compatibility=c;strategy=s;calls++;arity=3;}}
   static class SurfaceView {Context context;Display display;Surface surface=new Surface();SurfaceView(Context c,Display d){context=c;display=d;}Context getContext(){return context;}Display getDisplay(){return display;}Holder getHolder(){return new Holder(surface);}}
   static class Holder {Surface s;Holder(Surface v){s=v;}Surface getSurface(){return s;}}
   static class WindowManager {static class LayoutParams {int preferredDisplayModeId;float preferredRefreshRate;}}
@@ -136,10 +173,11 @@ public class RefreshProbe {
  @WINDOW@
  @HIGHEST@
  public static void main(String[] args){
-  for(int api:new int[]{23,28,30,31,35,36}){Build.VERSION.SDK_INT=api;android.view.Display d=new android.view.Display();Window w=new Window(d);Activity a=new Activity(w);android.view.SurfaceView v=new android.view.SurfaceView(new ContextWrapper(a),d);
+  for(int api:new int[]{23,28,30,31,35,36,37}){Build.VERSION.SDK_INT=api;android.view.Display d=new android.view.Display();Window w=new Window(d);Activity a=new Activity(w);android.view.SurfaceView v=new android.view.SurfaceView(new ContextWrapper(a),d);
    applyLauncherSurfaceRefresh(v);
    if(api<30){check(w.updates==0&&v.surface.calls==0,"old API path unchanged");continue;}
    check(w.attrs.preferredRefreshRate==120&&w.updates==1,"owning window and Surface vote together");check(v.surface.requested==120&&v.surface.arity==(api>=31?3:2),"same-resolution maximum and API gate retained");
+   check(v.surface.compatibility==(api>=36&&@AT_LEAST@?2:0)&&v.surface.strategy==0,"compatibility gate and seamless strategy");
    applyLauncherSurfaceRefresh(v);check(w.updates==1,"unchanged window vote not reapplied");
    w.attrs.preferredDisplayModeId=42;w.attrs.preferredRefreshRate=90;applyLauncherSurfaceRefresh(v);check(w.attrs.preferredDisplayModeId==42&&w.attrs.preferredRefreshRate==90,"explicit mode preference is preserved");
    w.attrs.preferredDisplayModeId=0;v.surface.fail=true;applyLauncherSurfaceRefresh(v);check(w.attrs.preferredRefreshRate==120,"Surface failure does not discard window capability hint");
@@ -192,16 +230,21 @@ def main():
     ap.add_argument('--host-source',type=Path,default=THEME/'MaintainedLauncherSettingsHost.java')
     ap.add_argument('--bridge-source',type=Path,default=THEME/'LauncherSettingBridge.java')
     ap.add_argument('--android-serial')
+    ap.add_argument('--at-least',action='store_true',help='Expect API36+ UI compatibility in a diagnostic bridge source')
     ap.add_argument('--sdk',type=Path,default=Path('D:/sdk'))
     ap.add_argument('--output',type=Path)
     args=ap.parse_args();sources={}
     if args.suite in ('all','weather'):
         s=args.weather_source.read_text(encoding='utf-8-sig')
-        sources['WeatherProbe']=WEATHER.replace('@REQUEST@',block(s,'private static void requestSingleLocation(')).replace('@FINISH@',block(s,'private static void finishLocationRequest(')).replace('@VALID@',block(s,'private static boolean validCoordinate(')).replace('@LAST@',block(s,'private static Location bestLastLocation('))
+        sources['WeatherProbe']=WEATHER.replace('@PERMISSION@',block(s,'private static boolean hasLocationPermission(')).replace('@REQUEST@',block(s,'private static void requestSingleLocation(')).replace('@FINISH@',block(s,'private static void finishLocationRequest(')).replace('@VALID@',block(s,'private static boolean validCoordinate(')).replace('@LAST@',block(s,'private static Location bestLastLocation('))
     if args.suite in ('all','icon'):
-        s=args.host_source.read_text(encoding='utf-8-sig');sources['IconProbe']=ICON.replace('@LOAD@',block(s,'private static Drawable loadApkIcon('))
+        s=args.host_source.read_text(encoding='utf-8-sig')
+        sources['IconProbe']=(ICON.replace('@LOAD@',block(s,'private static Drawable loadApkIcon('))
+            .replace('@DEFAULT@',block(s,'public static Drawable loadDefaultIconForDesktopItem('))
+            .replace('@RESOURCE@',block(s,'private static Drawable loadApkIconResource(') if 'private static Drawable loadApkIconResource(' in s else '')
+            .replace('@RAWAPP@',block(s,'private static Drawable loadApkApplicationIcon(') if 'private static Drawable loadApkApplicationIcon(' in s else ''))
     if args.suite in ('all','refresh'):
-        s=args.bridge_source.read_text(encoding='utf-8-sig');sources['RefreshProbe']=REFRESH.replace('@SURFACE@',block(s,'public static void applyLauncherSurfaceRefresh(')).replace('@WINDOW@',block(s,'public static void applyLauncherWindowRefresh(')).replace('@HIGHEST@',block(s,'private static float highestSameResolutionRefresh('))
+        s=args.bridge_source.read_text(encoding='utf-8-sig');sources['RefreshProbe']=REFRESH.replace('@AT_LEAST@',str(args.at_least).lower()).replace('@SURFACE@',block(s,'public static void applyLauncherSurfaceRefresh(')).replace('@WINDOW@',block(s,'public static void applyLauncherWindowRefresh(')).replace('@HIGHEST@',block(s,'private static float highestSameResolutionRefresh('))
     if args.suite in ('all','status'):
         s=args.host_source.read_text(encoding='utf-8-sig');sources['StatusProbe']=STATUS.replace('@BIND@',block(s,'private static void bindWeatherStatusUpdates('))
     if args.android_serial:
@@ -226,6 +269,13 @@ def main():
   java.lang.reflect.Method batch=listener.getClass().getDeclaredMethod("onLocationChanged",List.class);batch.setAccessible(true);batch.invoke(listener,Arrays.asList(fix));
   java.lang.reflect.Method flush=listener.getClass().getDeclaredMethod("onFlushComplete",int.class);flush.setAccessible(true);flush.invoke(listener,1);
   check(fetches==1&&c.manager.removed==1,"new SDK callback implementations are safe on old runtime");
+  Context fallback=fresh();fallback.manager.denied=true;fallback.manager.enabled.add("network");requestSingleLocation(fallback);
+  check(sLocationRequesting&&"network".equals(fallback.manager.requested)&&!fallback.fine,"fused denial uses permitted network with real Android callback interface");
+  fallback.manager.listener.onLocationChanged(fix);check(fetches==1&&!sLocationRequesting&&fallback.manager.removed==1,"network callback completes once on actual runtime");
+  Context revoked=fresh();revoked.coarse=false;revoked.manager.denied=true;revoked.manager.enabled.add("network");requestSingleLocation(revoked);
+  check(!sLocationRequesting&&revoked.manager.requested==null,"actual permission denial never starts fallback");
+  Context gps=fresh();gps.manager.denied=true;gps.manager.enabled.add("gps");requestSingleLocation(gps);
+  check(!sLocationRequesting&&gps.manager.requested==null,"coarse request does not widen permission on real runtime");
   System.out.println("PASS WEATHER_NATIVE_CALLBACK api="+Build.VERSION.SDK_INT+" checks="+checks+"; location service and prefs are doubles");
  }
 ''',1)

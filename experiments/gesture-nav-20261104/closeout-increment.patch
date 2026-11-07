@@ -1,0 +1,183 @@
+diff --git a/docs/INDEX.md b/docs/INDEX.md
+--- a/docs/INDEX.md
++++ b/docs/INDEX.md
+@@ -27,7 +27,7 @@
+ 
+ - [自适应刷新率工作区审计](compatibility/ADAPTIVE_REFRESH_AUDIT_20261104.md)：2026-11-04请求入口、动画时钟、既有无效候选及RMS进程归属／有限租期验证前置条件；未新增生产修复。
+ 
+-- [无 ROOT 返回图标动画：调用链审计与实施设计](compatibility/GESTURE_NAV_CONTRACT_IMPLEMENTATION_DESIGN.md)：2026-11-04审计基线及S1状态；有限12宫格静态图稿已接通生产回复，系统采用待验，尚未通过本次动画验收，S2未进入。
++- [无 ROOT 返回图标动画：调用链审计与实施设计](compatibility/GESTURE_NAV_CONTRACT_IMPLEMENTATION_DESIGN.md)：截至2026-11-04暂停；S1未通过，S2不启动。正式入口隐藏、编译开关关闭；代码／补丁与证据见实验归档。
+ 
+ - [全项目架构审计](development/FULL_PROJECT_ARCHITECTURE_AUDIT.md)：2026-10-15真实工作区、入口、线程和Owner盘点。
+ - [稳定性与问题清单](development/FULL_STABILITY_AND_BUG_AUDIT.md)：分级证据、最小修复、撤回候选及未关闭风险。
+diff --git a/tools/tests/gesture_nav/README.md b/tools/tests/gesture_nav/README.md
+--- a/tools/tests/gesture_nav/README.md
++++ b/tools/tests/gesture_nav/README.md
+@@ -1,11 +1,17 @@
++> Paused 2026-11-04. Product builds hide the settings entry and set
++> HOME_ICON_EXPERIMENT_AVAILABLE=false. The 193-check result is retained historical
++> experimental evidence, not a new release validation. --experimental-build changes
++> only generated JVM test copies; it never enables the product or installs anything.
++> Archived source/patches and evidence index: experiments/gesture-nav-20261104/README.md.
++
+ # S1 controlled tests
+ 
+ Run from the project root:
+ 
+ ```powershell
+-python -B tools/tests/gesture_nav/run_tests.py
+-python -B tools/tests/gesture_nav/run_tests.py --negative-control consume --output build/gesture-nav-s1-20261104/negative-consume
+-python -B tools/tests/gesture_nav/run_tests.py --negative-control deadline --output build/gesture-nav-s1-20261104/negative-deadline
++python -B tools/tests/gesture_nav/run_tests.py --experimental-build
++python -B tools/tests/gesture_nav/run_tests.py --experimental-build --negative-control consume --output build/gesture-nav-s1-20261104/negative-consume
++python -B tools/tests/gesture_nav/run_tests.py --experimental-build --negative-control deadline --output build/gesture-nav-s1-20261104/negative-deadline
+ ```
+ 
+ The runner compiles the complete production `LauncherHomeCompat`, `HomeGestureContract`,
+diff --git a/tools/tests/gesture_nav/run_tests.py b/tools/tests/gesture_nav/run_tests.py
+--- a/tools/tests/gesture_nav/run_tests.py
++++ b/tools/tests/gesture_nav/run_tests.py
+@@ -115,8 +115,11 @@
+     parser = argparse.ArgumentParser(__doc__)
+     parser.add_argument('--jdk', default='E:/Program Files/Android/Android Studio/jbr')
+     parser.add_argument('--output', default=str(ROOT/'build/gesture-nav-s1-20261104/tests'))
++    parser.add_argument('--experimental-build', action='store_true', help='Enable the paused compile-time gate only in generated JVM test copies')
+     parser.add_argument('--negative-control', choices=['consume', 'deadline'])
+     args = parser.parse_args()
++    if not args.experimental_build:
++        parser.error('Experiment paused: use --experimental-build for the preserved 193-check experimental suite; product source remains disabled')
+     out = Path(args.output)
+     source, classes = out/'src', out/'classes'
+     source.mkdir(parents=True, exist_ok=True)
+@@ -134,6 +137,10 @@
+                 body = body.replace(b'intent.removeExtra(EXTRA);', b'/* negative: leave extra intact */')
+             else:
+                 body = body.replace(b'return now < received || now - received >= DEADLINE_MS;', b'return false;')
++        if name == 'LauncherHomeCompat':
++            gate = b'HOME_ICON_EXPERIMENT_AVAILABLE = false;'
++            assert body.count(gate) == 1, 'Expected paused product gate'
++            body = body.replace(gate, b'HOME_ICON_EXPERIMENT_AVAILABLE = true;')
+         target = source/PACKAGE/(name+'.java')
+         target.parent.mkdir(parents=True, exist_ok=True)
+         target.write_bytes(body)
+diff --git a/launcher/tools/maintained_settings_res/res/layout/setting_ocd_options.xml b/launcher/tools/maintained_settings_res/res/layout/setting_ocd_options.xml
+--- a/launcher/tools/maintained_settings_res/res/layout/setting_ocd_options.xml
++++ b/launcher/tools/maintained_settings_res/res/layout/setting_ocd_options.xml
+@@ -4,8 +4,6 @@
+     <com.smartisanos.home.widget.sys.Title android:id="@id/view_title" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_alignParentTop="true" android:overScrollMode="always" setting:title_titlex="@string/obsession_header_title" />
+     <ScrollView android:layout_width="match_parent" android:layout_height="match_parent" android:layout_below="@id/view_title" android:layout_alignParentBottom="true" android:overScrollMode="always">
+         <LinearLayout android:orientation="vertical" android:layout_width="match_parent" android:layout_height="match_parent">
+-            <com.smartisanos.home.settings.SettingItemSwitch android:id="@+id/item_id_home_icon_animation" android:layout_marginTop="@dimen/settings_item_top_bottom_margin" setting:setting_item_switch_title="@string/home_icon_animation_title" style="@style/SettingSubItemSingleStyle" />
+-            <com.smartisanos.home.widget.sys.TipsView android:layout_marginTop="@dimen/settings_item_title_margin_top" android:text="@string/home_icon_animation_tips" style="@style/SettingItemTipsStyle" />
+             <com.smartisanos.home.settings.SettingItemSwitch android:id="@id/item_id_hide_lable" android:layout_marginTop="@dimen/settings_item_top_bottom_margin" setting:setting_item_switch_title="@string/obsession_hide_lable" style="@style/SettingSubItemSingleStyle" />
+             <com.smartisanos.home.settings.SettingItemSwitch android:id="@id/item_id_hide_navigation_bar" android:layout_marginTop="@dimen/settings_item_top_bottom_margin" setting:setting_item_switch_title="@string/hide_navigation_bar_label" style="@style/SettingSubItemSingleStyle" />
+             <com.smartisanos.home.widget.sys.TipsView android:layout_marginTop="@dimen/settings_item_title_margin_top" android:text="@string/usage_tips_hide_navigation_summary" style="@style/SettingItemTipsStyle" />
+diff --git a/launcher/tools/java/com/smartisanos/launcher/gesture/LauncherHomeCompat.java b/launcher/tools/java/com/smartisanos/launcher/gesture/LauncherHomeCompat.java
+--- a/launcher/tools/java/com/smartisanos/launcher/gesture/LauncherHomeCompat.java
++++ b/launcher/tools/java/com/smartisanos/launcher/gesture/LauncherHomeCompat.java
+@@ -51,6 +51,15 @@
+     private static int lifecycleStrategy;
+     private static boolean experimentPaused;
+ 
++    // Paused 2026-11-04: release builds cannot enable this unfinished experiment,
++    // including devices that retained an enabled preference from a diagnostic APK.
++    private static final boolean HOME_ICON_EXPERIMENT_AVAILABLE = false;
++
++    private static boolean iconAnimationEnabled(Context context) {
++        return HOME_ICON_EXPERIMENT_AVAILABLE
++                && LauncherSettingBridge.readBool(context, ICON_ANIMATION_SETTING, false);
++    }
++
+     public static final String ICON_ANIMATION_SETTING = "launcher_home_icon_animation_enabled";
+     private static final HomeGestureContract.State GESTURES = new HomeGestureContract.State();
+     private static volatile GestureWork gestureWork;
+@@ -179,7 +188,7 @@
+         // J/Eb already restore their existing scene and request an engine update.
+         // Do not hide/show a valid Surface, re-layout it, or recreate its textures.
+         window(activity, "RESUME_END");
+-        geometryCapture = Log.isLoggable("HomeGeometry", Log.DEBUG);
++        geometryCapture = iconAnimationEnabled(activity) && Log.isLoggable("HomeGeometry", Log.DEBUG);
+         if (geometryCapture && surface()!=null) {
+             int[] location=new int[2]; surface().getLocationOnScreen(location);
+             Log.i("HomeGeometry", "SURFACE width="+surface().getWidth()+" height="+surface().getHeight()
+@@ -243,7 +252,8 @@
+     }
+ 
+     public static void onIconAnimationSettingChanged(Context context) {
+-        if (!LauncherSettingBridge.readBool(context, ICON_ANIMATION_SETTING, false)) {
++        if (!iconAnimationEnabled(context)) {
++            geometryCapture = false;
+             cancelGesture("setting_off");
+         }
+     }
+@@ -256,7 +266,7 @@
+             // Disabled/no-contract HOME never allocates a handler, request or GL job.
+             if (!intent.hasExtra(HomeGestureContract.EXTRA)) return;
+             HomeGestureContract.Request request = HomeGestureContract.consume(intent,
+-                    LauncherSettingBridge.readBool(activity, ICON_ANIMATION_SETTING, false),
++                    iconAnimationEnabled(activity),
+                     SystemClock.uptimeMillis());
+             request = GESTURES.start(request, SystemClock.uptimeMillis());
+             if (request == null) return;
+@@ -370,7 +380,7 @@
+         Activity owner = work.owner.get();
+         GLSurfaceView view = surface();
+         if (owner == null || owner.isFinishing() || owner.isDestroyed() || view == null
+-                || !LauncherSettingBridge.readBool(owner, ICON_ANIMATION_SETTING, false)
++                || !iconAnimationEnabled(owner)
+                 || view.getDisplay() == null || view.getDisplay().getRotation() != work.rotation
+                 || view.getWidth() != work.width || view.getHeight() != work.height
+                 || work.surfaceGen != surfaceGeneration || work.scene != sceneIdentity
+diff --git a/launcher/tools/java/com/smartisanos/launcher/theme/MaintainedLauncherSettingsHost.java b/launcher/tools/java/com/smartisanos/launcher/theme/MaintainedLauncherSettingsHost.java
+--- a/launcher/tools/java/com/smartisanos/launcher/theme/MaintainedLauncherSettingsHost.java
++++ b/launcher/tools/java/com/smartisanos/launcher/theme/MaintainedLauncherSettingsHost.java
+@@ -14824,8 +14824,6 @@
+             bindBackTitle(activity, resources, root, "view_title",
+                     getString(resources, "obsession_header_title", "OCD Settings"), "OCD_OPTIONS", backToMainAction(activity));
+             bindSwitch(activity, resources, root, "item_id_hide_lable", "launcher_hide_lable", false);
+-            bindSwitch(activity, resources, root, "item_id_home_icon_animation",
+-                    com.smartisanos.launcher.gesture.LauncherHomeCompat.ICON_ANIMATION_SETTING, false);
+             bindSwitch(activity, resources, root, "item_id_hide_navigation_bar", "launcher_hide_navigation_bar", false);
+             bindBadgeVisibilitySwitch(activity, resources, root);
+             bindBadgeSwipeCleanSwitch(activity, resources, root);
+diff --git a/docs/compatibility/GESTURE_NAV_CONTRACT_IMPLEMENTATION_DESIGN.md b/docs/compatibility/GESTURE_NAV_CONTRACT_IMPLEMENTATION_DESIGN.md
+--- a/docs/compatibility/GESTURE_NAV_CONTRACT_IMPLEMENTATION_DESIGN.md
++++ b/docs/compatibility/GESTURE_NAV_CONTRACT_IMPLEMENTATION_DESIGN.md
+@@ -1,8 +1,14 @@
+ # 无 ROOT 应用返回图标动画：调用链审计与实施设计
+ 
+-日期：2026-11-04。阶段：**S0完成；S1已接通有限12宫格静态图稿生产回复，系统采用待验；S2／S3未进入**。
++**GestureNavContract 移植：暂停开发。截至 2026-11-04。**
+ 
+-本页是本次移植的设计基线。默认策略保持关闭，不能把历史实验算作本次验收；本次实际实现和限制见第7节及开发日志。
++协议收发、限定图标几何、系统 finish 回调均已验证。系统动画未观察到采用目标坐标，S1 未通过。S2 不启动。
++
++保留实验代码与证据，正式发布默认关闭并隐藏未完成入口。后续只有获得新的系统动画目标更新证据，才重新评估。
++
++本次不是图标坐标算不出来，也不是系统完全不响应，而是系统处理了协议回复，却没有观察到预期的收拢结果。具体阻断点仍未确定。限定几何仅含已记录样本，不扩展为跨图标／宫格／ROM通过；下文是历史设计与阶段记录，其“下一步”均不再自动执行。
++
++[暂停归档与恢复说明](../../experiments/gesture-nav-20261104/README.md)。
+ 
+ ## 1. 目标与历史边界
+ 
+diff --git a/docs/development/DEVELOPMENT_LOG.md b/docs/development/DEVELOPMENT_LOG.md
+--- a/docs/development/DEVELOPMENT_LOG.md
++++ b/docs/development/DEVELOPMENT_LOG.md
+@@ -8,6 +8,8 @@
+ - 尚未解决：整体冷启动慢、Folder 打开／关闭的可感知停顿、OPPO 手势返回闪回。
+ - 待定位／补验：其他主题／动画及目标GPU尚未覆盖的EGL恢复矩阵、系统图标跨机来源一致性的目标机验收（时钟X21A受控恢复已通过）、故障 NewBox 双机、iQOO百叶窗及Z8公共翻页串图、vivo S20 Pro手势返回空档、X200s升级后智能模式高刷差异、魅族高刷及完整跨 ROM／长稳矩阵。局部通过不代表整项关闭。
+ - 下一步顺序及验收条件统一见[专项计划](LAUNCHER_FIX_AND_OPTIMIZATION_PLAN.md)，不在每条记录重复安排“下一项”。
++
++- 暂停开发：GestureNavContract移植；协议／限定图稿几何／finish回调已验证，未观察到系统动画采用目标，S1未通过、S2不启动。正式入口隐藏并默认禁用，见11-04记录及实验归档。
+ 
+ ## 记录规则
+ 
+@@ -48,6 +50,8 @@
+ - **最终系统采用验证（同日合并）：** 仅操作明确授权的emulator-5554／API36，先保存当时安装原包43a8f180…6f0f2e及设置／UI状态，候选安装后拉回SHA256核对为3f71848f…15c89f。真实相机组件、同一12宫格布局及首次启动定位说明屏，关闭A→开启B→回关A2各3次底部250ms上滑均由前后topResumedActivity确认APP→HOME；HOME键仅准备。B三轮收到有效合同并通过生产几何，发出RectF(83.99994,229.5,275.99994,421.5)，收到至发送162.2／163.8／130.4ms。没有系统接收确认；B录像仍向中下部缩小消失而非左上相机目标，与关闭组未见有意义改善。证据为应用日志＋真实手势录像及30fps重采样彩色窗口轨迹，非系统TargetRect／面板present证据，不宣称系统绝未处理任何回信。单轮核对position字段及copyFrom未发现明确格式错误，缺接收／动画结束时间对齐，原因保留未知，停止试改；不改几何、不重建APK、不开发S2。首次回关未生效组保留为invalid-A2-still-on并排除，确认UI关闭后重录有效A2。完整原视频A／B／A2、B-protocol-only.log、轨迹图、哈希及result.json在 `build/gesture-acceptance-20261104/`。结束用本批实际原包-r -d保留数据回装并拉回核对哈希一致；UI开关关闭，System／Global与log tags还原，临时远端视频／XML清理。新建的应用私有false偏好可能保留（与原未设定同为有效关闭），未清数据；未改HOME Role、导航或布局，未操作连接真机。本环境S1未通过，S2不准入；系统收到协议／Launcher成功发送／系统采用分别记录，壁纸早段空档与Recents长稳不由本轮代验。MEMORY.md未更新，未提交／推送。
+ 
+ - **有界finish确认实验（同日合并）：** 用户明确同意后，仅HomeGestureContract新增默认关闭的HomeFinishProbe log-tag诊断：回信附带独立ParcelUuid／requestId的可选finish Message，静态Messenger无Activity引用，最多4条／3秒清理，不加Surface、不动图标几何／支持范围。193项受控测试、根构建、v1／v2／v3及16KiB对齐通过；仅emulator-5554保留数据安装，拉回核对本次APK b75bc08a…183607一致。三次真实相机→底部上滑均收到有效协议／发送原RectF，且收到匹配FINISH_ACK 3/3，发送到ACK约24.0／25.2／473.4ms；结合已核对系统accept→maybeSendEndMessage代码，确认本轮通过UUID／弱Consumer校验并进入accept，可排除本轮回信完全未到达／被token拒绝，不能倒推上批旧轮。此次收到到发送539.7／494.1／213.2ms，较上批130–164ms不同；ACK到达时间不能证明accept时刻或该时刻spring.isEnded，不认定三次均为迟到。录像仍向中下部消失，未见朝相机目标收拢；系统接受消息与可见目标采用继续区分，S1未通过、S2未进入，不继续试改。证据 `build/finish-probe-20261104/` 含Probe.mp4、probe-only.log、service-dump、轨迹、result.json及增量回退补丁。结束恢复实际安装前原包43a8f180…6f0f2e并拉回逐字节哈希核对，UI开关false、系统键及三个诊断tag恢复，远端文件清理；未操作真机、HOME Role／Quickstep／SystemUI／布局不变。生产几何两源码哈希前后一致；MEMORY.md未更新，未提交／推送。
++
++- **暂停收尾（截至2026-11-04）：** GestureNavContract移植暂停开发。协议收发、限定图标几何、系统finish回调均已验证，未观察到系统动画采用目标坐标，S1未通过，S2不启动，具体阻断点仍未确定。正式设置入口及绑定已移除；HomeCompat的HOME_ICON_EXPERIMENT_AVAILABLE=false使遗留开启偏好也不能启动会话，几何诊断受同门控；关闭时不启动额外GL采样、图标遍历、Messenger或回调Handler。保留协议／几何／诊断代码，193项测试及A/B/A／finish证据冻结，不重复构建／安装／时序／几何实验。暂停前源码与四阶段增量补丁、冻结测试结果保存于 `experiments/gesture-nav-20261104/experimental-source-before-pause.zip`；证据哈希索引及恢复说明同目录，收尾增量补丁单独保留。静态核对XML入口移除、绑定移除、编译门控及证据哈希、Python语法和diff检查；不把这些检查当新APK或真机验证。本项与OPPO早段壁纸闪回、vivo最近任务异常分别保持独立，后两者未由本项修复。后续仅获得新的系统动画目标更新证据才重新评估。MEMORY.md未更新，既有用户改动保留，未提交／推送。
+ 
+ ### 2026-11-03
+ 

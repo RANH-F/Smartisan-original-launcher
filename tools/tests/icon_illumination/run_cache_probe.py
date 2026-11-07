@@ -13,7 +13,10 @@ P='com/smartisanos/launcher/theme/'
 def main():
     parser=argparse.ArgumentParser(__doc__)
     for key in ('serial','jdk','sdk','output'):parser.add_argument('--'+key,required=True)
+    parser.add_argument('--before-artwork', type=Path)
+    parser.add_argument('--after-artwork', type=Path)
     parser.add_argument('--baseline',action='store_true');args=parser.parse_args()
+    if bool(args.before_artwork) != bool(args.after_artwork): parser.error('both artwork files are required')
     out,jdk,sdk=Path(args.output),Path(args.jdk),Path(args.sdk);out.mkdir(parents=True,exist_ok=True)
     classes,dex=out/'classes',out/'dex';classes.mkdir(exist_ok=True);dex.mkdir(exist_ok=True)
     def run(cmd,log=None):
@@ -40,8 +43,13 @@ def main():
     def device(*cmd,**kw):return run([adb,'-s',args.serial,*cmd],**kw)
     remote='/data/local/tmp/smartisan-projection-cache-f07-'+uuid.uuid4().hex
     device('shell','mkdir',remote);device('push',dex/'classes.dex',remote+'/probe.dex')
+    artwork_args=''
+    if args.before_artwork:
+        device('push',args.before_artwork,remote+'/before.png')
+        device('push',args.after_artwork,remote+'/after.png')
+        artwork_args=' '+remote+'/before.png '+remote+'/after.png'
     before=device('shell','pidof','com.smartisanos.launcher').strip();mode='baseline' if args.baseline else 'fixed'
-    result=device('shell',f'CLASSPATH={remote}/probe.dex app_process /system/bin com.smartisanos.launcher.theme.ProjectionCacheProbe {remote} {mode}',log='device.log')
+    result=device('shell',f'CLASSPATH={remote}/probe.dex app_process /system/bin com.smartisanos.launcher.theme.ProjectionCacheProbe {remote} {mode}'+artwork_args,log='device.log')
     assert ('BASELINE_POST_RASTER_CACHE' if args.baseline else 'PASS PROJECTION_CACHE_CHECKS=') in result
     after=device('shell','pidof','com.smartisanos.launcher').strip()
     (out/'summary.json').write_text(json.dumps(dict(mode=mode,serial=args.serial,workspace=remote,launcher_pid_before=before,launcher_pid_after=after,metrics=[s for s in result.splitlines() if s.startswith(('BENCH','COLD_','PASS PROJECTION'))],scope='real Android Bitmap/Canvas/PNG/files; warmed isolated elapsed time, no allocation measurement or desktop frame-time claim'),indent=2),encoding='utf-8')

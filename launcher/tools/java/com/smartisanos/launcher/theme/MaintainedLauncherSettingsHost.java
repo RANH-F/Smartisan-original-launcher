@@ -3182,20 +3182,39 @@ public final class MaintainedLauncherSettingsHost {
         // A fixed source density also keeps bitmap artwork selection consistent across devices.
         if (info != null && info.activityInfo != null
                 && info.activityInfo.applicationInfo != null) {
-            int icon = info.getIconResource();
-            if (icon != 0) {
-                try {
-                    Resources apk = TextUtils.isEmpty(info.resolvePackageName)
-                            ? pm.getResourcesForApplication(info.activityInfo.applicationInfo)
-                            : pm.getResourcesForApplication(info.resolvePackageName);
-                    return apk.getDrawableForDensity(icon, android.util.DisplayMetrics.DENSITY_XXXHIGH);
-                } catch (PackageManager.NameNotFoundException | Resources.NotFoundException
-                        | SecurityException unavailable) {
-                    // Retain component-specific fallback if the raw resource is unavailable.
-                }
-            }
+            Drawable raw = loadApkIconResource(pm, info.activityInfo.applicationInfo,
+                    info.getIconResource(), info.resolvePackageName);
+            if (raw != null) return raw;
         }
         return info.loadIcon(pm);
+    }
+
+    private static Drawable loadApkIconResource(PackageManager pm, ApplicationInfo application,
+                                               int icon, String resourcePackage) {
+        if (application == null || icon == 0) return null;
+        try {
+            Resources apk = TextUtils.isEmpty(resourcePackage)
+                    ? pm.getResourcesForApplication(application)
+                    : pm.getResourcesForApplication(resourcePackage);
+            return apk.getDrawableForDensity(icon, android.util.DisplayMetrics.DENSITY_XXXHIGH);
+        } catch (PackageManager.NameNotFoundException | Resources.NotFoundException
+                | SecurityException unavailable) {
+            return null;
+        }
+    }
+
+    /** Unresolved Activities still use raw APK artwork before the OEM application fallback. */
+    private static Drawable loadApkApplicationIcon(PackageManager pm, String packageName)
+            throws PackageManager.NameNotFoundException {
+        try {
+            ApplicationInfo application = pm.getApplicationInfo(packageName, 0);
+            Drawable raw = loadApkIconResource(pm, application,
+                    application == null ? 0 : application.icon, null);
+            if (raw != null) return raw;
+        } catch (PackageManager.NameNotFoundException | SecurityException unavailable) {
+            // Keep the previous platform fallback when application metadata is unavailable.
+        }
+        return pm.getApplicationIcon(packageName);
     }
 
     static List<WeatherBridge.CityResult> searchBundledCities(Context context, String query,
@@ -3291,7 +3310,7 @@ public final class MaintainedLauncherSettingsHost {
                         && className != null && className.equals(info.activityInfo.name);
                 return loadIconSource(info, pm, keyOnly && exact ? context : null);
             }
-            return new ManagedIconSource(normalizeLauncherIcon(pm.getApplicationIcon(packageName)), "DEFAULT");
+            return new ManagedIconSource(normalizeLauncherIcon(loadApkApplicationIcon(pm, packageName)), "DEFAULT");
         } catch (Throwable ignored) {
             return new ManagedIconSource(null, "DEFAULT");
         }
@@ -3363,7 +3382,7 @@ public final class MaintainedLauncherSettingsHost {
             ResolveInfo info = resolveLauncherActivity(
                     context.getPackageManager(), packageName, className);
             if (info != null) return loadApkIcon(info, context.getPackageManager());
-            return context.getPackageManager().getApplicationIcon(packageName);
+            return loadApkApplicationIcon(context.getPackageManager(), packageName);
         } catch (Throwable ignored) {
             return null;
         }
@@ -6153,6 +6172,10 @@ public final class MaintainedLauncherSettingsHost {
         }
         item.setCheckedAnimated(next);
         writeBoolSetting(context, key, next);
+        if (com.smartisanos.launcher.gesture.LauncherHomeCompat.ICON_ANIMATION_SETTING.equals(key)) {
+            com.smartisanos.launcher.gesture.LauncherHomeCompat.onIconAnimationSettingChanged(context);
+            return;
+        }
         if ("launcher_hide_navigation_bar".equals(key) && context instanceof Activity) {
             applyLauncherNavigationBarSetting((Activity) context);
         }
@@ -10656,6 +10679,22 @@ public final class MaintainedLauncherSettingsHost {
     }
 
     private static void applyTheme(Activity activity, String id, String pkg, String name) {
+        // The original renderer owns one pending or running theme transition.
+        // Reject a second submission before changing the active theme or wallpaper.
+        try {
+            Class<?> handler = Class.forName("com.smartisanos.launcher.theme.t");
+            Object transition = handler.getMethod("getInstance").invoke(null);
+            if (Boolean.TRUE.equals(handler.getMethod("Xf").invoke(transition))
+                    || Boolean.TRUE.equals(handler.getMethod("Wf").invoke(transition))) {
+                Log.i(LOG_TAG, "THEME_SUBMISSION_BUSY theme=" + id);
+                Toast.makeText(activity, "正在切换桌面主题，请稍后再试", Toast.LENGTH_SHORT).show();
+                return;
+            }
+        } catch (ReflectiveOperationException error) {
+            Log.w(LOG_TAG, "THEME_SUBMISSION_STATE_UNAVAILABLE", error);
+            Toast.makeText(activity, "暂时无法切换桌面主题", Toast.LENGTH_SHORT).show();
+            return;
+        }
         invalidateThemeWallpaperSync();
         logOperation(activity, "ACTION", "apply_theme id=" + id + ", pkg=" + pkg + ", name=" + name
                 + ", before=" + themeDiagnosticState(activity)
@@ -20002,14 +20041,21 @@ public final class MaintainedLauncherSettingsHost {
     private static ManagedIconSource resolveImprovedIconSource(Context context, ResolveInfo info, Resources resources) {
         ActivityInfo ai = info == null ? null : info.activityInfo;
         if (ai == null) return new ManagedIconSource(null, "DEFAULT");
+        // AUTO system icons use their canonical alias before optional package candidates.
+        // Manual RESOURCE/PACK/CUSTOM/ORIGINAL choices have already returned above.
+        // Candidate discovery lacks labels and the external settings resource table;
+        // its package result must not outrank a drawable that is already available here.
+        String alias = smartisanSystemIconAlias(context, info);
+        Drawable raw = isSystemApp(ai)
+                ? libraryIconDrawableNonBlocking(context, resources, alias) : null;
+        if (raw != null) return new ManagedIconSource(raw, "IMPROVED:" + alias);
         IconPreviewRepository.ImprovedCandidate candidate = IconPreviewRepository.get(context)
                 .resolveImprovedCandidate(ai.packageName, ai.name);
         if (candidate.exists && !TextUtils.isEmpty(candidate.sourceId)) {
-            Drawable raw = libraryIconDrawableNonBlocking(context, resources, candidate.sourceId);
+            raw = libraryIconDrawableNonBlocking(context, resources, candidate.sourceId);
             if (raw != null) return new ManagedIconSource(raw, "IMPROVED:" + candidate.sourceId);
         }
-        String alias = smartisanSystemIconAlias(context, info);
-        Drawable raw = libraryIconDrawableNonBlocking(context, resources, alias);
+        raw = libraryIconDrawableNonBlocking(context, resources, alias);
         if (raw != null) return new ManagedIconSource(raw, "IMPROVED:" + alias);
         String local = smartisanIconNameFor(context, info);
         raw = maintainedResourceIcon(context, resources, local);

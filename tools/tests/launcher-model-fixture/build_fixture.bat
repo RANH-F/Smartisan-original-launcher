@@ -4,8 +4,8 @@ setlocal EnableExtensions
 set "FIXTURE_ROOT=%~dp0"
 set "VARIANT=%~1"
 if "%VARIANT%"=="" set "VARIANT=v1"
-if /I not "%VARIANT%"=="v1" if /I not "%VARIANT%"=="v2" if /I not "%VARIANT%"=="v3-stale" if /I not "%VARIANT%"=="v4-add" (
-  echo Usage: %~nx0 ^<v1^|v2^|v3-stale^|v4-add^>
+if /I not "%VARIANT%"=="v1" if /I not "%VARIANT%"=="v2" if /I not "%VARIANT%"=="v3-stale" if /I not "%VARIANT%"=="v4-add" if /I not "%VARIANT%"=="v5-alias" (
+  echo Usage: %~nx0 ^<v1^|v2^|v3-stale^|v4-add^|v5-alias^>
   exit /b 2
 )
 
@@ -47,7 +47,7 @@ echo [2/5] Linking fixture APK...
 "%AAPT2%" link -o "%UNSIGNED%" -I "%ANDROID_JAR%" --manifest "%FIXTURE_ROOT%variants\%VARIANT%\AndroidManifest.xml" -R "%COMPILED%" --min-sdk-version 23 --target-sdk-version 28 || exit /b 11
 
 echo [3/5] Compiling fixture activities...
-"%JAVAC%" -source 8 -target 8 -bootclasspath "%ANDROID_JAR%" -d "%CLASSES%" "%FIXTURE_ROOT%src\com\smartisan\launchertest\fixture\LauncherActivityA.java" "%FIXTURE_ROOT%src\com\smartisan\launchertest\fixture\LauncherActivityB.java" "%FIXTURE_ROOT%src\com\smartisan\launchertest\fixture\LauncherActivityC.java" || exit /b 12
+"%JAVAC%" -source 8 -target 8 -bootclasspath "%ANDROID_JAR%" -d "%CLASSES%" "%FIXTURE_ROOT%src\com\smartisan\launchertest\fixture\LauncherActivityA.java" "%FIXTURE_ROOT%src\com\smartisan\launchertest\fixture\LauncherActivityB.java" "%FIXTURE_ROOT%src\com\smartisan\launchertest\fixture\LauncherActivityC.java" "%FIXTURE_ROOT%src\com\smartisan\launchertest\fixture\ComponentSettingsActivity.java" || exit /b 12
 "%JAR%" cf "%CLASSES_JAR%" -C "%CLASSES%" . || exit /b 13
 call "%D8%" --lib "%ANDROID_JAR%" --min-api 23 --output "%DEX%" "%CLASSES_JAR%" || exit /b 14
 "%JAR%" uf "%UNSIGNED%" -C "%DEX%" classes.dex || exit /b 15

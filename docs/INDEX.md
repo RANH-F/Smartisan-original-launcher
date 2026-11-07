@@ -25,6 +25,11 @@
 
 ## 稳定合同与专项审计
 
+- [自适应刷新率工作区审计](compatibility/ADAPTIVE_REFRESH_AUDIT_20261104.md)：2026-11-04请求入口、动画时钟、既有无效候选及RMS进程归属／有限租期验证前置条件；未新增生产修复。
+- [Gate 3 RMS协议与有限诊断设计](compatibility/RMS_GATE3_PROTOCOL_20261104.md)：实际Binder布局、caller／client及回收边界、固定8秒候选、恢复方案和唯一A–F验收；仅离线设计准入，未制包／未操作真机。
+
+- [无 ROOT 返回图标动画：调用链审计与实施设计](compatibility/GESTURE_NAV_CONTRACT_IMPLEMENTATION_DESIGN.md)：截至2026-11-04暂停；S1未通过，S2不启动。正式入口隐藏、编译开关关闭；代码／补丁与证据见实验归档。
+
 - [全项目架构审计](development/FULL_PROJECT_ARCHITECTURE_AUDIT.md)：2026-10-15真实工作区、入口、线程和Owner盘点。
 - [稳定性与问题清单](development/FULL_STABILITY_AND_BUG_AUDIT.md)：分级证据、最小修复、撤回候选及未关闭风险。
 - [性能基线与优化](development/PERFORMANCE_BASELINE_AND_OPTIMIZATION.md)：五样本日志基线、分配验证和未证明的收益。

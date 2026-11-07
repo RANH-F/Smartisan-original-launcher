@@ -141,6 +141,7 @@ public final class LauncherSettingBridge {
     private static final Map<Class<?>, Map<String, Field>> GEOMETRY_FIELDS = new HashMap<>();
     private static final Class<?>[] NO_GEOMETRY_ARGS = new Class<?>[0];
     private static final Class<?>[] INT_GEOMETRY_ARG = {Integer.TYPE};
+    private static final Class<?>[] BOOLEAN_GEOMETRY_ARG = {Boolean.TYPE};
     private static final Class<?>[] STRING_GEOMETRY_ARG = {String.class};
     private static final Class<?>[] FLOAT_GEOMETRY_ARGS = {Float.TYPE, Float.TYPE, Float.TYPE};
     private static final Map<Object, float[]> OVERVIEW_ICON_FACTORS = new java.util.WeakHashMap<>();
@@ -514,6 +515,11 @@ public final class LauncherSettingBridge {
         Bitmap sharedShadow = null;
         try {
             Object shadowNode = findLiveShadow(activeRoot);
+            if (shadowNode == null) {
+                // A cleared live tree can still own a cached bitmap recovery.
+                // Reuse only its retained shadow source; never reattach/render the node.
+                shadowNode = readPrivateField(activeRoot, "activeIconShadowNode");
+            }
             if (shadowNode != null) {
                 Object texture = invoke(shadowNode, "getTextureName", Integer.valueOf(0));
                 if (texture instanceof String) {
@@ -1041,7 +1047,7 @@ public final class LauncherSettingBridge {
                 return;
             }
 
-            Object baseScale = invoke(activeBase, "getScale");
+            Object baseScale = invokePixelGrid(activeBase, "getScale");
             Rect activeBaseRect = worldRect(activeBase);
 
             float logicalArtwork = Math.max(1.0f, raster.logicalArtworkWidth);
@@ -1049,8 +1055,8 @@ public final class LauncherSettingBridge {
             float logicalTexture = Math.max(1.0f, raster.physicalTextureWidth / raster.rasterScale);
             float logicalTextureHeight = Math.max(1.0f,
                     raster.physicalTextureHeight / raster.rasterScale);
-            Object staticScale = staticIconNode == null ? invoke(cell, "getScale")
-                    : invoke(staticIconNode, "getScale");
+            Object staticScale = staticIconNode == null ? invokePixelGrid(cell, "getScale")
+                    : invokePixelGrid(staticIconNode, "getScale");
             Rect staticRect = staticIconNode == null ? null : worldRect(staticIconNode);
             String oracle;
             float staticArtworkWorldWidth;
@@ -1070,7 +1076,7 @@ public final class LauncherSettingBridge {
                 float staticLocalHeight = Math.abs(floatField(staticScale, "y"));
                 if (staticIconNode != null && staticLocalWidth > 0.0f
                         && staticLocalHeight > 0.0f) {
-                    Object rootScale = invoke(activeRoot, "getScale");
+                    Object rootScale = invokePixelGrid(activeRoot, "getScale");
                     float rootX = floatField(rootScale, "x");
                     float rootY = floatField(rootScale, "y");
                     float rootZ = floatField(rootScale, "z");
@@ -1086,9 +1092,9 @@ public final class LauncherSettingBridge {
                         float widthCorrection = staticArtworkHalfWidth / currentHalfWidth;
                         float heightCorrection = staticArtworkHalfHeight / currentHalfHeight;
                         float correction = Math.min(widthCorrection, heightCorrection);
-                        invoke(activeRoot, "setScale", Float.valueOf(rootX * correction),
+                        invokePixelGrid(activeRoot, "setScale", Float.valueOf(rootX * correction),
                                 Float.valueOf(rootY * correction), Float.valueOf(rootZ));
-                        invoke(activeRoot, "updateGeometricState");
+                        invokePixelGrid(activeRoot, "updateGeometricState");
                         Log.i(TAG, "ICON_CONTRACT_ACTIVE_SYNC type=" + type.toUpperCase()
                                 + " state=" + (ACTIVE_ICON_STATES.get(activeRoot) == null
                                 ? "LIVE" : ACTIVE_ICON_STATES.get(activeRoot))
@@ -1107,7 +1113,7 @@ public final class LauncherSettingBridge {
                                 + ((baseHalfHeight * Math.abs(rootY * correction))
                                 / staticArtworkHalfHeight)
                                 + " centerDeltaX=0.0 centerDeltaY=0.0"
-                                + " rootScaleAfter=" + vector2(invoke(activeRoot, "getScale")));
+                                + " rootScaleAfter=" + vector2(invokePixelGrid(activeRoot, "getScale")));
                         return;
                     }
                 }
@@ -1132,7 +1138,7 @@ public final class LauncherSettingBridge {
             float uniformCorrection = widthCorrection;
             float liveBodyWorldBeforeWidth = activeBaseRect.width;
             float liveBodyWorldBeforeHeight = activeBaseRect.height;
-            Object rootScale = invoke(activeRoot, "getScale");
+            Object rootScale = invokePixelGrid(activeRoot, "getScale");
             float rootX = floatField(rootScale, "x");
             float rootY = floatField(rootScale, "y");
             float rootZ = floatField(rootScale, "z");
@@ -1152,22 +1158,22 @@ public final class LauncherSettingBridge {
                     + " widthCorrection=" + widthCorrection
                     + " heightCorrection=" + heightCorrection
                     + " uniformCorrection=" + uniformCorrection);
-            invoke(activeRoot, "setScale", Float.valueOf(rootX * uniformCorrection),
+            invokePixelGrid(activeRoot, "setScale", Float.valueOf(rootX * uniformCorrection),
                     Float.valueOf(rootY * uniformCorrection), Float.valueOf(rootZ));
-            invoke(activeRoot, "updateGeometricState");
+            invokePixelGrid(activeRoot, "updateGeometricState");
             activeBaseRect = worldRect(activeBase);
             if (activeBaseRect == null) return;
             for (int attempt = 0; attempt < 2; attempt++) {
                 float deltaX = staticRect.centerX - activeBaseRect.centerX;
                 float deltaY = staticRect.centerY - activeBaseRect.centerY;
                 if (Math.abs(deltaX) <= 0.5f && Math.abs(deltaY) <= 0.5f) break;
-                Object translate = invoke(activeRoot, "getLocation");
+                Object translate = invokePixelGrid(activeRoot, "getLocation");
                 float translateX = floatField(translate, "x");
                 float translateY = floatField(translate, "y");
                 float translateZ = floatField(translate, "z");
-                invoke(activeRoot, "setTranslate", Float.valueOf(translateX + deltaX),
+                invokePixelGrid(activeRoot, "setTranslate", Float.valueOf(translateX + deltaX),
                         Float.valueOf(translateY + deltaY), Float.valueOf(translateZ));
-                invoke(activeRoot, "updateGeometricState");
+                invokePixelGrid(activeRoot, "updateGeometricState");
                 activeBaseRect = worldRect(activeBase);
                 if (activeBaseRect == null) return;
             }
@@ -1183,7 +1189,7 @@ public final class LauncherSettingBridge {
                     + " widthCorrection=" + widthCorrection
                     + " heightCorrection=" + heightCorrection
                     + " uniformCorrection=" + uniformCorrection
-                    + " rootScaleAfter=" + vector2(invoke(activeRoot, "getScale"))
+                    + " rootScaleAfter=" + vector2(invokePixelGrid(activeRoot, "getScale"))
                     + " liveBodyWorldAfter=" + activeBaseRect.width + "x"
                     + activeBaseRect.height);
             float finalWidthRatio = activeBaseRect.width
@@ -1209,14 +1215,14 @@ public final class LauncherSettingBridge {
                     + " centerDeltaX=" + centerDeltaX
                     + " centerDeltaY=" + centerDeltaY
                     + " staticVisible=" + (staticIconNode == null
-                    ? "NOT_CREATED" : invoke(staticIconNode, "isVisible"))
-                    + " activeRootVisible=" + invoke(activeRoot, "isVisible")
-                    + " activeBackgroundVisible=" + invoke(activeBase, "isVisible")
+                    ? "NOT_CREATED" : invokePixelGrid(staticIconNode, "isVisible"))
+                    + " activeRootVisible=" + invokePixelGrid(activeRoot, "isVisible")
+                    + " activeBackgroundVisible=" + invokePixelGrid(activeBase, "isVisible")
                     + " staticScale=" + vector2(staticScale)
                     + " activeBaseScale=" + vector2(baseScale)
                     + " iconSizePercent=" + readIconSizePercent(applicationContext())
                     + " rootScaleBefore=" + rootScaleBefore
-                    + " rootScaleAfter=" + vector2(invoke(activeRoot, "getScale"))
+                    + " rootScaleAfter=" + vector2(invokePixelGrid(activeRoot, "getScale"))
                     + " shadowWorldRect=" + shadowFinalRect
                     + " commonParentAppliedOnce=true"
                     + " generation=" + generation);
@@ -1253,7 +1259,7 @@ public final class LauncherSettingBridge {
             boolean dynamicOwnsShadow = dynamicShadow != null;
             // Original L.a retains the contact shadow underneath sc[27]'s moving projection.
             // LiveShadow remains the ActiveIcon contact owner; sc[27] owns only projection.
-            invoke(cellShadow, "setVisibility", Boolean.valueOf(projection || !dynamicOwnsShadow));
+            invokePixelGrid(cellShadow, "setVisibility", Boolean.valueOf(projection || !dynamicOwnsShadow));
             Log.i(TAG, "ACTIVE_ICON_SHADOW_OWNERSHIP owner="
                     + (dynamicOwnsShadow ? "DynamicShadowNode" : "OrdinaryCellShadow")
                     + " ordinaryCellShadowVisible=" + (projection || !dynamicOwnsShadow)
@@ -1308,21 +1314,21 @@ public final class LauncherSettingBridge {
     }
 
     private static Object findActiveIconBase(Object activeRoot, String type) throws Exception {
-        int count = ((Integer) invoke(activeRoot, "getChildCount")).intValue();
+        int count = ((Integer) invokePixelGrid(activeRoot, "getChildCount")).intValue();
         String expected = "weather".equals(type) ? "weatherView_back" : "calenderBg";
         for (int i = 0; i < count; i++) {
-            Object child = invoke(activeRoot, "getChildAt", Integer.valueOf(i));
-            Object name = invoke(child, "getName");
+            Object child = invokePixelGrid(activeRoot, "getChildAt", Integer.valueOf(i));
+            Object name = invokePixelGrid(child, "getName");
             if (expected.equals(name)) return child;
         }
         return null;
     }
 
     private static Object findLiveShadow(Object activeRoot) throws Exception {
-        int count = ((Integer) invoke(activeRoot, "getChildCount")).intValue();
+        int count = ((Integer) invokePixelGrid(activeRoot, "getChildCount")).intValue();
         for (int i = 0; i < count; i++) {
-            Object child = invoke(activeRoot, "getChildAt", Integer.valueOf(i));
-            Object name = invoke(child, "getName");
+            Object child = invokePixelGrid(activeRoot, "getChildAt", Integer.valueOf(i));
+            Object name = invokePixelGrid(child, "getName");
             if (name instanceof String && ((String) name).endsWith("LiveShadow")) return child;
         }
         return null;
@@ -1429,7 +1435,9 @@ public final class LauncherSettingBridge {
                 // These hot paths have fixed engine signatures. Do not enumerate the hundreds
                 // of inherited SceneNode methods or select an overload by arity alone.
                 Class<?>[] types = NO_GEOMETRY_ARGS;
-                if ("getTextureName".equals(name) || "mode".equals(name)) types = INT_GEOMETRY_ARG;
+                if ("getTextureName".equals(name) || "mode".equals(name)
+                        || "getChildAt".equals(name)) types = INT_GEOMETRY_ARG;
+                else if ("setVisibility".equals(name)) types = BOOLEAN_GEOMETRY_ARG;
                 else if ("bb".equals(name)) types = STRING_GEOMETRY_ARG;
                 else if ("setTranslate".equals(name) || "setScale".equals(name)) types = FLOAT_GEOMETRY_ARGS;
                 else if ("getCornerPointScreenCoord".equals(name)) types = new Class<?>[] {

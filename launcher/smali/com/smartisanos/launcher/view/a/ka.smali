@@ -965,6 +965,53 @@
     return-void
 .end method
 
+.method public preparePreviewChildLayers()V
+    .locals 9
+
+    invoke-virtual {p0}, Lcom/smartisanos/launcher/view/a/g;->Rl()Lcom/smartisanos/launcher/data/ItemInfo;
+    move-result-object v0
+    instance-of v1, v0, Lcom/smartisanos/launcher/data/FolderInfo;
+    if-eqz v1, :done
+    check-cast v0, Lcom/smartisanos/launcher/data/FolderInfo;
+    invoke-virtual {v0}, Lcom/smartisanos/launcher/data/FolderInfo;->lf()I
+    move-result v1
+    const/4 v2, 0x3
+    invoke-static {v1, v2}, Ljava/lang/Math;->min(II)I
+    move-result v1
+    if-lez v1, :done
+
+    const/16 v2, 0x8
+    mul-int v3, v1, v2
+    new-array v3, v3, [Ljava/lang/String;
+    const/4 v4, 0x0
+    :child
+    if-ge v4, v1, :schedule
+    invoke-virtual {v0, v4}, Lcom/smartisanos/launcher/data/FolderInfo;->ia(I)Lcom/smartisanos/launcher/data/ItemInfo;
+    move-result-object v5
+    if-eqz v5, :next_child
+    iget-byte v6, v5, Lcom/smartisanos/launcher/data/ItemInfo;->itemType:B
+    if-nez v6, :next_child
+    invoke-virtual {v5}, Lcom/smartisanos/launcher/data/ItemInfo;->Pe()Ljava/lang/String;
+    move-result-object v5
+    const/4 v6, 0x0
+    mul-int v7, v4, v2
+    :layer
+    if-ge v6, v2, :next_child
+    invoke-virtual {p0, v5, v6}, Lcom/smartisanos/launcher/view/a/g;->n(Ljava/lang/String;I)Ljava/lang/String;
+    move-result-object v8
+    aput-object v8, v3, v7
+    add-int/lit8 v6, v6, 0x1
+    add-int/lit8 v7, v7, 0x1
+    goto :layer
+    :next_child
+    add-int/lit8 v4, v4, 0x1
+    goto :child
+    :schedule
+    invoke-static {v3}, Lcom/smartisanos/launcher/theme/IconIlluminationCompat;->prepareFolderLayers([Ljava/lang/String;)V
+    :done
+    return-void
+.end method
+
 .method public fb(Z)V
     .locals 0
 

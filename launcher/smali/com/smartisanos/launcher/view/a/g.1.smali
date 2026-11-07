@@ -10999,7 +10999,7 @@
     return-object p0
 .end method
 
-.method public fb(Z)V
+.method public reloadRetainedForegroundTexture()V
     .locals 9
 
     .line 1
@@ -11068,6 +11068,23 @@
     invoke-static/range {v1 .. v8}, Lcom/smartisanos/launcher/e/s;->a(Lcom/smartisanos/launcher/view/activeicon/a;Lcom/smartisanos/launcher/data/ItemInfo;Ljava/lang/String;ZZIII)Lcom/smartisanos/smengine/Da;
 
     :goto_fb_texture_ready
+    return-void
+.end method
+
+.method public fb(Z)V
+    .locals 9
+
+    .line 1
+    iget-object v0, p0, Lcom/smartisanos/launcher/view/a/g;->Rj:Lcom/smartisanos/launcher/data/ItemInfo;
+
+    if-nez v0, :cond_0
+
+    return-void
+
+    .line 2
+    :cond_0
+    invoke-virtual {p0}, Lcom/smartisanos/launcher/view/a/g;->reloadRetainedForegroundTexture()V
+
     const/4 v0, 0x0
 
     if-eqz p1, :cond_1

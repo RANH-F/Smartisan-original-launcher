@@ -5129,6 +5129,126 @@
     return-void
 .end method
 
+.method public rebuildGaussianBackground(Lcom/smartisanos/smengine/Camera;)V
+    .locals 8
+
+    # Reuse the original loadPage producer, source selection and cleanup callback.
+    move-object v1, p1
+    const/4 v0, 0x1
+    const/4 v2, 0x0
+
+    sget-boolean v3, Lcom/smartisanos/launcher/data/Constants;->sIsGaussianTheme:Z
+
+    const/4 v4, 0x0
+
+    if-eqz v3, :cond_a
+
+    .line 37
+    invoke-static {}, Lcom/smartisanos/launcher/ja;->getInstance()Lcom/smartisanos/launcher/ja;
+
+    move-result-object v3
+
+    invoke-virtual {v3}, Lcom/smartisanos/launcher/ja;->getApplication()Landroid/app/Application;
+
+    move-result-object v3
+
+    .line 38
+    sget-boolean v5, Lcom/smartisanos/launcher/data/Constants;->isTransparentTheme:Z
+
+    if-eqz v5, :cond_normal_theme_wallpaper_uri
+
+    sget-object v5, Lcom/smartisanos/launcher/data/Constants;->sWallpaperUri:Ljava/lang/String;
+
+    goto :goto_theme_wallpaper_uri
+
+    :cond_normal_theme_wallpaper_uri
+    const/4 v5, 0x0
+
+    :goto_theme_wallpaper_uri
+
+    invoke-static {v3, v5}, Lcom/smartisanos/launcher/e/s;->n(Landroid/content/Context;Ljava/lang/String;)Landroid/graphics/Bitmap;
+
+    move-result-object v3
+
+    .line 39
+    sget-boolean v5, Lcom/smartisanos/launcher/data/Constants;->ENABLE_LARGE_SCREEN_MODE:Z
+
+    if-nez v5, :cond_9
+
+    .line 40
+    invoke-static {v4, v3}, Lcom/smartisanos/launcher/e/s;->a(Lcom/smartisanos/launcher/theme/v;Landroid/graphics/Bitmap;)Landroid/graphics/Bitmap;
+
+    move-result-object v3
+
+    .line 41
+    :cond_9
+    invoke-static {}, Lcom/smartisanos/smengine/Ra;->getInstance()Lcom/smartisanos/smengine/Ra;
+
+    move-result-object v5
+
+    invoke-virtual {v5}, Lcom/smartisanos/smengine/Ra;->rt()Lcom/smartisanos/smengine/Ea;
+
+    move-result-object v5
+
+    const-string v6, "background.png"
+
+    .line 42
+    invoke-static {v6}, Lcom/smartisanos/launcher/pb;->path(Ljava/lang/String;)Ljava/lang/String;
+
+    move-result-object v6
+
+    .line 43
+    invoke-virtual {v5, v6}, Lcom/smartisanos/smengine/Ea;->ab(Ljava/lang/String;)V
+
+    .line 44
+    new-instance v7, Lcom/smartisanos/smengine/Da;
+
+    invoke-direct {v7, v3}, Lcom/smartisanos/smengine/Da;-><init>(Landroid/graphics/Bitmap;)V
+
+    .line 45
+    invoke-virtual {v5, v6, v7}, Lcom/smartisanos/smengine/Ea;->a(Ljava/lang/String;Lcom/smartisanos/smengine/Da;)V
+
+    .line 46
+    invoke-virtual {v7, v0}, Lcom/smartisanos/smengine/Da;->Sb(Z)Z
+
+    .line 47
+    invoke-virtual {p0}, Lcom/smartisanos/launcher/view/Eb;->uh()Lcom/smartisanos/smengine/F;
+
+    move-result-object v3
+
+    .line 48
+    invoke-virtual {v3, v0}, Lcom/smartisanos/smengine/SceneNode;->setSceneNodeForceRender(Z)V
+
+    .line 49
+    invoke-virtual {v3, v1}, Lcom/smartisanos/smengine/F;->draw(Lcom/smartisanos/smengine/Camera;)V
+
+    .line 50
+    invoke-virtual {v3, v2}, Lcom/smartisanos/smengine/SceneNode;->setSceneNodeForceRender(Z)V
+
+    .line 51
+    invoke-static {}, Lcom/smartisanos/smengine/Ra;->getInstance()Lcom/smartisanos/smengine/Ra;
+
+    move-result-object v1
+
+    invoke-virtual {v1}, Lcom/smartisanos/smengine/Ra;->wt()V
+
+    .line 52
+    new-instance v1, Lcom/smartisanos/launcher/view/Ab;
+
+    const/16 v6, 0x64
+
+    invoke-direct {v1, p0, v6, v5, v3}, Lcom/smartisanos/launcher/view/Ab;-><init>(Lcom/smartisanos/launcher/view/Eb;ILcom/smartisanos/smengine/Ea;Lcom/smartisanos/smengine/F;)V
+
+    const/4 v3, 0x0
+
+    .line 53
+    invoke-virtual {v1, v3}, Lcom/smartisanos/smengine/n;->q(F)V
+
+    .line 54
+    :cond_a
+    return-void
+.end method
+
 .method public Vh()V
     .locals 9
 
@@ -5394,114 +5514,9 @@
     move-result-object v1
 
     .line 36
-    sget-boolean v3, Lcom/smartisanos/launcher/data/Constants;->sIsGaussianTheme:Z
-
     const/4 v4, 0x0
+    invoke-virtual {p0, v1}, Lcom/smartisanos/launcher/view/Eb;->rebuildGaussianBackground(Lcom/smartisanos/smengine/Camera;)V
 
-    if-eqz v3, :cond_a
-
-    .line 37
-    invoke-static {}, Lcom/smartisanos/launcher/ja;->getInstance()Lcom/smartisanos/launcher/ja;
-
-    move-result-object v3
-
-    invoke-virtual {v3}, Lcom/smartisanos/launcher/ja;->getApplication()Landroid/app/Application;
-
-    move-result-object v3
-
-    .line 38
-    sget-boolean v5, Lcom/smartisanos/launcher/data/Constants;->isTransparentTheme:Z
-
-    if-eqz v5, :cond_normal_theme_wallpaper_uri
-
-    sget-object v5, Lcom/smartisanos/launcher/data/Constants;->sWallpaperUri:Ljava/lang/String;
-
-    goto :goto_theme_wallpaper_uri
-
-    :cond_normal_theme_wallpaper_uri
-    const/4 v5, 0x0
-
-    :goto_theme_wallpaper_uri
-
-    invoke-static {v3, v5}, Lcom/smartisanos/launcher/e/s;->n(Landroid/content/Context;Ljava/lang/String;)Landroid/graphics/Bitmap;
-
-    move-result-object v3
-
-    .line 39
-    sget-boolean v5, Lcom/smartisanos/launcher/data/Constants;->ENABLE_LARGE_SCREEN_MODE:Z
-
-    if-nez v5, :cond_9
-
-    .line 40
-    invoke-static {v4, v3}, Lcom/smartisanos/launcher/e/s;->a(Lcom/smartisanos/launcher/theme/v;Landroid/graphics/Bitmap;)Landroid/graphics/Bitmap;
-
-    move-result-object v3
-
-    .line 41
-    :cond_9
-    invoke-static {}, Lcom/smartisanos/smengine/Ra;->getInstance()Lcom/smartisanos/smengine/Ra;
-
-    move-result-object v5
-
-    invoke-virtual {v5}, Lcom/smartisanos/smengine/Ra;->rt()Lcom/smartisanos/smengine/Ea;
-
-    move-result-object v5
-
-    const-string v6, "background.png"
-
-    .line 42
-    invoke-static {v6}, Lcom/smartisanos/launcher/pb;->path(Ljava/lang/String;)Ljava/lang/String;
-
-    move-result-object v6
-
-    .line 43
-    invoke-virtual {v5, v6}, Lcom/smartisanos/smengine/Ea;->ab(Ljava/lang/String;)V
-
-    .line 44
-    new-instance v7, Lcom/smartisanos/smengine/Da;
-
-    invoke-direct {v7, v3}, Lcom/smartisanos/smengine/Da;-><init>(Landroid/graphics/Bitmap;)V
-
-    .line 45
-    invoke-virtual {v5, v6, v7}, Lcom/smartisanos/smengine/Ea;->a(Ljava/lang/String;Lcom/smartisanos/smengine/Da;)V
-
-    .line 46
-    invoke-virtual {v7, v0}, Lcom/smartisanos/smengine/Da;->Sb(Z)Z
-
-    .line 47
-    invoke-virtual {p0}, Lcom/smartisanos/launcher/view/Eb;->uh()Lcom/smartisanos/smengine/F;
-
-    move-result-object v3
-
-    .line 48
-    invoke-virtual {v3, v0}, Lcom/smartisanos/smengine/SceneNode;->setSceneNodeForceRender(Z)V
-
-    .line 49
-    invoke-virtual {v3, v1}, Lcom/smartisanos/smengine/F;->draw(Lcom/smartisanos/smengine/Camera;)V
-
-    .line 50
-    invoke-virtual {v3, v2}, Lcom/smartisanos/smengine/SceneNode;->setSceneNodeForceRender(Z)V
-
-    .line 51
-    invoke-static {}, Lcom/smartisanos/smengine/Ra;->getInstance()Lcom/smartisanos/smengine/Ra;
-
-    move-result-object v1
-
-    invoke-virtual {v1}, Lcom/smartisanos/smengine/Ra;->wt()V
-
-    .line 52
-    new-instance v1, Lcom/smartisanos/launcher/view/Ab;
-
-    const/16 v6, 0x64
-
-    invoke-direct {v1, p0, v6, v5, v3}, Lcom/smartisanos/launcher/view/Ab;-><init>(Lcom/smartisanos/launcher/view/Eb;ILcom/smartisanos/smengine/Ea;Lcom/smartisanos/smengine/F;)V
-
-    const/4 v3, 0x0
-
-    .line 53
-    invoke-virtual {v1, v3}, Lcom/smartisanos/smengine/n;->q(F)V
-
-    .line 54
     :cond_a
     invoke-direct {p0}, Lcom/smartisanos/launcher/view/Eb;->Gx()V
 
@@ -9819,6 +9834,65 @@
     return-void
 .end method
 
+.method public static prepareVisibleFolderLayers()V
+    .locals 3
+
+    sget-boolean v0, Lcom/smartisanos/launcher/data/Constants;->SHOW_ICON_SHADOW_LIST:Z
+    if-eqz v0, :done
+    invoke-static {}, Lcom/smartisanos/launcher/view/Eb;->getInstance()Lcom/smartisanos/launcher/view/Eb;
+    move-result-object v0
+    invoke-virtual {v0}, Lcom/smartisanos/launcher/view/Eb;->Gh()Lcom/smartisanos/launcher/view/b/fa;
+    move-result-object v0
+    if-eqz v0, :done
+    invoke-virtual {v0}, Lcom/smartisanos/launcher/view/b/fa;->Wq()Lcom/smartisanos/launcher/view/b/M;
+    move-result-object v0
+    if-eqz v0, :done
+    invoke-virtual {v0}, Lcom/smartisanos/launcher/view/b/M;->pn()Ljava/util/ArrayList;
+    move-result-object v0
+    invoke-virtual {v0}, Ljava/util/ArrayList;->iterator()Ljava/util/Iterator;
+    move-result-object v0
+    :scan
+    invoke-interface {v0}, Ljava/util/Iterator;->hasNext()Z
+    move-result v1
+    if-eqz v1, :done
+    invoke-interface {v0}, Ljava/util/Iterator;->next()Ljava/lang/Object;
+    move-result-object v1
+    instance-of v2, v1, Lcom/smartisanos/launcher/view/a/ka;
+    if-eqz v2, :scan
+    check-cast v1, Lcom/smartisanos/launcher/view/a/ka;
+    invoke-virtual {v1}, Lcom/smartisanos/launcher/view/a/ka;->preparePreviewChildLayers()V
+    :done
+    return-void
+.end method
+
+.method private static shouldPreloadProjectionLayer(I)Z
+    .locals 4
+
+    invoke-static {}, Lcom/smartisanos/smengine/Ra;->getInstance()Lcom/smartisanos/smengine/Ra;
+    move-result-object v0
+    invoke-virtual {v0}, Lcom/smartisanos/smengine/Ra;->lm()[I
+    move-result-object v0
+    if-eqz v0, :preload
+
+    array-length v1, v0
+    const/16 v2, 0x8
+    if-ne v1, v2, :preload
+
+    const/4 v2, 0x0
+    :scan_mapping
+    aget v3, v0, v2
+    if-eq v3, p0, :preload
+    add-int/lit8 v2, v2, 0x1
+    if-lt v2, v1, :scan_mapping
+
+    const/4 v0, 0x0
+    return v0
+
+    :preload
+    const/4 v0, 0x1
+    return v0
+.end method
+
 .method public oh()V
     .locals 19
 
@@ -10822,6 +10896,12 @@
 
     :goto_11
     if-ge v11, v12, :cond_24
+
+    # The material loads missing layers on demand if its mapping changes later.
+    aget v14, v8, v11
+    invoke-static {v14}, Lcom/smartisanos/launcher/view/Eb;->shouldPreloadProjectionLayer(I)Z
+    move-result v14
+    if-eqz v14, :cond_23
 
     .line 114
     new-instance v13, Ljava/lang/StringBuilder;

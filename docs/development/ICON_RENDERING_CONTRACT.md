@@ -1,6 +1,8 @@
 # Icon Rendering Contract
 
 状态：**ARCHITECTURE_FROZEN / IMPLEMENTATION_COMPLETE / RUNTIME_MATRIX_NOT_PASSED**
+
+2026-11-01 默认圆框补充：用户要求已重绘的不规则透明图稿保留原形。v14复用已有完整底板分类；分类未命中的legacy图稿保留其规范来源画布及Alpha，不再添加中性圆底。该处理仅决定DEFAULT来源装饰，不新增几何倍率或Layout Owner；Adaptive背景和已确认完整底板沿原路径。模块实图、遮罩与回归边界见DEVELOPMENT_LOG.md本日记录。
 冻结日期：2026-08-21
 
 2026-10-24 圆框限定补充：DefaultIconCircleRenderer V9 对符合高覆盖、连续实心圆角底板特征的输入，仅在私有副本延展背景，保留完整前景矩阵；圆形、孔洞及不规则图案不强行当作底板。Adaptive 背景按平台 extra inset 展开，前景与阴影合同不变，API26引用仍受版本门控。Android9原生74检查及真实OPPO来源重放通过，OPPO整机/跨ROM矩阵未验收；详见 DEVELOPMENT_LOG.md 同日记录，不改变本文运行时矩阵未通过状态。

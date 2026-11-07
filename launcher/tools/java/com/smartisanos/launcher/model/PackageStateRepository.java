@@ -2,6 +2,9 @@ package com.smartisanos.launcher.model;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.ComponentName;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.ResolveInfo;
 import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -61,6 +64,40 @@ public final class PackageStateRepository {
         List matches = pm.queryIntentActivities(intent, 0);
         if (matches == null || matches.isEmpty()) return result(key, PackageState.DISABLED, false, "no_launcher_activity", source);
         return result(key, PackageState.PRESENT, true, "package_present", source);
+    }
+
+    /** Component changes are not package removal. Null means retain, including filtered profiles. */
+    public List<ResolveInfo> launcherComponentsForRefresh(String pkg, int userId) {
+        if (app == null || userId != 0 || TextUtils.isEmpty(pkg)) return null;
+        UserHandle user = profiles.userForLegacyId(userId);
+        if (profiles.stateFor(user) != ProfileState.AVAILABLE) return null;
+        try {
+            PackageManager pm = app.getPackageManager();
+            ApplicationInfo info = pm.getApplicationInfo(pkg, 0);
+            if (!info.enabled || (info.flags & ApplicationInfo.FLAG_SUSPENDED) != 0) return null;
+            return pm.queryIntentActivities(new Intent(Intent.ACTION_MAIN)
+                    .addCategory(Intent.CATEGORY_LAUNCHER).setPackage(pkg), 0);
+        } catch (Exception error) {
+            Log.w(TAG, "[COMPONENT][RETAIN] pkg=" + pkg + " reason=query_failed", error);
+            return null;
+        }
+    }
+
+    public boolean isLauncherComponentExplicitlyDisabled(String pkg, String component, int userId) {
+        if (app == null || userId != 0 || TextUtils.isEmpty(pkg) || TextUtils.isEmpty(component)) return false;
+        try {
+            ComponentName name = ComponentName.unflattenFromString(component);
+            if (name == null) name = new ComponentName(pkg, component.startsWith(".") ? pkg + component : component);
+            if (!pkg.equals(name.getPackageName())) return false;
+            int state = app.getPackageManager().getComponentEnabledSetting(name);
+            return state == PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+                    || state == PackageManager.COMPONENT_ENABLED_STATE_DISABLED_USER
+                    || (state == PackageManager.COMPONENT_ENABLED_STATE_DEFAULT
+                        && !app.getPackageManager().getActivityInfo(name,
+                                PackageManager.MATCH_DISABLED_COMPONENTS).enabled);
+        } catch (Exception error) {
+            return false;
+        }
     }
     private PackageStateResult result(LauncherItemKey key, PackageState state, boolean visible, String reason, String source) {
         PackageStateResult result = new PackageStateResult(key, state, visible, source, reason);

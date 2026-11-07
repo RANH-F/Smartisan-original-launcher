@@ -8,6 +8,8 @@
 
 
 # instance fields
+.field private mTargetContextGeneration:I
+
 .field private AG:Z
 
 .field private BG:Z
@@ -233,6 +235,8 @@
 .method public Ka(Z)V
     .locals 5
 
+    invoke-direct/range {p0 .. p0}, Lcom/smartisanos/smengine/N;->ensureTargetContext()V
+
     const/4 v0, 0x0
 
     const/4 v1, -0x1
@@ -413,6 +417,8 @@
 .method public Qk()V
     .locals 4
 
+    invoke-direct/range {p0 .. p0}, Lcom/smartisanos/smengine/N;->ensureTargetContext()V
+
     .line 1
     iget-boolean v0, p0, Lcom/smartisanos/smengine/N;->xG:Z
 
@@ -457,6 +463,8 @@
 .method public Rk()I
     .locals 0
 
+    invoke-direct/range {p0 .. p0}, Lcom/smartisanos/smengine/N;->ensureTargetContext()V
+
     .line 1
     iget p0, p0, Lcom/smartisanos/smengine/N;->sG:I
 
@@ -494,6 +502,8 @@
 .method public Uk()Landroid/graphics/Bitmap;
     .locals 2
 
+    invoke-direct/range {p0 .. p0}, Lcom/smartisanos/smengine/N;->ensureTargetContext()V
+
     .line 1
     iget v0, p0, Lcom/smartisanos/smengine/N;->uG:I
 
@@ -510,6 +520,8 @@
 
 .method public bind()V
     .locals 1
+
+    invoke-direct/range {p0 .. p0}, Lcom/smartisanos/smengine/N;->ensureTargetContext()V
 
     .line 1
     iget-boolean v0, p0, Lcom/smartisanos/smengine/N;->xG:Z
@@ -531,6 +543,8 @@
 
 .method public create()V
     .locals 19
+
+    invoke-direct/range {p0 .. p0}, Lcom/smartisanos/smengine/N;->ensureTargetContext()V
 
     move-object/from16 v0, p0
 
@@ -1235,6 +1249,12 @@
 
     .line 98
     :cond_12
+    # Preserve the external Surface for a later retry; delete only owned GL names.
+    move-object/from16 v0, p0
+    iget-object v2, v0, Lcom/smartisanos/smengine/N;->mSurface:Landroid/view/Surface;
+    const/4 v1, 0x1
+    invoke-virtual {v0, v1}, Lcom/smartisanos/smengine/N;->Ka(Z)V
+    iput-object v2, v0, Lcom/smartisanos/smengine/N;->mSurface:Landroid/view/Surface;
     return-void
 .end method
 
@@ -1251,6 +1271,13 @@
 
 .method public genMipmap()V
     .locals 1
+
+    invoke-direct/range {p0 .. p0}, Lcom/smartisanos/smengine/N;->ensureTargetContext()V
+
+    iget-boolean v0, p0, Lcom/smartisanos/smengine/N;->xG:Z
+    if-nez v0, :target_mipmap_ready
+    return-void
+    :target_mipmap_ready
 
     .line 1
     iget-boolean v0, p0, Lcom/smartisanos/smengine/N;->AG:Z
@@ -1458,4 +1485,23 @@
     move-result-object p0
 
     return-object p0
+.end method
+
+# Context loss invalidates GL names, not the target description or external Surface.
+.method private ensureTargetContext()V
+    .locals 2
+
+    invoke-static {}, Lcom/smartisanos/launcher/gesture/LauncherHomeCompat;->getEglContextGeneration()I
+    move-result v0
+    iget v1, p0, Lcom/smartisanos/smengine/N;->mTargetContextGeneration:I
+    if-eq v0, v1, :target_context_current
+
+    # Stamp first because the existing non-deleting reset also checks this guard.
+    iput v0, p0, Lcom/smartisanos/smengine/N;->mTargetContextGeneration:I
+    const/4 v1, 0x0
+    invoke-virtual {p0, v1}, Lcom/smartisanos/smengine/N;->Ka(Z)V
+    iput-boolean v1, p0, Lcom/smartisanos/smengine/N;->AG:Z
+
+    :target_context_current
+    return-void
 .end method

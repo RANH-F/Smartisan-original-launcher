@@ -1,0 +1,262 @@
+{
+  "build\\gesture-acceptance-20261104\\A-first.jpg": {
+    "bytes": 180402,
+    "sha256": "712be7b7e3a4019d966c66953bcd75fc45e5c166011d5cd32da0dfd8064b1a2b"
+  },
+  "build\\gesture-acceptance-20261104\\A-trajectory.jpg": {
+    "bytes": 162918,
+    "sha256": "4b026a23b028c9462670f3e76e94ebea1133ce9bbfb0d5bd1f7257616cbb79b1"
+  },
+  "build\\gesture-acceptance-20261104\\A.json": {
+    "bytes": 972,
+    "sha256": "a862cef679557a7ffdac1a6a1f225b1bcd680a90ea34d207649168ec15e2c6a2"
+  },
+  "build\\gesture-acceptance-20261104\\A.log": {
+    "bytes": 49685,
+    "sha256": "bcb91b40df6cc0e69ee4885420b8e55c58560578e375b2bcab0b182d4730638d"
+  },
+  "build\\gesture-acceptance-20261104\\A.mp4": {
+    "bytes": 2674648,
+    "sha256": "9d071aa756fe611f79e275627d222afe6169e59f80ba4204a00e3a192e5f96ed"
+  },
+  "build\\gesture-acceptance-20261104\\A2-trajectory.jpg": {
+    "bytes": 161779,
+    "sha256": "a19780760478b5b354ef4982f675fd13f5794e2eb7b69c60b4224204c537d541"
+  },
+  "build\\gesture-acceptance-20261104\\A2.json": {
+    "bytes": 972,
+    "sha256": "520d28e27dc85e3dc5377aa7dd7d939637a021f87fb2d4c0303d960dff1ddad5"
+  },
+  "build\\gesture-acceptance-20261104\\A2.log": {
+    "bytes": 147901,
+    "sha256": "05f7df852cea722ba40582037237d092e21ce8ee6bf385247f5abad51d79d4b7"
+  },
+  "build\\gesture-acceptance-20261104\\A2.mp4": {
+    "bytes": 2873846,
+    "sha256": "e816df10ecf9c967f82e6268af7e66bab85524a6e259f913957f51bc6f9ef08f"
+  },
+  "build\\gesture-acceptance-20261104\\B-first.jpg": {
+    "bytes": 194688,
+    "sha256": "66ce2384e1b26850adcba91b41bce4b706d7accb51881001907adac7d2222690"
+  },
+  "build\\gesture-acceptance-20261104\\B-protocol-only.log": {
+    "bytes": 1510,
+    "sha256": "96f12b30e1fbc88f4359f0af46ae253e50e1388fc2e2fc268e0764001aed04d7"
+  },
+  "build\\gesture-acceptance-20261104\\B-trajectory.jpg": {
+    "bytes": 164968,
+    "sha256": "6823de24f5c0ce726d8d7a86b6f066073032219c05dc4424b05955cb3bd62f1a"
+  },
+  "build\\gesture-acceptance-20261104\\B.json": {
+    "bytes": 972,
+    "sha256": "cac47f146a1535457b41ab1fb839d7444e7488d82b2ff0dddf8e78c6abd4b1d9"
+  },
+  "build\\gesture-acceptance-20261104\\B.log": {
+    "bytes": 82823,
+    "sha256": "cebaf54c32c2896c02e96095198518f4df736a423d81b8597f59628f63be20ef"
+  },
+  "build\\gesture-acceptance-20261104\\B.mp4": {
+    "bytes": 2932299,
+    "sha256": "1ac027dc87dc1f380cad180b59ab3837ad3f4399a8085cb4c9352551b6f6ffe7"
+  },
+  "build\\gesture-acceptance-20261104\\baseline.json": {
+    "bytes": 812,
+    "sha256": "9476780f70d1a447e82d8492bad2d83aba34c8aa7271c9c33c20c7bf7bf8e28c"
+  },
+  "build\\gesture-acceptance-20261104\\before.png": {
+    "bytes": 2636907,
+    "sha256": "a40da8810023253e5ca47740d9bc975f0ccf6cab2f8a7c94cd78b3ebf01746dd"
+  },
+  "build\\gesture-acceptance-20261104\\camera-now.png": {
+    "bytes": 22988,
+    "sha256": "8a1cfd8e8b6fc171e07f6c3e128fbccd314af9f5b1a3b970953773c6eedef620"
+  },
+  "build\\gesture-acceptance-20261104\\current.png": {
+    "bytes": 2613571,
+    "sha256": "7f8b70038a02b3f76b04c7a835c17b655ce92d13c0a461ed38a331891614ed16"
+  },
+  "build\\gesture-acceptance-20261104\\installed-before.apk": {
+    "bytes": 57555863,
+    "sha256": "43a8f180580944b7df447adc166941304c737cea3707940a030729c9206f0f2e"
+  },
+  "build\\gesture-acceptance-20261104\\installed-candidate.apk": {
+    "bytes": 58096622,
+    "sha256": "3f71848faf1f867b5f636ac8d5351c455596b3ccd82e9cf67628ef623215c89f"
+  },
+  "build\\gesture-acceptance-20261104\\invalid-A2-still-on.json": {
+    "bytes": 972,
+    "sha256": "0ea57ada7e9847c59d360302653a848047483cde95424a815b88b1e146612226"
+  },
+  "build\\gesture-acceptance-20261104\\invalid-A2-still-on.log": {
+    "bytes": 116118,
+    "sha256": "d8daada59cc936d26679c9ee949a08d66ef24a59c22488cf7c9a2b27b8159062"
+  },
+  "build\\gesture-acceptance-20261104\\invalid-A2-still-on.mp4": {
+    "bytes": 2806377,
+    "sha256": "23e6f677f599cbf96536973747597b62798aa378019269c403b637b9f9eaa5ca"
+  },
+  "build\\gesture-acceptance-20261104\\restored.apk": {
+    "bytes": 57555863,
+    "sha256": "43a8f180580944b7df447adc166941304c737cea3707940a030729c9206f0f2e"
+  },
+  "build\\gesture-acceptance-20261104\\result.json": {
+    "bytes": 2170,
+    "sha256": "cda63020c2424a1a29fe163f6f22ae65e6c44ca8f790731d45f207e703d7970b"
+  },
+  "build\\gesture-acceptance-20261104\\system-errors.log": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "build\\gesture-acceptance-20261104\\trajectories.json": {
+    "bytes": 11716,
+    "sha256": "088f88f4206c32ef8f1e81860e8b63a0fd9427c1e34620b57fc61c78c56e874a"
+  },
+  "build\\gesture-geometry-20261104\\build.log": {
+    "bytes": 2862,
+    "sha256": "f94af52b834468043eac9fe336b75dca804617d13fef7b6cfbde0b20830a26ba"
+  },
+  "build\\gesture-geometry-20261104\\camera-geometry.json": {
+    "bytes": 1435,
+    "sha256": "542d54f7cf35234d4c6898aba248e3a029ec63715ae61509c82f812e054771f1"
+  },
+  "build\\gesture-geometry-20261104\\camera-overlay.png": {
+    "bytes": 2335233,
+    "sha256": "8200c112b6b3ea7ffaa0d88b88b8ef7e585a6acca91378f65d47843421968858"
+  },
+  "build\\gesture-geometry-20261104\\desktop.png": {
+    "bytes": 2614872,
+    "sha256": "60d4ae2b176f08587bd13173b545ba7ea8aa99069d12d2ce5d346a5a85e8ffec"
+  },
+  "build\\gesture-geometry-20261104\\emulator-error.log": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "build\\gesture-geometry-20261104\\emulator.log": {
+    "bytes": 12155,
+    "sha256": "ee4666b9a718dbad02dddbd816d55436e7687923d854335f32f787642ec830e5"
+  },
+  "build\\gesture-geometry-20261104\\geometry-increment.patch": {
+    "bytes": 15477,
+    "sha256": "364f93b4cc5ffad5d81a173436d523e679593e0c2ea8cce94acd3a679e36e19d"
+  },
+  "build\\gesture-geometry-20261104\\geometry.log": {
+    "bytes": 26634,
+    "sha256": "58d7e6f08e281a65ed779c7063cbf280198a35fe79a8050c734d47a865e08df9"
+  },
+  "build\\gesture-geometry-20261104\\installed-before.apk": {
+    "bytes": 57555863,
+    "sha256": "43a8f180580944b7df447adc166941304c737cea3707940a030729c9206f0f2e"
+  },
+  "build\\gesture-geometry-20261104\\installed-diagnostic.apk": {
+    "bytes": 58092526,
+    "sha256": "a78611a2d38a4b1309e0f288946bd6032293d86b14631a6b0b4328cafb9d9204"
+  },
+  "build\\gesture-geometry-20261104\\raw-overlay.png": {
+    "bytes": 2332773,
+    "sha256": "d5900ee732209576652c879c85722f8302fc71c24004e17816a69ac7004b767e"
+  },
+  "build\\gesture-geometry-20261104\\raw-overlay.png.json": {
+    "bytes": 672,
+    "sha256": "580cd2318a81bb300141f929212114c4c6576bd26ee348dbd165ca01e271988b"
+  },
+  "build\\gesture-geometry-20261104\\restored.apk": {
+    "bytes": 57555863,
+    "sha256": "43a8f180580944b7df447adc166941304c737cea3707940a030729c9206f0f2e"
+  },
+  "build\\gesture-geometry-20261104\\result.json": {
+    "bytes": 1202,
+    "sha256": "5982856085276f7ec7e5886a4ed597f170def5dc7e19ce18ef493dfd629b7f29"
+  },
+  "build\\gesture-geometry-20261104\\rollback-check.txt": {
+    "bytes": 3,
+    "sha256": "13bf7b3039c63bf5a50491fa3cfd8eb4e699d1ba1436315aef9cbe5711530354"
+  },
+  "build\\finish-probe-20261104\\all.log": {
+    "bytes": 188501,
+    "sha256": "a32bffe6f6c2a50e62df4b799a83332e805c83c2396badc3e6103803150258fb"
+  },
+  "build\\finish-probe-20261104\\baseline.json": {
+    "bytes": 465,
+    "sha256": "89bc3785d5a321c4b6a82850ef1f613653c4ec9bb715d7a4a07d54a5dce93489"
+  },
+  "build\\finish-probe-20261104\\build.log": {
+    "bytes": 2703,
+    "sha256": "ed09ab3a6e2295a60e928af608a72449e4b516157782e641fe7263b462783e85"
+  },
+  "build\\finish-probe-20261104\\finish-probe-increment.patch": {
+    "bytes": 15792,
+    "sha256": "fe602b241943b3261b8123c5a31ae63b4f57c82a213c9dcbf64327d50fd27ae4"
+  },
+  "build\\finish-probe-20261104\\installed-before.apk": {
+    "bytes": 57555863,
+    "sha256": "43a8f180580944b7df447adc166941304c737cea3707940a030729c9206f0f2e"
+  },
+  "build\\finish-probe-20261104\\installed-probe.apk": {
+    "bytes": 58096622,
+    "sha256": "b75bc08ae856edb5b5269e17860fc59306810d306c2316fb2474d292dc183607"
+  },
+  "build\\finish-probe-20261104\\launcher-finish-probe.apk": {
+    "bytes": 58096622,
+    "sha256": "b75bc08ae856edb5b5269e17860fc59306810d306c2316fb2474d292dc183607"
+  },
+  "build\\finish-probe-20261104\\probe-only.log": {
+    "bytes": 2297,
+    "sha256": "2a64d6bc74ea3bd0ffb489da34181c6a0a657ab770855d6b569898e4f1cae77b"
+  },
+  "build\\finish-probe-20261104\\Probe.json": {
+    "bytes": 969,
+    "sha256": "a034f893a4763e4907ad036fbfab06907e79a290d6885103f633f11a11e721bd"
+  },
+  "build\\finish-probe-20261104\\Probe.log": {
+    "bytes": 188501,
+    "sha256": "a32bffe6f6c2a50e62df4b799a83332e805c83c2396badc3e6103803150258fb"
+  },
+  "build\\finish-probe-20261104\\Probe.mp4": {
+    "bytes": 2348769,
+    "sha256": "68f8e8ef8a864a0988c5008642228d167ff77a4c37c782bea5711ca2617402b4"
+  },
+  "build\\finish-probe-20261104\\restored.apk": {
+    "bytes": 57555863,
+    "sha256": "43a8f180580944b7df447adc166941304c737cea3707940a030729c9206f0f2e"
+  },
+  "build\\finish-probe-20261104\\result.json": {
+    "bytes": 2245,
+    "sha256": "672382aa07d9a20bbb6e5d287a13800bd1ec8770bdbdccc2cef5dd7f7347d348"
+  },
+  "build\\finish-probe-20261104\\rollback-check.txt": {
+    "bytes": 8,
+    "sha256": "c9d7a0682d275afe0a4d41a00294f56d6d82783a4de393ea188806cc8b3ee509"
+  },
+  "build\\finish-probe-20261104\\service-dump.txt": {
+    "bytes": 84843,
+    "sha256": "1255ad632edd7479958fcf24391a43419f32a17eb90ccb06708f8831d2e5b6aa"
+  },
+  "build\\finish-probe-20261104\\signature.txt": {
+    "bytes": 412,
+    "sha256": "68432f047efa51f97e2f0939b812a04f089c3e4c006fab3f0cbab6f8d4f5bbc1"
+  },
+  "build\\finish-probe-20261104\\trajectory.jpg": {
+    "bytes": 157526,
+    "sha256": "8ce0cac1119c6fdc9ed6da38d08732dc09b6a2e1c74d8291c3ad0da73f4abb60"
+  },
+  "build\\finish-probe-20261104\\trajectory.json": {
+    "bytes": 4364,
+    "sha256": "bbacc6fa4999a3a3c5b821000721de1bdfb916bd266a74cee9a5ac05c71dda2e"
+  },
+  "build\\quickstep-receiver-20261104\\decode.log": {
+    "bytes": 240,
+    "sha256": "9770490adecac6a76c2f161f9d878ef2f429f672b3b7b8f5e3988e90ecf54cbf"
+  },
+  "build\\quickstep-receiver-20261104\\Quickstep.apk": {
+    "bytes": 15878209,
+    "sha256": "427a6f3da2eead1e813b344507ca1fcaa815785525ef0fa25066c9884cf10244"
+  },
+  "build\\quickstep-receiver-20261104\\receiver-analysis.json": {
+    "bytes": 2763,
+    "sha256": "a58835d1efd1474b258f629fea40aae10ec6899492d0ac613f5443a98c0d8d94"
+  },
+  "build\\quickstep-receiver-20261104\\service-dump.txt": {
+    "bytes": 85368,
+    "sha256": "d74ad67343fc01624829ce2862065ec682e98a463cbec65f70de0d34c4d26eb5"
+  }
+}

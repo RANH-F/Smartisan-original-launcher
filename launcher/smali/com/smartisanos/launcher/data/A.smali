@@ -643,6 +643,14 @@
 
 
 # Keep original placement/duplicate/ID handling, but amortize per-item disk commits.
+.method public static refreshLauncherComponents(Ljava/lang/String;Ljava/util/List;)V
+    .locals 0
+
+    invoke-static {p0, p1}, Lcom/smartisanos/launcher/data/A;->b(Ljava/lang/String;Ljava/util/List;)V
+
+    return-void
+.end method
+
 .method private static placeStartupItems(Ljava/util/List;Ljava/util/List;)V
     .locals 3
 
@@ -8539,6 +8547,10 @@
 .method private static b(Ljava/lang/String;Ljava/util/List;)V
     .locals 17
 
+    const-string v0, "ComponentUpdate"
+    move-object/from16 v1, p0
+    invoke-static {v0, v1}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
+
     move-object/from16 v0, p0
 
     .line 51
@@ -9083,6 +9095,12 @@
     if-eqz v6, :cond_e
 
     .line 107
+    invoke-static {v6}, Lcom/smartisanos/launcher/model/LauncherModelRepository;->canRemoveDisabledLauncherComponent(Ljava/lang/Object;)Z
+
+    move-result v8
+
+    if-eqz v8, :cond_e
+
     iget-wide v12, v6, Lcom/smartisanos/launcher/data/ItemInfo;->id:J
 
     invoke-static {v12, v13}, Lcom/smartisanos/launcher/data/A;->n(J)V

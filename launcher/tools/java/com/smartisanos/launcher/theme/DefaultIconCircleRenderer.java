@@ -19,10 +19,11 @@ public final class DefaultIconCircleRenderer {
     public static final String KEY_SHAPE = "launcher_default_icon_shape_v1";
     public static final String SHAPE_FOLLOW_APP = "follow_app";
     public static final String SHAPE_CIRCLE = "circle";
-    public static final String VERSION = "default-circle:v11-raw-apk-resource";
+    public static final String VERSION = "default-circle:v14-transparent-artwork";
 
     // Median alpha envelope measured from five complete circular IMPROVED assets.
     private static final float CIRCLE_ENVELOPE_RATIO = 0.9791667f;
+    private static final int PLATE_ALPHA_MIN = 248;
     private DefaultIconCircleRenderer() {
     }
 
@@ -107,7 +108,6 @@ public final class DefaultIconCircleRenderer {
             top = Math.min(top, y); bottom = y;
         }
         if (right < left) {
-            if (neutralFallback) drawNeutralBackground(canvas, circleBounds);
             return;
         }
         float cx = (left + right + 1) * .5f, cy = (top + bottom + 1) * .5f;
@@ -135,22 +135,29 @@ public final class DefaultIconCircleRenderer {
         // Small glyphs therefore need no second full-canvas background scan.
         boolean possiblePlate = right - left + 1 >= width * .6f
                 && bottom - top + 1 >= height * .6f;
-        if ((!possiblePlate || !drawLegacyBackground(canvas, source, pixels, circleBounds, matrix))
-                && neutralFallback) {
-            drawNeutralBackground(canvas, circleBounds);
+        if (possiblePlate && drawLegacyBackground(canvas, source, pixels, circleBounds, matrix)) {
+            // The shader already contains the complete artwork at this matrix.
+            // Redrawing the original also restores its obsolete rounded edge/shadow.
+            return;
+        }
+        if (neutralFallback) {
+            // An unrecognized legacy contour is finished transparent artwork, not a plate.
+            // Preserve its full canvas, silhouette and padding just as follow-app does.
+            canvas.drawBitmap(source, 0f, 0f, null);
+            return;
         }
         Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
         canvas.drawBitmap(source, matrix, paint);
     }
 
-    /** Extends a solid square or rounded plate; the complete artwork stays above it. */
+    /** Extends a solid plate using its complete artwork, preserving the foreground matrix. */
     private static boolean drawLegacyBackground(Canvas canvas, Bitmap source, int[] pixels,
             RectF circleBounds, Matrix artworkMatrix) {
         int width = source.getWidth(), height = source.getHeight();
         int left = width, top = height, right = -1, bottom = -1;
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
-                if ((pixels[y * width + x] >>> 24) < 250) continue;
+                if ((pixels[y * width + x] >>> 24) < PLATE_ALPHA_MIN) continue;
                 left = Math.min(left, x); right = Math.max(right, x);
                 top = Math.min(top, y); bottom = Math.max(bottom, y);
             }
@@ -163,7 +170,7 @@ public final class DefaultIconCircleRenderer {
         for (int y = top; y <= bottom; y++) {
             int first = right + 1, last = left - 1, count = 0;
             for (int x = left; x <= right; x++) {
-                if ((pixels[y * width + x] >>> 24) >= 250) {
+                if ((pixels[y * width + x] >>> 24) >= PLATE_ALPHA_MIN) {
                     if (first > right) first = x;
                     last = x;
                     count++;
@@ -188,7 +195,9 @@ public final class DefaultIconCircleRenderer {
             int tolerance = Math.max(2, Math.round(w * .03f));
             for (int y = 0; !circular && y < h; y++) {
                 int first = rowFirst[y], last = rowLast[y];
-                if (rowCount[y] != last - first + 1 || rowCount[y] < w * .35f
+                // High total coverage and the monotone symmetric contour already
+                // reject glyphs. A rounded plate's first opaque chord may be short.
+                if (rowCount[y] != last - first + 1
                         || Math.abs((first - left) - (right - last)) > tolerance) return false;
                 // Top and bottom corner radii may differ. Each half must taper
                 // continuously, rather than requiring identical opposing rows.
@@ -259,12 +268,6 @@ public final class DefaultIconCircleRenderer {
             }
         }
         return true;
-    }
-
-    private static void drawNeutralBackground(Canvas canvas, RectF circleBounds) {
-        Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        paint.setColor(0xfff2f2f2);
-        canvas.drawOval(circleBounds, paint);
     }
 
     /** Draws the final circle as an anti-aliased primitive instead of a hard clipPath edge. */

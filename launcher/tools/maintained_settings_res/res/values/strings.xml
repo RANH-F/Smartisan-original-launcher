@@ -158,6 +158,8 @@
     <string name="multi_select_in_mode">%1$d/%2$d apps selected</string>
     <string name="mutiselect_first_notice">Press and drag to move selected apps.</string>
     <string name="net_is_not_available">Net is not available</string>
+    <string name="home_icon_animation_title">应用返回图标动画</string>
+    <string name="home_icon_animation_tips">上滑返回桌面时，将应用窗口自然收拢至对应图标。部分系统可能不支持。</string>
     <string name="obsession_badge_swipe_clean">Swipe to Clean Icon Badges</string>
     <string name="obsession_badge_swipe_clean_tips">Swipe upward from the bottom edge to clear app notification badges.</string>
     <string name="obsession_badge_reminder_tips">Allow notification badges in the upper-right corner of app icons.</string>

@@ -205,6 +205,11 @@ public final class SmartisanInstallManager {
         }
         Log.i(TAG, "INSTALL_MODEL_READY pending=" + pendingEventCount());
         processPendingEvents(context, "model_ready_reconcile");
+        sWorkerHandler.post(new Runnable() {
+            @Override public void run() {
+                LauncherModelRepository.refreshStartupDisabledComponents(context);
+            }
+        });
         reconcilePinnedShortcuts(context);
     }
 
@@ -966,6 +971,21 @@ public final class SmartisanInstallManager {
             }
             if (!sModelReady) {
                 schedulePendingAttemptLocked(context, event, 100L);
+                return;
+            }
+            if (Intent.ACTION_PACKAGE_CHANGED.equals(event.action)
+                    || Intent.ACTION_PACKAGE_REPLACED.equals(event.action)) {
+                event.dispatched = true;
+                sWorkerHandler.post(new Runnable() {
+                    @Override public void run() {
+                        LauncherModelRepository.refreshLauncherComponents(context, event.packageName, event.userId);
+                        synchronized (LOCK) {
+                            PENDING_PACKAGE_EVENTS.remove(pendingKey(event.packageName, event.userId,
+                                    event.userSerial, event.action, event.componentName));
+                        }
+                        persistPendingEvents(context);
+                    }
+                });
                 return;
             }
             if (!launcherActivityAvailable(context, event.packageName)) {

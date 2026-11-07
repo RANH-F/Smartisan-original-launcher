@@ -94,5 +94,19 @@ public final class ProjectionCacheProbe {
         bench("bench",a,a,"same-revision");bench("bench",a,b,"same-alpha-new-bitmap");a.recycle();b.recycle();
         if(!args[1].equals("baseline"))cases();
         else System.out.println("BASELINE_POST_RASTER_CACHE=MEASURED");
+        if(args.length>3){
+            Bitmap before=BitmapFactory.decodeFile(args[2]),after=BitmapFactory.decodeFile(args[3]);
+            check(before!=null&&after!=null,"real artwork decoded");
+            check(IconIlluminationCompat.write("real-module",before,false),"real old contour generated");
+            int[][] old=new int[8][];
+            for(int i=0;i<8;i++)old[i]=pixels(file("real-module",i+1));
+            check(IconIlluminationCompat.write("real-module",after,false),"real new contour generated");
+            int changed=0;for(int i=0;i<8;i++)if(!Arrays.equals(old[i],pixels(file("real-module",i+1))))changed++;
+            check(changed==8,"all eight layers follow changed real contour");
+            check(IconIlluminationCompat.write("real-module-reference",after,true),"real contour forced reference");
+            sameLayers("real-module","real-module-reference");
+            before.recycle();after.recycle();
+            System.out.println("PASS REAL_ARTWORK_REPLACEMENT layersChanged="+changed+" checks="+checks);
+        }
     }
 }

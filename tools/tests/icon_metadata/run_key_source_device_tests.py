@@ -158,6 +158,7 @@ def main():
 OWNER_HELPERS = r'''
  static Drawable loadCurrentDesktopDrawable(Object i){return loadIconForDesktopItem(currentApplicationContext(),"test.app","test.Main","test",user);}
  static Drawable loadApkIcon(ResolveInfo r,PackageManager pm){return r.loadIcon(pm);}
+ static Drawable loadApkApplicationIcon(PackageManager pm,String p){return pm.getApplicationIcon(p);}
  static Resources settingsResources(Context c){return Resources.getSystem();}
  static Drawable selectedIconDrawable(Context c,ResolveInfo r,Object label,Resources res){return resolveManagedIconSource(c,r,res,null).drawable;}
  static Drawable resolveManagedIcon(Context c,ResolveInfo r,Resources res,Object t){return resolveManagedIconSource(c,r,res,null).drawable;}
@@ -230,6 +231,7 @@ VALIDITY_METHODS = r'''
   mode="original";IconSourceManager.global=IconSourceManager.Type.DEFAULT;available=true;user=0;componentMatches=true;
   String key=After.key(item);check(key.equals(After.key(item)),"identical inputs reuse key");
   circle=true;different(item,key,"circle preference invalidates DEFAULT");circle=false;
+  DefaultIconCircleRenderer.VERSION="older-shape";different(item,key,"renderer version invalidates previous final raster");DefaultIconCircleRenderer.VERSION="shape";
   resized=true;different(item,key,"classification invalidates");resized=false;
   theme=1;different(item,key,"transparent theme invalidates");theme=0;
   logicalArt++;different(item,key,"logical artwork invalidates");logicalArt--;

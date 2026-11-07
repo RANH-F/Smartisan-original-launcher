@@ -14,6 +14,8 @@
 
 .field private mProgram:I
 
+.field private mContextGeneration:I
+
 .field private tS:Ljava/lang/String;
 
 .field private uS:Ljava/lang/String;
@@ -672,7 +674,7 @@
 .end method
 
 .method public create()V
-    .locals 1
+    .locals 2
 
     .line 1
     iget-object v0, p0, Lcom/smartisanos/smengine/sa;->uS:Ljava/lang/String;
@@ -682,6 +684,18 @@
     iget-object v0, p0, Lcom/smartisanos/smengine/sa;->tS:Ljava/lang/String;
 
     if-eqz v0, :cond_1
+
+    # GL names can identify unrelated objects after EGL context recreation.
+    invoke-static {}, Lcom/smartisanos/launcher/gesture/LauncherHomeCompat;->getEglContextGeneration()I
+    move-result v0
+    iget v1, p0, Lcom/smartisanos/smengine/sa;->mContextGeneration:I
+    if-eq v0, v1, :shader_context_ready
+    iput v0, p0, Lcom/smartisanos/smengine/sa;->mContextGeneration:I
+    const/4 v1, 0x0
+    iput v1, p0, Lcom/smartisanos/smengine/sa;->mProgram:I
+    iput v1, p0, Lcom/smartisanos/smengine/sa;->wS:I
+    iput v1, p0, Lcom/smartisanos/smengine/sa;->yS:I
+    :shader_context_ready
 
     .line 2
     iget v0, p0, Lcom/smartisanos/smengine/sa;->mProgram:I

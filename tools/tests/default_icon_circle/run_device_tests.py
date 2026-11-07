@@ -14,8 +14,11 @@ def main():
     parser.add_argument('--sdk', required=True, type=Path)
     parser.add_argument('--output', required=True, type=Path)
     parser.add_argument('--visual', action='store_true')
+    parser.add_argument('--packages', nargs='+', default=[])
     parser.add_argument('--renderer', type=Path, default=ROOT / 'launcher/tools/java/com/smartisanos/launcher/theme/DefaultIconCircleRenderer.java')
     args = parser.parse_args()
+    if args.packages and not args.visual:
+        parser.error('--packages requires --visual')
     args.output.mkdir(parents=True, exist_ok=True)
 
     def run(command, name):
@@ -47,15 +50,27 @@ def main():
         command = 'CLASSPATH=' + remote + ' app_process /system/bin ' + main_class
         if args.visual:
             command += ' /data/local/tmp/default-circle-visual.png'
+            command += ''.join(' ' + package for package in args.packages)
         result = run([*adb, 'shell', command], 'device.log')
         if args.visual:
-            run([*adb, 'pull', '/data/local/tmp/default-circle-visual.png', args.output / 'visual.png'], 'pull.log')
+            if args.packages:
+                for package in args.packages:
+                    for suffix in ('raw', 'rendered'):
+                        name = package + '.' + suffix + '.png'
+                        run([*adb, 'pull', '/data/local/tmp/default-circle-visual.png.' + name,
+                             args.output / name], 'pull-' + name + '.log')
+            else:
+                run([*adb, 'pull', '/data/local/tmp/default-circle-visual.png', args.output / 'visual.png'], 'pull.log')
         expected = 'DEFAULT_CIRCLE_VISUAL_WRITTEN' if args.visual else 'DEFAULT_CIRCLE_COMPLETE_ARTWORK'
         if expected not in result:
             raise AssertionError('missing completion marker')
         print(result)
     finally:
         run([*adb, 'shell', 'rm', '-f', remote, '/data/local/tmp/default-circle-visual.png'], 'cleanup.log')
+        for package in args.packages:
+            for suffix in ('raw', 'rendered'):
+                run([*adb, 'shell', 'rm', '-f', '/data/local/tmp/default-circle-visual.png.'
+                     + package + '.' + suffix + '.png'], 'cleanup-' + package + '-' + suffix + '.log')
 
 
 if __name__ == '__main__':

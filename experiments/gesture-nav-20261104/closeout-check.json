@@ -1,0 +1,14 @@
+{
+  "checks": {
+    "xml_entry_removed": true,
+    "binding_removed": true,
+    "release_gate_false": true,
+    "diagnostic_gated": true,
+    "old_enabled_pref_cannot_enable": true,
+    "evidence_hashes_unchanged": true
+  },
+  "tests_rerun": false,
+  "apk_rebuilt": false,
+  "device_operations": false,
+  "archive_sha256": "a58716ba20557752d72a83bae1726126e2554f096b4b7654c61e8e6d837e97da"
+}
