@@ -790,3 +790,12 @@ git push --force
 不要用“是否继续”“要不要我继续”之类结尾。
 
 任务明确时，直接完成。
+
+## Smartisan Icon Ecosystem Master Specification
+
+Before any task involving icon matching, adaptation status, online catalogs, Intents, icon uploads, review, publishing, caching, or resource updates, read:
+
+`docs/architecture/SMARTISAN_ICON_ECOSYSTEM_MASTER_SPEC.md`
+
+This is the highest-level cross-project architecture specification. Do not create a second adaptation state or resource protocol. Report conflicts before making changes; do not change the architecture unilaterally.
+

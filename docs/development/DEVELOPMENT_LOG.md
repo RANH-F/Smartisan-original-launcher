@@ -636,3 +636,9 @@
 | 2026-06 | 初期设置、图标和主题修复 | [6月](archive/DEVELOPMENT_HISTORY.md#2026-06-30) |
 
 `MEMORY.md` 未更新。本页记录结论，原始数据按证据目录查阅；历史候选、失败试验和未验证范围均保留在归档中。
+
+## 2026-11-08 — IconHub 跨仓库生态方案 S0 检查点
+
+- 已同步用户提供的全链路架构规范；本仓库规范路径为 `docs/architecture/SMARTISAN_ICON_ECOSYSTEM_MASTER_SPEC.md`，与 Smartisan-IconHub 版本 SHA-256 一致。
+- 双仓库分支、构建版本、Launcher 图标源审计和正式 API 空目录现状记录于 `docs/phase-reports/S0-cross-repo-baseline-20261108.md`。
+- S0 未修改 Launcher 运行时代码。后续 Launcher 改造前继续按本仓库要求对比当前实现、原版 APK、clean_launcher 和 maintained 参考。
