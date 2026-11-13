@@ -218,6 +218,8 @@
     .line 4
     invoke-super {p0}, Landroid/app/Application;->onCreate()V
 
+    invoke-static {p0}, Lcom/smartisanos/launcher/theme/LauncherNetworkPolicy;->initialize(Landroid/content/Context;)V
+
     const-string v0, "INSTALL_MANAGER_INIT_BEGIN"
 
     invoke-static {v0}, Lcom/smartisanos/launcher/diagnostics/StartupCompatibilityLogger;->mark(Ljava/lang/String;)V

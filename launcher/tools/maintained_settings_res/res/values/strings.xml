@@ -964,4 +964,6 @@
     <string name="sponsor_title">Power by</string>
     <string name="sponsor_names">@夏尔美、@星辰、@幸福的街角、@287266982、@CH</string>
     <string name="sponsor_thanks">Thanks to the Smartisan community for their support. Listed in no particular order.</string>
+    <string name="launcher_network_title">Launcher network access</string>
+    <string name="launcher_network_required">Enable Launcher network access in OCD Settings</string>
 </resources>

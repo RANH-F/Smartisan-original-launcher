@@ -819,4 +819,6 @@
     <string name="sponsor_title">Power by</string>
     <string name="sponsor_names">@夏尔美、@星辰、@幸福的街角、@287266982、@CH、@我没叫啊</string>
     <string name="sponsor_thanks">感谢以上锤友赞助支持，排名不分先后</string>
+    <string name="launcher_network_title">桌面联网</string>
+    <string name="launcher_network_required">请在强迫症选项中开启桌面联网</string>
 </resources>

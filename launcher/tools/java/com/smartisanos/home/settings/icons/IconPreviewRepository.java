@@ -30,6 +30,8 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import com.smartisanos.launcher.theme.LauncherNetworkPolicy;
+
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Locale;
@@ -1263,6 +1265,7 @@ public final class IconPreviewRepository implements ComponentCallbacks2 {
 
     /** Existing mirrors/cache, now raw IO only. Decode resumes on the preview pool. */
     private boolean fetchOnlineSource(String sourceId, OnlineFetch fetch) {
+        if (!LauncherNetworkPolicy.isEnabled()) return false;
         if (TextUtils.isEmpty(sourceId) || (!sourceId.matches("[A-Za-z0-9._-]+")
                 && !"com.miui. delock.theme".equals(sourceId))) return false;
         android.content.SharedPreferences prefs = app.getSharedPreferences("online_icon_cache_v4", Context.MODE_PRIVATE);
@@ -1278,7 +1281,7 @@ public final class IconPreviewRepository implements ComponentCallbacks2 {
             HttpURLConnection conn = null;
             try {
                 String encoded = java.net.URLEncoder.encode(sourceId, "UTF-8").replace("+", "%20");
-                conn = (HttpURLConnection) new URL(baseUrl + encoded + ".png").openConnection();
+                conn = LauncherNetworkPolicy.open(new URL(baseUrl + encoded + ".png"));
                 conn.setConnectTimeout(1200);
                 conn.setReadTimeout(1800);
                 conn.setUseCaches(true);
@@ -1320,7 +1323,7 @@ public final class IconPreviewRepository implements ComponentCallbacks2 {
                     return true;
                 }
             } catch (Exception ignored) { allNotFound = false; }
-            finally { if (conn != null) conn.disconnect(); }
+            finally { if (conn != null) LauncherNetworkPolicy.close(conn); }
         }
         if (allNotFound && (fetch == null || !fetch.cancelled))
             prefs.edit().putLong("miss." + sourceId, System.currentTimeMillis()).apply();

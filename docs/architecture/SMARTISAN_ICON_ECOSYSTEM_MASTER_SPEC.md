@@ -1,6 +1,8 @@
 # Smartisan Icon × Smartisan Launcher
 # 全链路统一图标生态实施总方案
 
+> 当前部署、产品入口与实施验收以[当前实施方案](SMARTISAN_ICON_CURRENT_PLAN.md)为准。以下保留 V1.0 架构合同和历史实施上下文。
+
 版本：V1.0
 
 目标：一次性完成在线图标管理、统一目录、自动审核、人工审核、Gitee 发布、Launcher 自动匹配、跨应用跳转、自定义图标共享、原版锤子桌面对接及自动更新。

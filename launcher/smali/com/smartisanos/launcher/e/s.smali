@@ -11166,7 +11166,7 @@
     invoke-direct {v3, v4}, Ljava/net/URL;-><init>(Ljava/lang/String;)V
 
     .line 6
-    invoke-virtual {v3}, Ljava/net/URL;->openConnection()Ljava/net/URLConnection;
+    invoke-static {v3}, Lcom/smartisanos/launcher/theme/LauncherNetworkPolicy;->open(Ljava/net/URL;)Ljava/net/HttpURLConnection;
 
     move-result-object v3
 

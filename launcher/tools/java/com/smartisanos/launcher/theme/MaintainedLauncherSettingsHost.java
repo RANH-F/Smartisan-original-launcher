@@ -2974,6 +2974,7 @@ public final class MaintainedLauncherSettingsHost {
     }
 
     private static void downloadQuickSearchApk(final Context context) {
+        if (!requireLauncherNetwork(context)) return;
         File baseDir = null;
         try {
             baseDir = context.getExternalCacheDir();
@@ -3075,7 +3076,7 @@ public final class MaintainedLauncherSettingsHost {
                     } catch (Throwable ignored) {
                     }
                     if (conn != null) {
-                        conn.disconnect();
+                        LauncherNetworkPolicy.close(conn);
                     }
                 }
             }
@@ -11194,6 +11195,7 @@ public final class MaintainedLauncherSettingsHost {
     }
 
     private static long downloadTheme(Activity activity, ThemeEntry entry) {
+        if (!requireLauncherNetwork(activity)) return -1;
         String url = THEME_DOWNLOAD_BASE + entry.pkg + ".apk";
         try {
             if (!ensureDownloadPermission(activity)) {
@@ -11226,7 +11228,7 @@ public final class MaintainedLauncherSettingsHost {
             if (manager == null) {
                 throw new IllegalStateException("DownloadManager unavailable");
             }
-            long id = manager.enqueue(request);
+            long id = LauncherNetworkPolicy.enqueue(manager, request);
             activity.getSharedPreferences(THEME_DOWNLOAD_PREFS, Context.MODE_PRIVATE)
                     .edit()
                     .putLong(entry.pkg, id)
@@ -11237,6 +11239,7 @@ public final class MaintainedLauncherSettingsHost {
             Toast.makeText(activity, "已开始下载：" + entry.name, Toast.LENGTH_SHORT).show();
             return id;
         } catch (Throwable t) {
+            if (!LauncherNetworkPolicy.isEnabled()) return -1;
             try {
                 activity.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
             } catch (Throwable ignored) {
@@ -11613,6 +11616,7 @@ public final class MaintainedLauncherSettingsHost {
     }
 
     private static void checkForUpdates(final Activity activity) {
+        if (!requireLauncherNetwork(activity)) return;
         logOperation(activity, "ACTION", "check_for_updates");
         final Resources resources = getMaintainedResources(activity);
         final String checkTitle = getString(resources, "check_update_title", "检查更新");
@@ -11624,7 +11628,7 @@ public final class MaintainedLauncherSettingsHost {
                 HttpURLConnection conn = null;
                 try {
                     URL url = new URL(UPDATE_RELEASE_API);
-                    conn = (HttpURLConnection) url.openConnection();
+                    conn = LauncherNetworkPolicy.open(url);
                     conn.setConnectTimeout(8000);
                     conn.setReadTimeout(10000);
                     conn.setRequestProperty("Accept", "application/vnd.github+json");
@@ -11750,7 +11754,7 @@ public final class MaintainedLauncherSettingsHost {
                                     appVersion(activity), error));
                 } finally {
                     if (conn != null) {
-                        conn.disconnect();
+                        LauncherNetworkPolicy.close(conn);
                     }
                 }
             }
@@ -11897,6 +11901,7 @@ public final class MaintainedLauncherSettingsHost {
             downloadUpdateApkWithDownloadManager(activity, updateDownloadCandidates(tag, name, url), out, tag,
                     showUpdateDownloadProgress(activity));
         } catch (Throwable t) {
+            if (!LauncherNetworkPolicy.isEnabled()) return;
             try {
                 activity.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
             } catch (Throwable ignored) {
@@ -11919,6 +11924,10 @@ public final class MaintainedLauncherSettingsHost {
     private static void downloadUpdateApkWithDownloadManager(final Activity activity, final String[] urls,
                                                              final File out, final String tag,
                                                              final UpdateDownloadProgress ui) {
+        if (!requireLauncherNetwork(activity)) {
+            dismissUpdateDownloadProgress(ui);
+            return;
+        }
         downloadUpdateApkWithDownloadManager(activity, urls, out, tag, ui, 0);
     }
 
@@ -11926,6 +11935,10 @@ public final class MaintainedLauncherSettingsHost {
                                                              final File out, final String tag,
                                                              final UpdateDownloadProgress ui,
                                                              final int index) {
+        if (!LauncherNetworkPolicy.isEnabled()) {
+            dismissUpdateDownloadProgress(ui);
+            return;
+        }
         boolean enqueued = false;
         try {
             DownloadManager manager = (DownloadManager) activity.getSystemService(Context.DOWNLOAD_SERVICE);
@@ -11947,7 +11960,7 @@ public final class MaintainedLauncherSettingsHost {
             if (Build.VERSION.SDK_INT >= 11) {
                 request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
             }
-            final long downloadId = manager.enqueue(request);
+            final long downloadId = LauncherNetworkPolicy.enqueue(manager, request);
             enqueued = true;
             activity.getSharedPreferences(THEME_DOWNLOAD_PREFS, Context.MODE_PRIVATE)
                     .edit()
@@ -12004,13 +12017,13 @@ public final class MaintainedLauncherSettingsHost {
                                 break;
                             }
                             lastError = new IllegalStateException("HTTP " + code);
-                            conn.disconnect();
+                            LauncherNetworkPolicy.close(conn);
                             conn = null;
                         } catch (Throwable t) {
                             lastError = t;
                             if (conn != null) {
                                 try {
-                                    conn.disconnect();
+                                    LauncherNetworkPolicy.close(conn);
                                 } catch (Throwable ignored) {
                                 }
                                 conn = null;
@@ -12085,7 +12098,7 @@ public final class MaintainedLauncherSettingsHost {
                     } catch (Throwable ignored) {
                     }
                     if (conn != null) {
-                        conn.disconnect();
+                        LauncherNetworkPolicy.close(conn);
                     }
                 }
             }
@@ -12095,7 +12108,7 @@ public final class MaintainedLauncherSettingsHost {
     private static HttpURLConnection openDownloadConnection(String url) throws Exception {
         String current = url;
         for (int i = 0; i < 5; i++) {
-            HttpURLConnection conn = (HttpURLConnection) new URL(current).openConnection();
+            HttpURLConnection conn = LauncherNetworkPolicy.open(new URL(current));
             conn.setInstanceFollowRedirects(false);
             conn.setConnectTimeout(12000);
             conn.setReadTimeout(20000);
@@ -12108,7 +12121,7 @@ public final class MaintainedLauncherSettingsHost {
                     || code == 307
                     || code == 308) {
                 String next = conn.getHeaderField("Location");
-                conn.disconnect();
+                LauncherNetworkPolicy.close(conn);
                 if (next == null || next.length() == 0) {
                     throw new IllegalStateException("Redirect without Location");
                 }
@@ -14828,6 +14841,13 @@ public final class MaintainedLauncherSettingsHost {
                 activity.getResources().getDisplayMetrics().widthPixels - dp(activity, 32)), -2);
     }
 
+    private static boolean requireLauncherNetwork(Context context) {
+        if (LauncherNetworkPolicy.isEnabled()) return true;
+        Toast.makeText(context, getString(context, "launcher_network_required",
+                "Enable Launcher network access in OCD Settings"), Toast.LENGTH_SHORT).show();
+        return false;
+    }
+
     private static void showOcdOptionsPage(final Activity activity) {
         showOcdOptionsPage(activity, true);
     }
@@ -14845,6 +14865,18 @@ public final class MaintainedLauncherSettingsHost {
             bindBadgeSwipeCleanSwitch(activity, resources, root);
             bindSwitch(activity, resources, root, "item_id_unlock_anim", "launcher_unlock_animation_enabled", false);
             bindUnlockCompatibilitySwitch(activity, resources, root);
+            View networkView = find(resources, root, "item_id_launcher_network");
+            if (networkView instanceof SettingItemSwitch) {
+                final SettingItemSwitch item = (SettingItemSwitch) networkView;
+                item.setChecked(LauncherNetworkPolicy.isEnabled());
+                bindSwitchControlOnly(item, new View.OnClickListener() {
+                    public void onClick(View view) {
+                        boolean enabled = !LauncherNetworkPolicy.isEnabled();
+                        LauncherNetworkPolicy.setEnabled(activity.getApplicationContext(), enabled);
+                        item.setCheckedAnimated(enabled);
+                    }
+                });
+            }
             migrateSearchGestureSetting(activity);
             synchronizeBadgeSettingsWithNotificationAccess(activity,
                     com.smartisanos.launcher.badge.BadgeBridge.hasNotificationAccess(activity));
@@ -20374,7 +20406,7 @@ public final class MaintainedLauncherSettingsHost {
         // Icon loading also runs on Launcher's model/database worker. Blocking
         // that thread on HTTP keeps the desktop on "initializing". Only the
         // dedicated fetch executor may perform network I/O.
-        if (!allowNetwork) {
+        if (!allowNetwork || !LauncherNetworkPolicy.isEnabled()) {
             scheduleSmartisanIconFetch(context, packageName);
             return null;
         }
@@ -20394,7 +20426,7 @@ public final class MaintainedLauncherSettingsHost {
                 HttpURLConnection conn = null;
                 try {
                     URL url = new URL(baseUrl + packageName + ".png");
-                    conn = (HttpURLConnection) url.openConnection();
+                    conn = LauncherNetworkPolicy.open(url);
                     // Fail over quickly when one domestic/overseas mirror is
                     // unreachable instead of blocking every queued icon.
                     conn.setConnectTimeout(1200);
@@ -20439,7 +20471,7 @@ public final class MaintainedLauncherSettingsHost {
                     }
                     if (conn != null) {
                         try {
-                            conn.disconnect();
+                            LauncherNetworkPolicy.close(conn);
                         } catch (Throwable ignored) {
                         }
                     }

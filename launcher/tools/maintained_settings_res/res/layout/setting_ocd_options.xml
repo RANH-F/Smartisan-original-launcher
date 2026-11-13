@@ -15,6 +15,7 @@
             <com.smartisanos.home.widget.sys.TipsView android:layout_marginTop="@dimen/settings_item_title_margin_top" android:text="@string/unlock_animation_tips" style="@style/SettingItemTipsStyle" />
             <com.smartisanos.home.settings.SettingItemSwitch android:id="@+id/item_id_unlock_wait_for_focus" android:layout_marginTop="@dimen/settings_item_top_bottom_margin" setting:setting_item_switch_title="@string/unlock_wait_for_focus_title" style="@style/SettingSubItemSingleStyle" />
             <com.smartisanos.home.widget.sys.TipsView android:layout_marginTop="@dimen/settings_item_title_margin_top" android:text="@string/unlock_wait_for_focus_tips" style="@style/SettingItemTipsStyle" />
+            <com.smartisanos.home.settings.SettingItemSwitch android:id="@+id/item_id_launcher_network" android:layout_marginTop="@dimen/settings_item_top_bottom_margin" setting:setting_item_switch_title="@string/launcher_network_title" style="@style/SettingSubItemSingleStyle" />
             <include layout="@layout/item_bottom_shadow_layout" />
         </LinearLayout>
     </ScrollView>

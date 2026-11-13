@@ -334,12 +334,20 @@ public final class WeatherBridge {
                 return;
             }
         }
+        if (!LauncherNetworkPolicy.isEnabled()) {
+            callback.onResult(java.util.Collections.<CityResult>emptyList(), null);
+            return;
+        }
         new Thread(new Runnable() {
             @Override public void run() {
                 List<CityResult> cities = new ArrayList<CityResult>();
                 String error = null;
                 HttpURLConnection connection = null;
                 try {
+                    if (!LauncherNetworkPolicy.isEnabled()) {
+                        callback.onResult(cities, null);
+                        return;
+                    }
                     cities = searchCitiesWithAndroidGeocoder(context, normalizedQuery);
                     if (!cities.isEmpty()) {
                         cities = normalizeCityResults(normalizedQuery, cities);
@@ -354,7 +362,7 @@ public final class WeatherBridge {
                     String endpoint = "https://geocoding-api.open-meteo.com/v1/search?name="
                             + URLEncoder.encode(normalizedQuery, "UTF-8")
                             + "&count=20&language=zh&format=json&countryCode=CN";
-                    connection = (HttpURLConnection) new URL(endpoint).openConnection();
+                    connection = LauncherNetworkPolicy.open(new URL(endpoint));
                     connection.setConnectTimeout(1800);
                     connection.setReadTimeout(2800);
                     connection.setRequestProperty("User-Agent", "SmartisanLauncher/1.5");
@@ -377,7 +385,7 @@ public final class WeatherBridge {
                 } catch (Throwable failure) {
                     error = failure.getMessage() == null ? "城市搜索失败，请检查网络" : failure.getMessage();
                 } finally {
-                    if (connection != null) connection.disconnect();
+                    if (connection != null) LauncherNetworkPolicy.close(connection);
                 }
                 callback.onResult(cities, error);
             }
@@ -571,6 +579,7 @@ public final class WeatherBridge {
     }
 
     public static void scheduleRefresh(Context context, boolean force) {
+        if (!LauncherNetworkPolicy.isEnabled()) return;
         if (context == null) {
             return;
         }
@@ -769,7 +778,7 @@ public final class WeatherBridge {
 
     private static void fetchAsync(final Context context, final double latitude,
             final double longitude) {
-        if (!LauncherSettingBridge.dynamicWeatherCalendarEnabled(context)) {
+        if (!LauncherNetworkPolicy.isEnabled() || !LauncherSettingBridge.dynamicWeatherCalendarEnabled(context)) {
             return;
         }
         synchronized (LOCK) {
@@ -877,7 +886,7 @@ public final class WeatherBridge {
 
     private static WeatherResult fetchChinaWeather(String stationId) throws Exception {
         String endpoint = "https://d1.weather.com.cn/sk_2d/" + stationId + ".html";
-        HttpURLConnection connection = (HttpURLConnection) new URL(endpoint).openConnection();
+        HttpURLConnection connection = LauncherNetworkPolicy.open(new URL(endpoint));
         connection.setConnectTimeout(1500);
         connection.setReadTimeout(2000);
         connection.setRequestProperty("Referer", "https://www.weather.com.cn/");
@@ -898,7 +907,7 @@ public final class WeatherBridge {
             return new WeatherResult(mapChinaWeather(weather), temperature, temperature,
                     temperature, "06:00", "18:00", "中国天气网");
         } finally {
-            connection.disconnect();
+            LauncherNetworkPolicy.close(connection);
         }
     }
 
@@ -924,7 +933,7 @@ public final class WeatherBridge {
                 + formatCoordinate(latitude) + "&longitude=" + formatCoordinate(longitude)
                 + "&current=temperature_2m,apparent_temperature,weather_code,is_day"
                 + "&daily=sunrise,sunset&timezone=auto&forecast_days=1";
-        HttpURLConnection connection = (HttpURLConnection) new URL(endpoint).openConnection();
+        HttpURLConnection connection = LauncherNetworkPolicy.open(new URL(endpoint));
         connection.setConnectTimeout(3500);
         connection.setReadTimeout(5000);
         connection.setRequestProperty("Accept", "application/json");
@@ -954,7 +963,7 @@ public final class WeatherBridge {
                     (int) Math.round(actualTemperature), apparentTemperature,
                     sunrise, sunset, "Open-Meteo");
         } finally {
-            connection.disconnect();
+            LauncherNetworkPolicy.close(connection);
         }
     }
 
@@ -962,7 +971,7 @@ public final class WeatherBridge {
             throws Exception {
         String endpoint = "https://api.met.no/weatherapi/locationforecast/2.0/compact?lat="
                 + formatCoordinate(latitude) + "&lon=" + formatCoordinate(longitude);
-        HttpURLConnection connection = (HttpURLConnection) new URL(endpoint).openConnection();
+        HttpURLConnection connection = LauncherNetworkPolicy.open(new URL(endpoint));
         connection.setConnectTimeout(3000);
         connection.setReadTimeout(4500);
         connection.setRequestProperty("Accept", "application/json");
@@ -987,7 +996,7 @@ public final class WeatherBridge {
             return new WeatherResult(mapMetSymbol(symbol), temperature,
                     temperature, (int) Math.round(apparent), "06:00", "18:00", "MET Norway");
         } finally {
-            connection.disconnect();
+            LauncherNetworkPolicy.close(connection);
         }
     }
 
@@ -1199,6 +1208,7 @@ public final class WeatherBridge {
     }
 
     private static String resolveCityName(Context context, double latitude, double longitude) {
+        if (!LauncherNetworkPolicy.isEnabled()) return "";
         try {
             if (Geocoder.isPresent()) {
                 List<Address> addresses = new Geocoder(context, Locale.CHINA)
@@ -1227,7 +1237,7 @@ public final class WeatherBridge {
             String endpoint = "https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat="
                     + formatCoordinate(latitude) + "&lon=" + formatCoordinate(longitude)
                     + "&zoom=10&addressdetails=1&accept-language=zh-CN";
-            connection = (HttpURLConnection) new URL(endpoint).openConnection();
+            connection = LauncherNetworkPolicy.open(new URL(endpoint));
             connection.setConnectTimeout(8000);
             connection.setReadTimeout(10000);
             connection.setRequestProperty("Accept", "application/json");
@@ -1245,7 +1255,7 @@ public final class WeatherBridge {
             Log.w(TAG, "network reverse geocoding failed", error);
             return "";
         } finally {
-            if (connection != null) connection.disconnect();
+            if (connection != null) LauncherNetworkPolicy.close(connection);
         }
     }
 

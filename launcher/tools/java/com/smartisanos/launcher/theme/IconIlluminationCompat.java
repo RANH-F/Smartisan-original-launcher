@@ -603,17 +603,13 @@ public final class IconIlluminationCompat {
             long[] times = new long[SIGMAS.length];
             for (int layer = 0; layer < SIGMAS.length; layer++) {
                 byte[] blurred = IconProjectionBlur.blur(source, 256, 256, SIGMAS[layer]);
-                for (int i = 0; i < pixels.length; i++) pixels[i] = (blurred[i] & 255) << 24;
-                Bitmap output = Bitmap.createBitmap(pixels, 256, 256, Bitmap.Config.ARGB_8888);
                 File destination = new File(directory, key + '_' + (layer + 1) + ".png");
                 File temporary = new File(directory, destination.getName() + ".tmp");
                 try {
                     CRC32 checksum = new CRC32();
                     try (CheckedOutputStream stream = new CheckedOutputStream(
                             new FileOutputStream(temporary), checksum)) {
-                        if (!output.compress(Bitmap.CompressFormat.PNG, 100, stream)) {
-                            throw new java.io.IOException("PNG encode failed");
-                        }
+                        ProjectionPng.write(stream, blurred);
                     }
                     if (!temporary.renameTo(destination)) {
                         throw new java.io.IOException("Projection mask replace failed");
@@ -621,7 +617,6 @@ public final class IconIlluminationCompat {
                     lengths[layer] = destination.length(); crc[layer] = checksum.getValue();
                     times[layer] = destination.lastModified();
                 } finally {
-                    output.recycle();
                     if (temporary.exists()) temporary.delete();
                 }
             }

@@ -4,6 +4,9 @@
 
 ## 必读入口
 
+- [IconHub × Launcher 当前实施方案](architecture/SMARTISAN_ICON_CURRENT_PLAN.md)
+- [IconHub × Launcher 执行计划与交接记录](architecture/ECOSYSTEM_EXECUTION_HANDOFF.md)
+
 - [项目介绍](../README.md)
 - [AI 工作规则](../AGENTS.md)
 - [长期项目记忆](../MEMORY.md)
