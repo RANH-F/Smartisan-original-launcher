@@ -13319,46 +13319,6 @@
       }
     },
     {
-      "sourceId": "com.android.gallery3d_2",
-      "name": "相册",
-      "category": "system",
-      "terms": [
-        "com.android.gallery3d",
-        "com.android.gallery3d_2",
-        "相册",
-        "Gallery",
-        "xiangce",
-        "xiang ce",
-        "xc",
-        "system",
-        "系统"
-      ],
-      "groups": {
-        "names": [
-          "相册"
-        ],
-        "aliases": [
-          "Gallery"
-        ],
-        "pinyin": [
-          "xiangce",
-          "xiang ce"
-        ],
-        "initials": [
-          "xc"
-        ],
-        "identities": [
-          "com.android.gallery3d"
-        ],
-        "keywords": [
-          "system",
-          "系统",
-          "xiangce",
-          "xc"
-        ]
-      }
-    },
-    {
       "sourceId": "com.android.hwmirror.Mirror",
       "name": "com.android.hwmirror.Mirror",
       "category": "other",
@@ -153647,5 +153607,5 @@
       "lzjd"
     ]
   },
-  "revision": "6a739c2ae07fb6a7"
+  "revision": "50fa6f9e06d6086f"
 }

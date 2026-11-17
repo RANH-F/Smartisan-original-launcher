@@ -219,6 +219,7 @@
     invoke-super {p0}, Landroid/app/Application;->onCreate()V
 
     invoke-static {p0}, Lcom/smartisanos/launcher/theme/LauncherNetworkPolicy;->initialize(Landroid/content/Context;)V
+    invoke-static {p0}, Lcom/smartisanos/home/settings/icons/IconHubSource;->initialize(Landroid/content/Context;)V
 
     const-string v0, "INSTALL_MANAGER_INIT_BEGIN"
 

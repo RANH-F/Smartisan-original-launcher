@@ -7,6 +7,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.RectF;
 import android.os.Build;
 import android.provider.Settings;
 import android.util.Log;
@@ -161,6 +162,92 @@ public final class LauncherSettingBridge {
         } catch (Exception error) {
             Log.w("LauncherThemeBar", "STATE_UNAVAILABLE", error);
         }
+    }
+
+    public static void drawNotificationBadgeDigit(Canvas canvas, Bitmap digit, android.graphics.Rect source,
+            RectF slot, Paint paint) {
+        int width = digit.getWidth();
+        int height = digit.getHeight();
+        int[] pixels = new int[width * height];
+        digit.getPixels(pixels, 0, width, 0, 0, width, height);
+        source.set(width, height, 0, 0);
+        long inkWeight = 0;
+        long weightedX = 0;
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                int alpha = pixels[y * width + x] >>> 24;
+                if (alpha < 128) continue;
+                inkWeight += alpha;
+                weightedX += (long) x * alpha;
+                source.left = Math.min(source.left, x);
+                source.top = Math.min(source.top, y);
+                source.right = Math.max(source.right, x + 1);
+                source.bottom = Math.max(source.bottom, y + 1);
+            }
+        }
+        if (source.isEmpty()) return;
+
+        float scale = Math.min(slot.width() / width, slot.height() / height);
+        float inkCenterX = (float) weightedX / inkWeight + 0.5f;
+        float left = slot.centerX() - inkCenterX * scale;
+        float top = slot.centerY() - source.exactCenterY() * scale;
+        // Draw the full glyph so its antialiased edges survive optical centering.
+        source.set(0, 0, width, height);
+        slot.set(left, top, left + width * scale, top + height * scale);
+        canvas.drawBitmap(digit, source, slot, paint);
+    }
+
+    public static void centerNotificationBadgeCount(Bitmap background, Bitmap count) {
+        int width = count.getWidth();
+        int height = count.getHeight();
+        int[] pixels = new int[width * height];
+        count.getPixels(pixels, 0, width, 0, 0, width, height);
+        int left = width;
+        int right = 0;
+        int top = height;
+        int bottom = 0;
+        long weight = 0;
+        long weightedX = 0;
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                int alpha = pixels[y * width + x] >>> 24;
+                if (alpha < 128) continue;
+                weight += alpha;
+                weightedX += (long) x * alpha;
+                left = Math.min(left, x);
+                right = Math.max(right, x + 1);
+                top = Math.min(top, y);
+                bottom = Math.max(bottom, y + 1);
+            }
+        }
+        if (weight > 0) {
+            int redTop = height;
+            int redBottom = 0;
+            for (int y = 0; y < height; y++) {
+                int color = background.getPixel(width / 2, y);
+                int red = android.graphics.Color.red(color);
+                if (android.graphics.Color.alpha(color) >= 128 && red > 140
+                        && red - android.graphics.Color.green(color) > 70
+                        && red - android.graphics.Color.blue(color) > 65) {
+                    redTop = Math.min(redTop, y);
+                    redBottom = y + 1;
+                }
+            }
+            float scale = 1f;
+            if (redBottom > redTop) {
+                float redDiameter = redBottom - redTop;
+                float redWidth = width - height + redDiameter;
+                scale = Math.min(0.45f * redDiameter / (bottom - top),
+                        (redWidth - 0.24f * redDiameter) / (right - left));
+            }
+            float dx = width / 2f - ((float) weightedX / weight + 0.5f) * scale;
+            float centerY = redBottom > redTop ? (redTop + redBottom) / 2f : height / 2f;
+            float dy = centerY - (top + bottom) / 2f * scale;
+            new Canvas(background).drawBitmap(count, null,
+                    new RectF(dx, dy, dx + width * scale, dy + height * scale),
+                    new Paint(Paint.FILTER_BITMAP_FLAG));
+        }
+        count.recycle();
     }
 
     public static boolean isDesktopWallpaperDark(Bitmap bitmap) {
@@ -1509,7 +1596,9 @@ public final class LauncherSettingBridge {
                 if (dock) size = 1.15f;
             }
             Object[] nodes = (Object[]) readGeometryField(cell, "sc");
+            // sc[27] derives its scale and offset directly from sc[0] in g.smali.
             for (int slot : new int[] {0, 7}) {
+                if (nodes != null && slot >= nodes.length) continue;
                 if (nodes == null || nodes[slot] == null) continue;
                 Object node = nodes[slot];
                 Object scale = invokePixelGrid(node, "getScale");

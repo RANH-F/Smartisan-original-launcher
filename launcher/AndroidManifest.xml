@@ -1,5 +1,5 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" android:versionCode="37" android:versionName="1.6.0-T" package="com.smartisanos.launcher">
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" android:versionCode="46" android:versionName="1.6.0-T" package="com.smartisanos.launcher">
   <uses-sdk android:minSdkVersion="23" android:targetSdkVersion="28" />
   <uses-feature android:glEsVersion="0x00020000" />
   <permission android:name="com.ranhf.smartisanlauncher.permission.READ_DATABASE" android:protectionLevel="signature" />
@@ -201,5 +201,6 @@
     <service android:name="com.squareup.leakcanary.DisplayLeakService" android:enabled="false" android:process=":leakcanary" />
     <service android:name="com.squareup.leakcanary.SmartisanLeakService" android:enabled="false" android:process=":leakcanary" />
     <activity android:label="displayleak" android:name="com.squareup.leakcanary.internal.DisplayLeakActivity" android:enabled="false" android:taskAffinity="com.squareup.leakcanary.com.smartisanos.launcher" />
+    <provider android:name="com.smartisanos.home.settings.icons.IconShareProvider" android:authorities="com.smartisanos.launcher.iconshare" android:exported="false" android:grantUriPermissions="true" />
   </application>
 </manifest>

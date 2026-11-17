@@ -159,12 +159,12 @@ python tools\patch_badge_service_manifest.py
 
 ## 版本号与测试／正式发布
 
-当前开发测试版本为 **1.6.0-T / versionCode 34**。`-T` 表示测试版；只有明确正式发布时才改为 **1.6.0**，不因构建、安装或局部回归通过自动改成正式版。
+当前测试候选版本见开发日志顶部。`-T` 表示测试版；只有明确正式发布时才改为 **1.6.0**，不因构建、安装或局部回归通过自动改成正式版。
 
 使用现有工具一次同步三处，版本名允许变长；不要对二进制 Manifest 使用文本替换或硬编码偏移：
 
 ```powershell
-python tools/set_launcher_version.py 1.6.0-T 34
+python tools/set_launcher_version.py 1.6.0-T 46
 .\build.bat
 ```
 
@@ -175,6 +175,15 @@ python tools/set_launcher_version.py 1.6.0-T 34
 - `launcher/original/AndroidManifest.xml`：最终注入 APK 的二进制 Manifest。
 
 工具解析 AXML 字符串池及属性后重建，不要求新旧版本名等长。临时降版测试也使用该工具；测试结束恢复三个入口的测试版身份。正式发布时使用同一工具写入 `1.6.0`，versionCode 按届时渠道已发布值确认，不能只删 README 中的 `-T`。最终结果以签名 APK 的 badging 为准。
+
+正式 OTA 示例：将测试版改为 1.6.0，目标 versionCode 为 48 时，从仓库根目录执行：
+
+```powershell
+python tools/set_launcher_version.py 1.6.0 48
+.\build.bat
+```
+
+用下文命令确认签名 APK 的包名为 com.smartisanos.launcher、versionName 为 1.6.0、versionCode 为 48，并核对签名证书与已安装版本一致。到 Smartisan Icon 管理后台的 OTA 页面选择「锤子桌面」，上传此 APK，版本名填 1.6.0、版本号填 48，填写更新说明后发布。用于升级时，versionCode 必须高于客户端已安装版本及该渠道当前发布版本。README 的展示版本可随正式发布更新。
 
 ## 构建后验证
 

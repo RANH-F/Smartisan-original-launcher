@@ -412,7 +412,7 @@ public final class DesktopRestoreController {
         IconBackupCodec.restore(context, backup.icons, backup.extractedRoot);
         RestoreIconSourceReconciler.restorePortableSources(context, backup.portableSources,
                 backup.extractedRoot);
-        RestoreIconSourceReconciler.setPendingReconcile(context, entry.operationToken);
+        RestoreIconSourceReconciler.setPendingReconcile(context, entry.operationToken, backup.icons);
 
         Log.i(TAG, "RESTORE_CACHE_INVALIDATED oldRasterVersion=raster:v1-v7 newRasterVersion=raster:v8"
                 + " ordinaryTableIcons=cleared shortcutSource=preserved");
@@ -459,8 +459,10 @@ public final class DesktopRestoreController {
                 MAIN.post(new Runnable() {
                     @Override public void run() {
                         MaintainedLauncherSettingsHost.showRestoreStatusToast(app, resultCode);
-                        if ("RESTORE_COMPLETE".equals(resultCode)) {
+                        if ("RESTORE_COMPLETE".equals(resultCode) || "UNDO_COMPLETE".equals(resultCode)
+                                || "RESTORE_ROLLED_BACK".equals(resultCode)) {
                             RestoreIconSourceReconciler.primeIconSourceAfterRestore(app);
+                            RestoreIconSourceReconciler.onLauncherModelReady(app);
                         }
                     }
                 });

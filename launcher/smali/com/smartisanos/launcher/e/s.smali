@@ -9127,7 +9127,7 @@
 .end method
 
 .method public static k(II)Landroid/graphics/Bitmap;
-    .locals 20
+    .locals 21
 
     move/from16 v0, p0
 
@@ -9232,7 +9232,7 @@
     move-result-object v3
 
     .line 8
-    invoke-virtual {v1}, Landroid/graphics/drawable/NinePatchDrawable;->getIntrinsicWidth()I
+    invoke-virtual {v1}, Landroid/graphics/drawable/NinePatchDrawable;->getIntrinsicHeight()I
 
     move-result v4
 
@@ -9360,12 +9360,17 @@
     .line 17
     invoke-virtual {v1, v8}, Landroid/graphics/drawable/NinePatchDrawable;->draw(Landroid/graphics/Canvas;)V
 
+    # Keep the glyphs on their own layer until the full count can be centered.
+    sget-object v8, Landroid/graphics/Bitmap$Config;->ARGB_8888:Landroid/graphics/Bitmap$Config;
+    invoke-static {v4, v5, v8}, Landroid/graphics/Bitmap;->createBitmap(IILandroid/graphics/Bitmap$Config;)Landroid/graphics/Bitmap;
+    move-result-object v8
+    move-object/from16 v20, v8
+    new-instance v8, Landroid/graphics/Canvas;
+    move-object/from16 v10, v20
+    invoke-direct {v8, v10}, Landroid/graphics/Canvas;-><init>(Landroid/graphics/Bitmap;)V
+
     .line 18
-    invoke-virtual {v1}, Landroid/graphics/drawable/NinePatchDrawable;->getIntrinsicWidth()I
-
-    move-result v1
-
-    int-to-float v1, v1
+    int-to-float v1, v5
 
     iget v10, v3, Lcom/smartisanos/launcher/data/LayoutProperty;->flag_message_number_width:F
 
@@ -9511,7 +9516,7 @@
 
     invoke-direct {v0, v15, v11, v7, v10}, Landroid/graphics/RectF;-><init>(FFFF)V
 
-    invoke-virtual {v8, v9, v2, v0, v14}, Landroid/graphics/Canvas;->drawBitmap(Landroid/graphics/Bitmap;Landroid/graphics/Rect;Landroid/graphics/RectF;Landroid/graphics/Paint;)V
+    invoke-static {v8, v9, v2, v0, v14}, Lcom/smartisanos/launcher/theme/LauncherSettingBridge;->drawNotificationBadgeDigit(Landroid/graphics/Canvas;Landroid/graphics/Bitmap;Landroid/graphics/Rect;Landroid/graphics/RectF;Landroid/graphics/Paint;)V
 
     .line 29
     iget v0, v3, Lcom/smartisanos/launcher/data/LayoutProperty;->flag_message_number_width:F
@@ -9616,6 +9621,8 @@
     move/from16 v19, v0
 
     move-object/from16 v18, v7
+    move-object/from16 v6, v20
+    invoke-static {v7, v6}, Lcom/smartisanos/launcher/theme/LauncherSettingBridge;->centerNotificationBadgeCount(Landroid/graphics/Bitmap;Landroid/graphics/Bitmap;)V
 
     const/4 v0, 0x2
 

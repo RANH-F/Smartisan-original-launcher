@@ -141,6 +141,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Method;
+import com.smartisanos.home.settings.icons.IconHubSource;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.SimpleDateFormat;
@@ -296,6 +297,7 @@ public final class MaintainedLauncherSettingsHost {
     private static final String EXTRA_PASSWORD_TARGET_SHORTCUT_ID = "launcher_password_target_shortcut_id";
     private static final String EXTRA_PASSWORD_SET_MODE = "launcher_password_set_mode";
     private static final int REQUEST_PICK_CUSTOM_ICON = 53026;
+    private static final int REQUEST_PICK_ICONHUB = 53036;
     private static final long SETTINGS_CLICK_GUARD_MS = 90L;
     private static long sSettingsClickBlockedUntil;
     private static boolean sIconSizeAppliedThisProcess;
@@ -412,16 +414,10 @@ public final class MaintainedLauncherSettingsHost {
             // first run. Two workers made later desktop rows wait behind slow
             // mirrors; six remains modest while removing most queue latency.
             java.util.concurrent.Executors.newFixedThreadPool(6);
-    private static final String[] ONLINE_ICON_BASE_URLS = new String[]{
-            "https://gitee.com/RANH-F/Smartisan-original-launcher-download/raw/master/icons/drawable/",
-            "https://raw.githubusercontent.com/RANH-F/Smartisan-original-launcher/main/icons/drawable/"
-    };
     private static final String THEME_DOWNLOAD_BASE =
             "https://gitee.com/RANH-F/Smartisan-original-launcher-download/releases/download/themes-v1/";
     private static final String UPDATE_RELEASE_API =
-            "https://gitee.com/api/v5/repos/RANH-F/Smartisan-original-launcher-download/releases?per_page=20";
-    private static final String UPDATE_RELEASE_GITEE_MIRROR =
-            "https://gitee.com/RANH-F/Smartisan-original-launcher-download/releases/download/";
+            "https://icon.fangbianmian.fun/v1/app/release?package_name=com.smartisanos.launcher";
     private static final String UPDATE_NOTIFICATION_CHANNEL = "launcher_update_download";
     private static final int UPDATE_NOTIFICATION_ID = 53046;
     private static final int UPDATE_INSTALL_NOTIFICATION_ID = 53047;
@@ -785,9 +781,9 @@ public final class MaintainedLauncherSettingsHost {
                 intent.removeExtra(EXTRA_UPDATE_APK_PATH);
                 tuneWindow(activity);
                 if (downloadId != -1) {
-                    installApk(activity, downloadId);
+                    installVerifiedUpdateApk(activity, downloadId);
                 } else if (!TextUtils.isEmpty(path)) {
-                    installApkFile(activity, new File(path));
+                    installVerifiedUpdateApkFile(activity, new File(path));
                 } else {
                     Toast.makeText(activity, "未找到下载的安装包，请重新下载", Toast.LENGTH_SHORT).show();
                 }
@@ -1590,12 +1586,22 @@ public final class MaintainedLauncherSettingsHost {
                 showDesktopBackupPage(activity, true);
             }
         });
+        View recents = find(resources, root, "setting_open_recents");
+        if (recents != null && DefaultHomeSettingsPage.canOpenVivoRecents(activity)) {
+            recents.setVisibility(View.VISIBLE);
+            click(activity, resources, root, "setting_open_recents", new View.OnClickListener() {
+                public void onClick(View v) { DefaultHomeSettingsPage.openVivoRecents(activity); }
+            });
+        } else if (recents != null) {
+            recents.setVisibility(View.GONE);
+        }
         hide(resources, root, "setting_share");
         hide(resources, root, "setting_feedback");
         hide(resources, root, "setting_user_experience");
         setBackground(find(resources, root, "more_check_upgradation"), resources, "setting_item_up");
         setBackground(find(resources, root, "setting_switch_launcher"), resources, "more_item_middle");
         setBackground(find(resources, root, "setting_about_us"), resources, "setting_item_down");
+        bindUpdateBadge(activity, find(resources, root, "more_check_upgradation_text"));
         click(activity, resources, root, "more_check_upgradation", new View.OnClickListener() {
             public void onClick(View v) {
                 checkForUpdates(activity);
@@ -3821,7 +3827,178 @@ public final class MaintainedLauncherSettingsHost {
                 && Math.abs(Color.alpha(color) - Color.alpha(expected)) <= tolerance;
     }
 
+    private static void launchIconHubContribution(final Activity activity, final RedirectIconInfo info,
+            final boolean request) {
+        if (!requireIconHub(activity)) return;
+        final Intent intent = new Intent("com.smartisan.iconhub.action."
+                + (request ? "REQUEST_ADAPTATION" : "PREPARE_UPLOAD")).setPackage("com.smartisan.iconhub")
+                .putExtra("com.smartisan.iconhub.extra.PROTOCOL", 1)
+                .putExtra("com.smartisan.iconhub.extra.PACKAGE", info.packageName)
+                .putExtra("com.smartisan.iconhub.extra.ACTIVITY",
+                        TextUtils.isEmpty(info.componentName) ? null :
+                        info.componentName.contains("/") ? info.componentName :
+                        info.packageName + "/" + info.componentName)
+                .putExtra("com.smartisan.iconhub.extra.APP_LABEL", info.displayName);
+        if (request) {
+            startIconHubContribution(activity, intent);
+            return;
+        }
+        SMARTISAN_ICON_FETCH_EXECUTOR.execute(new Runnable() {
+            public void run() {
+                byte[] image = null;
+                RedirectIconInfo selected = RedirectIconDB.getRedirectIconInfo(
+                        activity, info.packageName, info.componentName);
+                String mode = RedirectIconDB.modeOf(selected);
+                if (RedirectIconDB.MODE_CUSTOM.equals(mode) && selected != null) {
+                    image = selected.iconData;
+                    File original = customShareOriginal(activity, info.packageName, info.componentName);
+                    if (original.isFile()) {
+                        try (InputStream input = new java.io.FileInputStream(original)) {
+                            image = readAllBytes(input, 512 * 1024);
+                        } catch (java.io.IOException ignored) {
+                        }
+                    }
+                } else if (RedirectIconDB.MODE_RESOURCE.equals(mode)) {
+                    String source = RedirectIconDB.resourceNameOf(selected);
+                    File file = smartisanIconCacheFile(activity, source);
+                    try (InputStream input = new java.io.FileInputStream(file)) {
+                        image = readAllBytes(input, 512 * 1024);
+                    } catch (java.io.IOException ignored) {
+                    }
+                }
+                if (image == null && RedirectIconDB.MODE_AUTO.equals(mode)) {
+                    String source = sIconHubMatches.get(info.packageName + "/" + info.componentName);
+                    if (!TextUtils.isEmpty(source) && !IconHubSource.isUnavailable(source)) {
+                        File file = smartisanIconCacheFile(activity, source);
+                        try (InputStream input = new java.io.FileInputStream(file)) {
+                            image = readAllBytes(input, 512 * 1024);
+                        } catch (java.io.IOException ignored) {
+                        }
+                    }
+                }
+                if (image == null) {
+                    Drawable drawable = null;
+                    if (RedirectIconDB.MODE_PACK.equals(mode)) {
+                        String pack = RedirectIconDB.packNameOf(selected);
+                        String name = RedirectIconDB.packDrawableNameOf(selected);
+                        drawable = TextUtils.isEmpty(name)
+                                ? IconPackManager.getPackedIcon(activity, pack, info.packageName, info.componentName)
+                                : IconPackManager.getPackedDrawable(activity, pack, name);
+                    } else {
+                        ResolveInfo resolved = resolveLauncherActivity(activity.getPackageManager(),
+                                info.packageName, info.componentName);
+                        if (resolved != null) {
+                            try {
+                                drawable = resolveManagedIconSource(activity, resolved,
+                                        settingsResources(activity), null, selected).drawable;
+                            } catch (Exception error) {
+                                Log.w(LOG_TAG, "Unable to resolve icon for sharing", error);
+                            }
+                            if (drawable == null) drawable = resolved.loadIcon(activity.getPackageManager());
+                        }
+                    }
+                    if (drawable instanceof BitmapDrawable) {
+                        Bitmap bitmap = ((BitmapDrawable) drawable).getBitmap();
+                        if (bitmap != null && !bitmap.isRecycled()) {
+                            ByteArrayOutputStream png = new ByteArrayOutputStream();
+                            if (bitmap.compress(Bitmap.CompressFormat.PNG, 100, png)
+                                    && png.size() <= 512 * 1024) image = png.toByteArray();
+                        }
+                    }
+                }
+                Uri staged = null;
+                if (image != null && image.length <= 512 * 1024) {
+                    try {
+                        staged = com.smartisanos.home.settings.icons.IconShareProvider.stage(activity, image);
+                    } catch (java.io.IOException ignored) {
+                    }
+                }
+                final Uri uri = staged;
+                activity.runOnUiThread(new Runnable() {
+                    public void run() {
+                        if (activity.isFinishing()) return;
+                        if (uri == null) {
+                            Toast.makeText(activity, "当前图标没有可投稿的 PNG 原图", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        intent.putExtra("com.smartisan.iconhub.extra.ICON_URI", uri);
+                        intent.setClipData(android.content.ClipData.newRawUri("icon", uri));
+                        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        startIconHubContribution(activity, intent);
+                    }
+                });
+            }
+        });
+    }
+
+    private static LinearLayout.LayoutParams iconChoiceEntryParams(Activity activity) {
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, dp(activity, 72));
+        params.setMargins(0, dp(activity, 12), 0, 0);
+        return params;
+    }
+
+    private static void startIconHubContribution(Activity activity, Intent intent) {
+        try {
+            activity.startActivity(intent);
+        } catch (RuntimeException error) {
+            Toast.makeText(activity, "无法打开 Smartisan Icon", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private static void launchIconHubPicker(Activity activity, RedirectIconInfo info) {
+        if (!requireIconHub(activity)) return;
+        SharedPreferences prefs = activity.getSharedPreferences(ICON_OVERRIDE_PREFS, Context.MODE_PRIVATE);
+        prefs.edit().putString("pending_iconhub_pick", info.getPrimaryId()).apply();
+        try {
+            activity.startActivityForResult(IconHubSource.pickIcon(info.packageName, info.componentName),
+                    REQUEST_PICK_ICONHUB);
+        } catch (android.content.ActivityNotFoundException | SecurityException error) {
+            prefs.edit().remove("pending_iconhub_pick").apply();
+            Toast.makeText(activity, "无法打开 Smartisan Icon 选图", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private static void onIconHubPicked(final Activity activity, int resultCode, Intent data) {
+        if (activity == null) return;
+        SharedPreferences prefs = activity.getSharedPreferences(ICON_OVERRIDE_PREFS, Context.MODE_PRIVATE);
+        String key = prefs.getString("pending_iconhub_pick", "");
+        prefs.edit().remove("pending_iconhub_pick").apply();
+        if (resultCode != Activity.RESULT_OK || key.isEmpty()) return;
+        final String[] target = splitIconKey(key);
+        if (target[0].isEmpty()) return;
+        final String component = "null".equals(target[1]) ? null : target[1];
+        final String source = IconHubSource.pickedSource(data, target[0], component);
+        if (source == null) return;
+        SMARTISAN_ICON_FETCH_EXECUTOR.execute(new Runnable() {
+            public void run() {
+                final boolean ready = isImprovedIconEnabled(activity)
+                        ? loadLibraryIconForPreview(activity, source, false) != null
+                        : IconPreviewRepository.get(activity).cacheIconHubOriginal(source);
+                activity.runOnUiThread(new Runnable() {
+                    public void run() {
+                        if (!ready) {
+                            Toast.makeText(activity, "暂时无法读取所选图标，请重试", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        synchronized (sSmartisanIconCache) {
+                            sSmartisanIconCache.remove(source);
+                        }
+                        RedirectIconDB.updateResourceIcon(activity, target[0], component, source);
+                        syncSelectedLibraryIcon(activity, target[0], component, source);
+                        IconPreviewRepository.get(activity).invalidateAppCandidates(target[0]);
+                        applyIconChanges(activity, Collections.singleton(target[0]));
+                        invalidateActiveIconAdapter();
+                    }
+                });
+            }
+        });
+    }
+
     public static boolean onActivityResult(Activity activity, int requestCode, int resultCode, Intent data) {
+        if (requestCode == REQUEST_PICK_ICONHUB) {
+            onIconHubPicked(activity, resultCode, data);
+            return true;
+        }
         // Some role controllers reject immediately without a pause/resume pair.
         // Both return routes consume the same pending flag; neither trusts resultCode.
         if (requestCode == REQUEST_DEFAULT_HOME) {
@@ -5142,6 +5319,92 @@ public final class MaintainedLauncherSettingsHost {
         return scroll;
     }
 
+    private static int sAppIconFilter;
+
+    private static View createAppIconFilter(Context context, ListView list) {
+        final String[] labels = {
+                getString(context, "icon_filter_all", "全部应用"),
+                getString(context, "icon_redrawn", "已重绘"),
+                getString(context, "icon_original", "未重绘")
+        };
+        LinearLayout bar = new LinearLayout(context);
+        bar.setGravity(Gravity.CENTER_VERTICAL);
+        bar.setPadding(dp(context, 30), dp(context, 10), dp(context, 30), dp(context, 4));
+        TextView button = text(context, labels[sAppIconFilter] + " ▾", 16, 0xff666666, false);
+        button.setMinHeight(dp(context, 48));
+        button.setGravity(Gravity.CENTER_VERTICAL);
+        bar.addView(button, new LinearLayout.LayoutParams(-2, -2));
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override public void onClick(View anchor) {
+                showAppIconFilterMenu(context, list, button, labels);
+            }
+        });
+        return bar;
+    }
+
+    private static void showAppIconFilterMenu(Context context, ListView list, TextView anchor, String[] labels) {
+        LinearLayout panel = new LinearLayout(context);
+        panel.setOrientation(LinearLayout.VERTICAL);
+        panel.setPadding(0, dp(context, 4), 0, dp(context, 4));
+        android.graphics.drawable.GradientDrawable surface = new android.graphics.drawable.GradientDrawable(
+                android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM,
+                new int[]{0xffffffff, 0xfffafafa});
+        surface.setCornerRadius(dp(context, 10));
+        surface.setStroke(Math.max(1, dp(context, 1)), 0xffe2e2e2);
+        android.widget.PopupWindow popup = new android.widget.PopupWindow(panel, dp(context, 174), -2, true);
+        popup.setBackgroundDrawable(surface);
+        popup.setOutsideTouchable(true);
+        popup.setElevation(dp(context, 5));
+        popup.setInputMethodMode(android.widget.PopupWindow.INPUT_METHOD_NOT_NEEDED);
+        Resources resources = context.getResources();
+        for (int index = 0; index < labels.length; index++) {
+            final int selection = index;
+            boolean selected = selection == sAppIconFilter;
+            LinearLayout row = new LinearLayout(context);
+            row.setGravity(Gravity.CENTER_VERTICAL);
+            row.setPadding(dp(context, 15), 0, dp(context, 15), 0);
+            row.setFocusable(true);
+            row.setSelected(selected);
+            android.graphics.drawable.StateListDrawable feedback = new android.graphics.drawable.StateListDrawable();
+            feedback.addState(new int[]{android.R.attr.state_pressed},
+                    new android.graphics.drawable.ColorDrawable(0xffeeeeee));
+            feedback.addState(new int[]{android.R.attr.state_focused},
+                    new android.graphics.drawable.ColorDrawable(0xffeeeeee));
+            feedback.addState(new int[0], new android.graphics.drawable.ColorDrawable(0x00000000));
+            row.setBackground(feedback);
+            TextView label = text(context, labels[index], 16, selected ? 0xffa84736 : 0xff454955, selected);
+            row.addView(label, new LinearLayout.LayoutParams(0, -2, 1f));
+            if (selected) {
+                ImageView check = new ImageView(context);
+                check.setImageDrawable(safeDrawable(resources, drawable(resources, "preview_picture_selected")));
+                check.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+                row.addView(check, new LinearLayout.LayoutParams(dp(context, 18), dp(context, 18)));
+            }
+            row.setOnClickListener(new View.OnClickListener() {
+                @Override public void onClick(View view) {
+                    popup.dismiss();
+                    if (sAppIconFilter == selection) return;
+                    sAppIconFilter = selection;
+                    anchor.setText(labels[selection] + " ▾");
+                    android.widget.ListAdapter current = list.getAdapter();
+                    if (current instanceof android.widget.HeaderViewListAdapter) {
+                        current = ((android.widget.HeaderViewListAdapter) current).getWrappedAdapter();
+                    }
+                    if (current instanceof AppIconAdapter) ((AppIconAdapter) current).refreshIconFilter();
+                }
+            });
+            panel.addView(row, new LinearLayout.LayoutParams(-1, dp(context, 46)));
+            if (index < labels.length - 1) {
+                View divider = new View(context);
+                divider.setBackgroundColor(0xffe8e8e8);
+                LinearLayout.LayoutParams inset = new LinearLayout.LayoutParams(-1, 1);
+                inset.setMargins(dp(context, 12), 0, dp(context, 12), 0);
+                panel.addView(divider, inset);
+            }
+        }
+        popup.showAsDropDown(anchor, 0, dp(context, 3), Gravity.START);
+    }
+
     private static void replaceIconListWithScroll(Activity activity, SettingsResourceContext context,
                                                   Resources resources, ListView list) {
         final int generation = ++sIconPageLoadGeneration;
@@ -5170,7 +5433,12 @@ public final class MaintainedLauncherSettingsHost {
         // Retain one ListView header slot so adapter/preview positions keep their contract.
         FrameLayout headerSlot = new FrameLayout(context);
         headerSlot.setLayoutParams(new AbsListView.LayoutParams(-1, -2));
-        headerSlot.addView(header, new FrameLayout.LayoutParams(-1, -2));
+        LinearLayout headerContent = new LinearLayout(context);
+        headerContent.setOrientation(LinearLayout.VERTICAL);
+        headerContent.addView(header, new LinearLayout.LayoutParams(-1, -2));
+        headerContent.addView(createAppIconFilter(context, list),
+                new LinearLayout.LayoutParams(-1, -2));
+        headerSlot.addView(headerContent, new FrameLayout.LayoutParams(-1, -2));
         list.setTag(search.getEditText());
         search.setCancelListener(new View.OnClickListener() {
             public void onClick(View view) {
@@ -11113,7 +11381,8 @@ public final class MaintainedLauncherSettingsHost {
         return null;
     }
 
-    private static CachedUpdateDownload cachedUpdateDownload(Context context, String tag, String apkName) {
+    private static CachedUpdateDownload cachedUpdateDownload(
+            Context context, String tag, String apkName, String expectedSha256) {
         try {
             SharedPreferences prefs = context.getSharedPreferences(THEME_DOWNLOAD_PREFS, Context.MODE_PRIVATE);
             long id = prefs.getLong(PREF_UPDATE_DOWNLOAD_ID, -1);
@@ -11122,6 +11391,8 @@ public final class MaintainedLauncherSettingsHost {
             }
             String savedTag = prefs.getString(PREF_UPDATE_DOWNLOAD_ID + ".tag", "");
             String savedName = prefs.getString(PREF_UPDATE_DOWNLOAD_ID + ".name", "");
+            String savedSha256 = prefs.getString(PREF_UPDATE_DOWNLOAD_ID + ".sha256", "");
+            if (expectedSha256 == null || !expectedSha256.equalsIgnoreCase(savedSha256)) return null;
             if (tag != null && tag.length() > 0 && savedTag != null && savedTag.length() > 0
                     && !tag.equals(savedTag)) {
                 return null;
@@ -11153,6 +11424,7 @@ public final class MaintainedLauncherSettingsHost {
                     .remove(PREF_UPDATE_DOWNLOAD_ID + ".url")
                     .remove(PREF_UPDATE_DOWNLOAD_ID + ".tag")
                     .remove(PREF_UPDATE_DOWNLOAD_ID + ".name")
+                    .remove(PREF_UPDATE_DOWNLOAD_ID + ".sha256")
                     .remove(String.valueOf(downloadId))
                     .remove(String.valueOf(downloadId) + ".path")
                     .commit();
@@ -11615,13 +11887,93 @@ public final class MaintainedLauncherSettingsHost {
         click(context, resources, root, idName, toastClick(context, message));
     }
 
+    private static final String UPDATE_BADGE_PREFS = "launcher_update_badge";
+    private static final String UPDATE_BADGE_VERSION = "latest_installable_version";
+    private static final long UPDATE_BADGE_INTERVAL_MS = 24 * 60 * 60 * 1000L;
+    private static final String UPDATE_BADGE_LAST_CHECK = "last_check_at_ms";
+    private static final long UPDATE_BADGE_START_DELAY_MS = 15_000L;
+    private static WeakReference<View> sUpdateBadgeView = new WeakReference<>(null);
+    private static final Handler UPDATE_BADGE_HANDLER = new Handler(Looper.getMainLooper());
+    private static Runnable sUpdateBadgePoll;
+
+    private static void bindUpdateBadge(Activity activity, View versionView) {
+        if (!(versionView instanceof TextView)) return;
+        sUpdateBadgeView = new WeakReference<>(versionView);
+        renderUpdateBadge(activity);
+        scheduleUpdateBadgeCheck(activity, 0L);
+    }
+
+    private static void scheduleUpdateBadgeCheck(Context context, long minimumDelay) {
+        if (sUpdateBadgePoll != null) UPDATE_BADGE_HANDLER.removeCallbacks(sUpdateBadgePoll);
+        if (!LauncherNetworkPolicy.isEnabled()) {
+            sUpdateBadgePoll = null;
+            return;
+        }
+        final Context app = context.getApplicationContext();
+        long delay = Math.max(minimumDelay, millisUntilUpdateBadgeCheck(app));
+        sUpdateBadgePoll = new Runnable() {
+            @Override public void run() {
+                if (!LauncherNetworkPolicy.isEnabled()) {
+                    sUpdateBadgePoll = null;
+                    return;
+                }
+                if (millisUntilUpdateBadgeCheck(app) == 0L) checkForUpdates(app, null);
+                scheduleUpdateBadgeCheck(app, 0L);
+            }
+        };
+        UPDATE_BADGE_HANDLER.postDelayed(sUpdateBadgePoll, delay);
+    }
+
+    private static long millisUntilUpdateBadgeCheck(Context context) {
+        long last = context.getSharedPreferences(UPDATE_BADGE_PREFS, Context.MODE_PRIVATE)
+                .getLong(UPDATE_BADGE_LAST_CHECK, 0L);
+        long now = System.currentTimeMillis();
+        if (last <= 0L || last > now) return 0L;
+        return Math.max(0L, UPDATE_BADGE_INTERVAL_MS - (now - last));
+    }
+
+    private static void renderUpdateBadge(Context context) {
+        View view = sUpdateBadgeView.get();
+        if (!(view instanceof TextView)) return;
+        TextView version = (TextView) view;
+        int latest = context.getSharedPreferences(UPDATE_BADGE_PREFS, Context.MODE_PRIVATE)
+                .getInt(UPDATE_BADGE_VERSION, 0);
+        Drawable dot = null;
+        int installed = appVersionCode(context);
+        if (installed > 0 && latest > installed) {
+            android.graphics.drawable.GradientDrawable badge = new android.graphics.drawable.GradientDrawable();
+            badge.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+            badge.setColor(0xffb4442e);
+            int size = dp(version.getContext(), 7);
+            badge.setBounds(0, 0, size, size);
+            dot = badge;
+        }
+        version.setCompoundDrawablePadding(dp(version.getContext(), 6));
+        version.setCompoundDrawables(null, null, dot, null);
+    }
+
+    private static void rememberUpdateBadge(Context context, int versionCode) {
+        context.getSharedPreferences(UPDATE_BADGE_PREFS, Context.MODE_PRIVATE)
+                .edit().putInt(UPDATE_BADGE_VERSION, versionCode).apply();
+        renderUpdateBadge(context);
+    }
+
     private static void checkForUpdates(final Activity activity) {
-        if (!requireLauncherNetwork(activity)) return;
-        logOperation(activity, "ACTION", "check_for_updates");
-        final Resources resources = getMaintainedResources(activity);
-        final String checkTitle = getString(resources, "check_update_title", "检查更新");
-        Toast.makeText(activity, getString(resources, "update_checking", "正在检查更新…"),
-                Toast.LENGTH_SHORT).show();
+        checkForUpdates(activity.getApplicationContext(), activity);
+    }
+
+    private static void checkForUpdates(final Context app, final Activity activity) {
+        final boolean interactive = activity != null;
+        if (interactive ? !requireLauncherNetwork(activity) : !LauncherNetworkPolicy.isEnabled()) return;
+        app.getSharedPreferences(UPDATE_BADGE_PREFS, Context.MODE_PRIVATE).edit()
+                .putLong(UPDATE_BADGE_LAST_CHECK, System.currentTimeMillis()).apply();
+        if (interactive) logOperation(activity, "ACTION", "check_for_updates");
+        final Resources resources = interactive ? getMaintainedResources(activity) : null;
+        final String checkTitle = interactive ? getString(resources, "check_update_title", "检查更新") : null;
+        if (interactive) {
+            Toast.makeText(activity, getString(resources, "update_checking", "正在检查更新…"),
+                    Toast.LENGTH_SHORT).show();
+        }
         final Handler handler = new Handler(Looper.getMainLooper());
         new Thread(new Runnable() {
             public void run() {
@@ -11631,9 +11983,13 @@ public final class MaintainedLauncherSettingsHost {
                     conn = LauncherNetworkPolicy.open(url);
                     conn.setConnectTimeout(8000);
                     conn.setReadTimeout(10000);
-                    conn.setRequestProperty("Accept", "application/vnd.github+json");
+                    conn.setRequestProperty("Accept", "application/json");
                     int code = conn.getResponseCode();
                     if (code == 404) {
+                        handler.post(new Runnable() {
+                            public void run() { rememberUpdateBadge(app, 0); }
+                        });
+                        if (!interactive) return;
                         postUpdateInfo(handler, activity, checkTitle,
                                 getFormattedString(resources, "update_no_published_release",
                                         "当前仓库还没有发布 Release\n当前版本：%1$s"
@@ -11647,53 +12003,56 @@ public final class MaintainedLauncherSettingsHost {
                     String json = readText(conn.getInputStream());
                     JSONObject release = softwareReleaseFromResponse(json);
                     if (release == null) {
+                        handler.post(new Runnable() {
+                            public void run() { rememberUpdateBadge(app, 0); }
+                        });
+                        if (!interactive) return;
                         postUpdateInfo(handler, activity, checkTitle,
                                 getFormattedString(resources, "update_no_release",
                                         "当前没有找到桌面软件 Release\n当前版本：%1$s",
                                         appVersion(activity)));
                         return;
                     }
-                    final String tag = release.optString("tag_name", "");
-                    final String name = release.optString("name", tag);
-                    final String body = release.optString("body", "");
-                    String apkUrl = null;
-                    String apkName = null;
-                    JSONArray assets = release.optJSONArray("assets");
-                    if (assets != null) {
-                        String fallbackApkUrl = null;
-                        String fallbackApkName = null;
-                        for (int i = 0; i < assets.length(); i++) {
-                            JSONObject asset = assets.optJSONObject(i);
-                            if (asset == null) continue;
-                            String assetName = asset.optString("name", "");
-                            String downloadUrl = asset.optString("browser_download_url", "");
-                            if (!isApkAssetName(assetName) || downloadUrl.length() == 0) {
-                                continue;
-                            }
-                            if (isLauncherUpdateApkName(assetName)) {
-                                apkName = assetName;
-                                apkUrl = downloadUrl;
-                                break;
-                            }
-                            if (fallbackApkUrl == null && !isNonLauncherUpdateApkName(assetName)) {
-                                fallbackApkName = assetName;
-                                fallbackApkUrl = downloadUrl;
-                            }
-                        }
-                        if (apkUrl == null) {
-                            apkName = fallbackApkName;
-                            apkUrl = fallbackApkUrl;
-                        }
+                    final JSONObject latest = release.optJSONObject("latest");
+                    if (latest == null) {
+                        handler.post(new Runnable() {
+                            public void run() { rememberUpdateBadge(app, 0); }
+                        });
+                        if (!interactive) return;
+                        postUpdateInfo(handler, activity, checkTitle,
+                                getFormattedString(resources, "update_no_release",
+                                        "当前没有找到桌面软件 Release\n当前版本：%1$s", appVersion(activity)));
+                        return;
                     }
-                    final String finalApkUrl = apkUrl;
-                    final String finalApkName = apkName == null ? "smartisan-launcher-update.apk" : apkName;
+                    final int latestVersionCode = latest.optInt("version_code", 0);
+                    final String tag = "vc" + latestVersionCode;
+                    final String name = latest.optString("version_name", "");
+                    final String body = latest.optString("changelog", "");
+                    final String apkUrl = latest.optString("apk_url", "");
+                    final String sha256 = latest.optString("sha256", "");
+                    final String apkName = latest.optString("file_name", "smartisan-launcher-update.apk");
+                    final String finalApkUrl = apkUrl.startsWith("/")
+                            ? "https://icon.fangbianmian.fun" + apkUrl : apkUrl;
+                    final String finalApkName = apkName;
                     final String finalName = name.length() == 0 ? tag : name;
                     final String finalBody = body;
                     handler.post(new Runnable() {
                         public void run() {
-                            String current = appVersionName(activity);
-                            int versionComparison = compareVersionTag(tag, current);
-                            if (finalApkUrl == null) {
+                            boolean installable = latestVersionCode > 0
+                                    && "com.smartisanos.launcher".equals(latest.optString("package_name", ""))
+                                    && finalApkUrl.startsWith("https://icon.fangbianmian.fun/v1/app/releases/")
+                                    && sha256.length() == 64 && isHexString(sha256);
+                            rememberUpdateBadge(app, installable ? latestVersionCode : 0);
+                            if (!interactive || activity.isFinishing() || activity.isDestroyed()) return;
+                            int versionComparison = latestVersionCode > appVersionCode(activity) ? 1
+                                    : (latestVersionCode < appVersionCode(activity) ? -1 : 0);
+                            if (latestVersionCode <= 0 || !"com.smartisanos.launcher".equals(
+                                    latest.optString("package_name", ""))) {
+                                showInfoDialog(activity, checkTitle, "OTA 信息与锤子桌面不匹配，已停止更新。");
+                                return;
+                            }
+                            if (finalApkUrl == null || !finalApkUrl.startsWith(
+                                    "https://icon.fangbianmian.fun/v1/app/releases/")) {
                                 showInfoDialog(activity, checkTitle,
                                         getFormattedString(resources, "update_release_without_apk",
                                                 "已找到线上版本：%1$s\n但该 Release 没有桌面主 APK 安装包"
@@ -11714,7 +12073,12 @@ public final class MaintainedLauncherSettingsHost {
                             if (finalBody != null && finalBody.length() > 0) {
                                 message += "\n\n" + finalBody;
                             }
-                            final CachedUpdateDownload cached = cachedUpdateDownload(activity, tag, finalApkName);
+                            if (sha256.length() != 64 || !isHexString(sha256)) {
+                                showInfoDialog(activity, checkTitle, "服务器返回的安装包摘要无效，已停止更新。");
+                                return;
+                            }
+                            final CachedUpdateDownload cached = cachedUpdateDownload(
+                                    activity, tag, finalApkName, sha256);
                             String positive = getString(resources,
                                     "launcher_update_download_action", "下载");
                             if (cached != null && cached.status == DownloadManager.STATUS_SUCCESSFUL) {
@@ -11730,7 +12094,7 @@ public final class MaintainedLauncherSettingsHost {
                                     new View.OnClickListener() {
                                 public void onClick(View v) {
                                     if (cached != null && cached.status == DownloadManager.STATUS_SUCCESSFUL) {
-                                        installApk(activity, cached.downloadId);
+                                        installVerifiedUpdateApk(activity, cached.downloadId);
                                         return;
                                     }
                                     if (cached != null && (cached.status == DownloadManager.STATUS_RUNNING
@@ -11741,12 +12105,13 @@ public final class MaintainedLauncherSettingsHost {
                                                 Toast.LENGTH_SHORT).show();
                                         return;
                                     }
-                                    downloadUpdateApk(activity, finalApkUrl, finalApkName, tag);
+                                    downloadUpdateApk(activity, finalApkUrl, finalApkName, tag, sha256);
                                 }
                             });
                         }
                     });
                 } catch (Throwable t) {
+                    if (!interactive) return;
                     final String error = shortError(t);
                     postUpdateInfo(handler, activity, checkTitle,
                             getFormattedString(resources, "update_info_failed",
@@ -11877,7 +12242,88 @@ public final class MaintainedLauncherSettingsHost {
         return out;
     }
 
-    private static void downloadUpdateApk(Activity activity, String url, String name, String tag) {
+    private static void installVerifiedUpdateApk(Activity activity, long downloadId) {
+        final Activity owner = activity;
+        new Thread(new Runnable() {
+            public void run() {
+                if (!verifyUpdateDownload(owner, downloadId)) return;
+                owner.runOnUiThread(new Runnable() {
+                    public void run() { installApk(owner, downloadId); }
+                });
+            }
+        }, "launcher-update-verify").start();
+    }
+
+    private static void installVerifiedUpdateApkFile(Activity activity, final File apk) {
+        final Activity owner = activity;
+        new Thread(new Runnable() {
+            public void run() {
+                if (!verifyUpdateApkFile(owner, apk)) return;
+                owner.runOnUiThread(new Runnable() {
+                    public void run() { installApkFile(owner, apk); }
+                });
+            }
+        }, "launcher-update-verify").start();
+    }
+
+    private static boolean verifyUpdateDownload(Context context, long downloadId) {
+        try {
+            SharedPreferences prefs = context.getSharedPreferences(THEME_DOWNLOAD_PREFS, Context.MODE_PRIVATE);
+            if (prefs.getLong(PREF_UPDATE_DOWNLOAD_ID, -1) != downloadId) return false;
+            String path = prefs.getString(PREF_UPDATE_DOWNLOAD_ID + ".path", "");
+            return verifyUpdateApkFile(context, new File(path));
+        } catch (Throwable error) {
+            Toast.makeText(context, "无法校验更新包，请重新下载", Toast.LENGTH_LONG).show();
+            return false;
+        }
+    }
+
+    private static boolean verifyUpdateApkFile(Context context, File apk) {
+        try {
+            String expected = context.getSharedPreferences(THEME_DOWNLOAD_PREFS, Context.MODE_PRIVATE)
+                    .getString(PREF_UPDATE_DOWNLOAD_ID + ".sha256", "");
+            if (apk == null || !apk.isFile() || expected == null || expected.length() != 64
+                    || !isHexString(expected)) {
+                Toast.makeText(context, "缺少有效的更新包校验信息，请重新检查更新", Toast.LENGTH_LONG).show();
+                return false;
+            }
+            java.security.MessageDigest digest = java.security.MessageDigest.getInstance("SHA-256");
+            InputStream input = new java.io.FileInputStream(apk);
+            try {
+                byte[] buffer = new byte[32768];
+                int count;
+                while ((count = input.read(buffer)) != -1) digest.update(buffer, 0, count);
+            } finally {
+                input.close();
+            }
+            StringBuilder actual = new StringBuilder(64);
+            for (byte value : digest.digest()) {
+                actual.append(String.format(java.util.Locale.ROOT, "%02x", value & 255));
+            }
+            if (!expected.equalsIgnoreCase(actual.toString())) {
+                apk.delete();
+                Toast.makeText(context, "更新包校验失败，文件已删除，请重新下载", Toast.LENGTH_LONG).show();
+                return false;
+            }
+            return true;
+        } catch (Throwable error) {
+            Toast.makeText(context, "更新包校验失败，请重新下载", Toast.LENGTH_LONG).show();
+            return false;
+        }
+    }
+
+    private static boolean isHexString(String value) {
+        if (value == null || value.length() == 0) return false;
+        for (int i = 0; i < value.length(); i++) {
+            char c = value.charAt(i);
+            if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static void downloadUpdateApk(Activity activity, String url, String name, String tag, String sha256) {
         try {
             // App-specific update storage needs no shared-storage permission.
             File dir = activity.getExternalFilesDir(null);
@@ -11898,6 +12344,8 @@ public final class MaintainedLauncherSettingsHost {
             cancelUpdateNotification(activity);
             cancelPreviousUpdateDownload(activity);
             Toast.makeText(activity, "已开始下载更新包", Toast.LENGTH_SHORT).show();
+            activity.getSharedPreferences(THEME_DOWNLOAD_PREFS, Context.MODE_PRIVATE)
+                    .edit().putString(PREF_UPDATE_DOWNLOAD_ID + ".sha256", sha256).commit();
             downloadUpdateApkWithDownloadManager(activity, updateDownloadCandidates(tag, name, url), out, tag,
                     showUpdateDownloadProgress(activity));
         } catch (Throwable t) {
@@ -11910,13 +12358,10 @@ public final class MaintainedLauncherSettingsHost {
         }
     }
 
-    private static String[] updateDownloadCandidates(String tag, String name, String githubUrl) {
+    private static String[] updateDownloadCandidates(String tag, String name, String releaseUrl) {
         ArrayList<String> urls = new ArrayList<String>();
-        if (tag != null && tag.length() > 0 && name != null && name.length() > 0) {
-            urls.add(UPDATE_RELEASE_GITEE_MIRROR + Uri.encode(tag) + "/" + Uri.encode(name));
-        }
-        if (githubUrl != null && githubUrl.length() > 0 && !urls.contains(githubUrl)) {
-            urls.add(githubUrl);
+        if (releaseUrl != null && releaseUrl.startsWith("https://icon.fangbianmian.fun/")) {
+            urls.add(releaseUrl);
         }
         return urls.toArray(new String[urls.size()]);
     }
@@ -12001,7 +12446,7 @@ public final class MaintainedLauncherSettingsHost {
                 try {
                     Throwable lastError = null;
                     for (int i = 0; i < urls.length; i++) {
-                        final boolean mirror = i == 0 && urls[i].startsWith(UPDATE_RELEASE_GITEE_MIRROR);
+                            final boolean mirror = false;
                         try {
                             handler.post(new Runnable() {
                                 public void run() {
@@ -12065,6 +12510,11 @@ public final class MaintainedLauncherSettingsHost {
                         throw new java.io.IOException("Incomplete update download");
                     }
                     output.flush();
+                    output.close();
+                    output = null;
+                    if (!verifyUpdateApkFile(activity, out)) {
+                        throw new java.io.IOException("Update APK SHA-256 mismatch");
+                    }
                     handler.post(new Runnable() {
                         public void run() {
                             dismissUpdateDownloadProgress(ui);
@@ -12225,7 +12675,7 @@ public final class MaintainedLauncherSettingsHost {
                         dismissUpdateDownloadProgress(ui);
                         notifyUpdateDownload(activity, "下载完成，点击可手动安装", 100, true, downloadId);
                         Toast.makeText(activity, "更新包下载完成，正在启动安装...", Toast.LENGTH_LONG).show();
-                        installApk(activity, downloadId);
+                        installVerifiedUpdateApk(activity, downloadId);
                         return;
                     }
                     if (status == DownloadManager.STATUS_FAILED) {
@@ -12326,6 +12776,8 @@ public final class MaintainedLauncherSettingsHost {
                 if (current != activity || activity.isFinishing() || activity.isDestroyed()
                         || activity.getWindow().getDecorView().getWindowVisibility() != View.VISIBLE) return;
                 com.smartisanos.launcher.gesture.LauncherHomeCompat.mark("RESUME_DIRTY_TASKS");
+                syncIconHub(activity);
+                scheduleUpdateBadgeCheck(activity, UPDATE_BADGE_START_DELAY_MS);
                 maybeRefreshLauncherWallpaper(activity);
                 applyBadgeIfDirty(activity);
                 if (LauncherSettingBridge.dynamicWeatherCalendarEnabled(activity)) {
@@ -12397,9 +12849,11 @@ public final class MaintainedLauncherSettingsHost {
                         || sDeferredLauncherActivity.get() != activity) return;
                 com.smartisanos.launcher.diagnostics.LauncherStartupDiagnostics
                         .mark("LAUNCH_OPTIONAL_PAGE_TASKS_BEGIN");
+                scheduleUpdateBadgeCheck(activity, UPDATE_BADGE_START_DELAY_MS);
                 com.smartisanos.launcher.quicksearch.SearchIndexRepository.get(activity)
                         .scheduleWarmup("page_ready");
                 ensureThemeSystemWallpaper(activity);
+                syncIconHub(activity);
                 maybeRefreshLauncherWallpaper(activity);
                 ensureIconRasterRevision(activity);
                 final Context app = activity.getApplicationContext();
@@ -12915,6 +13369,7 @@ public final class MaintainedLauncherSettingsHost {
                     .remove(PREF_UPDATE_DOWNLOAD_ID + ".url")
                     .remove(PREF_UPDATE_DOWNLOAD_ID + ".tag")
                     .remove(PREF_UPDATE_DOWNLOAD_ID + ".name")
+                    .remove(PREF_UPDATE_DOWNLOAD_ID + ".sha256")
                     .commit();
         } catch (Throwable ignored) {
         }
@@ -14872,8 +15327,21 @@ public final class MaintainedLauncherSettingsHost {
                 bindSwitchControlOnly(item, new View.OnClickListener() {
                     public void onClick(View view) {
                         boolean enabled = !LauncherNetworkPolicy.isEnabled();
-                        LauncherNetworkPolicy.setEnabled(activity.getApplicationContext(), enabled);
-                        item.setCheckedAnimated(enabled);
+                        if (enabled) {
+                            applyLauncherNetworkSetting(activity, item, true);
+                            return;
+                        }
+                        showConfirmDialog(activity,
+                                getString(resources, "launcher_network_disable_title", "关闭桌面联网？"),
+                                getString(resources, "launcher_network_disable_message",
+                                        "关闭后，桌面无法检查或下载更新、下载在线主题及刷新动态天气，正在进行的桌面下载也会取消。Smartisan Icon 使用自己的联网设置。"),
+                                getString(resources, "cancel", "取消"),
+                                getString(resources, "launcher_network_disable_action", "关闭"),
+                                new View.OnClickListener() {
+                                    @Override public void onClick(View button) {
+                                        applyLauncherNetworkSetting(activity, item, false);
+                                    }
+                                });
                     }
                 });
             }
@@ -14885,6 +15353,12 @@ public final class MaintainedLauncherSettingsHost {
         } catch (Throwable t) {
             showInfoDialog(activity, "OCD Settings", "Unable to open OCD settings");
         }
+    }
+
+    private static void applyLauncherNetworkSetting(Activity activity, SettingItemSwitch item, boolean enabled) {
+        LauncherNetworkPolicy.setEnabled(activity.getApplicationContext(), enabled);
+        scheduleUpdateBadgeCheck(activity, 0L);
+        item.setCheckedAnimated(enabled);
     }
 
     static void showSmartisanConfirmedSingleChoiceDialog(final Activity activity, String title,
@@ -15127,6 +15601,14 @@ public final class MaintainedLauncherSettingsHost {
             return info.versionName == null ? "" : info.versionName;
         } catch (Throwable ignored) {
             return "";
+        }
+    }
+
+    private static int appVersionCode(Context context) {
+        try {
+            return context.getPackageManager().getPackageInfo(context.getPackageName(), 0).versionCode;
+        } catch (Throwable ignored) {
+            return 0;
         }
     }
 
@@ -17232,26 +17714,240 @@ public final class MaintainedLauncherSettingsHost {
                 : IconSourceManager.Selection.defaultIcon());
     }
 
+    private static final java.util.concurrent.atomic.AtomicBoolean ICON_HUB_SYNC =
+            new java.util.concurrent.atomic.AtomicBoolean();
+    private static final java.util.concurrent.atomic.AtomicBoolean ICON_HUB_SYNC_PENDING =
+            new java.util.concurrent.atomic.AtomicBoolean();
+    private static volatile Map<String, String> sIconHubMatches = Collections.emptyMap();
+    private static volatile Map<String, String> sIconHubDigests = Collections.emptyMap();
+
+    private static android.database.ContentObserver sIconHubObserver;
+
+    private static synchronized void observeIconHub(final Context app) {
+        if (sIconHubObserver != null) return;
+        android.database.ContentObserver observer = new android.database.ContentObserver(
+                new Handler(Looper.getMainLooper())) {
+            @Override public void onChange(boolean selfChange) {
+                syncIconHub(app);
+            }
+        };
+        try {
+            IconHubSource.observe(app, observer);
+            sIconHubObserver = observer;
+        } catch (RuntimeException ignored) {
+            // A package removal can race registration. Resume will retry.
+        }
+    }
+
+    private static void syncSelectedLibraryIcon(Context context, String pkg, String component, String source) {
+        if (!isImprovedIconEnabled(context)) return;
+        final Context app = context.getApplicationContext();
+        IconHubSource.setPreferredIcon(app, pkg, component, source, new Runnable() {
+            @Override public void run() {
+                // An idempotent Provider write does not send notifyChange.
+                syncIconHub(app);
+            }
+        });
+    }
+
+    private static void syncIconHub(final Context context) {
+        final Context app = context.getApplicationContext();
+        ICON_HUB_SYNC_PENDING.set(true);
+        if (!ICON_HUB_SYNC.compareAndSet(false, true)) return;
+        SMARTISAN_ICON_FETCH_EXECUTOR.execute(new Runnable() {
+            public void run() {
+                try {
+                    while (ICON_HUB_SYNC_PENDING.getAndSet(false)) updateIconHubMatches(app);
+                } finally {
+                    ICON_HUB_SYNC.set(false);
+                    if (ICON_HUB_SYNC_PENDING.get()) syncIconHub(app);
+                }
+            }
+        });
+    }
+
+    private static volatile boolean sIconHubProjectionLoaded;
+
+    private static Map<String, String> readIconHubProjection(JSONObject value) {
+        Map<String, String> result = new java.util.LinkedHashMap<>();
+        for (java.util.Iterator<String> keys = value.keys(); keys.hasNext();) {
+            String key = keys.next();
+            result.put(key, value.optString(key, ""));
+        }
+        return result;
+    }
+
+    private static synchronized void loadStoredIconHubProjection(Context app) {
+        if (sIconHubProjectionLoaded) return;
+        try {
+            android.content.SharedPreferences store = app.getSharedPreferences("iconhub_catalog", 0);
+            JSONObject saved = new JSONObject(store.getString("projection", "{}"));
+            sIconHubDigests = readIconHubProjection(saved.getJSONObject("digests"));
+            sIconHubMatches = readIconHubProjection(saved.getJSONObject("matches"));
+        } catch (org.json.JSONException ignored) {
+            // No previously verified projection is available.
+        } finally {
+            sIconHubProjectionLoaded = true;
+        }
+    }
+
+    private static void updateIconHubMatches(Context app) {
+        loadStoredIconHubProjection(app);
+        android.content.SharedPreferences store = app.getSharedPreferences("iconhub_catalog", 0);
+        if (!IconHubSource.isAvailable(app)) {
+            if (!sIconHubDigests.isEmpty()) {
+                Map<String, String> unavailable = new java.util.LinkedHashMap<>();
+                for (String source : sIconHubDigests.keySet()) unavailable.put(source, "");
+                sIconHubDigests = unavailable;
+            }
+            if (isImprovedIconEnabled(app)) {
+                setImprovedIconEnabled(app, false);
+                new Handler(Looper.getMainLooper()).post(new Runnable() {
+                    @Override public void run() {
+                        applyGlobalImprovedSelection(app, false);
+                    }
+                });
+            }
+            return;
+        }
+        observeIconHub(app);
+        IconHubSource.flushPendingChoices(app);
+        Intent query = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER);
+        List<ResolveInfo> apps = queryLauncherActivitiesWithProfiles(app.getPackageManager(), query, 0);
+        Map<String, String> packages = new java.util.LinkedHashMap<>();
+        Map<String, String> explicit = new java.util.LinkedHashMap<>();
+        boolean improved = isImprovedIconEnabled(app);
+        for (ResolveInfo info : apps) {
+            ActivityInfo ai = info.activityInfo;
+            if (ai == null) continue;
+            String target = ai.packageName + "/" + ai.name;
+            RedirectIconInfo stored = RedirectIconDB.getRedirectIconInfo(app, ai.packageName, ai.name);
+            String mode = RedirectIconDB.modeOf(stored);
+            if (RedirectIconDB.MODE_PACK.equals(mode) || RedirectIconDB.MODE_CUSTOM.equals(mode)
+                    || RedirectIconDB.MODE_ORIGINAL.equals(mode)) {
+                // 第三方图标包、相册自定义、强制原版独立隔离，不参与在线同步
+                continue;
+            }
+            if (improved) {
+                packages.put(target, ai.packageName);
+                if (RedirectIconDB.MODE_RESOURCE.equals(mode)) {
+                    explicit.put(target, RedirectIconDB.resourceNameOf(stored));
+                }
+            }
+        }
+        if (packages.isEmpty() && explicit.isEmpty()) return;
+        String[] revision = new String[2];
+        List<String> revokedSources = new ArrayList<>();
+        Map<String, String> matches = IconHubSource.resolve(app, new ArrayList<>(packages.keySet()), true, revision, revokedSources);
+        if (matches == null) return;
+        java.util.LinkedHashSet<String> sources = new java.util.LinkedHashSet<>(matches.values());
+        sources.addAll(explicit.values());
+        sources.addAll(sIconHubMatches.values());
+        sources.remove("");
+        sources.remove(null);
+        Map<String, String> digests = IconHubSource.resolve(app, new ArrayList<>(sources), false, revision, revokedSources);
+        if (digests == null || improved != isImprovedIconEnabled(app)) return;
+        IconHubSource.replaceRevokedList(app, revokedSources);
+        Map<String, String> oldMatches = sIconHubMatches;
+        Map<String, String> oldDigests = sIconHubDigests;
+        Map<String, String> accepted = new java.util.LinkedHashMap<>(digests);
+        java.util.HashSet<String> changedSources = new java.util.HashSet<>();
+        IconPreviewRepository repo = IconPreviewRepository.get(app);
+        File cacheDir = new File(app.getFilesDir(), SMARTISAN_ICON_CACHE_DIR);
+        for (Map.Entry<String, String> entry : digests.entrySet()) {
+            String source = entry.getKey();
+            String digest = entry.getValue();
+            String old = oldDigests.get(source);
+            if (TextUtils.isEmpty(digest)) {
+                repo.removeVerifiedIconHubRaster(old);
+                File diskFile = new File(cacheDir, source + ".png");
+                if (diskFile.exists()) diskFile.delete();
+                synchronized (sSmartisanIconCache) {
+                    sSmartisanIconCache.remove(source);
+                }
+                changedSources.add(source);
+                continue;
+            }
+            if (digest.equals(old) && repo.hasVerifiedIconHubRaster(digest)) continue;
+            if (!repo.cacheIconHubOriginal(source, digest)) {
+                accepted.remove(source);
+                if (old != null) changedSources.add(source);
+                continue;
+            }
+            synchronized (sSmartisanIconCache) {
+                sSmartisanIconCache.remove(source);
+            }
+            changedSources.add(source);
+        }
+        if (improved != isImprovedIconEnabled(app)) return;
+        sIconHubDigests = accepted;
+        sIconHubMatches = matches;
+        try {
+            JSONObject projection = new JSONObject();
+            projection.put("matches", new JSONObject(matches));
+            projection.put("digests", new JSONObject(accepted));
+            store.edit().putString("projection", projection.toString()).apply();
+        } catch (org.json.JSONException error) {
+            Log.w(LOG_TAG, "ICONHUB_PROJECTION_SAVE_FAILED", error);
+        }
+        Log.i(LOG_TAG, "ICONHUB_SYNC revision=" + revision[0] + " targets=" + matches.size()
+                + " ready=" + accepted.size() + " revoked=" + revokedSources.size());
+        java.util.LinkedHashSet<String> changed = new java.util.LinkedHashSet<>();
+        for (String target : packages.keySet()) {
+            String source = matches.get(target);
+            String pkg = packages.get(target);
+            String component = target.substring(target.indexOf('/') + 1);
+            RedirectIconInfo current = RedirectIconDB.getRedirectIconInfo(app, pkg, component);
+
+            if (!TextUtils.equals(oldMatches.get(target), source) || changedSources.contains(source)
+                    || changedSources.contains(oldMatches.get(target))) {
+                changed.add(pkg);
+                if (!TextUtils.isEmpty(source) && !TextUtils.isEmpty(accepted.get(source))) {
+                    if (current == null) RedirectIconDB.updateAutoIcon(app, pkg, component);
+                }
+            }
+        }
+        for (Map.Entry<String, String> entry : explicit.entrySet()) {
+            if (changedSources.contains(entry.getValue())) {
+                changed.add(entry.getKey().substring(0, entry.getKey().indexOf('/')));
+            }
+        }
+        if (!changed.isEmpty()) {
+            repo.invalidateCandidates();
+            scheduleSmartisanIconRefresh(app, changed);
+        }
+    }
+
+    private static boolean requireIconHub(Context context) {
+        if (IconHubSource.isAvailable(context)) return true;
+        Toast.makeText(context, "请安装支持桌面对接的 Smartisan Icon", Toast.LENGTH_SHORT).show();
+        return false;
+    }
+
     private static void toggleImprovedIcon(Context context) {
         toggleImprovedIcon(context, (SettingItemSwitch) null);
     }
 
     private static void toggleImprovedIcon(Context context, SettingItemSwitch item) {
         boolean enabled = !isImprovedIconEnabled(context);
+        if (enabled && !requireIconHub(context)) return;
         setImprovedIconEnabled(context, enabled);
         if (item != null) {
             item.setCheckedAnimated(enabled);
         }
         applyGlobalImprovedSelection(context, enabled);
+        if (enabled) syncIconHub(context);
     }
 
     private static void toggleImprovedIcon(Context context, SwitchEx toggle) {
         boolean enabled = !isImprovedIconEnabled(context);
+        if (enabled && !requireIconHub(context)) return;
         setImprovedIconEnabled(context, enabled);
         if (toggle != null) {
             toggle.setCheckedAnimated(enabled);
         }
         applyGlobalImprovedSelection(context, enabled);
+        if (enabled) syncIconHub(context);
     }
 
     private static void applyGlobalImprovedSelection(final Context context, final boolean enabled) {
@@ -17962,6 +18658,11 @@ public final class MaintainedLauncherSettingsHost {
     }
 
 
+    private static File customShareOriginal(Context context, String pkg, String component) {
+        return new File(new File(context.getFilesDir(), "redirect_icons"),
+                RedirectIconDB.customFileName(pkg, component) + ".original.png");
+    }
+
     private static byte[] saveCustomIcon(Context context, String key, Uri uri) throws Exception {
         InputStream in = context.getContentResolver().openInputStream(uri);
         if (in == null) {
@@ -17996,6 +18697,24 @@ public final class MaintainedLauncherSettingsHost {
             icon.recycle();
         }
         source.recycle();
+        File original = customShareOriginal(context, parts[0], parts[1]);
+        original.delete();
+        try (InputStream originalInput = context.getContentResolver().openInputStream(uri)) {
+            if (originalInput != null) {
+                byte[] png = readAllBytes(originalInput, 512 * 1024);
+                if (png.length >= 33 && java.nio.ByteBuffer.wrap(png).getLong() == 0x89504e470d0a1a0aL) {
+                    android.util.AtomicFile stored = new android.util.AtomicFile(original);
+                    FileOutputStream stream = stored.startWrite();
+                    try {
+                        stream.write(png);
+                        stored.finishWrite(stream);
+                    } catch (java.io.IOException error) {
+                        stored.failWrite(stream);
+                    }
+                }
+            }
+        } catch (java.io.IOException | SecurityException ignored) {
+        }
         return bytes.toByteArray();
     }
 
@@ -18510,9 +19229,26 @@ public final class MaintainedLauncherSettingsHost {
 
     private static Drawable loadChoiceLibraryIcon(Context context, Resources resources,
             String sourceId, boolean cachedOnly) {
+        if (isImprovedIconEnabled(context) && IconHubSource.isAvailable(context)) {
+            if (IconHubSource.isUnavailable(sourceId)) return null;
+            IconPreviewRepository repo = IconPreviewRepository.get(context);
+            String digest = sIconHubDigests.get(sourceId);
+            if (TextUtils.isEmpty(digest) && !cachedOnly) {
+                Map<String, String> published = IconHubSource.resolve(context,
+                        new ArrayList<>(Collections.singletonList(sourceId)), false,
+                        new String[2], new ArrayList<String>());
+                if (published != null) digest = published.get(sourceId);
+            }
+            if (TextUtils.isEmpty(digest)) return null;
+            Bitmap bitmap = repo.readVerifiedIconHubRaster(digest);
+            if (bitmap == null && !cachedOnly && repo.cacheIconHubOriginal(sourceId, digest)) {
+                bitmap = repo.readVerifiedIconHubRaster(digest);
+            }
+            return isUsableIconBitmap(bitmap) ? new BitmapDrawable(resources, bitmap) : null;
+        }
         Drawable local = libraryIconDrawableNonBlocking(context, resources, sourceId);
         if (local != null || cachedOnly) return local;
-        // Use the same mirrors, miss policy and persistent cache as desktop artwork.
+        // Ask IconHub for the original through the existing desktop cache path.
         Bitmap downloaded = smartisanNetworkIconBitmap(context, sourceId, true);
         if (downloaded != null && isImprovedIconEnabled(context)) {
             java.util.Set<String> affected = promoteDownloadedImprovedIcon(context, sourceId);
@@ -18534,6 +19270,10 @@ public final class MaintainedLauncherSettingsHost {
     }
 
     private static List<String> choiceLibrarySourceIds(Context activity, Resources resources, IconManager iconManager, RedirectIconInfo info) {
+        if (isImprovedIconEnabled(activity)) {
+            List<String> published = IconHubSource.candidates(activity, info.packageName, info.componentName);
+            if (published != null) return published;
+        }
         ArrayList<String> names = new ArrayList<String>();
         IconPreviewRepository repository = IconPreviewRepository.get(activity);
         IconPreviewRepository.ImprovedCandidate mainCandidate =
@@ -18546,7 +19286,7 @@ public final class MaintainedLauncherSettingsHost {
             names.add(alias);
         }
         String baseName = info.packageName;
-        if (!names.contains(baseName)) {
+        if (alias == null && !names.contains(baseName)) {
             names.add(baseName);
         }
         List<String> repoVariants = repository.getVariantsForPackage(info.packageName);
@@ -18567,7 +19307,60 @@ public final class MaintainedLauncherSettingsHost {
             String current = RedirectIconDB.resourceNameOf(latest);
             if (!TextUtils.isEmpty(current) && !names.contains(current)) names.add(0, current);
         }
-        return names;
+        // The legacy list contains drawable stems. Resolve both spellings against
+        // one published snapshot before exposing a selectable library entry.
+        ArrayList<String> lookup = new ArrayList<>();
+        Map<String, String> variantIds = new java.util.LinkedHashMap<>();
+        for (String name : names) {
+            if (!IconHubSource.isValidSourceId(name)) continue;
+            lookup.add(name);
+            if (!name.equals(baseName) && name.indexOf('~') < 0) {
+                String variant = baseName + "~" + name;
+                if (IconHubSource.isValidSourceId(variant)) {
+                    variantIds.put(name, variant);
+                    lookup.add(variant);
+                }
+            }
+        }
+        String matched = sIconHubMatches.get(info.packageName + "/" + info.componentName);
+        if (IconHubSource.isValidSourceId(matched) && !names.contains(matched)) {
+            names.add(0, matched);
+            lookup.add(matched);
+        }
+        Map<String, String> published = IconHubSource.isAvailable(activity)
+                ? IconHubSource.resolve(activity, lookup, false, new String[2], new ArrayList<String>()) : null;
+        java.util.LinkedHashSet<String> usable = new java.util.LinkedHashSet<>();
+        for (String name : names) {
+            if (!IconHubSource.isValidSourceId(name)) continue;
+            if (IconHubSource.isUnavailable(name)) continue;
+            String variant = variantIds.get(name);
+            boolean variantPublished = published != null && variant != null && !TextUtils.isEmpty(published.get(variant));
+            boolean namePublished = published != null && !TextUtils.isEmpty(published.get(name));
+            boolean builtIn = isBuiltInResource(activity, resources, name);
+            if (variantPublished) {
+                usable.add(variant);
+            } else if (namePublished || (builtIn && (published == null || !isImprovedIconEnabled(activity)))) {
+                usable.add(name);
+            } else if (published != null) {
+                // 已联网解析，但在 IconHub 中已无此资源且不是内置资源 -> 属于下架/失效图标，清理旧缓存
+                File deadCache = new File(new File(activity.getFilesDir(), SMARTISAN_ICON_CACHE_DIR), name + ".png");
+                if (deadCache.exists()) deadCache.delete();
+            } else if (hasLocalChoiceSource(activity, resources, name)) {
+                usable.add(name);
+            }
+        }
+        return new ArrayList<>(usable);
+    }
+
+    private static boolean isBuiltInResource(Context context, Resources resources, String sourceId) {
+        if (context == null || TextUtils.isEmpty(sourceId) || sourceId.startsWith("ch-")) return false;
+        String name = candidateIdToDrawableName(sourceId);
+        try {
+            if (resources != null && resources.getIdentifier(name, "drawable", SETTINGS_PKG) != 0) return true;
+            if (context.getResources().getIdentifier(name, "drawable", context.getPackageName()) != 0) return true;
+        } catch (Throwable ignored) {
+        }
+        return false;
     }
 
     private static String selectedChoiceKey(Context activity, Resources resources, ResolveInfo resolved, RedirectIconInfo info) {
@@ -18575,6 +19368,7 @@ public final class MaintainedLauncherSettingsHost {
     }
 
     private static boolean hasLocalChoiceSource(Context context, Resources resources, String sourceId) {
+        if (IconHubSource.isUnavailable(sourceId)) return false;
         String name = candidateIdToDrawableName(sourceId);
         if (resources.getIdentifier(name, "drawable", SETTINGS_PKG) != 0
                 || context.getResources().getIdentifier(name, "drawable", context.getPackageName()) != 0) return true;
@@ -18685,7 +19479,8 @@ public final class MaintainedLauncherSettingsHost {
         private boolean choiceApplyPending;
         private int groupingGeneration;
         private String searchQuery = "";
-        private final List<Object> normalRows = new ArrayList<Object>();
+        private final List<RedirectIconInfo> normalRows = new ArrayList<>();
+        private final java.util.HashSet<String> redrawnRows = new java.util.HashSet<>();
         private AppIconSearchIndex<RedirectIconInfo> searchIndex;
         private Runnable rowsReadyAction;
         private Runnable rowsFailedAction;
@@ -18956,6 +19751,7 @@ public final class MaintainedLauncherSettingsHost {
                 if (!identities.remove(rowIdentity(info))) return false;
             if (!identities.isEmpty()) return false;
             normalRows.addAll(previous.normalRows);
+            redrawnRows.addAll(previous.redrawnRows);
             managedRows.addAll(previous.managedRows);
             rowVersions = previous.rowVersions;
             rowLabels = previous.rowLabels;
@@ -18977,7 +19773,8 @@ public final class MaintainedLauncherSettingsHost {
             previews.schedule(requestSession, IconPreviewRepository.Priority.P0_VISIBLE, new Runnable() {
                 public void run() {
                     try {
-                        final ArrayList<Object> grouped = new ArrayList<Object>();
+                        final ArrayList<RedirectIconInfo> grouped = new ArrayList<>();
+                        final java.util.HashSet<String> redrawnIds = new java.util.HashSet<>();
                         final java.util.HashSet<String> managed = new java.util.HashSet<String>();
                         final Map<String, Long> versions = new HashMap<String, Long>();
                         final Map<String, String> labels = new HashMap<String, String>();
@@ -19013,14 +19810,9 @@ public final class MaintainedLauncherSettingsHost {
                                 redrawn.add(effective);
                             else unredrawn.add(effective);
                         }
-                        if (!redrawn.isEmpty()) {
-                            grouped.add(new IconSection(getString(resources, "icon_redrawn", "已重绘")));
-                            grouped.addAll(redrawn);
-                        }
-                        if (!unredrawn.isEmpty()) {
-                            grouped.add(new IconSection(getString(resources, "icon_original", "未重绘")));
-                            grouped.addAll(unredrawn);
-                        }
+                        for (RedirectIconInfo info : redrawn) redrawnIds.add(rowIdentity(info));
+                        grouped.addAll(redrawn);
+                        grouped.addAll(unredrawn);
                         new Handler(Looper.getMainLooper()).post(new Runnable() {
                             public void run() {
                                 if (generation != groupingGeneration || dataGeneration != iconDataGeneration
@@ -19028,7 +19820,12 @@ public final class MaintainedLauncherSettingsHost {
                                         && !previews.isSessionActive(requestSession))) return;
                                 publishedIconDataGeneration = dataGeneration;
                                 searchIndex = index;
-                                if (rebuildSections) { normalRows.clear(); normalRows.addAll(grouped); }
+                                if (rebuildSections) {
+                                    normalRows.clear();
+                                    normalRows.addAll(grouped);
+                                    redrawnRows.clear();
+                                    redrawnRows.addAll(redrawnIds);
+                                }
                                 filterSearchRows();
                                 managedRows.clear(); managedRows.addAll(managed);
                                 rowVersions = versions; rowLabels = labels;
@@ -19057,13 +19854,24 @@ public final class MaintainedLauncherSettingsHost {
             notifyDataSetChanged();
         }
 
+        void refreshIconFilter() {
+            filterSearchRows();
+            notifyDataSetChanged();
+        }
+
         private void filterSearchRows() {
             rows.clear();
-            if (searchQuery.length() == 0) { rows.addAll(normalRows); return; }
-            rows.add(new IconSection("搜索结果"));
-            if (searchIndex != null) rows.addAll(searchIndex.filter(searchQuery));
-            if (searchIndex != null && rows.size() == 1)
-                rows.add(new IconSection("未找到相关应用"));
+            boolean searching = !searchQuery.isEmpty();
+            if (searching && searchIndex == null) return;
+            List<RedirectIconInfo> candidates = searching ? searchIndex.filter(searchQuery) : normalRows;
+            for (RedirectIconInfo info : candidates) {
+                if (sAppIconFilter == 0 || redrawnRows.contains(rowIdentity(info)) == (sAppIconFilter == 1)) {
+                    rows.add(info);
+                }
+            }
+            if (publishedIconDataGeneration >= 0L && rows.isEmpty()) {
+                rows.add(new IconSection(getString(context, "icon_filter_empty", "没有符合条件的应用")));
+            }
         }
 
         private LinearLayout createSectionHeader() {
@@ -19290,20 +20098,29 @@ public final class MaintainedLauncherSettingsHost {
                     View cachedGrid = createChoiceGridCard(row, info, null, returnScrollY, cachedChoices);
                     cachedGrid.setTag(cachedChoices);
                     content.addView(cachedGrid);
-                    View libraryEntry = iconHeaderRow(activity, context, resources, "搜索更多图标", "",
+                    content.addView(iconHeaderRow(activity, context, resources, "搜索更多图标", "",
                             "selector_setting_sub_item_bg_single", new View.OnClickListener() {
-                                public void onClick(View view) { showIconLibraryPage(row, info, returnScrollY, currentScrollY(activity)); }
-                            }, false, 0);
-                    LinearLayout.LayoutParams libraryParams = new LinearLayout.LayoutParams(-1, dp(activity, 72));
-                    libraryParams.setMargins(0, dp(activity, 12), 0, 0);
-                    content.addView(libraryEntry, libraryParams);
+                                public void onClick(View view) { launchIconHubPicker(activity, info); }
+                            }, false, 0), iconChoiceEntryParams(activity));
+                    content.addView(iconHeaderRow(activity, context, resources, "已安装的图标包", "",
+                            "selector_setting_sub_item_bg_single", new View.OnClickListener() {
+                                public void onClick(View view) {
+                                    showInstalledIconPacks(row, info, returnScrollY, currentScrollY(activity));
+                                }
+                            }, false, 0), iconChoiceEntryParams(activity));
                     View albumEntry = iconHeaderRow(activity, context, resources, "从相册选择", "",
                             "selector_setting_sub_item_bg_single", new View.OnClickListener() {
                                 public void onClick(View view) { pickCustomIcon(info, returnScrollY); }
                             }, false, 0);
-                    LinearLayout.LayoutParams albumParams = new LinearLayout.LayoutParams(-1, dp(activity, 72));
-                    albumParams.setMargins(0, dp(activity, 12), 0, 0);
-                    content.addView(albumEntry, albumParams);
+                    content.addView(albumEntry, iconChoiceEntryParams(activity));
+                    content.addView(iconHeaderRow(activity, context, resources, "共享此图标", "",
+                            "selector_setting_sub_item_bg_single", new View.OnClickListener() {
+                                public void onClick(View view) { launchIconHubContribution(activity, info, false); }
+                            }, false, 0), iconChoiceEntryParams(activity));
+                    content.addView(iconHeaderRow(activity, context, resources, "申请适配此图标", "",
+                            "selector_setting_sub_item_bg_single", new View.OnClickListener() {
+                                public void onClick(View view) { launchIconHubContribution(activity, info, true); }
+                            }, false, 0), iconChoiceEntryParams(activity));
                     discoverChoiceCandidates(content, row, info, returnScrollY);
                     scroll.addView(content, new ScrollView.LayoutParams(-1, -2));
                     parent.addView(scroll, index, lp);
@@ -19319,16 +20136,8 @@ public final class MaintainedLauncherSettingsHost {
             }
         }
 
-        private void showIconLibraryPage(final View row, final RedirectIconInfo info,
+        private void showInstalledIconPacks(final View row, final RedirectIconInfo info,
                 final int returnScrollY, final int choiceScrollY) {
-            showIconLibraryPage(row, info, returnScrollY, choiceScrollY, null, 0, 0, true,
-                    new IconLibrarySearchPage.State());
-        }
-
-        private void showIconLibraryPage(final View row, final RedirectIconInfo info,
-                final int returnScrollY, final int choiceScrollY, final String browseCategory,
-                final int categoryFirst, final int categoryTop, final boolean forward,
-                final IconLibrarySearchPage.State navigation) {
             cancelCurrentIconPageSession(activity);
             final IconPreviewRepository.RequestSession session = IconPreviewRepository.get(activity).openSession("ICON_LIBRARY");
             sCurrentIconPageSession = session;
@@ -19340,19 +20149,8 @@ public final class MaintainedLauncherSettingsHost {
                     hideInputMethod(activity, page);
                     showIconChoicePage(row, info, returnScrollY, choiceScrollY, false);
                 }};
-                final Runnable backAction = new Runnable() { public void run() {
-                    if (browseCategory != null) {
-                        hideInputMethod(activity, page);
-                        showIconLibraryPage(row, info, returnScrollY, choiceScrollY, null,
-                                categoryFirst, categoryTop, false, navigation);
-                        return;
-                    }
-                    if (sCurrentIconLibraryPage != null && sCurrentIconPageOwner != null
-                            && sCurrentIconPageOwner.get() == activity && sCurrentIconLibraryPage.handleBack()) return;
-                    exitAction.run();
-                }};
-                bindBackTitle(activity, resources, page, "view_title", browseCategory == null ? "搜索图标"
-                        : IconLibrarySearchPage.categoryTitle(browseCategory), "ICON_LIBRARY", backAction);
+                bindBackTitle(activity, resources, page, "view_title", "已安装的图标包",
+                        "ICON_LIBRARY", exitAction);
                 ListView list = asList(find(resources, page, "icons_list_view"));
                 ViewGroup parent = (ViewGroup) list.getParent();
                 int index = parent.indexOfChild(list);
@@ -19392,13 +20190,11 @@ public final class MaintainedLauncherSettingsHost {
                                 exitAction.run();
                             }
                             public void openCategory(String category, int firstVisible, int top) {
-                                hideInputMethod(activity, page);
-                                showIconLibraryPage(row, info, returnScrollY, choiceScrollY,
-                                        category, firstVisible, top, true, navigation);
+                                // The installed pack page opens directly in its fixed category.
                             }
                             public void back() { activity.onBackPressed(); }
                             public void hideKeyboard(View view) { hideInputMethod(activity, view); }
-                        }, browseCategory, categoryFirst, categoryTop, navigation);
+                        }, "__packs__", 0, 0, new IconLibrarySearchPage.State());
                 browser.setId(list.getId());
                 sCurrentIconLibraryPage = browser;
                 final IconLibrarySearchPage selectedBrowser = browser;
@@ -19412,7 +20208,7 @@ public final class MaintainedLauncherSettingsHost {
                             }});
                         }});
                 parent.addView(browser, index, params);
-                setSettingsContentView(activity, context, resources, page, forward, true);
+                setSettingsContentView(activity, context, resources, page, true, true);
                 hideInputMethod(activity, page);
             } catch (Exception error) {
                 Log.w(LOG_TAG, "ICON_LIBRARY_PAGE_OPEN_FAILED", error);
@@ -19470,9 +20266,7 @@ public final class MaintainedLauncherSettingsHost {
             repository.discoverCandidates(session, info.packageName, info.componentName, info.ownerId,
                     new IconPreviewRepository.CandidateLibrary() {
                         public List<String> sourceIds() { return choiceLibrarySourceIds(activity, resources, iconManager, info); }
-                        public boolean contains(String id) {
-                            return resources.getIdentifier(candidateIdToDrawableName(id), "drawable", SETTINGS_PKG) != 0;
-                        }
+                        public boolean contains(String id) { return true; }
                         public List<AppIconCandidate> extraCandidates() {
                             RedirectIconInfo latest = RedirectIconDB.getRedirectIconMetadata(activity,info.packageName,info.componentName);
                             String pack = RedirectIconDB.packNameOf(latest), name = RedirectIconDB.packDrawableNameOf(latest);
@@ -19769,6 +20563,7 @@ public final class MaintainedLauncherSettingsHost {
                 info.drawableName = RedirectIconDB.MODE_RESOURCE + ":" + choice.sourceId;
                 info.iconData = null;
                 RedirectIconDB.updateResourceIcon(activity, info.packageName, info.componentName, choice.sourceId);
+                syncSelectedLibraryIcon(activity, info.packageName, info.componentName, choice.sourceId);
                 forceUpdateIcon(activity, info);
                 invalidateIconData();
             }
@@ -19819,15 +20614,6 @@ public final class MaintainedLauncherSettingsHost {
                     .putInt(PREF_PENDING_CUSTOM_ICON_CHOICE_SCROLL_Y, currentScrollY(activity))
                     .putBoolean(PREF_PENDING_CUSTOM_ICON_RESTORE_CHOICE, true).apply();
             beginPickCustomIcon(activity);
-        }
-
-        private void useImprovedIcon(View row, RedirectIconInfo info) {
-            info.useImprovedAppIcon = true;
-            info.drawableName = RedirectIconDB.MODE_AUTO;
-            info.iconData = null;
-            RedirectIconDB.updateAutoIcon(activity, info.packageName, info.componentName);
-            forceUpdateIcon(activity, info);
-            invalidateIconData();
         }
 
         private boolean isImprovedSelected(RedirectIconInfo info, Drawable candidate) {
@@ -20049,8 +20835,26 @@ public final class MaintainedLauncherSettingsHost {
                     : new BitmapDrawable(context.getResources(), bitmap), "CUSTOM");
         }
         if (RedirectIconDB.MODE_RESOURCE.equals(mode)) {
+            if (shouldFollowIconHub(context, ai.packageName, ai.name, temporaryGlobal)) {
+                return resolveImprovedIconSource(context, info, resources);
+            }
             String source = RedirectIconDB.resourceNameOf(redirect);
-            return new ManagedIconSource(libraryIconDrawable(context, resources, source), "IMPROVED:" + source);
+            if (IconHubSource.hasPendingChoice(context, ai.packageName + "/" + ai.name)
+                    && !IconHubSource.isUnavailable(source)) {
+                String digest = sIconHubDigests.get(source);
+                Bitmap raster = IconPreviewRepository.get(context).readVerifiedIconHubRaster(digest);
+                if (isUsableIconBitmap(raster)) {
+                    return new ManagedIconSource(new BitmapDrawable(resources, raster), "IMPROVED:" + source);
+                }
+            }
+            if (!IconHubSource.isUnavailable(source)) {
+                Drawable d = libraryIconDrawable(context, resources, source);
+                if (d != null) {
+                    return new ManagedIconSource(d, "IMPROVED:" + source);
+                }
+            }
+            // 已被下架或文件不存在，自动清除失效映射并回退到默认
+            RedirectIconDB.updateAutoIcon(context, ai.packageName, ai.name);
         }
         if (RedirectIconDB.MODE_PACK.equals(mode)) {
             String pack = RedirectIconDB.packNameOf(redirect);
@@ -20070,30 +20874,93 @@ public final class MaintainedLauncherSettingsHost {
         return new ManagedIconSource(null, "DEFAULT");
     }
 
+    private static boolean shouldFollowIconHub(Context context, String pkg, String component,
+                                               IconSourceManager.Selection temporaryGlobal) {
+        IconSourceManager.Selection global = temporaryGlobal == null ? IconSourceManager.get(context) : temporaryGlobal;
+        if (global.type != IconSourceManager.Type.IMPROVED) return false;
+        if (!sIconHubProjectionLoaded) loadStoredIconHubProjection(context);
+        String target = pkg + "/" + component;
+        return sIconHubMatches.containsKey(target)
+                && !IconHubSource.hasPendingChoice(context, target);
+    }
+
     private static ManagedIconSource resolveImprovedIconSource(Context context, ResolveInfo info, Resources resources) {
         ActivityInfo ai = info == null ? null : info.activityInfo;
         if (ai == null) return new ManagedIconSource(null, "DEFAULT");
-        // AUTO system icons use their canonical alias before optional package candidates.
-        // Manual RESOURCE/PACK/CUSTOM/ORIGINAL choices have already returned above.
-        // Candidate discovery lacks labels and the external settings resource table;
-        // its package result must not outrank a drawable that is already available here.
+        if (!sIconHubProjectionLoaded) loadStoredIconHubProjection(context);
+        String target = ai.packageName + "/" + ai.name;
+        Map<String, String> matches = sIconHubMatches;
+        String publishedSource = matches.get(target);
+
+        // 1. 在线图库 IconHub 返回的权威款式优先（已融合用户手选偏好与官方拟物优先计算结果）
+        if (!TextUtils.isEmpty(publishedSource) && !IconHubSource.isUnavailable(publishedSource)
+                && !LauncherSettingBridge.isDynamicIconPackage(ai.packageName)) {
+            String digest = sIconHubDigests.get(publishedSource);
+            Bitmap verified = null;
+            if (!TextUtils.isEmpty(digest)) {
+                String key = "hub:" + digest;
+                synchronized (sSmartisanIconCache) {
+                    verified = sSmartisanIconCache.get(key);
+                }
+                if (verified == null) {
+                    verified = IconPreviewRepository.get(context).readVerifiedIconHubRaster(digest);
+                    if (isUsableIconBitmap(verified)) {
+                        synchronized (sSmartisanIconCache) { sSmartisanIconCache.put(key, verified); }
+                    }
+                }
+            }
+            Drawable drawable = verified == null ? null : new BitmapDrawable(resources, verified);
+            if (drawable != null) {
+                return new ManagedIconSource(drawable, "IMPROVED:" + publishedSource);
+            }
+        }
+
+        if (matches.containsKey(target) && !LauncherSettingBridge.isDynamicIconPackage(ai.packageName)) {
+            return new ManagedIconSource(null, "DEFAULT");
+        }
+
+        // 2. 本地回退（离线或 IconHub 未准备好）：官方原版拟物图标绝对优先（Official First）
+        // 系统应用别名优先（如相册对应沙漠相框）
         String alias = smartisanSystemIconAlias(context, info);
-        Drawable raw = isSystemApp(ai)
-                ? libraryIconDrawableNonBlocking(context, resources, alias) : null;
-        if (raw != null) return new ManagedIconSource(raw, "IMPROVED:" + alias);
+        if (!TextUtils.isEmpty(alias) && !alias.startsWith("ch-") && !IconHubSource.isUnavailable(alias)) {
+            Drawable raw = libraryIconDrawableNonBlocking(context, resources, alias);
+            if (raw != null) return new ManagedIconSource(raw, "IMPROVED:" + alias);
+        }
+
+        // 本地内置或映射的官方拟物资源（如微信、企业微信官方双气泡）
+        String local = smartisanIconNameFor(context, info);
+        if (!TextUtils.isEmpty(local) && !local.startsWith("ch-") && !IconHubSource.isUnavailable(local)) {
+            Drawable localDraw = maintainedResourceIcon(context, resources, local);
+            if (localDraw != null) return new ManagedIconSource(localDraw, "IMPROVED:" + local);
+        }
+
+        // 同名包名的官方拟物图标（如 com.tencent.wework 官方双气泡）
+        if (!ai.packageName.startsWith("ch-") && !IconHubSource.isUnavailable(ai.packageName)) {
+            Drawable pkgDraw = libraryIconDrawableNonBlocking(context, resources, ai.packageName);
+            if (pkgDraw != null) return new ManagedIconSource(pkgDraw, "IMPROVED:" + ai.packageName);
+        }
+
+        // 官方候选图标（非 ch- 社区图标）
         IconPreviewRepository.ImprovedCandidate candidate = IconPreviewRepository.get(context)
                 .resolveImprovedCandidate(ai.packageName, ai.name);
-        if (candidate.exists && !TextUtils.isEmpty(candidate.sourceId)) {
-            raw = libraryIconDrawableNonBlocking(context, resources, candidate.sourceId);
-            if (raw != null) return new ManagedIconSource(raw, "IMPROVED:" + candidate.sourceId);
+        if (candidate.exists && !TextUtils.isEmpty(candidate.sourceId)
+                && !candidate.sourceId.startsWith("ch-") && !IconHubSource.isUnavailable(candidate.sourceId)) {
+            Drawable candDraw = libraryIconDrawableNonBlocking(context, resources, candidate.sourceId);
+            if (candDraw != null) return new ManagedIconSource(candDraw, "IMPROVED:" + candidate.sourceId);
         }
-        raw = libraryIconDrawableNonBlocking(context, resources, alias);
-        if (raw != null) return new ManagedIconSource(raw, "IMPROVED:" + alias);
-        String local = smartisanIconNameFor(context, info);
-        raw = maintainedResourceIcon(context, resources, local);
-        if (raw != null) return new ManagedIconSource(raw, "IMPROVED:" + local);
-        return new ManagedIconSource(libraryIconDrawableNonBlocking(context, resources, ai.packageName),
-                "IMPROVED:" + ai.packageName);
+
+        // 社区候选图标
+        if (candidate.exists && !TextUtils.isEmpty(candidate.sourceId) && !IconHubSource.isUnavailable(candidate.sourceId)) {
+            Drawable candDraw = libraryIconDrawableNonBlocking(context, resources, candidate.sourceId);
+            if (candDraw != null) return new ManagedIconSource(candDraw, "IMPROVED:" + candidate.sourceId);
+        }
+
+        if (!TextUtils.isEmpty(alias) && !IconHubSource.isUnavailable(alias)) {
+            Drawable raw = libraryIconDrawableNonBlocking(context, resources, alias);
+            if (raw != null) return new ManagedIconSource(raw, "IMPROVED:" + alias);
+        }
+
+        return new ManagedIconSource(null, "DEFAULT");
     }
 
     private static Drawable effectiveIconDrawable(Context context, ResolveInfo info, Resources resources,
@@ -20167,7 +21034,8 @@ public final class MaintainedLauncherSettingsHost {
                 return new android.graphics.drawable.BitmapDrawable(context.getResources(), bitmap);
             }
         }
-        if (RedirectIconDB.MODE_RESOURCE.equals(mode)) {
+        if (RedirectIconDB.MODE_RESOURCE.equals(mode)
+                && !shouldFollowIconHub(context, ai.packageName, ai.name, null)) {
             Drawable custom = libraryIconDrawable(context, resources, RedirectIconDB.resourceNameOf(redirect));
             if (custom != null) {
                 return custom;
@@ -20203,6 +21071,7 @@ public final class MaintainedLauncherSettingsHost {
         if (name == null || name.length() == 0) {
             return null;
         }
+        if (IconHubSource.isUnavailable(name) || "".equals(sIconHubDigests.get(name))) return null;
         Drawable local = maintainedResourceIcon(context, resources, name);
         if (local != null) {
             return local;
@@ -20214,6 +21083,7 @@ public final class MaintainedLauncherSettingsHost {
         if (name == null || name.length() == 0) {
             return null;
         }
+        if (IconHubSource.isUnavailable(name) || "".equals(sIconHubDigests.get(name))) return null;
         Drawable local = maintainedResourceIcon(context, resources, name);
         if (local != null) {
             return local;
@@ -20256,6 +21126,7 @@ public final class MaintainedLauncherSettingsHost {
     }
 
     private static boolean libraryIconStored(Context context, Resources resources, String name) {
+        if (IconHubSource.isUnavailable(name)) return false;
         if (name == null || name.length() == 0) {
             return false;
         }
@@ -20381,8 +21252,8 @@ public final class MaintainedLauncherSettingsHost {
     }
 
     private static Bitmap smartisanNetworkIconBitmap(Context context, String packageName, boolean allowNetwork) {
-        if (packageName == null || packageName.length() == 0
-                || !packageName.matches("[A-Za-z0-9._-]+")) {
+        if (IconHubSource.isUnavailable(packageName)) return null;
+        if (!IconHubSource.isValidSourceId(packageName)) {
             return null;
         }
         synchronized (sSmartisanIconCache) {
@@ -20400,105 +21271,12 @@ public final class MaintainedLauncherSettingsHost {
             }
             return cached;
         }
-        if (shouldSkipSmartisanIconFetch(context, packageName)) {
-            return null;
-        }
-        // Icon loading also runs on Launcher's model/database worker. Blocking
-        // that thread on HTTP keeps the desktop on "initializing". Only the
-        // dedicated fetch executor may perform network I/O.
-        if (!allowNetwork || !LauncherNetworkPolicy.isEnabled()) {
+        if (!allowNetwork) {
             scheduleSmartisanIconFetch(context, packageName);
             return null;
         }
-        Bitmap bitmap = null;
-        if (allowNetwork && IconPreviewRepository.isPreviewWorker()) {
-            // A cache miss yields to bounded IO; this render task resumes after the raw write.
-            Drawable deferred = IconPreviewRepository.get(context).loadImprovedIconDrawable(packageName);
-            return deferred instanceof BitmapDrawable ? ((BitmapDrawable) deferred).getBitmap() : null;
-        }
-        boolean allMirrorsNotFound = true;
-        StrictMode.ThreadPolicy oldPolicy = null;
-        try {
-            oldPolicy = StrictMode.getThreadPolicy();
-            StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder(oldPolicy).permitNetwork().build());
-            for (String baseUrl : ONLINE_ICON_BASE_URLS) {
-                InputStream in = null;
-                HttpURLConnection conn = null;
-                try {
-                    URL url = new URL(baseUrl + packageName + ".png");
-                    conn = LauncherNetworkPolicy.open(url);
-                    // Fail over quickly when one domestic/overseas mirror is
-                    // unreachable instead of blocking every queued icon.
-                    conn.setConnectTimeout(1200);
-                    conn.setReadTimeout(1800);
-                    conn.setUseCaches(true);
-                    conn.setRequestProperty("Accept", "image/png");
-                    conn.setRequestProperty("User-Agent", "SmartisanLauncher-OnlineIcon/1");
-                    int responseCode = conn.getResponseCode();
-                    if (responseCode != 200) {
-                        if (responseCode != 404) {
-                            allMirrorsNotFound = false;
-                        }
-                        continue;
-                    }
-                    allMirrorsNotFound = false;
-                    String contentType = conn.getContentType();
-                    if (contentType != null && !contentType.toLowerCase().startsWith("image/")) {
-                        continue;
-                    }
-                    in = conn.getInputStream();
-                    byte[] data = readAllBytes(in, 512 * 1024);
-                    BitmapFactory.Options options = new BitmapFactory.Options();
-                    options.inPreferredConfig = Bitmap.Config.ARGB_8888;
-                    options.inScaled = false;
-                    Bitmap decoded = BitmapFactory.decodeByteArray(data, 0, data.length, options);
-                    if (isUsableIconBitmap(decoded) && decoded.getWidth() >= 48 && decoded.getHeight() >= 48
-                            && decoded.getWidth() <= 1024 && decoded.getHeight() <= 1024) {
-                        bitmap = decoded;
-                        writeCachedSmartisanIcon(context, packageName, bitmap);
-                        break;
-                    }
-                } catch (Throwable ignored) {
-                    // A timeout/DNS/TLS failure is not proof that the icon does
-                    // not exist. Do not poison the persistent miss cache.
-                    allMirrorsNotFound = false;
-                } finally {
-                    if (in != null) {
-                        try {
-                            in.close();
-                        } catch (Throwable ignored) {
-                        }
-                    }
-                    if (conn != null) {
-                        try {
-                            LauncherNetworkPolicy.close(conn);
-                        } catch (Throwable ignored) {
-                        }
-                    }
-                }
-            }
-        } catch (Throwable ignored) {
-        } finally {
-            if (oldPolicy != null) {
-                try {
-                    StrictMode.setThreadPolicy(oldPolicy);
-                } catch (Throwable ignored) {
-                }
-            }
-        }
-        synchronized (sSmartisanIconCache) {
-            if (bitmap != null) {
-                sSmartisanIconCache.put(packageName, bitmap);
-            } else {
-                // A transient network miss must not become a process-lifetime
-                // negative cache after the retry window expires.
-                sSmartisanIconCache.remove(packageName);
-            }
-        }
-        if (bitmap == null && allMirrorsNotFound) {
-            markSmartisanIconMiss(context, packageName);
-        }
-        return bitmap;
+        Drawable result = IconPreviewRepository.get(context).loadImprovedIconDrawable(packageName);
+        return result instanceof BitmapDrawable ? ((BitmapDrawable) result).getBitmap() : null;
     }
 
     private static void scheduleSmartisanIconFetch(final Context context, final String packageName) {
@@ -20583,6 +21361,7 @@ public final class MaintainedLauncherSettingsHost {
     }
 
     private static Bitmap readCachedSmartisanIcon(Context context, String packageName) {
+        if (IconHubSource.isUnavailable(packageName)) return null;
         try {
             File file = smartisanIconCacheFile(context, packageName);
             if (file == null || !file.exists()) {
@@ -20757,17 +21536,14 @@ public final class MaintainedLauncherSettingsHost {
         }
     }
 
-    private static void markSmartisanIconMiss(Context context, String packageName) {
-        try {
-            context.getSharedPreferences(SMARTISAN_ICON_CACHE_PREFS, Context.MODE_PRIVATE).edit()
-                    .putLong("miss." + packageName, System.currentTimeMillis()).apply();
-        } catch (Throwable ignored) {
-        }
-    }
-
     private static File smartisanIconCacheFile(Context context, String packageName) {
         if (context == null || packageName == null) {
             return null;
+        }
+        if (IconHubSource.isValidSourceId(packageName)) {
+            File imported = new File(new File(context.getFilesDir(), SMARTISAN_ICON_CACHE_DIR),
+                    packageName + ".png");
+            if (imported.isFile()) return imported;
         }
         File persistent = new File(new File(context.getFilesDir(), SMARTISAN_ICON_CACHE_DIR),
                 Integer.toHexString(packageName.hashCode()) + ".png");

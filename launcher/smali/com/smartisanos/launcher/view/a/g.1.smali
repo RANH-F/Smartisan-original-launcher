@@ -833,7 +833,19 @@
 .method private projectionLayoutOffsetY()F
     .locals 2
 
-    # Match the icon body's layout choice in Cm(), including Dock label eligibility.
+    # Prefer sc[0]'s live Y translation so mode switches (Ya) and steady state (Cm) stay in lockstep.
+    iget-object v0, p0, Lcom/smartisanos/launcher/view/a/g;->sc:[Lcom/smartisanos/smengine/SceneNode;
+    if-eqz v0, :fallback_mode
+    const/4 v1, 0x0
+    aget-object v0, v0, v1
+    if-eqz v0, :fallback_mode
+    invoke-virtual {v0}, Lcom/smartisanos/smengine/SceneNode;->getLocation()Lcom/smartisanos/smengine/a/j;
+    move-result-object v0
+    if-eqz v0, :fallback_mode
+    iget v0, v0, Lcom/smartisanos/smengine/a/j;->y:F
+    return v0
+
+    :fallback_mode
     iget v0, p0, Lcom/smartisanos/launcher/view/a/g;->hH:I
     invoke-static {v0}, Lcom/smartisanos/launcher/data/Constants;->mode(I)Lcom/smartisanos/launcher/data/LayoutProperty;
     move-result-object v0
@@ -848,6 +860,95 @@
 
     :offset_ready
     int-to-float v0, v0
+    return v0
+.end method
+
+.method private projectionIconScaleX()F
+    .locals 2
+
+    iget-object v0, p0, Lcom/smartisanos/launcher/view/a/g;->sc:[Lcom/smartisanos/smengine/SceneNode;
+    if-eqz v0, :fallback_scale_x
+    const/4 v1, 0x0
+    aget-object v0, v0, v1
+    if-eqz v0, :fallback_scale_x
+    invoke-virtual {v0}, Lcom/smartisanos/smengine/SceneNode;->getScale()Lcom/smartisanos/smengine/a/j;
+    move-result-object v0
+    if-eqz v0, :fallback_scale_x
+    iget v0, v0, Lcom/smartisanos/smengine/a/j;->x:F
+    const/4 v1, 0x0
+    cmpl-float v1, v0, v1
+    if-lez v1, :fallback_scale_x
+    return v0
+
+    :fallback_scale_x
+    iget-object v0, p0, Lcom/smartisanos/launcher/view/a/g;->dH:Lcom/smartisanos/launcher/data/LayoutProperty;
+    iget v0, v0, Lcom/smartisanos/launcher/data/LayoutProperty;->icon_size_with_shadow:F
+    const/high16 v1, 0x40000000    # 2.0f
+    div-float/2addr v0, v1
+    return v0
+.end method
+
+.method private projectionIconScaleY()F
+    .locals 2
+
+    iget-object v0, p0, Lcom/smartisanos/launcher/view/a/g;->sc:[Lcom/smartisanos/smengine/SceneNode;
+    if-eqz v0, :fallback_scale_y
+    const/4 v1, 0x0
+    aget-object v0, v0, v1
+    if-eqz v0, :fallback_scale_y
+    invoke-virtual {v0}, Lcom/smartisanos/smengine/SceneNode;->getScale()Lcom/smartisanos/smengine/a/j;
+    move-result-object v0
+    if-eqz v0, :fallback_scale_y
+    iget v0, v0, Lcom/smartisanos/smengine/a/j;->y:F
+    const/4 v1, 0x0
+    cmpl-float v1, v0, v1
+    if-lez v1, :fallback_scale_y
+    return v0
+
+    :fallback_scale_y
+    iget-object v0, p0, Lcom/smartisanos/launcher/view/a/g;->dH:Lcom/smartisanos/launcher/data/LayoutProperty;
+    iget v0, v0, Lcom/smartisanos/launcher/data/LayoutProperty;->icon_size_with_shadow:F
+    const/high16 v1, 0x40000000    # 2.0f
+    div-float/2addr v0, v1
+    return v0
+.end method
+
+.method private projectionOffsetX()F
+    .locals 3
+
+    invoke-static {}, Lcom/smartisanos/smengine/Ra;->getInstance()Lcom/smartisanos/smengine/Ra;
+    move-result-object v0
+    invoke-virtual {v0}, Lcom/smartisanos/smengine/Ra;->nt()F
+    move-result v0
+    invoke-direct {p0}, Lcom/smartisanos/launcher/view/a/g;->projectionIconScaleX()F
+    move-result v1
+    iget-object v2, p0, Lcom/smartisanos/launcher/view/a/g;->dH:Lcom/smartisanos/launcher/data/LayoutProperty;
+    iget v2, v2, Lcom/smartisanos/launcher/data/LayoutProperty;->icon_size_with_shadow:F
+    const/high16 p0, 0x40000000    # 2.0f
+    div-float/2addr v2, p0
+    div-float/2addr v1, v2
+    mul-float/2addr v0, v1
+    return v0
+.end method
+
+.method private projectionOffsetY()F
+    .locals 4
+
+    invoke-static {}, Lcom/smartisanos/smengine/Ra;->getInstance()Lcom/smartisanos/smengine/Ra;
+    move-result-object v0
+    invoke-virtual {v0}, Lcom/smartisanos/smengine/Ra;->ot()F
+    move-result v0
+    invoke-direct {p0}, Lcom/smartisanos/launcher/view/a/g;->projectionIconScaleY()F
+    move-result v1
+    iget-object v2, p0, Lcom/smartisanos/launcher/view/a/g;->dH:Lcom/smartisanos/launcher/data/LayoutProperty;
+    iget v2, v2, Lcom/smartisanos/launcher/data/LayoutProperty;->icon_size_with_shadow:F
+    const/high16 v3, 0x40000000    # 2.0f
+    div-float/2addr v2, v3
+    div-float/2addr v1, v2
+    mul-float/2addr v0, v1
+    invoke-direct {p0}, Lcom/smartisanos/launcher/view/a/g;->projectionLayoutOffsetY()F
+    move-result v1
+    add-float/2addr v0, v1
     return v0
 .end method
 
@@ -3395,26 +3496,14 @@
     if-eqz v1, :cond_1
 
     .line 12
-    invoke-static {}, Lcom/smartisanos/smengine/Ra;->getInstance()Lcom/smartisanos/smengine/Ra;
-
-    move-result-object v1
-
-    invoke-virtual {v1}, Lcom/smartisanos/smengine/Ra;->nt()F
+    invoke-direct {p0}, Lcom/smartisanos/launcher/view/a/g;->projectionOffsetX()F
 
     move-result v1
 
     .line 13
-    invoke-static {}, Lcom/smartisanos/smengine/Ra;->getInstance()Lcom/smartisanos/smengine/Ra;
-
-    move-result-object v5
-
-    invoke-virtual {v5}, Lcom/smartisanos/smengine/Ra;->ot()F
+    invoke-direct {p0}, Lcom/smartisanos/launcher/view/a/g;->projectionOffsetY()F
 
     move-result v5
-
-    invoke-direct {p0}, Lcom/smartisanos/launcher/view/a/g;->projectionLayoutOffsetY()F
-    move-result v6
-    add-float/2addr v5, v6
 
     .line 14
     iget-object v6, p0, Lcom/smartisanos/launcher/view/a/g;->sc:[Lcom/smartisanos/smengine/SceneNode;
@@ -3423,12 +3512,32 @@
 
     invoke-virtual {v6, v1, v5, v2}, Lcom/smartisanos/smengine/SceneNode;->setTranslate(FFF)V
 
+    invoke-static {}, Lcom/smartisanos/smengine/Ra;->getInstance()Lcom/smartisanos/smengine/Ra;
+
+    move-result-object v1
+
+    invoke-virtual {v1}, Lcom/smartisanos/smengine/Ra;->mt()F
+
+    move-result v1
+
+    invoke-direct {p0}, Lcom/smartisanos/launcher/view/a/g;->projectionIconScaleX()F
+
+    move-result v5
+
+    mul-float/2addr v5, v1
+
+    invoke-direct {p0}, Lcom/smartisanos/launcher/view/a/g;->projectionIconScaleY()F
+
+    move-result v3
+
+    mul-float/2addr v1, v3
+
+    const/high16 v3, 0x3f800000    # 1.0f
+
+    invoke-virtual {v6, v5, v1, v3}, Lcom/smartisanos/smengine/SceneNode;->setScale(FFF)V
+
     .line 15
-    iget-object v1, p0, Lcom/smartisanos/launcher/view/a/g;->sc:[Lcom/smartisanos/smengine/SceneNode;
-
-    aget-object v1, v1, v3
-
-    invoke-virtual {v1}, Lcom/smartisanos/smengine/SceneNode;->updateGeometricState()V
+    invoke-virtual {v6}, Lcom/smartisanos/smengine/SceneNode;->updateGeometricState()V
 
     .line 16
     :cond_1
@@ -6192,6 +6301,25 @@
 
     invoke-virtual {v2}, Lcom/smartisanos/smengine/SceneNode;->updateWorldTransforms()V
 
+    iget-object v2, p0, Lcom/smartisanos/launcher/view/a/g;->sc:[Lcom/smartisanos/smengine/SceneNode;
+
+    const/16 v4, 0xb
+
+    aget-object v2, v2, v4
+
+    if-eqz v2, :ya_after_normal_shadow
+
+    iget v5, v0, Lcom/smartisanos/smengine/a/j;->x:F
+
+    iget v6, v0, Lcom/smartisanos/smengine/a/j;->z:F
+
+    invoke-virtual {v2, v5, v3, v6}, Lcom/smartisanos/smengine/SceneNode;->setTranslate(FFF)V
+
+    invoke-virtual {v2}, Lcom/smartisanos/smengine/SceneNode;->updateWorldTransforms()V
+
+    invoke-virtual {v2}, Lcom/smartisanos/smengine/SceneNode;->updateGeometricState()V
+
+    :ya_after_normal_shadow
     .line 9
     iget-object v2, p0, Lcom/smartisanos/launcher/view/a/g;->sc:[Lcom/smartisanos/smengine/SceneNode;
 
@@ -6278,6 +6406,55 @@
 
     .line 20
     :cond_4
+    invoke-static {p0, v7}, Lcom/smartisanos/launcher/theme/LauncherSettingBridge;->preserveOverviewIconAspect(Ljava/lang/Object;I)V
+
+    iget-object v0, p0, Lcom/smartisanos/launcher/view/a/g;->sc:[Lcom/smartisanos/smengine/SceneNode;
+
+    const/16 v1, 0x1b
+
+    aget-object v0, v0, v1
+
+    if-eqz v0, :ya_after_projection
+
+    invoke-direct {p0}, Lcom/smartisanos/launcher/view/a/g;->projectionOffsetX()F
+
+    move-result v1
+
+    invoke-direct {p0}, Lcom/smartisanos/launcher/view/a/g;->projectionOffsetY()F
+
+    move-result v2
+
+    const/4 v3, 0x0
+
+    invoke-virtual {v0, v1, v2, v3}, Lcom/smartisanos/smengine/SceneNode;->setTranslate(FFF)V
+
+    invoke-static {}, Lcom/smartisanos/smengine/Ra;->getInstance()Lcom/smartisanos/smengine/Ra;
+
+    move-result-object v1
+
+    invoke-virtual {v1}, Lcom/smartisanos/smengine/Ra;->mt()F
+
+    move-result v1
+
+    invoke-direct {p0}, Lcom/smartisanos/launcher/view/a/g;->projectionIconScaleX()F
+
+    move-result v2
+
+    mul-float/2addr v2, v1
+
+    invoke-direct {p0}, Lcom/smartisanos/launcher/view/a/g;->projectionIconScaleY()F
+
+    move-result v3
+
+    mul-float/2addr v1, v3
+
+    const/high16 v3, 0x3f800000    # 1.0f
+
+    invoke-virtual {v0, v2, v1, v3}, Lcom/smartisanos/smengine/SceneNode;->setScale(FFF)V
+
+    invoke-virtual {v0}, Lcom/smartisanos/smengine/SceneNode;->updateGeometricState()V
+
+    :ya_after_projection
     invoke-virtual {p0}, Lcom/smartisanos/launcher/view/a/g;->Bm()V
 
     .line 21
@@ -6287,8 +6464,6 @@
     invoke-virtual {p0}, Lcom/smartisanos/smengine/SceneNode;->setNeedDisplay()V
 
     :cond_5
-    invoke-static {p0, v7}, Lcom/smartisanos/launcher/theme/LauncherSettingBridge;->preserveOverviewIconAspect(Ljava/lang/Object;I)V
-
     return-void
 .end method
 
@@ -9903,30 +10078,27 @@
     int-to-float v11, v11
     mul-float/2addr v10, v11
 
-    # Rebuild from original weather geometry so repeated draws never accumulate a scale.
-    invoke-static {}, Lcom/smartisanos/smengine/Ra;->getInstance()Lcom/smartisanos/smengine/Ra;
-    move-result-object v13
-    invoke-virtual {v13}, Lcom/smartisanos/smengine/Ra;->nt()F
+    # Rebuild from current icon layout and aspect-compensated scale so single-page and multi-page match.
+    invoke-direct {p0}, Lcom/smartisanos/launcher/view/a/g;->projectionOffsetX()F
     move-result v11
     mul-float/2addr v11, v7
     add-float/2addr v9, v11
-    invoke-virtual {v13}, Lcom/smartisanos/smengine/Ra;->ot()F
+    invoke-direct {p0}, Lcom/smartisanos/launcher/view/a/g;->projectionOffsetY()F
     move-result v11
-
-    invoke-direct {p0}, Lcom/smartisanos/launcher/view/a/g;->projectionLayoutOffsetY()F
-    move-result v12
-    add-float/2addr v11, v12
     mul-float/2addr v11, v8
     add-float/2addr v10, v11
+    invoke-static {}, Lcom/smartisanos/smengine/Ra;->getInstance()Lcom/smartisanos/smengine/Ra;
+    move-result-object v13
     invoke-virtual {v13}, Lcom/smartisanos/smengine/Ra;->mt()F
+    move-result v13
+    invoke-direct {p0}, Lcom/smartisanos/launcher/view/a/g;->projectionIconScaleX()F
     move-result v11
-    iget-object v12, p0, Lcom/smartisanos/launcher/view/a/g;->dH:Lcom/smartisanos/launcher/data/LayoutProperty;
-    iget v12, v12, Lcom/smartisanos/launcher/data/LayoutProperty;->icon_size_with_shadow:F
-    mul-float/2addr v11, v12
-    const/high16 v12, 0x40000000
-    div-float/2addr v11, v12
-    mul-float v12, v11, v8
+    mul-float/2addr v11, v13
     mul-float/2addr v11, v7
+    invoke-direct {p0}, Lcom/smartisanos/launcher/view/a/g;->projectionIconScaleY()F
+    move-result v12
+    mul-float/2addr v12, v13
+    mul-float/2addr v12, v8
     const/high16 v13, 0x3f800000
     invoke-virtual {v0, v11, v12, v13}, Lcom/smartisanos/smengine/SceneNode;->setScale(FFF)V
     const/4 v13, 0x0
@@ -11458,26 +11630,14 @@
     move-result-object v1
 
     .line 3
-    invoke-static {}, Lcom/smartisanos/smengine/Ra;->getInstance()Lcom/smartisanos/smengine/Ra;
-
-    move-result-object v2
-
-    invoke-virtual {v2}, Lcom/smartisanos/smengine/Ra;->nt()F
+    invoke-direct {p0}, Lcom/smartisanos/launcher/view/a/g;->projectionOffsetX()F
 
     move-result v2
 
     .line 4
-    invoke-static {}, Lcom/smartisanos/smengine/Ra;->getInstance()Lcom/smartisanos/smengine/Ra;
-
-    move-result-object v3
-
-    invoke-virtual {v3}, Lcom/smartisanos/smengine/Ra;->ot()F
+    invoke-direct {p0}, Lcom/smartisanos/launcher/view/a/g;->projectionOffsetY()F
 
     move-result v3
-
-    invoke-direct {p0}, Lcom/smartisanos/launcher/view/a/g;->projectionLayoutOffsetY()F
-    move-result v6
-    add-float/2addr v3, v6
 
     .line 5
     invoke-static {}, Lcom/smartisanos/smengine/Ra;->getInstance()Lcom/smartisanos/smengine/Ra;
@@ -11629,19 +11789,17 @@
     invoke-virtual {v0, v2, v3, v1}, Lcom/smartisanos/smengine/SceneNode;->setTranslate(FFF)V
 
     .line 18
-    iget-object p0, p0, Lcom/smartisanos/launcher/view/a/g;->dH:Lcom/smartisanos/launcher/data/LayoutProperty;
+    invoke-direct {p0}, Lcom/smartisanos/launcher/view/a/g;->projectionIconScaleX()F
 
-    iget p0, p0, Lcom/smartisanos/launcher/data/LayoutProperty;->icon_size_with_shadow:F
+    move-result v1
 
-    mul-float v1, v4, p0
+    mul-float/2addr v1, v4
 
-    const/high16 v2, 0x40000000    # 2.0f
+    invoke-direct {p0}, Lcom/smartisanos/launcher/view/a/g;->projectionIconScaleY()F
 
-    div-float/2addr v1, v2
+    move-result p0
 
     mul-float/2addr v4, p0
-
-    div-float/2addr v4, v2
 
     const/high16 p0, 0x3f800000    # 1.0f
 
@@ -14167,7 +14325,8 @@
 
     iget v2, v2, Lcom/smartisanos/launcher/data/LayoutProperty;->icon_size_with_shadow:F
 
-    const/high16 v6, 0x3f000000    # 0.5f
+    # Keep the visible rim near 36% of the reference icon width.
+    const v6, 0x3f08f5c3    # 0.535f
 
     mul-float/2addr v2, v6
 
@@ -14687,26 +14846,14 @@
 
     .line 21
     :cond_4
-    invoke-static {}, Lcom/smartisanos/smengine/Ra;->getInstance()Lcom/smartisanos/smengine/Ra;
-
-    move-result-object v4
-
-    invoke-virtual {v4}, Lcom/smartisanos/smengine/Ra;->nt()F
+    invoke-direct {p0}, Lcom/smartisanos/launcher/view/a/g;->projectionOffsetX()F
 
     move-result v4
 
     .line 22
-    invoke-static {}, Lcom/smartisanos/smengine/Ra;->getInstance()Lcom/smartisanos/smengine/Ra;
-
-    move-result-object v5
-
-    invoke-virtual {v5}, Lcom/smartisanos/smengine/Ra;->ot()F
+    invoke-direct {p0}, Lcom/smartisanos/launcher/view/a/g;->projectionOffsetY()F
 
     move-result v5
-
-    invoke-direct {p0}, Lcom/smartisanos/launcher/view/a/g;->projectionLayoutOffsetY()F
-    move-result v7
-    add-float/2addr v5, v7
 
     .line 23
     invoke-static {}, Lcom/smartisanos/smengine/Ra;->getInstance()Lcom/smartisanos/smengine/Ra;
@@ -14721,19 +14868,17 @@
     invoke-virtual {v1, v4, v5, v3}, Lcom/smartisanos/smengine/SceneNode;->setTranslate(FFF)V
 
     .line 25
-    iget-object v3, p0, Lcom/smartisanos/launcher/view/a/g;->dH:Lcom/smartisanos/launcher/data/LayoutProperty;
+    invoke-direct {p0}, Lcom/smartisanos/launcher/view/a/g;->projectionIconScaleX()F
 
-    iget v3, v3, Lcom/smartisanos/launcher/data/LayoutProperty;->icon_size_with_shadow:F
+    move-result v4
 
-    mul-float v4, v6, v3
+    mul-float/2addr v4, v6
 
-    const/high16 v5, 0x40000000    # 2.0f
+    invoke-direct {p0}, Lcom/smartisanos/launcher/view/a/g;->projectionIconScaleY()F
 
-    div-float/2addr v4, v5
+    move-result v3
 
     mul-float/2addr v6, v3
-
-    div-float/2addr v6, v5
 
     invoke-virtual {v1, v4, v6, v0}, Lcom/smartisanos/smengine/SceneNode;->setScale(FFF)V
 

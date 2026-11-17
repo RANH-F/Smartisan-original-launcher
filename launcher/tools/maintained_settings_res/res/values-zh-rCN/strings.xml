@@ -821,4 +821,9 @@
     <string name="sponsor_thanks">感谢以上锤友赞助支持，排名不分先后</string>
     <string name="launcher_network_title">桌面联网</string>
     <string name="launcher_network_required">请在强迫症选项中开启桌面联网</string>
+    <string name="icon_filter_all">全部应用</string>
+    <string name="icon_filter_empty">没有符合条件的应用</string>
+    <string name="launcher_network_disable_title">关闭桌面联网？</string>
+    <string name="launcher_network_disable_message">关闭后，桌面无法检查或下载更新、下载在线主题及刷新动态天气，正在进行的桌面下载也会取消。Smartisan Icon 使用自己的联网设置。</string>
+    <string name="launcher_network_disable_action">关闭</string>
 </resources>

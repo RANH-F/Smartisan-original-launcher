@@ -21,6 +21,7 @@ import java.util.HashSet;
 public final class RestoreIconSourceReconciler {
     private static final String TAG = "RestoreIconSource";
     private static final String PREF_PENDING = "restore_icon_source_reconcile_pending";
+    private static final String PREF_SHARED = "restore_iconhub_choices";
     private static final String PREF_TOKEN = "restore_icon_source_token";
     private static final String CACHE_DIR = "online_icon_cache_v4";
     private static final long MAX_SOURCE_BYTES = 512L * 1024L;
@@ -173,10 +174,12 @@ public final class RestoreIconSourceReconciler {
         Log.i(TAG, "RESTORE_ICON_SOURCES count=" + records.length() + " legacyArchive=false");
     }
 
-    public static void setPendingReconcile(Context context, String token) {
+    public static void setPendingReconcile(Context context, String token, JSONObject icons) {
         if (context == null) return;
         IconRasterDiagnostics.markIconLifecycle("RESTORE");
+        JSONObject shared = icons.optJSONObject("sharedChoices");
         if (!prefs(context).edit().putBoolean(PREF_PENDING, true)
+                .putString(PREF_SHARED, shared == null ? "" : shared.toString())
                 .putString(PREF_TOKEN, token).commit()) {
             Log.w(TAG, "RESTORE_ICON_SOURCE_PENDING_COMMIT_FAILED");
         }
@@ -201,7 +204,7 @@ public final class RestoreIconSourceReconciler {
 
         final String token = prefs.getString(PREF_TOKEN, "");
         IconRasterDiagnostics.markIconLifecycle("RESTORE");
-        prefs.edit().remove(PREF_PENDING).remove(PREF_TOKEN).commit();
+        final String shared = prefs.getString(PREF_SHARED, "");
 
         IconSourceManager.Selection source = IconSourceManager.get(context);
         Log.i(TAG, "RESTORE_ICON_SOURCE_MODEL_READY token=" + token + " source=" + source.value());
@@ -211,6 +214,16 @@ public final class RestoreIconSourceReconciler {
             IconSourceManager.set(context, IconSourceManager.Selection.defaultIcon());
             source = IconSourceManager.Selection.defaultIcon();
             MaintainedLauncherSettingsHost.persistGlobalIconSelection(context, source);
+        }
+
+        try {
+            if (!shared.isEmpty()) {
+                JSONObject choices = new JSONObject(shared);
+                com.smartisanos.home.settings.icons.IconHubSource.queueRestoredChoices(context, choices);
+            }
+            prefs.edit().remove(PREF_PENDING).remove(PREF_TOKEN).remove(PREF_SHARED).commit();
+        } catch (Exception error) {
+            Log.w(TAG, "RESTORE_ICON_SHARED_CHOICES_FAILED", error);
         }
 
         MaintainedLauncherSettingsHost.reconcileCurrentGlobalIconSource(context, ApplyReason.RESTORE, false);
@@ -242,7 +255,7 @@ public final class RestoreIconSourceReconciler {
 
     static boolean isPortableSourceName(String name) {
         if (name == null || name.length() > 260 || name.startsWith(".")) return false;
-        if (!name.matches("[A-Za-z0-9._-]+\\.png")) return false;
+        if (!name.matches("[A-Za-z0-9._~-]+\\.png")) return false;
         String sourceId = name.substring(0, name.length() - 4);
         return sourceId.length() > 0 && !sourceId.contains("..")
                 && !".".equals(sourceId) && !"..".equals(sourceId);

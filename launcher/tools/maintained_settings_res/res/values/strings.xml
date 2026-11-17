@@ -966,4 +966,9 @@
     <string name="sponsor_thanks">Thanks to the Smartisan community for their support. Listed in no particular order.</string>
     <string name="launcher_network_title">Launcher network access</string>
     <string name="launcher_network_required">Enable Launcher network access in OCD Settings</string>
+    <string name="icon_filter_all">All apps</string>
+    <string name="icon_filter_empty">No matching apps</string>
+    <string name="launcher_network_disable_title">Turn off Launcher network access?</string>
+    <string name="launcher_network_disable_message">Launcher will stop checking for and downloading updates, downloading online themes, and refreshing live weather. Active Launcher downloads will be cancelled. Smartisan Icon uses its own network settings.</string>
+    <string name="launcher_network_disable_action">Turn off</string>
 </resources>

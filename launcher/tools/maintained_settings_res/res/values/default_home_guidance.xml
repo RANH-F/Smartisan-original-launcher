@@ -3,6 +3,8 @@
     <string name="default_home_page_title">Default launcher</string>
     <string name="default_home_row_title">Default launcher</string>
     <string name="default_home_recheck_title">Check again</string>
+    <string name="setting_open_recents">Open recent apps</string>
+    <string name="default_home_test_vivo_recents_unavailable">This system version did not allow vivo recent apps to open.</string>
     <string name="default_home_tips_title">How to set</string>
     <string name="default_home_status_confirmed">Smartisan Launcher</string>
     <string name="default_home_status_unset">Not set</string>

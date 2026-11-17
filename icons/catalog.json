@@ -16103,8 +16103,7 @@
         "xc"
       ],
       "icons": [
-        "com.android.gallery3d",
-        "com.android.gallery3d_2"
+        "com.android.gallery3d"
       ],
       "primary": "com.android.gallery3d",
       "tags": [],

@@ -61,6 +61,14 @@ public final class IconBackupCodec {
             records.put(record);
         }
         root.put("records", records);
+        java.util.ArrayList<String> targets = new java.util.ArrayList<>();
+        for (int i = 0; i < records.length(); i++) {
+            JSONObject entry = records.getJSONObject(i);
+            targets.add(entry.getString("packageName") + "/" + entry.getString("componentName"));
+        }
+        java.util.Map<String, String> shared = com.smartisanos.home.settings.icons.IconHubSource
+                .queryPreferredIcons(context, targets);
+        if (shared != null) root.put("sharedChoices", new JSONObject(shared));
         return root;
     }
 

@@ -158,7 +158,7 @@ public class IconManager {
             EXACT_PACKAGE_MAP.put("com.miui.soundrecorder", "com.smartisanos.recorder");
 
             EXACT_PACKAGE_MAP.put("com.vivo.camera", "com.android.camera2");
-            EXACT_PACKAGE_MAP.put("com.vivo.gallery", "com.android.gallery3d");
+            EXACT_PACKAGE_MAP.put("com.vivo.gallery", "com.huawei.photos");
             EXACT_PACKAGE_MAP.put("com.iqoo.secure", "com.smartisanos.security");
             EXACT_PACKAGE_MAP.put("com.vivo.permissionmanager", "com.smartisanos.security");
             EXACT_PACKAGE_MAP.put("com.vivo.calculator", "com.smartisanos.calculator");

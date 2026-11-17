@@ -3,6 +3,8 @@
     <string name="default_home_page_title">设置默认桌面</string>
     <string name="default_home_row_title">默认桌面</string>
     <string name="default_home_recheck_title">重新检测</string>
+    <string name="setting_open_recents">开启最近任务</string>
+    <string name="default_home_test_vivo_recents_unavailable">当前系统版本未允许打开 vivo 最近任务。</string>
     <string name="default_home_tips_title">设置提示</string>
     <string name="default_home_status_confirmed">锤子桌面</string>
     <string name="default_home_status_unset">尚未设置</string>

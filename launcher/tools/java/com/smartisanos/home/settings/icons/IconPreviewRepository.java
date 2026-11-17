@@ -7,6 +7,7 @@ import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -30,10 +31,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
-import com.smartisanos.launcher.theme.LauncherNetworkPolicy;
 
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.Locale;
 
 /**
@@ -1078,6 +1076,7 @@ public final class IconPreviewRepository implements ComponentCallbacks2 {
     }
 
     private boolean checkCandidateExists(String key) {
+        if (IconHubSource.isUnavailable(key)) return false;
         IconLibraryCatalog catalog = IconLibraryCatalog.peek();
         if (catalog != null && catalog.contains(key)) return true;
         if (TextUtils.isEmpty(key)) return false;
@@ -1102,6 +1101,7 @@ public final class IconPreviewRepository implements ComponentCallbacks2 {
     }
 
     public Drawable loadImprovedIconDrawableCachedOnly(String sourceId, int targetPixelSize) {
+        if (IconHubSource.isUnavailable(sourceId)) return null;
         if (TextUtils.isEmpty(sourceId)) return null;
         // 1. Built-in resources
         String resName = sourceId.replace('.', '_').replace('-', '_');
@@ -1166,6 +1166,7 @@ public final class IconPreviewRepository implements ComponentCallbacks2 {
     }
 
     public Drawable loadImprovedIconDrawable(String sourceId, int targetPixelSize) {
+        if (IconHubSource.isUnavailable(sourceId)) return null;
         if (TextUtils.isEmpty(sourceId)) return null;
         // 1. Built-in resources
         String resName = sourceId.replace('.', '_').replace('-', '_');
@@ -1263,71 +1264,81 @@ public final class IconPreviewRepository implements ComponentCallbacks2 {
         }
     }
 
-    /** Existing mirrors/cache, now raw IO only. Decode resumes on the preview pool. */
+    public boolean cacheIconHubOriginal(String sourceId) {
+        if (Looper.myLooper() == Looper.getMainLooper()) return false;
+        return fetchOnlineSource(sourceId, null, null);
+    }
+
+    public boolean cacheIconHubOriginal(String sourceId, String digest) {
+        if (Looper.myLooper() == Looper.getMainLooper()) return false;
+        return fetchOnlineSource(sourceId, null, digest);
+    }
+
+    private static String renderingCacheKey(String digest) {
+        return "render-v1-" + digest;
+    }
+
+    public boolean hasVerifiedIconHubRaster(String digest) {
+        return digest != null && digest.matches("[a-f0-9]{64}")
+                && new File(new File(app.getFilesDir(), "online_icon_cache_v4"),
+                        renderingCacheKey(digest) + ".png").isFile();
+    }
+
+    public Bitmap readVerifiedIconHubRaster(String digest) {
+        if (digest == null || !digest.matches("[a-f0-9]{64}")) return null;
+        File file = new File(new File(app.getFilesDir(), "online_icon_cache_v4"),
+                renderingCacheKey(digest) + ".png");
+        return file.isFile() ? IconBitmapDecoder.decodeFileNearTarget(file, 256) : null;
+    }
+
+    public void removeVerifiedIconHubRaster(String digest) {
+        if (digest == null || !digest.matches("[a-f0-9]{64}")) return;
+        new File(new File(app.getFilesDir(), "online_icon_cache_v4"),
+                renderingCacheKey(digest) + ".png").delete();
+    }
+
     private boolean fetchOnlineSource(String sourceId, OnlineFetch fetch) {
-        if (!LauncherNetworkPolicy.isEnabled()) return false;
-        if (TextUtils.isEmpty(sourceId) || (!sourceId.matches("[A-Za-z0-9._-]+")
-                && !"com.miui. delock.theme".equals(sourceId))) return false;
-        android.content.SharedPreferences prefs = app.getSharedPreferences("online_icon_cache_v4", Context.MODE_PRIVATE);
-        long miss = prefs.getLong("miss." + sourceId, 0L);
-        if (miss > 0 && System.currentTimeMillis() - miss < 60L * 60L * 1000L) return false;
-        String[] mirrors = new String[]{
-            "https://gitee.com/RANH-F/Smartisan-original-launcher-download/raw/master/icons/drawable/",
-            "https://raw.githubusercontent.com/RANH-F/Smartisan-original-launcher/main/icons/drawable/"
-        };
-        boolean allNotFound = true;
-        for (String baseUrl : mirrors) {
-            if (fetch != null && fetch.cancelled) return false;
-            HttpURLConnection conn = null;
-            try {
-                String encoded = java.net.URLEncoder.encode(sourceId, "UTF-8").replace("+", "%20");
-                conn = LauncherNetworkPolicy.open(new URL(baseUrl + encoded + ".png"));
-                conn.setConnectTimeout(1200);
-                conn.setReadTimeout(1800);
-                conn.setUseCaches(true);
-                conn.setRequestProperty("Accept", "image/png");
-                conn.setRequestProperty("User-Agent", "SmartisanLauncher-OnlineIcon/1");
-                long deadline = android.os.SystemClock.uptimeMillis() + 8000L;
-                int response = conn.getResponseCode();
-                if (response != 200) { if (response != 404) allNotFound = false; continue; }
-                allNotFound = false;
-                String type = conn.getContentType();
-                if (type != null && !type.toLowerCase(Locale.US).startsWith("image/")) continue;
-                InputStream stream = conn.getInputStream();
-                byte[] data;
-                try {
-                    ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-                    byte[] buffer = new byte[8192];
-                    int read;
-                    while ((read = stream.read(buffer)) != -1) {
-                        if (fetch != null && fetch.cancelled) return false;
-                        if (bytes.size() + read > 512 * 1024
-                                || android.os.SystemClock.uptimeMillis() > deadline)
-                            throw new java.io.IOException("Online icon response exceeds limits");
-                        bytes.write(buffer, 0, read);
-                    }
-                    data = bytes.toByteArray();
-                } finally { stream.close(); }
-                // Bounds come from PNG IHDR; do not decode a Bitmap on the IO executor.
-                if (data.length < 24 || data[0] != (byte)137 || data[1] != 80 || data[2] != 78
-                        || data[3] != 71 || data[4] != 13 || data[5] != 10 || data[6] != 26 || data[7] != 10
-                        || data[12] != 73 || data[13] != 72 || data[14] != 68 || data[15] != 82) continue;
-                java.nio.ByteBuffer header = java.nio.ByteBuffer.wrap(data);
-                int width = header.getInt(16), height = header.getInt(20);
-                if (width < 32 || height < 32 || width > 1024 || height > 1024) continue;
-                if (!hasValidPngChunks(data)) continue;
-                if (fetch != null && fetch.cancelled) return false;
-                if (saveToDiskCache(sourceId, data)) {
-                    prefs.edit().remove("miss." + sourceId).apply();
-                    trimOnlineDiskCacheAsync();
-                    return true;
+        return fetchOnlineSource(sourceId, fetch, null);
+    }
+
+    private boolean fetchOnlineSource(String sourceId, OnlineFetch fetch, String digest) {
+        if (!IconHubSource.isValidSourceId(sourceId)
+                || (fetch != null && fetch.cancelled)) return false;
+        try {
+            byte[] data = IconHubSource.readOriginal(app, sourceId);
+            if (data == null || data.length < 33) return false;
+            if (digest != null) {
+                byte[] hash = java.security.MessageDigest.getInstance("SHA-256").digest(data);
+                StringBuilder hex = new StringBuilder(64);
+                for (byte value : hash) {
+                    hex.append(Character.forDigit((value >>> 4) & 15, 16));
+                    hex.append(Character.forDigit(value & 15, 16));
                 }
-            } catch (Exception ignored) { allNotFound = false; }
-            finally { if (conn != null) LauncherNetworkPolicy.close(conn); }
+                if (!digest.equalsIgnoreCase(hex.toString())) return false;
+            }
+            java.nio.ByteBuffer header = java.nio.ByteBuffer.wrap(data);
+            if (header.getLong(0) != 0x89504e470d0a1a0aL) return false;
+            int width = header.getInt(16), height = header.getInt(20);
+            if (width < 32 || height < 32 || width > 1024 || height > 1024
+                    || !hasValidPngChunks(data) || (fetch != null && fetch.cancelled)) return false;
+            if (digest != null) {
+                BitmapFactory.Options options = new BitmapFactory.Options();
+                options.inSampleSize = Math.max(1, Integer.highestOneBit(Math.max(width, height) / 256));
+                Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length, options);
+                if (bitmap == null) return false;
+                try {
+                    ByteArrayOutputStream raster = new ByteArrayOutputStream();
+                    if (!bitmap.compress(Bitmap.CompressFormat.PNG, 100, raster)
+                            || !saveToDiskCache(renderingCacheKey(digest), raster.toByteArray())) return false;
+                } finally {
+                    bitmap.recycle();
+                }
+            } else if (!saveToDiskCache(sourceId, data)) return false;
+            trimOnlineDiskCacheAsync();
+            return true;
+        } catch (java.io.IOException | java.security.NoSuchAlgorithmException | RuntimeException ignored) {
+            return false;
         }
-        if (allNotFound && (fetch == null || !fetch.cancelled))
-            prefs.edit().putLong("miss." + sourceId, System.currentTimeMillis()).apply();
-        return false;
     }
 
     private final class IoOperation implements Runnable {
@@ -1383,8 +1394,7 @@ public final class IconPreviewRepository implements ComponentCallbacks2 {
             if ((int) crc.getValue() != bytes.getInt(offset + 8 + length)) return false;
             if (type == 0x49444154 && length > 0) hasImageData = true;
             if (type == 0x49454e44)
-                return hasImageData && length == 0 && offset + 12 == data.length
-                        && hasValidPngData(data);
+                return hasImageData && length == 0 && hasValidPngData(java.util.Arrays.copyOf(data, offset + 12));
             offset += length + 12;
         }
         return false;

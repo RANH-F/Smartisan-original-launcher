@@ -26,7 +26,7 @@ public final class IconRasterDiagnostics {
     private static final Set<String> REPORTED = new HashSet<String>();
     private static final int DIAGNOSTIC_ALPHA_CUTOFF = 40;
     private static final String SOURCE_CANVAS_VERSION = "source-canvas:v13-default-circle-sync-pref";
-    private static final String RASTER_CACHE_VERSION = "raster:v30-consistent-source-classification";
+    private static final String RASTER_CACHE_VERSION = "raster:v31-consistent-source-classification";
     private static final Map<String, Object> PENDING_SOURCE_WRITES =
             new java.util.LinkedHashMap<String, Object>();
     private static boolean sDesktopPageReady;

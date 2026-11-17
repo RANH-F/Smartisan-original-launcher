@@ -323,6 +323,7 @@ if exist "%ROOT%launcher\tools\maintained_settings_res\res" (
   )
   copy /y "%ROOT%icons\drawable\com.smartisanos.weather.png" "%ROOT%launcher\scratch\maintained_settings_res\res\drawable\static_icon_weather.png" >nul
   copy /y "%ROOT%icons\drawable\com.android.calendar.png" "%ROOT%launcher\scratch\maintained_settings_res\res\drawable\static_icon_calendar.png" >nul
+  copy /y "%ROOT%icons\drawable\com.huawei.photos.png" "%ROOT%launcher\scratch\maintained_settings_res\res\drawable\com_huawei_photos.png" >nul
 
   if not exist "%ROOT%launcher\assets\icons" (
     mkdir "%ROOT%launcher\assets\icons"

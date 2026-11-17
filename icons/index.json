@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "path": "icons/drawable/{sourceId}.png",
-  "count": 5199,
+  "count": 5198,
   "icons": [
     {
       "package": "Han.GJZS",
@@ -2912,12 +2912,6 @@
       "file": "com.android.gallery3d.png",
       "bytes": 146891,
       "sha256": "f605d02d0116f7ea79571c18a5071084bc6b2bec696c77e2751cafe2d288c58c"
-    },
-    {
-      "package": "com.android.gallery3d_2",
-      "file": "com.android.gallery3d_2.png",
-      "bytes": 47793,
-      "sha256": "4b2eef3820ebf035af21e5ad74669f609030ce5efc1c9a162d3967755b855a55"
     },
     {
       "package": "com.android.hwmirror.Mirror",
@@ -23418,8 +23412,8 @@
     {
       "package": "com.tencent.wework",
       "file": "com.tencent.wework.png",
-      "bytes": 181817,
-      "sha256": "02a20bfc154ecdb0b39d76a9ecb605c404a5f69520e65446279a59704e19f161"
+      "bytes": 153807,
+      "sha256": "22bec3edcf8f7c7459e5df3702e61d75617a3137d6afdbf007a7f018327fbaf4"
     },
     {
       "package": "com.tencent.wifimanager",

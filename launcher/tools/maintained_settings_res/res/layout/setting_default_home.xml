@@ -24,7 +24,8 @@
             <RelativeLayout android:id="@+id/default_home_recheck"
                 android:layout_width="match_parent" android:layout_height="72dp"
                 android:background="@drawable/setting_item_down" android:visibility="gone">
-                <TextView style="@style/SmartisanSettingsRowTitle"
+                <TextView android:id="@+id/default_home_recheck_title"
+                    style="@style/SmartisanSettingsRowTitle"
                     android:layout_toLeftOf="@id/default_home_recheck_arrow"
                     android:singleLine="true" android:ellipsize="end"
                     android:text="@string/default_home_recheck_title" />

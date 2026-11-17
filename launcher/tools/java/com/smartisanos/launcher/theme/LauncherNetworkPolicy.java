@@ -30,7 +30,7 @@ public final class LauncherNetworkPolicy {
 
     public static boolean isEnabled() {
         SharedPreferences settings = preferences;
-        return settings != null && settings.getBoolean("enabled", false);
+        return settings != null && settings.getBoolean("enabled", true);
     }
 
     public static void setEnabled(final Context context, boolean enabled) {

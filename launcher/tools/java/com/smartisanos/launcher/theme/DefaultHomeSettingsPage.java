@@ -44,7 +44,9 @@ final class DefaultHomeSettingsPage {
                 }
             });
             click(activity, resources, root, "default_home_recheck", new View.OnClickListener() {
-                public void onClick(View v) { showDefaultHomeCheck(activity); }
+                public void onClick(View v) {
+                    showDefaultHomeCheck(activity);
+                }
             });
             updateDefaultHomePage(activity, resources, root, defaultHomeState(activity));
             setSettingsContentView(activity, context, resources, root, forward);
@@ -78,6 +80,28 @@ final class DefaultHomeSettingsPage {
         if (tips != null) tips.setVisibility(state == 1 ? View.GONE : View.VISIBLE);
         if (heading != null) heading.setVisibility(state == 1 ? View.GONE : View.VISIBLE);
         setText(tips, defaultHomeHelpMessage(resources, Build.MANUFACTURER, Build.BRAND));
+    }
+
+    static boolean canOpenVivoRecents(Context context) {
+        return defaultHomeState(context) == 1 && Build.VERSION.SDK_INT == 37
+                && "vivo".equalsIgnoreCase(Build.MANUFACTURER)
+                && "V2458A".equalsIgnoreCase(Build.MODEL);
+    }
+
+    static void openVivoRecents(Activity activity) {
+        if (!canOpenVivoRecents(activity)) return;
+        Intent intent = new Intent(Intent.ACTION_MAIN)
+                .setClassName("com.bbk.launcher2", "com.android.quickstep.RecentsActivity")
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        try {
+            activity.startActivity(intent);
+            Log.i(LOG_TAG, "VIVO_RECENTS_TEST launch_requested");
+        } catch (ActivityNotFoundException | SecurityException error) {
+            Log.w(LOG_TAG, "VIVO_RECENTS_TEST launch_failed", error);
+            Resources resources = getMaintainedResources(activity);
+            showInfoDialog(activity, text(resources, "setting_open_recents"),
+                    text(resources, "default_home_test_vivo_recents_unavailable"));
+        }
     }
 
     /** 1 = confirmed, 0 = system reports another holder, -1 = inconclusive. */
