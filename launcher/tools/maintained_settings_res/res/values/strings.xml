@@ -770,12 +770,12 @@
     <string name="backup_now">Back up now</string>
     <string name="restore_from_backup">Restore from backup</string>
     <string name="undo_last_restore">Undo last restore</string>
-    <string name="desktop_backup_tips">Backs up Home layout, settings, themes, and icons. Wallpaper, app data, accounts, privacy password, and system grants are excluded. Restore does not install missing apps or change wallpaper. Keep backup files safe.</string>
+    <string name="desktop_backup_tips">Backs up Home layout, settings, themes, icons, and Home wallpaper settings, including a custom wallpaper selected in Home. Lock screen wallpaper, app data, accounts, the privacy password, and system permissions are excluded. Restore does not install missing apps. Keep backup files safe.</string>
     <string name="restore_preview_title">Restore Home backup</string>
     <string name="backup_preview_title">Back up Home</string>
     <string name="backup_preview_start">Start backup</string>
     <string name="backup_preview_preparing">Preparing backup preview…</string>
-    <string name="backup_preview_tips">This is the archive to be saved. Wallpaper, app data, and system grants are excluded.</string>
+    <string name="backup_preview_tips">The archive saves Home wallpaper settings and any custom wallpaper selected in Home. Lock screen wallpaper, app data, and system permissions are excluded.</string>
     <string name="backup_setting_icon_pack">Current icon pack</string>
     <string name="backup_setting_icon_size">Icon size</string>
     <string name="backup_setting_default_icon_shape">Default app icon frame</string>
@@ -812,7 +812,7 @@
     <string name="missing_icon_pack_count">Missing icon packs</string>
     <string name="missing_theme_count">Missing theme packages</string>
     <string name="permission_count">Features requiring authorization</string>
-    <string name="restore_preview_tips">Restore replaces the current Home layout and backed-up Home settings. Current new apps and valid shortcuts are kept at the end of Home. The current state is saved automatically and can be undone. Wallpaper is not changed.</string>
+    <string name="restore_preview_tips">Restore replaces the current Home layout and the settings saved in the backup. Newly installed apps and valid shortcuts are kept at the end of Home. If the backup contains wallpaper settings, the Home wallpaper is restored from the backup. The current state is saved automatically so you can undo the restore.</string>
     <string name="backup_not_selected">Not selected</string>
     <string name="backup_location_selected">Folder selected</string>
     <string name="backup_last_incomplete">Last backup did not finish</string>
@@ -852,7 +852,7 @@
     <string name="grid_mode_20">20-cell grid</string>
     <string name="backup_default_theme">Default theme</string>
     <string name="restore_preview_failed">Unable to show the restore preview.</string>
-    <string name="restore_confirm_message">Restore replaces the current Home layout and backed-up Home settings, keeping current new apps and valid shortcuts at the end of Home; the current state is saved automatically beforehand, so the restore can be undone. Wallpaper stays unchanged.</string>
+    <string name="restore_confirm_message">Restore replaces the current Home layout and the settings saved in the backup. Newly installed apps and valid shortcuts are kept at the end of Home. If the backup contains wallpaper settings, the Home wallpaper is restored too. The current state is saved first. A successful restore replaces any previous undo record, so only this restore can be undone.</string>
     <string name="restore_action">Restore</string>
     <string name="undo_restore_confirm_message">Home will return to the state before the last restore.\nLayout and settings changes made after that restore will also be replaced.</string>
     <string name="undo_action">Undo</string>

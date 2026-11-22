@@ -2421,11 +2421,26 @@
 .end method
 
 .method public static a(Landroid/content/Context;Ljava/lang/String;Landroid/os/Bundle;)Landroid/os/Bundle;
-    .locals 2
+    .locals 3
 
     const/4 v0, 0x0
 
     :try_start_0
+    const-string v1, "com.smartisanos.sidebar.call"
+
+    invoke-virtual {p0}, Landroid/content/Context;->getPackageManager()Landroid/content/pm/PackageManager;
+
+    move-result-object v2
+
+    invoke-virtual {v2, v1, v0}, Landroid/content/pm/PackageManager;->resolveContentProvider(Ljava/lang/String;I)Landroid/content/pm/ProviderInfo;
+
+    move-result-object v2
+
+    if-nez v2, :sidebar_provider_available
+
+    return-object v0
+
+    :sidebar_provider_available
     const-string v1, "content://com.smartisanos.sidebar.call"
 
     .line 337

@@ -11,6 +11,15 @@ import android.app.Activity;import android.os.Handler;import android.os.Looper;i
 import java.io.*;import java.net.*;
 public class DownloadCheck {
  static final String UPDATE_RELEASE_GITEE_MIRROR="mirror";static int installs,errors;static int length;static byte[] body;
+ static final String LOG_TAG="test";
+ static class Log {static void w(String tag,String message){throw new AssertionError(message);}}
+ static boolean cancelDuringRead;
+ static class LauncherNetworkPolicy {
+  static boolean current;
+  static long currentGeneration(){return current?0:-1;}
+  static boolean isCurrent(long generation){return generation==0&&current;}
+  static void close(HttpURLConnection connection){connection.disconnect();}
+ }
  static class UpdateDownloadProgress {}
  static void updateUpdateProgressUi(Activity a,UpdateDownloadProgress u,String s,int p){}
  static void notifyUpdateDownload(Activity a,String s,int p,boolean complete){if(complete)errors++;}
@@ -18,18 +27,27 @@ public class DownloadCheck {
  static void dismissUpdateDownloadProgress(UpdateDownloadProgress u){}
  static String shortError(Throwable t){return t.getClass().getSimpleName();}
  static void installApkFile(Activity a,File f){installs++;}
- static HttpURLConnection openDownloadConnection(String url)throws Exception {
+ static boolean verifyUpdateApkFile(Activity a,File f){return true;}
+ static HttpURLConnection openDownloadConnection(String url,long generation)throws Exception {
   if(url.equals("fail"))throw new IOException("offline");
   return new HttpURLConnection(new URL("http://test.invalid")) {
    public void disconnect(){}public boolean usingProxy(){return false;}public void connect(){}
    public int getResponseCode(){return 200;}public int getContentLength(){return length;}
-   public InputStream getInputStream(){return new ByteArrayInputStream(body);}
+   public InputStream getInputStream(){
+    return new ByteArrayInputStream(body){
+     public synchronized int read(byte[] target,int offset,int count){
+      if(cancelDuringRead)LauncherNetworkPolicy.current=false;
+      return super.read(target,offset,count);
+     }
+    };
+   }
   };
  }
 '''
 SUFFIX=r'''
  static void test(String[] urls,int declared,byte[] bytes,boolean success)throws Exception {
-  installs=0;errors=0;length=declared;body=bytes;File file=File.createTempFile("update", ".apk");file.delete();
+  installs=0;errors=0;length=declared;body=bytes;LauncherNetworkPolicy.current=true;
+  File file=File.createTempFile("update", ".apk");file.delete();
   downloadUpdateApkDirect(new Activity(),urls,file,new UpdateDownloadProgress());
   for(Thread thread:Thread.getAllStackTraces().keySet())if(thread.getName().equals("launcher-update-direct-download")) {thread.join(5000);if(thread.isAlive())throw new AssertionError("worker did not finish");}
   if(installs!=(success?1:0)||errors!=(success?0:1))throw new AssertionError("installs="+installs+" errors="+errors);
@@ -41,7 +59,9 @@ SUFFIX=r'''
   test(new String[]{"ok"},0,new byte[]{},false);
   test(new String[]{"fail","ok"},3,new byte[]{1,2,3},true);
   test(new String[]{"fail","fail"},3,new byte[]{1,2,3},false);
-  System.out.println("PASS production background download cases=5: complete, truncated, empty, mirror fallback, offline");
+  cancelDuringRead=true;
+  test(new String[]{"ok"},3,new byte[]{1,2,3},false);
+  System.out.println("PASS production background download cases=6: complete, truncated, empty, mirror fallback, offline, cancelled");
  }
 }
 '''

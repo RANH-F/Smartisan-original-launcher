@@ -6166,48 +6166,7 @@
     :goto_5
     if-eqz v2, :cond_f
 
-    .line 48
-    invoke-static {}, Lcom/smartisanos/launcher/view/Eb;->getInstance()Lcom/smartisanos/launcher/view/Eb;
-
-    move-result-object v3
-
-    if-eqz v3, :cond_11
-
-    invoke-static {}, Lcom/smartisanos/launcher/theme/t;->getInstance()Lcom/smartisanos/launcher/theme/t;
-
-    move-result-object v3
-
-    invoke-virtual {v3}, Lcom/smartisanos/launcher/theme/t;->Wf()Z
-
-    move-result v3
-
-    if-nez v3, :cond_11
-
-    .line 49
-    invoke-static {}, Lcom/smartisanos/launcher/theme/t;->getInstance()Lcom/smartisanos/launcher/theme/t;
-
-    move-result-object v3
-
-    invoke-virtual {v3}, Lcom/smartisanos/launcher/theme/t;->Yf()V
-
-    .line 50
-    invoke-static {}, Lcom/smartisanos/launcher/J;->getInstance()Lcom/smartisanos/launcher/J;
-
-    move-result-object v3
-
-    invoke-static {}, Lcom/smartisanos/launcher/theme/X;->eg()Lcom/smartisanos/launcher/theme/v;
-
-    move-result-object v4
-
-    sget v6, Lcom/smartisanos/launcher/ob;->theme_changing:I
-
-    .line 51
-    invoke-static {v6}, Lcom/smartisanos/launcher/e/s;->oa(I)Ljava/lang/String;
-
-    move-result-object v6
-
-    .line 52
-    invoke-virtual {v3, v4, v6}, Lcom/smartisanos/launcher/J;->a(Lcom/smartisanos/launcher/theme/v;Ljava/lang/String;)V
+    invoke-direct {p0}, Lcom/smartisanos/launcher/J;->startPendingThemeTransition()Z
 
     goto :goto_6
 
@@ -6569,6 +6528,67 @@
     invoke-virtual {p0}, Landroid/content/ActivityNotFoundException;->printStackTrace()V
 
     return v1
+.end method
+
+.method public resumePendingSettingsTheme()Z
+    .locals 2
+
+    # Let a focused desktop consume a settings request missed during onResume.
+    iget-boolean v0, p0, Lcom/smartisanos/launcher/J;->Wf:Z
+    if-eqz v0, :not_started
+
+    sget-boolean v0, Lcom/smartisanos/launcher/data/Constants;->NEED_REBOOT:Z
+    if-nez v0, :not_started
+
+    sget-boolean v0, Lcom/smartisanos/launcher/data/Constants;->showDialogForThemeUninstalled:Z
+    if-nez v0, :not_started
+
+    invoke-static {}, Lcom/smartisanos/launcher/theme/t;->getInstance()Lcom/smartisanos/launcher/theme/t;
+    move-result-object v0
+    invoke-virtual {v0}, Lcom/smartisanos/launcher/theme/t;->Uf()Lcom/smartisanos/launcher/theme/ChangeThemeHandler$RequireChangeFrom;
+    move-result-object v0
+    sget-object v1, Lcom/smartisanos/launcher/theme/ChangeThemeHandler$RequireChangeFrom;->SETTING:Lcom/smartisanos/launcher/theme/ChangeThemeHandler$RequireChangeFrom;
+    if-ne v0, v1, :not_started
+
+    invoke-direct {p0}, Lcom/smartisanos/launcher/J;->startPendingThemeTransition()Z
+    move-result v0
+    return v0
+
+    :not_started
+    const/4 v0, 0x0
+    return v0
+.end method
+
+.method private startPendingThemeTransition()Z
+    .locals 3
+
+    invoke-static {}, Lcom/smartisanos/launcher/view/Eb;->getInstance()Lcom/smartisanos/launcher/view/Eb;
+    move-result-object v0
+    if-eqz v0, :not_started
+
+    invoke-static {}, Lcom/smartisanos/launcher/theme/t;->getInstance()Lcom/smartisanos/launcher/theme/t;
+    move-result-object v0
+    invoke-virtual {v0}, Lcom/smartisanos/launcher/theme/t;->bg()Z
+    move-result v1
+    if-eqz v1, :not_started
+
+    invoke-static {}, Lcom/smartisanos/launcher/theme/X;->eg()Lcom/smartisanos/launcher/theme/v;
+    move-result-object v1
+    if-eqz v1, :not_started
+
+    # The original handler clears pending and marks the transition running.
+    invoke-virtual {v0}, Lcom/smartisanos/launcher/theme/t;->Yf()V
+    sget v2, Lcom/smartisanos/launcher/ob;->theme_changing:I
+    invoke-static {v2}, Lcom/smartisanos/launcher/e/s;->oa(I)Ljava/lang/String;
+    move-result-object v2
+    invoke-virtual {p0, v1, v2}, Lcom/smartisanos/launcher/J;->a(Lcom/smartisanos/launcher/theme/v;Ljava/lang/String;)V
+
+    const/4 v0, 0x1
+    return v0
+
+    :not_started
+    const/4 v0, 0x0
+    return v0
 .end method
 
 .method public onWindowFocusChanged(Z)V

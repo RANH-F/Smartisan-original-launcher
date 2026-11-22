@@ -625,12 +625,12 @@
     <string name="backup_now">立即备份</string>
     <string name="restore_from_backup">从备份恢复</string>
     <string name="undo_last_restore">撤销上次恢复</string>
-    <string name="desktop_backup_tips">备份桌面布局、设置、主题与图标；不含壁纸、应用数据、账号、隐私密码及系统授权。恢复不会安装缺失应用或更改壁纸。请妥善保管备份文件。</string>
+    <string name="desktop_backup_tips">备份桌面布局、设置、主题、图标和桌面壁纸设置。已在桌面中选用的自定义壁纸会随备份保存。不含锁屏壁纸、应用数据、账号、隐私密码及系统授权。恢复不会安装缺失应用。请妥善保管备份文件。</string>
     <string name="restore_preview_title">恢复桌面备份</string>
     <string name="backup_preview_title">备份桌面</string>
     <string name="backup_preview_start">开始备份</string>
     <string name="backup_preview_preparing">正在准备备份预览…</string>
-    <string name="backup_preview_tips">以上为即将保存的备份内容；不含壁纸、应用数据和系统授权。</string>
+    <string name="backup_preview_tips">备份会保存桌面壁纸设置及已选用的自定义桌面壁纸。不含锁屏壁纸、应用数据和系统授权。</string>
     <string name="backup_setting_icon_pack">当前图标包</string>
     <string name="backup_setting_icon_size">图标大小</string>
     <string name="backup_setting_default_icon_shape">默认应用图标框</string>
@@ -667,7 +667,7 @@
     <string name="missing_icon_pack_count">缺少图标包</string>
     <string name="missing_theme_count">缺少主题包</string>
     <string name="permission_count">需要重新授权的功能</string>
-    <string name="restore_preview_tips">恢复将替换当前桌面布局和备份中已有的桌面设置。当前新安装的应用和有效快捷方式会保留到桌面末尾。恢复前会自动保存当前状态，恢复后可以撤销。当前壁纸不会改变。</string>
+    <string name="restore_preview_tips">恢复将替换当前桌面布局和备份中已有的桌面设置。新安装的应用和有效快捷方式会保留到桌面末尾。备份中有壁纸记录时，桌面壁纸会按备份恢复。恢复前会自动保存当前状态，恢复后可以撤销。</string>
     <string name="backup_not_selected">尚未选择</string>
     <string name="backup_location_selected">已选择目录</string>
     <string name="backup_last_incomplete">上次备份未完成</string>
@@ -707,7 +707,7 @@
     <string name="grid_mode_20">二十宫格</string>
     <string name="backup_default_theme">默认主题</string>
     <string name="restore_preview_failed">无法显示恢复预览</string>
-    <string name="restore_confirm_message">恢复将替换当前桌面布局及已备份的桌面设置，当前新安装的应用和有效快捷方式将保留到桌面末尾；恢复前会自动保存当前状态，恢复后可撤销。当前壁纸保持不变。</string>
+    <string name="restore_confirm_message">恢复会替换当前桌面布局和备份中已有的设置。新安装的应用和有效快捷方式会保留到桌面末尾。备份中有壁纸记录时，桌面壁纸也会恢复。恢复前会保存当前状态，成功后将替换旧的撤销记录，只能撤销本次恢复。</string>
     <string name="restore_action">恢复</string>
     <string name="undo_restore_confirm_message">桌面将恢复到上次恢复操作之前的状态。\n恢复完成后所做的布局和设置修改也会被替换。</string>
     <string name="undo_action">撤销</string>

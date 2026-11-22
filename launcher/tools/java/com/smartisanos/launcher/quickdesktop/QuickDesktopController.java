@@ -647,6 +647,9 @@ public final class QuickDesktopController {
                 hostView = null;
                 rootRef.clear();
                 if (current != null) current.releaseForDetach();
+            } else if (hostView != null) {
+                // The next open captures fresh artwork. The retained host has no use for these bitmaps.
+                hostView.clearBackgroundSnapshots();
             }
             Log.i(TAG, "QD_CLEANUP reason=" + reason + " releaseHost=" + releaseHost);
         } finally {

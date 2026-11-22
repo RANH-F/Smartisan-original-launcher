@@ -79,6 +79,23 @@ public final class IconHubSource {
                 .putExtra(EXTRA + "ACTIVITY", component);
     }
 
+    public static Intent launchIntent(Context context) {
+        if (!isAvailable(context)) return null;
+        return context.getPackageManager().getLaunchIntentForPackage(PACKAGE);
+    }
+
+    public static boolean isProviderReachable(Context context) {
+        android.content.ContentProviderClient client;
+        try {
+            client = context.getContentResolver().acquireContentProviderClient(ROOT);
+        } catch (SecurityException error) {
+            return false;
+        }
+        if (client == null) return false;
+        client.release();
+        return true;
+    }
+
     public static boolean isValidSourceId(String sourceId) {
         return sourceId != null && sourceId.matches("[A-Za-z0-9._~-]{1,255}")
                 && !".".equals(sourceId) && !sourceId.contains("..");
@@ -169,6 +186,8 @@ public final class IconHubSource {
     private static final String SYNC_PREFS = "iconhub_choice_sync";
     private static final String PENDING = "pending.";
     private static final String SYNCED = "synced.";
+    private static final String INSTALL_TIME = "companion_install_time";
+    private static final String RECOVERY_CHOICES = "companion_recovery_choices";
     private static final Object SYNC_LOCK = new Object();
     private static final Object PUSH_LOCK = new Object();
 
@@ -296,6 +315,76 @@ public final class IconHubSource {
             else editor.putString(SYNCED + pkg, sourceId);
             editor.commit();
         }
+    }
+
+    /** Snapshot shared preferences and recover only missing choices on a new installation. */
+    public static void reconcileReinstalledChoices(Context context, java.util.Set<String> targets) {
+        synchronized (PUSH_LOCK) {
+            android.content.SharedPreferences prefs = context.getSharedPreferences(SYNC_PREFS, 0);
+            long installed = companionInstallTime(context);
+            if (installed == 0) return;
+            long previous = prefs.getLong(INSTALL_TIME, 0);
+            String saved = prefs.getString(RECOVERY_CHOICES, "{}");
+            try {
+                java.util.Map<String, String> snapshot = readRecoveryChoices(saved);
+                if (previous != 0 && installed != previous && !snapshot.isEmpty()) {
+                    android.os.Bundle capabilities = context.getContentResolver().call(ROOT, "capabilities", null, null);
+                    if (capabilities == null) return;
+                    java.util.Map<String, String> missing = new java.util.LinkedHashMap<>();
+                    if (capabilities.getInt("version") >= 5) {
+                        for (String target : targets) {
+                            String source = snapshot.get(target);
+                            if (isValidSourceId(source) && !hasPendingChoice(context, target)) {
+                                missing.put(target, source);
+                            }
+                        }
+                    }
+                    if (!restoreMissingPreferences(context, missing)) return;
+                }
+                java.util.Map<String, String> current = queryPreferredIcons(context, new java.util.ArrayList<>(targets));
+                if (current == null || installed != companionInstallTime(context)) return;
+                current.values().removeAll(java.util.Collections.singleton(""));
+                if (previous == installed && current.equals(snapshot)) return;
+                prefs.edit().putLong(INSTALL_TIME, installed)
+                        .putString(RECOVERY_CHOICES, new org.json.JSONObject(current).toString()).apply();
+            } catch (org.json.JSONException | RuntimeException error) {
+                android.util.Log.w("IconHubSource", "ICONHUB_CHOICE_RECOVERY_FAILED", error);
+            }
+        }
+    }
+
+    private static java.util.Map<String, String> readRecoveryChoices(String saved) throws org.json.JSONException {
+        org.json.JSONObject object = new org.json.JSONObject(saved);
+        java.util.Map<String, String> choices = new java.util.HashMap<>();
+        for (java.util.Iterator<String> keys = object.keys(); keys.hasNext();) {
+            String key = keys.next();
+            choices.put(key, object.getString(key));
+        }
+        return choices;
+    }
+
+    private static long companionInstallTime(Context context) {
+        try {
+            return context.getPackageManager().getPackageInfo(PACKAGE, 0).firstInstallTime;
+        } catch (PackageManager.NameNotFoundException error) {
+            return 0;
+        }
+    }
+
+    private static boolean restoreMissingPreferences(Context context, java.util.Map<String, String> choices) {
+        java.util.List<String> targets = new java.util.ArrayList<>(choices.keySet());
+        for (int offset = 0; offset < targets.size(); offset += 200) {
+            java.util.ArrayList<String> batch = new java.util.ArrayList<>(
+                    targets.subList(offset, Math.min(offset + 200, targets.size())));
+            java.util.ArrayList<String> sources = new java.util.ArrayList<>(batch.size());
+            for (String target : batch) sources.add(choices.get(target));
+            android.os.Bundle args = new android.os.Bundle();
+            args.putStringArrayList("targets", batch);
+            args.putStringArrayList("sources", sources);
+            android.os.Bundle reply = context.getContentResolver().call(ROOT, "restoreMissingPreferences", null, args);
+            if (reply == null || !reply.getBoolean("success")) return false;
+        }
+        return true;
     }
 
     /**

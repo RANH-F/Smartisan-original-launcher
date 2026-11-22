@@ -901,11 +901,11 @@ public final class IconRasterDiagnostics {
                 && MaintainedLauncherSettingsHost.desktopDefaultCircleEnabled(itemInfo, resolved.type);
         if (defaultCircle && source != null && !source.isRecycled()) rawDrawable = null;
         if ((source == null || source.isRecycled()) && rawDrawable == null) return source;
-        int logicalArtwork = layoutSize(pageMode, "icon_size_origin");
-        int logicalTexture = layoutSize(pageMode, "icon_size_with_shadow");
         IconVisualMetrics visualMetrics = IconVisualMetrics.resolve(pageMode);
         NormalIconRasterSpec spec = resolveNormalIconRasterSpec(visualMetrics);
         if (spec == null) return source;
+        int logicalArtwork = spec.logicalArtworkWidth;
+        int logicalTexture = spec.logicalTextureWidth;
         float rasterScale = spec.rasterScale;
         int artwork = spec.artworkWidth;
         int texture = spec.textureWidth;
@@ -934,7 +934,9 @@ public final class IconRasterDiagnostics {
                 ? ((android.graphics.drawable.BitmapDrawable) rawDrawable).getBitmap() : null;
         Bitmap analysisSource = drawableBitmap != null && !drawableBitmap.isRecycled()
                 ? drawableBitmap : source;
-        VisibleBounds visibleBefore = analyzeVisibleBounds(analysisSource);
+        // Canvas bounds below describe the raster for diagnostics only.
+        boolean traceCanvas = DEBUG_RASTER_DUMP || Log.isLoggable(TAG, Log.DEBUG);
+        VisibleBounds visibleBefore = traceCanvas ? analyzeVisibleBounds(analysisSource) : null;
         int sourceWidth = rawDrawable == null ? source.getWidth()
                 : rawDrawable.getIntrinsicWidth() > 0 ? rawDrawable.getIntrinsicWidth()
                 : drawableBitmap != null ? drawableBitmap.getWidth() : artwork;
@@ -966,10 +968,10 @@ public final class IconRasterDiagnostics {
                     new RectF(drawLeftInArtwork, drawTopInArtwork,
                             drawLeftInArtwork + drawWidth, drawTopInArtwork + drawHeight), paint);
         }
-        VisibleBounds visibleAfter = analyzeVisibleBounds(physicalArtwork);
+        VisibleBounds visibleAfter = traceCanvas ? analyzeVisibleBounds(physicalArtwork) : null;
         Bitmap analyzedArtwork = physicalArtwork;
-        int analyzedGeneration = physicalArtwork.getGenerationId();
-        if (isAcceptanceSample(itemInfo)) {
+        int analyzedGeneration = traceCanvas ? physicalArtwork.getGenerationId() : 0;
+        if (traceCanvas && isAcceptanceSample(itemInfo)) {
             Log.w(TAG, "SOURCE_CANVAS_FINAL_SCALE package=" + itemField(itemInfo, "packageName")
                     + " sourceScale=" + sourceScale
                     + " visibleBefore=" + boundsString(visibleBefore)
@@ -1026,7 +1028,7 @@ public final class IconRasterDiagnostics {
         }
         reportPhysicalOnce(sourceWidth, sourceHeight, artwork, texture,
                 logicalArtwork, logicalTexture, visualMetrics);
-        if (analysisSource != null) {
+        if (traceCanvas && analysisSource != null) {
             reportSourceCanvasOnce(itemInfo, analysisSource, visibleBefore,
                     physicalArtwork, analyzedArtwork, analyzedGeneration, visibleAfter,
                     sourceScale, artwork, texture, defaultCircle);
@@ -1410,10 +1412,9 @@ public final class IconRasterDiagnostics {
     private static String buildTextureCacheKey(Object itemInfo, String baseKey,
             int pageMode) {
         if (isQuickLaunchItem(itemInfo)) return quickLaunchTextureCacheKey(itemInfo, baseKey);
-        NormalIconRasterSpec spec = resolveNormalIconRasterSpec(pageMode);
-        if (spec == null) return baseKey;
         IconVisualMetrics metrics = IconVisualMetrics.resolve(pageMode);
-        if (metrics == null) return baseKey;
+        NormalIconRasterSpec spec = resolveNormalIconRasterSpec(metrics);
+        if (spec == null) return baseKey;
         int logicalArtwork = spec.logicalArtworkWidth;
         int logicalTexture = spec.logicalTextureWidth;
         int artwork = spec.artworkWidth;

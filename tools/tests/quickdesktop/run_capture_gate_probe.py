@@ -16,11 +16,14 @@ def main():
     parser.add_argument('--generation', action='store_true')
     parser.add_argument('--blur', action='store_true')
     parser.add_argument('--workspace', action='store_true')
+    parser.add_argument('--close-only', action='store_true')
     parser.add_argument('--controller-source', type=Path)
     parser.add_argument('--blur-reference-source', type=Path)
     parser.add_argument('--capture-source', type=Path)
     parser.add_argument('--renderer-source', type=Path)
     args = parser.parse_args()
+    if args.close_only and (args.generation or args.blur or args.workspace):
+        parser.error('--close-only applies to the capture gate probe')
     out, jdk, sdk = Path(args.output), Path(args.jdk), Path(args.sdk)
     out.mkdir(parents=True, exist_ok=True)
 
@@ -141,8 +144,10 @@ import com.smartisanos.launcher.data.LayoutProperty;public class x {public stati
     remote = '/data/local/tmp/smartisan-' + probe + '.dex'
     run([adb, '-s', args.serial, 'push', dex / 'classes.dex', remote], 'push.log')
     output = run([adb, '-s', args.serial, 'shell', f'CLASSPATH={remote} app_process /system/bin '
-                  'com.smartisanos.launcher.quickdesktop.' + probe], 'device.log')
-    expected = ('PASS WORKSPACE_SNAPSHOT' if args.workspace else
+                  'com.smartisanos.launcher.quickdesktop.' + probe
+                  + (' --close-only' if args.close_only else '')], 'device.log')
+    expected = ('PASS CAPTURE_GATE_CLOSE_ONLY' if args.close_only else
+                'PASS WORKSPACE_SNAPSHOT' if args.workspace else
                 'PASS BLUR_KERNEL' if args.blur else
                 'PASS CAPTURE_GENERATION' if args.generation else 'PASS CAPTURE_GATE')
     assert expected in output, output

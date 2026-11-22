@@ -511,7 +511,7 @@
 .end method
 
 .method public onWindowFocusChanged(Z)V
-    .locals 0
+    .locals 2
 
     .line 1
     invoke-super {p0, p1}, Landroid/app/Activity;->onWindowFocusChanged(Z)V
@@ -525,9 +525,24 @@
     .line 2
     invoke-static {}, Lcom/smartisanos/launcher/J;->getInstance()Lcom/smartisanos/launcher/J;
 
-    move-result-object p0
+    move-result-object v0
 
-    invoke-virtual {p0, p1}, Lcom/smartisanos/launcher/J;->onWindowFocusChanged(Z)V
+    invoke-virtual {v0, p1}, Lcom/smartisanos/launcher/J;->onWindowFocusChanged(Z)V
 
+    if-eqz p1, :focus_done
+
+    invoke-static {p0}, Lcom/smartisanos/launcher/theme/LauncherSettingsOverlayHost;->isShowing(Landroid/app/Activity;)Z
+    move-result p1
+    if-nez p1, :focus_done
+
+    invoke-virtual {v0}, Lcom/smartisanos/launcher/J;->resumePendingSettingsTheme()Z
+    move-result p1
+    if-eqz p1, :focus_done
+
+    const-string v0, "LauncherTheme"
+    const-string v1, "THEME_HANDOFF_STARTED source=window_focus"
+    invoke-static {v0, v1}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
+
+    :focus_done
     return-void
 .end method

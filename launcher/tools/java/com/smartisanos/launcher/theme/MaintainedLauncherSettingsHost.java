@@ -216,8 +216,6 @@ public final class MaintainedLauncherSettingsHost {
     private static final String PROFILE_DISABLED_PREFIX = "disabled.";
     private static final String THEME_DOWNLOAD_PREFS = "theme_download_prefs";
     private static final String ICON_OVERRIDE_PREFS = "icon_override_prefs";
-    private static final String PREF_IMPROVED_ICON_DEFAULTS_USE_FIRST_CANDIDATE =
-            "improved_icon_defaults_use_first_candidate_v1";
     private static final String WALLPAPER_PREFS = "launcher_settings";
     private static final String PREF_WALLPAPER_URI = "launcher_wallpaper_uri";
     private static final String PREF_WALLPAPER_THUMB = "launcher_wallpaper_thumb";
@@ -4444,8 +4442,20 @@ public final class MaintainedLauncherSettingsHost {
             if (source == null) {
                 clearStoredLauncherWallpaper(context);
             } else {
-                String uri = saveLauncherWallpaperCopy(context, Uri.fromFile(source));
-                if (uri == null || uri.length() == 0) throw new java.io.IOException("Wallpaper restore copy failed");
+                String stagedUri = saveLauncherWallpaperCopy(context, Uri.fromFile(source));
+                if (stagedUri == null || stagedUri.length() == 0) {
+                    throw new java.io.IOException("Wallpaper restore copy failed");
+                }
+                // The next Launcher process can open the existing fixed-path fallback
+                // even when Android returns an older wallpaper preference at startup.
+                File staged = new File(Uri.parse(stagedUri).getPath());
+                File restored = new File(context.getFilesDir(), "launcher_wallpaper.jpg");
+                try {
+                    android.system.Os.rename(staged.getAbsolutePath(), restored.getAbsolutePath());
+                } finally {
+                    if (staged.exists()) staged.delete();
+                }
+                String uri = Uri.fromFile(restored).toString();
                 syncLauncherWallpaperUri(context, uri);
                 if (!context.getSharedPreferences(WALLPAPER_PREFS, Context.MODE_PRIVATE).edit()
                         .putString(PREF_WALLPAPER_URI, uri).putString(PREF_WALLPAPER_THUMB, "")
@@ -4454,7 +4464,7 @@ public final class MaintainedLauncherSettingsHost {
                     throw new java.io.IOException("Wallpaper restore preference commit failed");
                 }
                 setLauncherWallpaperConstant(uri);
-                cleanupOldWallpaperCopies(context, new File(Uri.parse(uri).getPath()));
+                cleanupOldWallpaperCopies(context, restored);
             }
             // Never write the old active theme while restore is still applying preferences.
             // The existing cold reload initializes the target theme and performs synchronization.
@@ -12435,6 +12445,11 @@ public final class MaintainedLauncherSettingsHost {
 
     private static void downloadUpdateApkDirect(final Activity activity, final String[] urls,
                                                 final File out, final UpdateDownloadProgress ui) {
+        final long networkGeneration = LauncherNetworkPolicy.currentGeneration();
+        if (networkGeneration < 0) {
+            dismissUpdateDownloadProgress(ui);
+            return;
+        }
         final Handler handler = new Handler(Looper.getMainLooper());
         updateUpdateProgressUi(activity, ui, "正在连接下载...", -1);
         notifyUpdateDownload(activity, "正在连接下载...", -1, false);
@@ -12443,6 +12458,7 @@ public final class MaintainedLauncherSettingsHost {
                 HttpURLConnection conn = null;
                 InputStream input = null;
                 FileOutputStream output = null;
+                boolean verified = false;
                 try {
                     Throwable lastError = null;
                     for (int i = 0; i < urls.length; i++) {
@@ -12456,7 +12472,7 @@ public final class MaintainedLauncherSettingsHost {
                                             mirror ? "正在连接国内镜像..." : "正在连接下载...", -1, false);
                                 }
                             });
-                            conn = openDownloadConnection(urls[i]);
+                            conn = openDownloadConnection(urls[i], networkGeneration);
                             int code = conn.getResponseCode();
                             if (code >= 200 && code < 300) {
                                 break;
@@ -12486,6 +12502,9 @@ public final class MaintainedLauncherSettingsHost {
                     long lastUpdate = 0;
                     int read;
                     while ((read = input.read(buffer)) != -1) {
+                        if (!LauncherNetworkPolicy.isCurrent(networkGeneration)) {
+                            throw new java.io.IOException("Launcher network request cancelled");
+                        }
                         output.write(buffer, 0, read);
                         downloaded += read;
                         long now = System.currentTimeMillis();
@@ -12506,6 +12525,9 @@ public final class MaintainedLauncherSettingsHost {
                             });
                         }
                     }
+                    if (!LauncherNetworkPolicy.isCurrent(networkGeneration)) {
+                        throw new java.io.IOException("Launcher network request cancelled");
+                    }
                     if (downloaded == 0 || (total > 0 && downloaded != total)) {
                         throw new java.io.IOException("Incomplete update download");
                     }
@@ -12515,21 +12537,17 @@ public final class MaintainedLauncherSettingsHost {
                     if (!verifyUpdateApkFile(activity, out)) {
                         throw new java.io.IOException("Update APK SHA-256 mismatch");
                     }
+                    verified = true;
                     handler.post(new Runnable() {
                         public void run() {
                             dismissUpdateDownloadProgress(ui);
                             notifyUpdateDownload(activity, "下载完成，点击可手动安装", 100, true, out);
+                            if (!LauncherNetworkPolicy.isCurrent(networkGeneration)) return;
                             Toast.makeText(activity, "更新包下载完成，正在启动安装...", Toast.LENGTH_LONG).show();
                             installApkFile(activity, out);
                         }
                     });
                 } catch (final Throwable t) {
-                    try {
-                        if (out.exists()) {
-                            out.delete();
-                        }
-                    } catch (Throwable ignored) {
-                    }
                     handler.post(new Runnable() {
                         public void run() {
                             dismissUpdateDownloadProgress(ui);
@@ -12547,6 +12565,9 @@ public final class MaintainedLauncherSettingsHost {
                         if (input != null) input.close();
                     } catch (Throwable ignored) {
                     }
+                    if (!verified && out.exists() && !out.delete()) {
+                        Log.w(LOG_TAG, "Could not remove incomplete update download");
+                    }
                     if (conn != null) {
                         LauncherNetworkPolicy.close(conn);
                     }
@@ -12556,9 +12577,13 @@ public final class MaintainedLauncherSettingsHost {
     }
 
     private static HttpURLConnection openDownloadConnection(String url) throws Exception {
+        return openDownloadConnection(url, LauncherNetworkPolicy.currentGeneration());
+    }
+
+    private static HttpURLConnection openDownloadConnection(String url, long networkGeneration) throws Exception {
         String current = url;
         for (int i = 0; i < 5; i++) {
-            HttpURLConnection conn = LauncherNetworkPolicy.open(new URL(current));
+            HttpURLConnection conn = LauncherNetworkPolicy.open(new URL(current), networkGeneration);
             conn.setInstanceFollowRedirects(false);
             conn.setConnectTimeout(12000);
             conn.setReadTimeout(20000);
@@ -14744,7 +14769,7 @@ public final class MaintainedLauncherSettingsHost {
         final Resources resources = getMaintainedResources(activity);
         showConfirmDialog(activity,
                 getString(resources, "restore_preview_title", "恢复桌面备份"),
-                getString(resources, "restore_confirm_message", "恢复将替换当前桌面布局及已备份的桌面设置，当前新安装的应用和有效快捷方式将保留到桌面末尾；恢复前会自动保存当前状态，恢复后可撤销。当前壁纸保持不变。"),
+                getString(resources, "restore_confirm_message", "恢复会替换当前桌面布局和备份中已有的设置。新安装的应用和有效快捷方式会保留到桌面末尾。备份中有壁纸记录时，桌面壁纸也会恢复。恢复前会保存当前状态，成功后将替换旧的撤销记录，只能撤销本次恢复。"),
                 getString(resources, "cancel", "取消"),
                 getString(resources, "restore_action", "恢复"), new View.OnClickListener() {
                     public void onClick(View v) {
@@ -15002,6 +15027,7 @@ public final class MaintainedLauncherSettingsHost {
             View refresh = find(resources, root, "weather_refresh");
             if (refresh != null) refresh.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
+                    if (!requireLauncherNetwork(activity)) return;
                     if (WeatherBridge.isAutomaticLocation(activity)
                             && !WeatherBridge.hasLocationPermissionForSettings(activity)) {
                         WeatherBridge.requestLocationPermission(activity);
@@ -15949,13 +15975,14 @@ public final class MaintainedLauncherSettingsHost {
         }
         String uri = "";
         if (isWallpaperReady(context, WALLPAPER_PREFS)) {
-            uri = readWallpaperUriFromPrefs(context, WALLPAPER_PREFS);
+            uri = ignoreDeletedWallpaperCopy(context, readWallpaperUriFromPrefs(context, WALLPAPER_PREFS));
             if (uri.length() > 0) {
                 return uri;
             }
         }
         if (isWallpaperReady(context, "com.smartisanos.launcher_prefs")) {
-            uri = readWallpaperUriFromPrefs(context, "com.smartisanos.launcher_prefs");
+            uri = ignoreDeletedWallpaperCopy(context,
+                    readWallpaperUriFromPrefs(context, "com.smartisanos.launcher_prefs"));
             if (uri.length() > 0) {
                 return uri;
             }
@@ -15964,15 +15991,30 @@ public final class MaintainedLauncherSettingsHost {
         if (uri.length() > 0) {
             return uri;
         }
-        uri = readWallpaperUriFromSettings(context, false);
+        uri = ignoreDeletedWallpaperCopy(context, readWallpaperUriFromSettings(context, false));
         if (uri.length() > 0) {
             return uri;
         }
-        uri = readWallpaperUriFromSettings(context, true);
+        uri = ignoreDeletedWallpaperCopy(context, readWallpaperUriFromSettings(context, true));
         if (uri.length() > 0) {
             return uri;
         }
         return localLauncherWallpaperUri(context);
+    }
+
+    private static String ignoreDeletedWallpaperCopy(Context context, String value) {
+        if (value.length() == 0) return value;
+        Uri uri = Uri.parse(value);
+        String path = uri.getPath();
+        if (!"file".equals(uri.getScheme()) || path == null) return value;
+        File file = new File(path);
+        String name = file.getName();
+        // A compatibility preference may still point to a private copy deleted during restore.
+        if (("launcher_wallpaper.jpg".equals(name) || name.startsWith("launcher_wallpaper_"))
+                && file.equals(new File(context.getFilesDir(), name)) && !file.exists()) {
+            return "";
+        }
+        return value;
     }
 
     private static String readWallpaperUriFromPrefs(Context context, String prefs) {
@@ -16585,8 +16627,10 @@ public final class MaintainedLauncherSettingsHost {
                 getString(resources, "apply", "应用"), true, 1);
         apply.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                applyGlobalIconSource(activity, temporary[0]);
+                if (temporary[0].type == IconSourceManager.Type.IMPROVED
+                        && !requireIconHub(activity)) return;
                 dialog.dismiss();
+                applyGlobalIconSource(activity, temporary[0]);
             }
         });
         buttons.addView(cancel, new LinearLayout.LayoutParams(0, dp(context, 47), 1));
@@ -16838,7 +16882,7 @@ public final class MaintainedLauncherSettingsHost {
         NETWORK_RECOVERED
     }
 
-    private static void applyGlobalIconSource(final Context context, final IconSourceManager.Selection selection) {
+    private static void applyGlobalIconSource(final Activity context, final IconSourceManager.Selection selection) {
         if (context == null) return;
         final Context app = context.getApplicationContext() == null ? context : context.getApplicationContext();
         final IconSourceManager.Selection previousSelection = IconSourceManager.get(app);
@@ -16849,6 +16893,10 @@ public final class MaintainedLauncherSettingsHost {
 
         persistGlobalIconSelection(context, targetSelection);
         reconcileCurrentGlobalIconSource(context, ApplyReason.USER_SELECTION, sourceChanged);
+        if (targetSelection.type == IconSourceManager.Type.IMPROVED) {
+            ICON_HUB_RECOVERY_REQUEST.set(new java.lang.ref.WeakReference<>(context));
+            syncIconHub(app);
+        }
     }
 
     public static void persistGlobalIconSelection(final Context context, final IconSourceManager.Selection selection) {
@@ -16880,11 +16928,6 @@ public final class MaintainedLauncherSettingsHost {
                     java.util.LinkedHashSet<String> changed = new java.util.LinkedHashSet<String>();
                     Resources resources = targetSelection.type == IconSourceManager.Type.IMPROVED
                             ? settingsResources(app) : null;
-                    SharedPreferences iconOverridePrefs = app.getSharedPreferences(
-                            ICON_OVERRIDE_PREFS, Context.MODE_PRIVATE);
-                    boolean resetLibraryDefaults = targetSelection.type == IconSourceManager.Type.IMPROVED
-                            && !iconOverridePrefs.getBoolean(
-                            PREF_IMPROVED_ICON_DEFAULTS_USE_FIRST_CANDIDATE, false);
                     int applicationCount = 0;
                     for (int i = 0; apps != null && i < apps.size(); i++) {
                         ResolveInfo info = apps.get(i);
@@ -16896,6 +16939,7 @@ public final class MaintainedLauncherSettingsHost {
                         String mode = RedirectIconDB.modeOf(redirect);
 
                         if (reason == ApplyReason.USER_SELECTION && sourceChanged
+                                && targetSelection.type != IconSourceManager.Type.IMPROVED
                                 && !RedirectIconDB.MODE_CUSTOM.equals(mode)
                                 && !RedirectIconDB.MODE_AUTO.equals(mode)) {
                             RedirectIconDB.updateAutoIcon(app, ai.packageName, ai.name);
@@ -16911,12 +16955,6 @@ public final class MaintainedLauncherSettingsHost {
                             com.smartisanos.home.settings.icons.IconPreviewRepository.ImprovedCandidate
                                     candidate = com.smartisanos.home.settings.icons.IconPreviewRepository
                                     .get(app).resolveImprovedCandidate(ai.packageName, ai.name);
-                            if (resetLibraryDefaults
-                                    && RedirectIconDB.MODE_RESOURCE.equals(mode)
-                                    && candidate.exists) {
-                                RedirectIconDB.updateAutoIcon(app, ai.packageName, ai.name);
-                                changed.add(ai.packageName);
-                            }
                             scheduleSmartisanIconFetch(app, ai.packageName);
                             if (candidate.exists && !TextUtils.isEmpty(candidate.sourceId)
                                     && !candidate.sourceId.equals(ai.packageName)) {
@@ -16928,10 +16966,6 @@ public final class MaintainedLauncherSettingsHost {
                         } else {
                             changed.add(ai.packageName);
                         }
-                    }
-                    if (resetLibraryDefaults) {
-                        iconOverridePrefs.edit().putBoolean(
-                                PREF_IMPROVED_ICON_DEFAULTS_USE_FIRST_CANDIDATE, true).apply();
                     }
                     Log.i(LOG_TAG, "RESTORE_ICON_SOURCE_RECONCILE source=" + targetSelection.type
                             + " reason=" + reason + " applicationCount=" + applicationCount + " changedCount=" + changed.size());
@@ -17718,6 +17752,8 @@ public final class MaintainedLauncherSettingsHost {
             new java.util.concurrent.atomic.AtomicBoolean();
     private static final java.util.concurrent.atomic.AtomicBoolean ICON_HUB_SYNC_PENDING =
             new java.util.concurrent.atomic.AtomicBoolean();
+    private static final java.util.concurrent.atomic.AtomicReference<java.lang.ref.WeakReference<Activity>>
+            ICON_HUB_RECOVERY_REQUEST = new java.util.concurrent.atomic.AtomicReference<>();
     private static volatile Map<String, String> sIconHubMatches = Collections.emptyMap();
     private static volatile Map<String, String> sIconHubDigests = Collections.emptyMap();
 
@@ -17757,7 +17793,9 @@ public final class MaintainedLauncherSettingsHost {
         SMARTISAN_ICON_FETCH_EXECUTOR.execute(new Runnable() {
             public void run() {
                 try {
-                    while (ICON_HUB_SYNC_PENDING.getAndSet(false)) updateIconHubMatches(app);
+                    while (ICON_HUB_SYNC_PENDING.getAndSet(false)) {
+                        updateIconHubMatches(app, ICON_HUB_RECOVERY_REQUEST.getAndSet(null));
+                    }
                 } finally {
                     ICON_HUB_SYNC.set(false);
                     if (ICON_HUB_SYNC_PENDING.get()) syncIconHub(app);
@@ -17791,7 +17829,7 @@ public final class MaintainedLauncherSettingsHost {
         }
     }
 
-    private static void updateIconHubMatches(Context app) {
+    private static void updateIconHubMatches(Context app, java.lang.ref.WeakReference<Activity> recoveryRequest) {
         loadStoredIconHubProjection(app);
         android.content.SharedPreferences store = app.getSharedPreferences("iconhub_catalog", 0);
         if (!IconHubSource.isAvailable(app)) {
@@ -17836,10 +17874,27 @@ public final class MaintainedLauncherSettingsHost {
             }
         }
         if (packages.isEmpty() && explicit.isEmpty()) return;
+        IconHubSource.reconcileReinstalledChoices(app, packages.keySet());
         String[] revision = new String[2];
         List<String> revokedSources = new ArrayList<>();
         Map<String, String> matches = IconHubSource.resolve(app, new ArrayList<>(packages.keySet()), true, revision, revokedSources);
-        if (matches == null) return;
+        if (matches == null) {
+            if (recoveryRequest != null) {
+                if (IconHubSource.isProviderReachable(app)) {
+                    syncIconHub(app);
+                } else {
+                    final Activity activity = recoveryRequest.get();
+                    if (activity != null) {
+                        activity.runOnUiThread(new Runnable() {
+                            @Override public void run() {
+                                promptToOpenIconHub(activity);
+                            }
+                        });
+                    }
+                }
+            }
+            return;
+        }
         java.util.LinkedHashSet<String> sources = new java.util.LinkedHashSet<>(matches.values());
         sources.addAll(explicit.values());
         sources.addAll(sIconHubMatches.values());
@@ -17851,6 +17906,7 @@ public final class MaintainedLauncherSettingsHost {
         Map<String, String> oldMatches = sIconHubMatches;
         Map<String, String> oldDigests = sIconHubDigests;
         Map<String, String> accepted = new java.util.LinkedHashMap<>(digests);
+        java.util.HashSet<String> obsoleteDigests = new java.util.HashSet<>();
         java.util.HashSet<String> changedSources = new java.util.HashSet<>();
         IconPreviewRepository repo = IconPreviewRepository.get(app);
         File cacheDir = new File(app.getFilesDir(), SMARTISAN_ICON_CACHE_DIR);
@@ -17859,7 +17915,7 @@ public final class MaintainedLauncherSettingsHost {
             String digest = entry.getValue();
             String old = oldDigests.get(source);
             if (TextUtils.isEmpty(digest)) {
-                repo.removeVerifiedIconHubRaster(old);
+                obsoleteDigests.add(old);
                 File diskFile = new File(cacheDir, source + ".png");
                 if (diskFile.exists()) diskFile.delete();
                 synchronized (sSmartisanIconCache) {
@@ -17868,10 +17924,17 @@ public final class MaintainedLauncherSettingsHost {
                 changedSources.add(source);
                 continue;
             }
-            if (digest.equals(old) && repo.hasVerifiedIconHubRaster(digest)) continue;
-            if (!repo.cacheIconHubOriginal(source, digest)) {
-                accepted.remove(source);
-                if (old != null) changedSources.add(source);
+            boolean rasterReady = repo.hasVerifiedIconHubRaster(digest);
+            if (rasterReady && digest.equals(old)) continue;
+            if (!rasterReady && !repo.cacheIconHubOriginal(source, digest)) {
+                // A published source changing its digest is different from a revocation.
+                // Continue to render the last verified artwork while the replacement is unavailable.
+                if (repo.hasVerifiedIconHubRaster(old)) {
+                    accepted.put(source, old);
+                } else {
+                    accepted.remove(source);
+                    if (old != null) changedSources.add(source);
+                }
                 continue;
             }
             synchronized (sSmartisanIconCache) {
@@ -17880,6 +17943,9 @@ public final class MaintainedLauncherSettingsHost {
             changedSources.add(source);
         }
         if (improved != isImprovedIconEnabled(app)) return;
+        // Another published source can still use the same verified raster, including as a fallback.
+        obsoleteDigests.removeAll(accepted.values());
+        for (String digest : obsoleteDigests) repo.removeVerifiedIconHubRaster(digest);
         sIconHubDigests = accepted;
         sIconHubMatches = matches;
         try {
@@ -17916,6 +17982,29 @@ public final class MaintainedLauncherSettingsHost {
             repo.invalidateCandidates();
             scheduleSmartisanIconRefresh(app, changed);
         }
+    }
+
+    private static void promptToOpenIconHub(final Activity activity) {
+        if (activity.isFinishing() || activity.isDestroyed() || !activity.hasWindowFocus()
+                || !isImprovedIconEnabled(activity)) return;
+        Intent intent = IconHubSource.launchIntent(activity);
+        if (intent == null) return;
+        showConfirmDialog(activity, "连接 Smartisan Icon",
+                "打开一次 Smartisan Icon，返回桌面后会继续同步改进版图标。",
+                "稍后", "打开", new View.OnClickListener() {
+                    @Override public void onClick(View view) {
+                        Intent current = IconHubSource.launchIntent(activity);
+                        try {
+                            if (current != null) {
+                                activity.startActivity(current);
+                                return;
+                            }
+                        } catch (ActivityNotFoundException | SecurityException error) {
+                            Log.w(LOG_TAG, "ICONHUB_OPEN_FAILED", error);
+                        }
+                        Toast.makeText(activity, "暂时无法打开 Smartisan Icon", Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 
     private static boolean requireIconHub(Context context) {
@@ -20853,8 +20942,8 @@ public final class MaintainedLauncherSettingsHost {
                     return new ManagedIconSource(d, "IMPROVED:" + source);
                 }
             }
-            // 已被下架或文件不存在，自动清除失效映射并回退到默认
-            RedirectIconDB.updateAutoIcon(context, ai.packageName, ai.name);
+            // Preserve the explicit source across missing files, revocation and reconnect.
+            // The normal global fallback still determines what can be shown now.
         }
         if (RedirectIconDB.MODE_PACK.equals(mode)) {
             String pack = RedirectIconDB.packNameOf(redirect);

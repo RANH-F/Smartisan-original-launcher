@@ -92,10 +92,19 @@ public final class QuickDesktopCaptureGateProbe {
     }
 
     public static void main(String[] args) throws Exception {
-        try { runProbe(); } catch (Throwable error) { error.printStackTrace(); System.exit(1); }
+        try { runProbe(args.length == 1 && "--close-only".equals(args[0])); }
+        catch (Throwable error) { error.printStackTrace(); System.exit(1); }
     }
 
-    private static void runProbe() throws Exception {
+    private static void closeAndCheckRetainedHost(QuickDesktopHostView host) throws Exception {
+        int clearsBeforeClose = host.clears;
+        QuickDesktopController.onHomeIntent();
+        check(host.getOpenProgress() == 0 && !ready(), "HOME did not clear owner");
+        check(host.clears == clearsBeforeClose + 1 && controllerField("hostView") == host,
+                "closing a retained host must clear its background snapshots");
+    }
+
+    private static void runProbe(boolean closeOnly) throws Exception {
         if (Looper.myLooper() == null) Looper.prepareMainLooper();
         Class<?> activityThread = Class.forName("android.app.ActivityThread");
         Object thread = activityThread.getMethod("systemMain").invoke(null);
@@ -131,6 +140,13 @@ public final class QuickDesktopCaptureGateProbe {
         Field rootField = QuickDesktopController.class.getDeclaredField("rootRef");
         rootField.setAccessible(true);
         rootField.set(null, new WeakReference<android.view.ViewGroup>(root));
+        if (closeOnly) {
+            // Exercise cleanup without the shell process's OEM ViewConfiguration dependency.
+            host.setOpenProgress(1f, "probe-open");
+            closeAndCheckRetainedHost(host);
+            System.out.println("PASS CAPTURE_GATE_CLOSE_ONLY checks=" + checks);
+            return;
+        }
         for (int i = 0; i < 20; i++) {
             touch(MotionEvent.ACTION_DOWN, 100, 800);
             progress(500); // Unaccepted progress must not grant ownership.
@@ -194,8 +210,7 @@ public final class QuickDesktopCaptureGateProbe {
         check(ready(), "completed snapshot not accepted");
         check(touch(MotionEvent.ACTION_UP, 600, 800)==1, "accepted UP also reached GL page owner");
         check(host.getOpenProgress() == 1, "release no longer opens");
-        QuickDesktopController.onHomeIntent();
-        check(host.getOpenProgress() == 0 && !ready(), "HOME did not clear owner");
+        closeAndCheckRetainedHost(host);
 
         touch(MotionEvent.ACTION_DOWN, 100, 2500);
         QuickDesktopController.requestShow();

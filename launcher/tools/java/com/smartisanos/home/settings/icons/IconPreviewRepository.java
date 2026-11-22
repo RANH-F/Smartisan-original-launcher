@@ -867,15 +867,26 @@ public final class IconPreviewRepository implements ComponentCallbacks2 {
 
     /** Low-priority maintenance after a completed online-icon write, never on page open. */
     public void trimOnlineDiskCacheAsync() {
-        long now = android.os.SystemClock.uptimeMillis();
-        if (now - lastDiskTrim < 60000L || !diskTrimQueued.compareAndSet(false, true)) return;
-        lastDiskTrim = now;
-        enqueueRender(new RenderTask(null, Priority.P2_IDLE, new DrawableLoader() {
-            public Drawable load() {
-                try { trimOnlineDiskCache(); } finally { diskTrimQueued.set(false); }
-                return null;
-            }
-        }, sequence.incrementAndGet()));
+        if (!diskTrimQueued.compareAndSet(false, true)) return;
+        if (android.os.SystemClock.uptimeMillis() - lastDiskTrim < 60000L) {
+            diskTrimQueued.set(false);
+            return;
+        }
+        // A memory trim can pause render tasks, but directory maintenance must still complete.
+        try {
+            indexPool.execute(new Runnable() {
+                @Override public void run() {
+                    try {
+                        trimOnlineDiskCache();
+                    } finally {
+                        lastDiskTrim = android.os.SystemClock.uptimeMillis();
+                        diskTrimQueued.set(false);
+                    }
+                }
+            });
+        } catch (java.util.concurrent.RejectedExecutionException full) {
+            diskTrimQueued.set(false);
+        }
     }
 
     private void trimOnlineDiskCache() {

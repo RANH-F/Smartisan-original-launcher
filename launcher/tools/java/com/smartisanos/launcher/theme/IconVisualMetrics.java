@@ -11,6 +11,7 @@ import android.util.Log;
  * therefore reads the selected scene values but never applies that setting again.
  */
 public final class IconVisualMetrics {
+    private static final String TAG = "LauncherIconRaster";
     public static final int REVISION = 5;
     // Frozen original-port golden: the UI's 100% maps to the artwork box that
     // was visually accepted before size controls were added. This calibration
@@ -99,20 +100,22 @@ public final class IconVisualMetrics {
             IconVisualMetrics result = new IconVisualMetrics(sceneMode, sceneMode, setting, cell,
                     artwork, texture, physicalArtwork, physicalTexture, scale,
                     surfaceWidth, logicalWidth);
-            Log.i("LauncherIconRaster", "ICON_VISUAL_METRICS sceneMode=" + sceneMode
-                    + " gridMode=" + sceneMode + " iconSizeSetting=" + setting
-                    + " cellWidth=" + cell + " logicalArtwork=" + artwork
-                    + " logicalTexture=" + texture + " physicalArtwork=" + physicalArtwork
-                    + " physicalTexture=" + physicalTexture
-                    + " activeIconOuterBox=" + result.activeIconOuterBox
-                    + " activeIconOuterScale=" + result.activeIconOuterScale
-                    + " weatherOuter=" + floatField(property, "weather_back_size", 0f)
-                    + " calendarOuter=" + floatField(property, "calendar_back_size", 0f)
-                    + " settingButton=" + floatField(property, "setting_button", 0f)
-                    + " physicalScale=" + scale + " surfaceWidth=" + surfaceWidth
-                    + " actualSurfaceResolved=" + actualSurfaceResolved
-                    + " surfaceOwner=" + (actualSurfaceResolved
-                    ? "LAUNCHER_GL_SURFACE" : "DISPLAY_FALLBACK"));
+            if (Log.isLoggable(TAG, Log.DEBUG)) {
+                Log.d(TAG, "ICON_VISUAL_METRICS sceneMode=" + sceneMode
+                        + " gridMode=" + sceneMode + " iconSizeSetting=" + setting
+                        + " cellWidth=" + cell + " logicalArtwork=" + artwork
+                        + " logicalTexture=" + texture + " physicalArtwork=" + physicalArtwork
+                        + " physicalTexture=" + physicalTexture
+                        + " activeIconOuterBox=" + result.activeIconOuterBox
+                        + " activeIconOuterScale=" + result.activeIconOuterScale
+                        + " weatherOuter=" + floatField(property, "weather_back_size", 0f)
+                        + " calendarOuter=" + floatField(property, "calendar_back_size", 0f)
+                        + " settingButton=" + floatField(property, "setting_button", 0f)
+                        + " physicalScale=" + scale + " surfaceWidth=" + surfaceWidth
+                        + " actualSurfaceResolved=" + actualSurfaceResolved
+                        + " surfaceOwner=" + (actualSurfaceResolved
+                            ? "LAUNCHER_GL_SURFACE" : "DISPLAY_FALLBACK"));
+            }
             return result;
         } catch (Throwable ignored) {
             return null;
